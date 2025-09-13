@@ -7,6 +7,7 @@ function CostFields(){
     <div className="row">
       <div className="cell"><p>Sl. No</p></div>
       {costfields.map((field)=><div className="cell">{field}</div>)}
+      <div className="cell">Cost per Day</div>
     </div>
   )
 }
@@ -20,7 +21,7 @@ function CostRecords(){
   
   return(
     <>
-    {costrecords.map((record,index)=><div className='row'><div className='cell'>{index}</div>{costfields.map((field)=><div className='cell'>{record[field]}</div>)}</div>)}
+    {costrecords.map((record,index)=><div className='row'><div className='cell'>{index}</div>{costfields.map((field)=><div className='cell'>{record[field]}</div>)}<div className='cell'>{record["Amount"]*(1000*60*60*24)/(Date.parse(record["Time Period to"])-Date.parse(record["Time Period from"]))}</div></div>)}
     </>
   )
 }

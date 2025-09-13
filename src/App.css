@@ -20,7 +20,6 @@
 
 .row{
   display: grid;
-  grid-template-columns: 4% 15% 15% 15% 8% 15% 15% 12%;
 }
 
 .cell{
@@ -30,6 +29,12 @@
   justify-content: center;
   border:1px solid black;
   padding:5px;
+}
+
+.costTable{
+  .row{
+  grid-template-columns: 10% 10% 10% 10% 10% 10% 10% 10% 10% 10%;
+  }
 }
 
 /*Apportionment*/

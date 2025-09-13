@@ -52,6 +52,7 @@ function DisplayAssets(){
     <>
     <div className='row'>{assetfields.map((field)=><div className='cell'>{field}</div>)}</div>
     {fixedassets.map((asset)=><div className='row'>{assetfields.map((field)=><div className='cell'>{asset[field]}</div>)}</div>)}
+
     </>
   )
 }
