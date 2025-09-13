@@ -26,6 +26,8 @@ function CostRecords(){
 }
 
 
+
+
 function CostTable(){
   return(
     <div className="costTable">
