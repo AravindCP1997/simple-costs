@@ -1,6 +1,36 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 
+function CreateClass(){
+    
+    const [GL,setGL] = useState('');
+    const [depreciable,setdepreciable] = useState(false);
+    const [classes,setclasses] = useState([])
+
+    useEffect(()=>{
+    ('classes' in localStorage) ? setclasses(JSON.parse(localStorage.getItem('classes'))) : null;
+  },[])
+
+  function submitClass(){
+    let assetclass = {}
+    assetclass['GL'] = GL;
+    assetclass['depreciable'] = depreciable;
+    classes.push(assetclass)
+    localStorage.setItem('classes',JSON.stringify(classes))
+  }
+    
+    return(
+       <form>
+        <h2>Create Asset Class</h2>
+        <label>General Ledger
+            <input type="text" value={GL} onChange={(e)=>{setGL(e.target.value)}}/>
+        </label>
+        <label>Depreciable
+            <input type="text" value={depreciable} onChange={(e)=>{setdepreciable(e.target.value)}}/>
+        </label>
+       </form> 
+    )
+}
 
 function CreateAsset(){
     const [assetclass,setclass] = useState('')
@@ -33,6 +63,7 @@ function submitAsset(){
 }
     return(
         <form>
+            <h2>Create Asset</h2>
             {assetdata.map((data)=><label>{data.field}<input type={data.type} value={data.value} onChange={data.onchange}/></label>)}
             <input type="submit" onClick={submitAsset}/>
         </form>
@@ -60,6 +91,7 @@ function DisplayAssets(){
 function FixedAssets(){
     return(
         <>
+        <CreateClass/>
         <CreateAsset/>
         <DisplayAssets/>
         </>
