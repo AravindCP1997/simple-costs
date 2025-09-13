@@ -1,0 +1,41 @@
+.verticalContainer{
+  display: flex;
+  flex-direction: column;
+  width:min(100%,1000px);
+}
+
+.navigation{
+  padding:10px;
+  display: flex;
+  flex-direction: row;
+  gap:10px;
+  border-radius:20px;
+  width:fit-content;
+  color:white;
+}
+
+.title{
+  color:var(--green);
+}
+
+.row{
+  display: grid;
+  grid-template-columns: 4% 15% 15% 15% 8% 15% 15% 12%;
+}
+
+.cell{
+  text-align:center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border:1px solid black;
+  padding:5px;
+}
+
+/*Apportionment*/
+
+
+.center-time{
+    display:grid;
+    grid-template-columns: 25% 25% 25% 25%;
+}

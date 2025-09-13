@@ -1,0 +1,13 @@
+@font-face {
+  font-family: "Lex";
+  src: url('../public/Lexend.woff');
+}
+
+html{
+  font-family: Lex;
+}
+
+:root{
+  --blue:rgb(64,82,106);
+  --green:rgb(0,176,80);
+}
