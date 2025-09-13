@@ -33,25 +33,25 @@ function RecordCost(){
     return(
         <form onSubmit={submitCost}>
             <label>Entry Date: 
-                <input value={edate} type="date" onChange={(e)=>setedate(e.target.value)}/>
+                <input value={edate} type="date" onChange={(e)=>setedate(e.target.value)} required/>
             </label>
             <label>Cost Element: 
-                <input value={costelement} type="text" onChange={(e)=>setcostelement(e.target.value)}/>
+                <input value={costelement} type="text" onChange={(e)=>setcostelement(e.target.value)}required/>
             </label>
             <label>Cost Centre or Cost Object: 
-                <input value={costcentre} type="text" onChange={(e)=>setcostcentre(e.target.value)}/>
+                <input value={costcentre} type="text" onChange={(e)=>setcostcentre(e.target.value)}required/>
             </label>
             <label>Type: 
-                <input value={type} type="text" onChange={(e)=>settype(e.target.value)}/>
+                <input value={type} type="text" onChange={(e)=>settype(e.target.value)}required/>
             </label>
             <label>Time Period from: 
-                <input value={timefrom} type="date" onChange={(e)=>settimefrom(e.target.value)}/>
+                <input value={timefrom} type="date" onChange={(e)=>settimefrom(e.target.value)}required/>
             </label>
             <label>Time Period to: 
-                <input value={timeto} type="date" onChange={(e)=>settimeto(e.target.value)}/>
+                <input value={timeto} type="date" onChange={(e)=>settimeto(e.target.value)}required/>
             </label>
             <label>Amount: 
-                <input value={amount} type="number" onChange={(e)=>setamount(e.target.value)}/>
+                <input value={amount} type="number" onChange={(e)=>setamount(e.target.value)}required/>
             </label>
             <button type="submit">Submit</button>
         </form>

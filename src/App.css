@@ -15,6 +15,9 @@
 }
 
 .title{
+  position:fixed;
+  bottom:10px;
+  right:10px;
   color:var(--green);
 }
 
@@ -43,4 +46,11 @@
 .center-time{
     display:grid;
     grid-template-columns: 25% 25% 25% 25%;
+}
+
+.assetTable{
+  .row{
+    display:grid;
+    grid-template-columns: 13% 13% 13% 13% 13% 13% 13%;
+  }
 }

@@ -49,11 +49,11 @@ function DisplayAssets(){
   const assetfields = ["Asset Class", "Description", "Date of Capitalisation", "Useful Life", "Salvage Value", "Income Tax Depreciation Block", "Income Tax Depreciation Rate"]
 
   return(
-    <>
+    <div className="assetTable">
     <div className='row'>{assetfields.map((field)=><div className='cell'>{field}</div>)}</div>
     {fixedassets.map((asset)=><div className='row'>{assetfields.map((field)=><div className='cell'>{asset[field]}</div>)}</div>)}
 
-    </>
+    </div>
   )
 }
 
