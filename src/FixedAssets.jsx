@@ -1,33 +1,38 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import {loadData} from './scripts.js'
+
+const assetfields = ["Asset Class", "Description", "Date of Capitalisation", "Useful Life", "Salvage Value", "Income Tax Depreciation Block", "Income Tax Depreciation Rate"]
 
 function CreateClass(){
     
     const [GL,setGL] = useState('');
     const [depreciable,setdepreciable] = useState(false);
-    const [classes,setclasses] = useState([])
-
-    useEffect(()=>{
-    ('classes' in localStorage) ? setclasses(JSON.parse(localStorage.getItem('classes'))) : null;
-  },[])
+    const [name,setname] = useState('')
+    const classes = loadData('classes');
 
   function submitClass(){
     let assetclass = {}
+    assetclass['Name'] = name;
     assetclass['GL'] = GL;
-    assetclass['depreciable'] = depreciable;
+    assetclass['Depreciable'] = depreciable;
     classes.push(assetclass)
     localStorage.setItem('classes',JSON.stringify(classes))
   }
     
     return(
-       <form>
+       <form onSubmit={submitClass}>
         <h2>Create Asset Class</h2>
+        <label>Name
+            <input type="text" value={name} onChange={(e)=>{setname(e.target.value)}}/>
+        </label>
         <label>General Ledger
             <input type="text" value={GL} onChange={(e)=>{setGL(e.target.value)}}/>
         </label>
         <label>Depreciable
             <input type="text" value={depreciable} onChange={(e)=>{setdepreciable(e.target.value)}}/>
         </label>
+        <input type="submit"/>
        </form> 
     )
 }
@@ -40,7 +45,6 @@ function CreateAsset(){
     const [salvagevalue,setsalvagevalue] = useState(0)
     const [itblock,setitblock] = useState('')
     const [itdep,setitdep] = useState(0)
-    const [fixedassets,setfixedassets] = useState([])
     const assetdata = [
     {"field":"Asset Class","type":"text", "value":assetclass, "onchange":(e)=>{setclass(e.target.value)}},
     {"field":"Description","type":"text", "onchange":(e)=>{setdescription(e.target.value)}, "value":description},
@@ -51,9 +55,7 @@ function CreateAsset(){
     {"field":"Income Tax Depreciation Rate","type":"number", "onchange":(e)=>{setitdep(e.target.value)}, "value":itdep}
 ]
 
-useEffect(()=>{
-    ('fixedassets' in localStorage) ? setfixedassets(JSON.parse(localStorage.getItem('fixedassets'))) : null;
-  },[])
+    const fixedassets = loadData('fixedassets')
 
 function submitAsset(){
     let asset = {};
@@ -71,13 +73,7 @@ function submitAsset(){
 }
 
 function DisplayAssets(){
-    const [fixedassets,setfixedassets] = useState([])
-    
-    useEffect(()=>{
-    ('fixedassets' in localStorage) ? setfixedassets(JSON.parse(localStorage.getItem('fixedassets'))) : null;
-  },[])
-
-  const assetfields = ["Asset Class", "Description", "Date of Capitalisation", "Useful Life", "Salvage Value", "Income Tax Depreciation Block", "Income Tax Depreciation Rate"]
+    const fixedassets = loadData('fixedassets')
 
   return(
     <div className="assetTable">
