@@ -1,5 +1,5 @@
 import './App.css'
-import {CreateObject, Purchase} from './Transaction.jsx';
+import {CreateObject, DisplayObjects, Purchase} from './Transaction.jsx';
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate } from 'react-router-dom';
 import { collection } from './scripts.js';
@@ -36,7 +36,7 @@ function Menu({index}){
       {menus.map((menu,index)=><div className="menu-cell"><Link to={"/home/"+index}>{menu.name}</Link></div>)}
     </div>
     <div className='menu'>
-      {menus[index]["items"].map((item)=><Link className="menu-cell" to={`/${item}`}>{item}</Link>)}
+      {menus[index]["items"].map((item)=><div className="menu-cell"><Link to={`/${item}`}>{item}</Link></div>)}
     </div>
     </>
   )
@@ -62,6 +62,8 @@ function App(){
       <Route path="/" element={<Navigate to="/home/0"/>}/>
       <Route path="/home/:ui" element={<div className='verticalContainer'><Home/></div>}/>
       <Route path="/createobject/:Object" element={<div className="verticalContainer"><CreateObject/></div>}/>
+      <Route path="/displayobjects/:Object" element={<div className='verticalContainer'><DisplayObjects/></div>}/>
+      <Route path="/displayobject/:Object/:id" element={<div className='verticalContainer'></div>}/>
     </Routes>
     </BrowserRouter>
   )

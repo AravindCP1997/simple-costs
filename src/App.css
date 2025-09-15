@@ -49,6 +49,9 @@
       text-align: center;
       opacity: 0.7;
       transition: 0.5s;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     .menu-cell:hover{
@@ -59,6 +62,30 @@
       color:white;
     }
   }
+}
+
+.objectNavigation{
+  display:flex;
+    flex-direction:row;
+    justify-content: center;
+    gap:15px;
+    padding-top:20px;
+
+    .menu-cell{
+      background: var(--blue);
+      padding:10px;
+      border-radius:15px;
+      opacity:0.7;
+      transition: 0.5s;
+
+      a{
+      color:white;
+      }
+    }
+
+    .menu-cell:hover{
+      opacity: 1;
+    }
 }
 
 .createobject{

@@ -1,6 +1,6 @@
 import { useState} from 'react';
 import { collection, loadData, saveData } from './scripts.js';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 export function Purchase(){
 
@@ -33,6 +33,19 @@ export function Purchase(){
     )
 }
 
+function ObjectNavigation({Object}){
+    const menus = [
+        {"name":"Create","method":"/CreateObject/"},
+        {"name":"Display","method":"/DisplayObject/"},
+        {"name":"Update","method":"/UpdateObject/"},
+        {"name":"Delete","method":"/DeleteObject/"},
+    ]
+    return(
+        <div className='objectNavigation'>
+            {menus.map((menu)=><div className='menu-cell'><Link to={`${menu.method}${Object}`}>{menu.name}</Link></div>)}
+        </div>
+    )
+}
 
 export function CreateObject(){
 
@@ -86,10 +99,23 @@ export function CreateObject(){
         alert(JSON.stringify(original))
     }
     return(
+        <div>
+        <ObjectNavigation Object={Object}/>
         <form onSubmit={submitobject} className='createobject'>
             <h2>Create {objectdata.name}</h2>
             {objectdata.fields.map((field)=><label>{field.field}<input name={field.field} value={inputdata[field.field]} type={field.type} onChange={handlechange}/></label>)}
             <input className="submitObject" type="submit"/>
         </form>
+        </div>
+    )
+}
+
+export function DisplayObjects(){
+    const {Object} = useParams();
+
+    const collection = loadData(Object);
+
+    return(
+        <p>{JSON.stringify(collection)}</p>
     )
 }
