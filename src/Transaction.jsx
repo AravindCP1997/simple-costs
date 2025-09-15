@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Date, SubmitButton, Description } from './Template.jsx';
+import { useState} from 'react';
 import { collection, loadData, saveData } from './scripts.js';
+import { useParams } from 'react-router-dom';
 
 export function Purchase(){
 
@@ -34,7 +34,9 @@ export function Purchase(){
 }
 
 
-export function CreateObject({Object}){
+export function CreateObject(){
+
+    let {Object} = useParams()
     const objects = {
     "Asset Class": {
         "name":"Asset Class",
@@ -49,6 +51,15 @@ export function CreateObject({Object}){
             "Depreciation Ledger": ""
         },
         "collection":"assetclasses"
+    },
+    "Asset": {
+        "name":"Asset",
+        "fields":[
+            {"field":"Name","type":"text", "use-state":""},
+            {"field":"Asset Class","type":"text", "use-state":""},
+            {"field":"Useful Life","type":"number", "use-state":0},
+        ],
+        "collection":"assets"
     }
 }
 
@@ -75,10 +86,10 @@ export function CreateObject({Object}){
         alert(JSON.stringify(original))
     }
     return(
-        <form onSubmit={submitobject}>
+        <form onSubmit={submitobject} className='createobject'>
             <h2>Create {objectdata.name}</h2>
             {objectdata.fields.map((field)=><label>{field.field}<input name={field.field} value={inputdata[field.field]} type={field.type} onChange={handlechange}/></label>)}
-            <input type="submit"/>
+            <input className="submitObject" type="submit"/>
         </form>
     )
 }

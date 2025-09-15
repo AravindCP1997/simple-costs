@@ -1,13 +1,24 @@
 @font-face {
   font-family: "Lex";
-  src: url('../public/Lexend.woff');
+  src: url('../Lexend.woff');
+}
+
+@font-face{
+  font-family: "Helvet";
+  src:url('../Helvetica.woff');
 }
 
 html{
   font-family: Lex;
+  background: var(--lightgray);
 }
 
 :root{
   --blue:rgb(64,82,106);
   --green:rgb(0,176,80);
+  --lightgray:rgb(243,243,247);
+}
+
+a{
+  text-decoration: none;
 }

@@ -1,81 +1,89 @@
 .verticalContainer{
   display: flex;
-  flex-direction: column;
-  width:min(100%,1000px);
-}
-
-.navigation{
-  padding:10px;
-  display: flex;
   flex-direction: row;
-  gap:10px;
+  justify-content: center;
+  position:relative;
+}
+
+.home{
+  width:min(850px,100%);
+  display:flex;
+  flex-direction: column;
+  gap:20px;
+  padding-top:10%;
+
+  .menus{
+    display:flex;
+    flex-direction:row;
+    justify-content: center;
+    gap:15px;
+    padding-top:20px;
+
+    .menu-cell{
+      background: var(--blue);
+      padding:10px;
+      border-radius:15px;
+      opacity:0.7;
+      transition: 0.5s;
+
+      a{
+      color:white;
+      }
+    }
+
+    .menu-cell:hover{
+      opacity: 1;
+    }
+  }
+
+  .menu{
+    display:grid;
+    grid-template-columns: 32% 32% 32%;
+    gap:1%;
+    row-gap: 10px;
+
+    .menu-cell{
+      background: var(--green);
+      padding:10px;
+      border-radius: 15px;
+      text-align: center;
+      opacity: 0.7;
+      transition: 0.5s;
+    }
+
+    .menu-cell:hover{
+      opacity: 1;
+    }
+
+    a {
+      color:white;
+    }
+  }
+}
+
+.createobject{
+  background:white;
+  padding:10px;
   border-radius:20px;
-  width:fit-content;
-  color:white;
-}
+  width:min(850px,100%);
 
-.title{
-  position:fixed;
-  bottom:10px;
-  right:10px;
-  color:var(--green);
-  z-index:-1;
-  opacity: 0.5;
-}
+  h2{
+    color:var(--blue);
+    border-bottom:1px solid var(--green);
+    padding:10px;
+  }
 
-.menus{
-  display: grid;
-  grid-template-columns: calc(100%/3) calc(100%/3) calc(100%/3);
-  justify-content: center;
-  
-
-  .menu-cell{
-    text-align: center;
-    cursor: pointer;
+  .submitObject{
+    border:none;
+    padding:10px;
+    background: var(--blue);
     transition: 0.5s;
+    color:white;
+    cursor: pointer;
+    opacity:0.8;
   }
 
-  .menu-cell:hover{
-    background:lightgray;
-    border-radius: 15px;
-  }
-}
-.menu{
-  display: flex;
-  flex-direction: column;
-  gap:10px;
-  text-align: center;
-}
-.row{
-  display: grid;
-}
-
-.cell{
-  text-align:center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  border:1px solid black;
-  padding:5px;
-}
-
-.costTable{
-  .row{
-  grid-template-columns: 10% 10% 10% 10% 10% 10% 10% 10% 10% 10%;
-  }
-}
-
-/*Apportionment*/
-
-
-.center-time{
-    display:grid;
-    grid-template-columns: 25% 25% 25% 25%;
-}
-
-.assetTable{
-  .row{
-    display:grid;
-    grid-template-columns: 13% 13% 13% 13% 13% 13% 13%;
+  .submitObject:hover{
+    opacity:1;
   }
 }
