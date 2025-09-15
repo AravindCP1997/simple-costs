@@ -19,8 +19,33 @@
   bottom:10px;
   right:10px;
   color:var(--green);
+  z-index:-1;
+  opacity: 0.5;
 }
 
+.menus{
+  display: grid;
+  grid-template-columns: calc(100%/3) calc(100%/3) calc(100%/3);
+  justify-content: center;
+  
+
+  .menu-cell{
+    text-align: center;
+    cursor: pointer;
+    transition: 0.5s;
+  }
+
+  .menu-cell:hover{
+    background:lightgray;
+    border-radius: 15px;
+  }
+}
+.menu{
+  display: flex;
+  flex-direction: column;
+  gap:10px;
+  text-align: center;
+}
 .row{
   display: grid;
 }
