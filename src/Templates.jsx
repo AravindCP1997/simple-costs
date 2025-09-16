@@ -1,87 +1,7 @@
 import { useState, useEffect} from 'react';
 import { collection, loadData, saveData } from './scripts.js';
 import { Link, useParams } from 'react-router-dom';
-import { Display, objects } from './Objects.jsx';
 
-export function Transaction(){
-
-    const [masterdata,setmaster] = useState({
-        "Header Data":{},
-        "Line Data":[]
-    })
-
-    const headerdata = [
-        {"name": "Posting Date", "input":"input","type":"date", "use-state":0},
-        {"name": "Entry Date", "input":"input","type":"date", "use-state":0}
-    ]
-
-    
-
-    
-
-    const [header,setheader] = useState({
-        "Posting Date":0,
-        "Entry Date":0
-    })
-
-
-
-    function headerchange(field,e){
-        const {value} = e.target
-        setheader(prevdata=>({
-            ...prevdata,
-            [field]:value
-        }))
-    }
-
-    const details = [
-        {"name": "Name", "input":"input","type":"text", "use-state":"", "placeholder":"Name"},
-        {"name": "Age", "input":"input","type":"number", "use-state":""},
-        {"name": "Salary", "type":"number", "input":"input","use-state":""},
-        {"name": "Gender", "type":"number", "input":"option","use-state":"Male", "options":["Male","Female"]},
-        {"name": "Favourite Cricketer", "type":"number", "input":"option","use-state":"Sachin", "options":["Aravind", "Dhoni", "Sachin"]}
-    ]
-
-    const list = [
-        {"id":0,"Name":"","Age":0, "Salary":0, "Gender":"Male","Favourite Cricketer":"Dhoni"}
-    ]
-
-    const [data,setdata] = useState(list)
-
-    function addItem(){
-        let id = data.length;
-        let datapack = {"id":id}
-        details.map(item=>datapack[item.name] = item["use-state"])
-        setdata([...data,datapack])
-    }
-
-    function handlechange(field,e,id){
-        const {value} = e.target
-        const olditem = data.filter(item=>item["id"]===id)[0];
-        const newitem = {...olditem,[field]:value}
-        const newdata = data.map((item)=>(item.id===id ? newitem : item))
-        setdata(newdata)
-    }
-
-
-        /*return(
-            <>
-            <InputRow collection={header} structure={headerdata} onchange={headerchange}/>
-            <MultipleEntry collection={data} structure={details} onchange={handlechange} addfunction={addItem}/>
-            <p>{JSON.stringify(header)}</p>
-            <p>{JSON.stringify(data)}</p>
-            <p>{JSON.stringify(masterdata)}</p>
-            <Create/>
-            </>
-        )*/
-
-            return(
-                <>
-                <Create/>
-                </>
-            )
-
-}
 
 function GenerateInput({item,k,value,onthischange}){
     return(
@@ -108,10 +28,32 @@ export function MultipleEntry({collection,fieldname,structure,onchange,addfuncti
     )
 }
 
+const objects = {
+    "Asset":{
+        "name":"Asset",
+        "schema": [
+            {"name": "Name", "datatype":"single", "input":"input", "type":"text"},
+            {"name": "Asset Class", "datatype":"single", "input":"option", "options":["Plant & Machinery", "Computer & Accessories"]},
+            {"name": "Useful Life", "datatype":"single", "input":"input", "type":"number"},
+            {"name": "Transactions", "datatype":"object", "structure":[{"name":"year","input":"input","type":"date"}]}
+        ],
+        "use-state":{
+            "Name":"",
+            "Asset Class":"",
+            "Useful Life":3,
+            "Transactions":{
+                "year":""
+            }
+        }
+    }
+}
 
-function Create(){
 
-    const [masterdata,setmaster] = useState({
+function Create({Object}){
+
+    const schema = objects[Object]["schema"]
+
+    /*const [masterdata,setmaster] = useState({
         "Name":{
             "First":"Aravind",
             "Second":"C Pradeep"
@@ -121,7 +63,9 @@ function Create(){
             {"id":0,"Bank":"SBI","Branch":"Karunagappally"}
         ],
         "Gender":"Male"
-    })
+    })*/
+
+        const [masterdata,setmaster] = useState(objects[Object]["use-state"])
 
     function addToList(list,structure,e){
         e.preventDefault;
@@ -170,12 +114,12 @@ function Create(){
 
     }
 
-    const schema = [
+    /*const schema = [
         {"name": "Name", "datatype":"object", "structure":[{"name": "First", "input":"input","type":"text", "use-state":""},{"name": "Second", "input":"input","type":"text", "use-state":""}]},
         {"name": "Age", "input":"input","datatype":"single", "type":"text", "use-state":""},
         {"name": "BankAccounts", "datatype":"collection", "structure":[{"name": "Bank", "input":"input","type":"text", "use-state":""},{"name": "Branch", "input":"input","type":"text", "use-state":""}]},
         {"name": "Gender", "input":"option", "datatype":"single", "options":["Male","Female"], "use-state":"Male"},
-    ]
+    ]*/
 
     return(
         <div>
@@ -187,6 +131,12 @@ function Create(){
             </div>)}
             <p>{JSON.stringify(masterdata)}</p>
         </div>
+    )
+}
+
+export function Transaction(){
+    return(
+        <Create Object={"Asset"}/>
     )
 }
 
