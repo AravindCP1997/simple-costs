@@ -38,7 +38,7 @@
 
   .menu{
     display:grid;
-    grid-template-columns: 99%;
+    grid-template-columns: 32% 32% 32%;
     gap:1%;
     row-gap: 10px;
 

@@ -1,10 +1,9 @@
 import './App.css'
-import {CreateObject, DisplayObjects} from './Objects.jsx';
+import {CreateObject, DisplayObjects, objects} from './Objects.jsx';
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate } from 'react-router-dom';
 import { collection } from './scripts.js';
 import {Transaction} from './Templates.jsx'
-
 
 function Title(){
   return(
@@ -19,7 +18,7 @@ function Menu({index}){
   
   const menus = [
     {"name":"Objects",
-      "items":['Asset Class','Asset','Cost Center', 'Cost Object','General Ledger','Location','Material','Profit Center', 'Purchase Order', 'Service Order', 'Vendor' ],
+      "items":Object.keys(objects),
       "onclick":"/displayobjects/"
     },
     {"name":"Transactions",
