@@ -43,19 +43,28 @@ export const objects = {
             {"field":"Cost Center","type":"text", "use-state":""},
             {"field":"Designation","type":"text", "use-state":""}
         ]
+    },
+    "Cost Center":{
+        "name":"Cost Center",
+        "fields":[
+            {"field":"Name","type":"text", "use-state":""},
+            {"field":"Profit Center","type":"text", "use-state":""},
+            {"field":"Apportionment Ratio","type":"text", "use-state":""},
+        ],
+        "collection":"costcenters"
     }
-
 }
 
 function ObjectNavigation({Object}){
     const menus = [
         {"name":"Create","method":"/CreateObject/"},
-        {"name":"Display","method":"/DisplayObjects/"},
-        {"name":"Update","method":"/UpdateObject/"},
-        {"name":"Delete","method":"/DeleteObject/"},
+        {"name":"Display","method":"/DisplayObject/"},
+        {"name":"Update","method":"/DisplayObject/"},
+        {"name":"Delete","method":"/DisplayObject/"},
     ]
     return(
         <div className='objectNavigation'>
+            <div className='menu-cell'><Link to="/">Home</Link></div>
             {menus.map((menu)=><div className='menu-cell'><Link to={`${menu.method}${Object}`}>{menu.name}</Link></div>)}
         </div>
     )
@@ -103,13 +112,61 @@ export function DisplayObjects(){
 
 
     const {Object} = useParams();
+    const fields = objects[Object].fields;
 
     const collection = loadData(objects[Object]['collection']);
 
     return(
         <div>
         <ObjectNavigation Object={Object}/>
-        {collection.map((item)=><p>{JSON.stringify(item)}</p>)}
+        <Display collection={collection} structure={fields}/>
+        </div>
+    )
+}
+
+export function DisplayObject(){
+
+    const {Object} = useParams()
+    const collection = loadData(objects[Object]['collection'])
+    const fields = objects[Object]['fields']
+    const [out,setout] = useState([])
+
+    const [id,setid] = useState();
+    function changeid(e){
+        setid(e.target.value)
+    }
+
+    function getObject(e){
+        e.preventDefault()
+        setout(collection.filter(item=>item.Name === id))
+    }
+
+    return(
+        <div>
+        <ObjectNavigation Object={Object}/>
+        <QueryObject object={Object} onsubmit={getObject} onchange={changeid} idvalue={id}/>
+        <Display collection={out} structure={fields}/>
+            </div>
+
+    )
+}
+
+function QueryObject({object,onsubmit,onchange,idvalue}){
+    return(
+        <form onSubmit={onsubmit}>
+        <label>Display {object} 
+        <input type="text" value={idvalue} onChange={onchange}/>
+        </label>
+        <input type="submit"/>
+        </form>
+    )
+
+}
+
+export function Display({collection,structure}){
+    return(
+        <div className='displayCollection'>
+           {collection.map((item)=><div className='display-item'>{structure.map((fieldname)=><div className='display-data'><div className='display-field'>{fieldname.field}</div><div className='object-field'>{item[fieldname.field]}</div></div>)}</div>)} 
         </div>
     )
 }

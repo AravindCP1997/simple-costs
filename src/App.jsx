@@ -1,5 +1,5 @@
 import './App.css'
-import {CreateObject, DisplayObjects, objects} from './Objects.jsx';
+import {CreateObject, DisplayObjects, DisplayObject, objects} from './Objects.jsx';
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate } from 'react-router-dom';
 import { collection } from './scripts.js';
@@ -64,10 +64,11 @@ function App(){
   return (
     <BrowserRouter>
     <Routes>
-      <Route path="/" element={<Navigate to="/home/0"/>}/>
+      <Route path="/" element={<Navigate to="/scratch"/>}/>
       <Route path="/home/:ui" element={<div className='verticalContainer'><Home/></div>}/>
       <Route path="/createobject/:Object" element={<div className="verticalContainer"><CreateObject/></div>}/>
       <Route path="/displayobjects/:Object" element={<div className='verticalContainer'><DisplayObjects/></div>}/>
+      <Route path="/displayobject/:Object" element={<div className="verticalContainer"><DisplayObject/></div>}/>
       <Route path="/displayobject/:Object/:id" element={<div className='verticalContainer'></div>}/>
       <Route path="/scratch" element={<div><Transaction/></div>}/>
     </Routes>

@@ -120,3 +120,28 @@
     opacity:1;
   }
 }
+
+.objectQuery{
+  width:min(100%,850px);
+  display:flex;
+  flex-direction: column;
+  gap:20px;
+}
+
+.displayCollection{
+  display:flex;
+  flex-direction: column;
+  background: white;
+  padding: 10px;
+  border-radius: 20px;
+
+  .display-data{
+    display:grid;
+    grid-template-columns: 50% 50%;
+  }
+}
+
+.row{
+  display: flex;
+  flex-direction: row;
+}
