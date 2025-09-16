@@ -16,6 +16,7 @@ html{
 :root{
   --blue:rgb(64,82,106);
   --green:rgb(0,176,80);
+  --red:rgb(255,0,0);
   --lightgray:rgb(243,243,247);
 }
 

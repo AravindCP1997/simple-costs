@@ -38,7 +38,7 @@
 
   .menu{
     display:grid;
-    grid-template-columns: 32% 32% 32%;
+    grid-template-columns: 99%;
     gap:1%;
     row-gap: 10px;
 
@@ -52,6 +52,12 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+      cursor: pointer;
+      color:white;
+    }
+
+    .menu-cell:nth-child(2n){
+      background: var(--blue);
     }
 
     .menu-cell:hover{

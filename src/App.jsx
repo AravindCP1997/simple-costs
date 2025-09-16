@@ -1,8 +1,9 @@
 import './App.css'
-import {CreateObject, DisplayObjects, Purchase} from './Transaction.jsx';
+import {CreateObject, DisplayObjects} from './Objects.jsx';
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate } from 'react-router-dom';
 import { collection } from './scripts.js';
+import {Transaction} from './Templates.jsx'
 
 
 function Title(){
@@ -18,7 +19,8 @@ function Menu({index}){
   
   const menus = [
     {"name":"Objects",
-      "items":['Asset Classes','Assets','Cost Centers', 'Cost Objects','General Ledgers','Locations','Materials','Profit Center', 'Purchase Order', 'Service Order', 'Vendor' ]
+      "items":['Asset Class','Asset','Cost Center', 'Cost Object','General Ledger','Location','Material','Profit Center', 'Purchase Order', 'Service Order', 'Vendor' ],
+      "onclick":"/displayobjects/"
     },
     {"name":"Transactions",
       "items":['Purchase','Sale']
@@ -36,7 +38,11 @@ function Menu({index}){
       {menus.map((menu,index)=><div className="menu-cell"><Link to={"/home/"+index}>{menu.name}</Link></div>)}
     </div>
     <div className='menu'>
-      {menus[index]["items"].map((item)=><div className="menu-cell"><Link to={`/${item}`}>{item}</Link></div>)}
+      {menus[index]["items"].map((item)=>
+        <div className="menu-cell">
+        <Link to={`${menus[index]["onclick"]}${item}`}>{item}</Link>
+        </div>
+      )}
     </div>
     </>
   )
@@ -64,6 +70,7 @@ function App(){
       <Route path="/createobject/:Object" element={<div className="verticalContainer"><CreateObject/></div>}/>
       <Route path="/displayobjects/:Object" element={<div className='verticalContainer'><DisplayObjects/></div>}/>
       <Route path="/displayobject/:Object/:id" element={<div className='verticalContainer'></div>}/>
+      <Route path="/scratch" element={<div><Transaction/></div>}/>
     </Routes>
     </BrowserRouter>
   )
