@@ -67,7 +67,7 @@ export function ObjectInfo(){
 function GenerateInput({item,k,value,onthischange}){
     return(
         <>
-            <label>{item['name']}: {item['input']==="input"&&<input key={k} value={value} onChange={onthischange} type={item['type']}/>}{item['input']==="option"&&<select key={k} value={value} onChange={onthischange}>{item['options'].map((option)=><option value={option}>{option}</option>)}</select>}</label>
+            <label className='input'>{item['name']}: {item['input']==="input"&&<input key={k} value={value} onChange={onthischange} type={item['type']}/>}{item['input']==="option"&&<select key={k} value={value} onChange={onthischange}>{item['options'].map((option)=><option value={option}>{option}</option>)}</select>}</label>
         </>
     )
 }
@@ -75,6 +75,7 @@ function GenerateInput({item,k,value,onthischange}){
 function InputRow({collection,structure,onchange,fieldname}){
     return(
         <>
+        <label>{fieldname}</label>
             <div className='row'>{structure.map((field,i)=><GenerateInput item={field} k={i} data-fieldname={fieldname} value={collection[field['name']]} onthischange={(e)=>onchange(fieldname,field['name'],e)}/>)} </div>
         </>
     )
@@ -83,6 +84,7 @@ function InputRow({collection,structure,onchange,fieldname}){
 export function MultipleEntry({collection,fieldname,structure,onchange,addfunction}){
     return(
         <>
+        <label>{fieldname}</label>
         <div className='row'>{collection.map((item,index)=><>{structure.map(field=><GenerateInput item={field} k={index} value={collection[index][field['name']]} onthischange={(e)=>onchange(fieldname,index,field['name'],e)}/>)}</>)}</div>
         <button onClick={addfunction}>Add</button>
         </>
@@ -207,7 +209,7 @@ export function Transaction(){
         
     }
     return(
-        <div>
+        <div className='display'>
         <ObjectNavigation Object={Object}/>
         <Create schema={schema} defaults={defaults} collection={collection} send={sendObject}/>
         </div>
@@ -232,7 +234,7 @@ export function CreateObject(){
         
     }
     return(
-        <div>
+        <div className='display'>
         <ObjectNavigation Object={Object}/>
         <Create schema={schema} defaults={defaults} collection={collection} send={sendObject}/>
         </div>
@@ -245,7 +247,7 @@ export function Manage(){
   
   return(
     <div className='manage'>
-      <div><h2>Manage</h2></div>
+      <div className='title'><h3>Manage</h3></div>
       {list.map(item=><div className='object'>
         <h3>{item}</h3>
         <div className='operations'>
@@ -253,10 +255,8 @@ export function Manage(){
             <Link to={`/query/${item}/Display`}>Display</Link>
             <Link to={`/query/${item}/Update`}>Update</Link>
             <Link to={`/query/${item}/Delete`}>Delete</Link>
-            
-        </div>
+            </div>
         </div>)}
-      <div className="cell"><Link to="/">Home</Link></div>
     </div>
   )
 }
@@ -282,7 +282,7 @@ function Home(){
 
   return(
     <div className='home'>
-      <h1 className='title'>Simple Costs<sup>&reg;</sup></h1>
+      <h1 className='title'>Welcome</h1>
     <div className='actions'>{}
       <div className='cell'><Link to="/manage">Manage</Link></div>
       <div className='cell'><Link to="/record">Record</Link></div>
