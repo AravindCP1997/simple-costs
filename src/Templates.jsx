@@ -48,16 +48,24 @@ const objects = {
             {"name": "Transactions", "datatype":"collection", "structure":[{"name":"Year","input":"input","type":"date"},{"name":"Deleted","input":"option","options":['True','False']}],"use-state":[{"id":0,"Year":0,"Deleted":"False"}]}
         ],
         "collection":'employees'
+    },
+    "Profit Center":{
+        "name":"Profit center",
+        "schema":[
+            {"name": "Center", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+            {"name": "Segment", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+        ],
+        "collection":"profitcenters"
     }
 }
 
 
-function Create({Object,Method}){
+function Create({schema,defaults,collection,id,send}){
 
-    const schema = objects[Object]["schema"]
+    /*const schema = objects[Object]["schema"]
 
     const defaults = {}
-    schema.map(item=>defaults[item['name']]=item['use-state'])
+    schema.map(item=>defaults[item['name']]=item['use-state'])*/
 
     const [masterdata,setmaster] = useState(defaults)
 
@@ -107,11 +115,10 @@ function Create({Object,Method}){
     }
     
     
-    const original = loadData(objects[Object]['collection']);
+    const original = loadData(collection);
 
     function submitObject(e){
-        const output = [...original,masterdata]
-        saveData(output,objects[Object]['collection'])
+        send(e,masterdata)
     }
 
     return(
@@ -131,9 +138,41 @@ function Create({Object,Method}){
 
 export function Transaction(){
 
-    const {Object} = useParams()
+    const {Object,Method,Id} = useParams()
+    const collection = objects[Object]['collection']
+    const schema = objects[Object]['schema']
+    const usestates = {}
+    schema.map(item=>usestates[item['name']]=item['use-state'])
+
+    const existingdata = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
+
+    const defaults = (Method==="Create") ? usestates : existingdata[Id];
+
+    function sendObject(e,data){
+        let datapack;
+        switch (Method) {
+            case 'Update':
+                datapack = existingdata.map((item,index)=>(index==Id)?data:item);
+                saveData(datapack,collection);
+                break;
+            case 'Create':
+                datapack = [...existingdata,data];
+                saveData(datapack,collection);
+                break;
+            case 'Delete':
+                datapack = existingdata.filter((item,index)=>index!=Id)
+                saveData(datapack,collection);
+                break;
+            default:
+                alert('Please put a method in the query')
+        }
+
+        
+    }
     return(
-        <Create Object={Object}/>
+        <>
+        <Create schema={schema} defaults={defaults} collection={collection} send={sendObject}/>
+        </>
     )
 }
 

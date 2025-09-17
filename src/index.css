@@ -10,16 +10,23 @@
 
 html{
   font-family: Helvet;
-  background: white;
+  padding-top:50px;
+  background: var(--lightgray);
 }
 
 :root{
   --blue:rgb(64,82,106);
   --green:rgb(0,176,80);
   --red:rgb(255,0,0);
-  --lightgray:rgb(243,243,247);
+  --lightgray:rgb(242,242,245);
 }
 
 a{
   text-decoration: none;
+}
+
+#root{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
 }
