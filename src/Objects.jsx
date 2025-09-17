@@ -2,70 +2,17 @@ import { useState} from 'react';
 import { collection, loadData, saveData } from './scripts.js';
 import { Link, useParams } from 'react-router-dom';
 
-export const objects = {
-    "Asset Class": {
-        "name":"Asset Class",
-        "fields":[
-            {"field":"Name","type":"text", "use-state":""},
-            {"field":"General Ledger","type":"text","use-state":""}    ,
-            {"field":"Depreciation Ledger","type":"text","use-state":""}
-        ],
-        "use-state":{
-            "Name":"",
-            "General Ledger":"",
-            "Depreciation Ledger": ""
-        },
-        "collection":"assetclasses"
-    },
-    "Asset": {
-        "name":"Asset",
-        "fields":[
-            {"field":"Name","type":"text", "use-state":""},
-            {"field":"Asset Class","type":"text", "use-state":""},
-            {"field":"Useful Life","type":"number", "use-state":0},
-        ],
-        "collection":"assets"
-    },
-    "Profit Center":{
-        "name": "Profit Center",
-        "fields": [
-            {"field":"Name","type":"text", "use-state":""},
-            {"field":"Segment","type":"text", "use-state":""},
-        ],
-        "collection":"profitcenters"
-
-    },
-    "Employee":{
-        "name": "Employee",
-        "fields":[
-            {"field":"Badge","type":"text", "use-state":""},
-            {"field":"Name","type":"text", "use-state":""},
-            {"field":"Cost Center","type":"text", "use-state":""},
-            {"field":"Designation","type":"text", "use-state":""}
-        ]
-    },
-    "Cost Center":{
-        "name":"Cost Center",
-        "fields":[
-            {"field":"Name","type":"text", "use-state":""},
-            {"field":"Profit Center","type":"text", "use-state":""},
-            {"field":"Apportionment Ratio","type":"text", "use-state":""},
-        ],
-        "collection":"costcenters"
-    }
-}
-
-function ObjectNavigation({Object}){
+export function ObjectNavigation({Object}){
     const menus = [
-        {"name":"Create","method":"/CreateObject/"},
-        {"name":"Display","method":"/DisplayObject/"},
-        {"name":"Update","method":"/DisplayObject/"},
-        {"name":"Delete","method":"/DisplayObject/"},
+        {"name":"Display","method":"Display"},
+        {"name":"Update","method":"/updateobject/"},
+        {"name":"Delete","method":"/deleteobject/"},
     ]
     return(
-        <div className='objectNavigation'>
+        <div className="navigation">
             <div className='menu-cell'><Link to="/">Home</Link></div>
-            {menus.map((menu)=><div className='menu-cell'><Link to={`${menu.method}${Object}`}>{menu.name}</Link></div>)}
+            <div className='menu-cell'><Link to={"/create/"+Object}>Create</Link></div>
+            {menus.map((menu)=><div className='menu-cell'><Link to={`/query/${Object}/${menu.method}`}>{menu.name}</Link></div>)}
         </div>
     )
 }
@@ -167,6 +114,21 @@ export function Display({collection,structure}){
     return(
         <div className='displayCollection'>
            {collection.map((item)=><div className='display-item'>{structure.map((fieldname)=><div className='display-data'><div className='display-field'>{fieldname.field}</div><div className='object-field'>{item[fieldname.field]}</div></div>)}</div>)} 
+        </div>
+    )
+}
+
+
+
+export function ObjectInfo(){
+    const {Object} = useParams()
+    const collections = (Object in localStorage) ? JSON.parse(localStorage.getItem(Object)) : []
+    return(
+        <div className='objectInfo'>
+            <h2>Overview of Class - {Object}</h2>
+            <ObjectNavigation Object={Object}/>
+            <p>Current Number of {Object} is {collections.length}</p>
+            
         </div>
     )
 }

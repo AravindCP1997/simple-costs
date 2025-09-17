@@ -15,6 +15,7 @@
     justify-content: center;
     width:min(100%,850px);
     gap:20px;
+    padding:10px;
 
     .cell{
       display: flex;
@@ -71,5 +72,36 @@
         border-radius: 20px;
       }
       
+    }
+  }
+
+  .manage{
+    .object{
+      cursor: pointer;
+      .operations{
+        max-height:0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+      }
+    }
+
+    .object:hover{
+      .operations{
+        max-height: unset;
+      }
+    }
+  }
+
+  .navigation{
+    display:flex;
+    flex-direction: row;
+    gap:10px;
+  }
+
+  @media screen and (max-width:500px){
+    .home{
+      .actions{
+        flex-direction: column;
+      }
     }
   }
