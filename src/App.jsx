@@ -64,13 +64,12 @@ function App(){
   return (
     <BrowserRouter>
     <Routes>
-      <Route path="/" element={<Navigate to="/scratch"/>}/>
+      <Route path="/:Object" element={<div><Transaction/></div>}/>
       <Route path="/home/:ui" element={<div className='verticalContainer'><Home/></div>}/>
       <Route path="/createobject/:Object" element={<div className="verticalContainer"><CreateObject/></div>}/>
       <Route path="/displayobjects/:Object" element={<div className='verticalContainer'><DisplayObjects/></div>}/>
       <Route path="/displayobject/:Object" element={<div className="verticalContainer"><DisplayObject/></div>}/>
       <Route path="/displayobject/:Object/:id" element={<div className='verticalContainer'></div>}/>
-      <Route path="/scratch" element={<div><Transaction/></div>}/>
     </Routes>
     </BrowserRouter>
   )

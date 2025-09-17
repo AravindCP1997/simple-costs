@@ -6,7 +6,7 @@ import { Link, useParams } from 'react-router-dom';
 function GenerateInput({item,k,value,onthischange}){
     return(
         <>
-            <div>{item['input']==="input"&&<input key={k} value={value} onChange={onthischange} type={item['type']}/>}{item['input']==="option"&&<select key={k} value={value} onChange={onthischange}>{item['options'].map((option)=><option value={option}>{option}</option>)}</select>}</div>
+            <label>{item['name']}: {item['input']==="input"&&<input key={k} value={value} onChange={onthischange} type={item['type']}/>}{item['input']==="option"&&<select key={k} value={value} onChange={onthischange}>{item['options'].map((option)=><option value={option}>{option}</option>)}</select>}</label>
         </>
     )
 }
@@ -32,48 +32,40 @@ const objects = {
     "Asset":{
         "name":"Asset",
         "schema": [
-            {"name": "Name", "datatype":"single", "input":"input", "type":"text"},
-            {"name": "Asset Class", "datatype":"single", "input":"option", "options":["Plant & Machinery", "Computer & Accessories"]},
-            {"name": "Useful Life", "datatype":"single", "input":"input", "type":"number"},
-            {"name": "Transactions", "datatype":"object", "structure":[{"name":"year","input":"input","type":"date"}]}
+            {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+            {"name": "Asset Class", "datatype":"single", "input":"option", "options":["Plant & Machinery", "Computer & Accessories"],"use-state":"Computer & Accessories"},
+            {"name": "Useful Life", "datatype":"single", "input":"input", "type":"number","use-state":0},
+            {"name": "Transactions", "datatype":"collection", "structure":[{"name":"Year","input":"input","type":"date"},{"name":"Deleted","input":"option","options":['True','False']}],"use-state":[{"id":0,"Year":0,"Deleted":"False"}]}
         ],
-        "use-state":{
-            "Name":"",
-            "Asset Class":"",
-            "Useful Life":3,
-            "Transactions":{
-                "year":""
-            }
-        }
+        "collection":'assets'
+    },
+    "Employee":{
+        "name":"Employee",
+        "schema": [
+            {"name": "Name", "datatype":"object", "structure":[{"name":"First Name", "input":"input", "type":"text"},{"name":"Second Name", "input":"input", "type":"text"}], "use-state":{"First Name":"Aravind", "Second Name":"C Pradeep"}},
+            {"name": "Age", "datatype":"single", "input":"input", "type":"number", "use-state":"26"},
+            {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "input":"input", "type":"text"},{"name":"IFSC", "input":"input", "type":"text"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056"}]},
+            {"name": "Transactions", "datatype":"collection", "structure":[{"name":"Year","input":"input","type":"date"},{"name":"Deleted","input":"option","options":['True','False']}],"use-state":[{"id":0,"Year":0,"Deleted":"False"}]}
+        ],
+        "collection":'employees'
     }
 }
 
 
-function Create({Object}){
+function Create({Object,Method}){
 
     const schema = objects[Object]["schema"]
 
-    /*const [masterdata,setmaster] = useState({
-        "Name":{
-            "First":"Aravind",
-            "Second":"C Pradeep"
-        },
-        "Age":28,
-        "BankAccounts":[
-            {"id":0,"Bank":"SBI","Branch":"Karunagappally"}
-        ],
-        "Gender":"Male"
-    })*/
+    const defaults = {}
+    schema.map(item=>defaults[item['name']]=item['use-state'])
 
-        const [masterdata,setmaster] = useState(objects[Object]["use-state"])
+    const [masterdata,setmaster] = useState(defaults)
 
-    function addToList(list,structure,e){
+    function addToList(list,structure,defaults,e){
         e.preventDefault;
-        let data = {};
         const oldlist = masterdata[list];
-        data['id'] = oldlist.length;
-        structure.map(item=>data[item['name']] = item['use-state'])
-        const newlist = [...oldlist,data]
+        const newentry = {...defaults,['id']:oldlist.length}
+        const newlist = [...oldlist,newentry]
         setmaster(prevdata=>({
             ...prevdata,
             [list]:newlist
@@ -113,13 +105,14 @@ function Create({Object}){
         }))
 
     }
+    
+    
+    const original = loadData(objects[Object]['collection']);
 
-    /*const schema = [
-        {"name": "Name", "datatype":"object", "structure":[{"name": "First", "input":"input","type":"text", "use-state":""},{"name": "Second", "input":"input","type":"text", "use-state":""}]},
-        {"name": "Age", "input":"input","datatype":"single", "type":"text", "use-state":""},
-        {"name": "BankAccounts", "datatype":"collection", "structure":[{"name": "Bank", "input":"input","type":"text", "use-state":""},{"name": "Branch", "input":"input","type":"text", "use-state":""}]},
-        {"name": "Gender", "input":"option", "datatype":"single", "options":["Male","Female"], "use-state":"Male"},
-    ]*/
+    function submitObject(e){
+        const output = [...original,masterdata]
+        saveData(output,objects[Object]['collection'])
+    }
 
     return(
         <div>
@@ -127,16 +120,20 @@ function Create({Object}){
         <div>
             {field['datatype']==="single"&&<GenerateInput item={field} k={0} value={masterdata[field['name']]} onthischange={(e)=>singlechange(field['name'],e)}/>}
             {field['datatype']==="object"&&<InputRow collection={masterdata[field['name']]} fieldname={field['name']} structure={field['structure']} onchange={objectchange} />}
-            {field['datatype']==="collection"&&<MultipleEntry collection={masterdata[field['name']]} fieldname={field['name']} structure={field['structure']} addfunction={(e)=>addToList(field['name'],field['structure'],e)} onchange={collectionchange}/>}
+            {field['datatype']==="collection"&&<MultipleEntry collection={masterdata[field['name']]} fieldname={field['name']} structure={field['structure']} addfunction={(e)=>addToList(field['name'],field['structure'],field['use-state'][0],e)} onchange={collectionchange}/>}
+            
             </div>)}
             <p>{JSON.stringify(masterdata)}</p>
+            <button onClick={(e)=>submitObject(e)}>Submit</button>
         </div>
     )
 }
 
 export function Transaction(){
+
+    const {Object} = useParams()
     return(
-        <Create Object={"Asset"}/>
+        <Create Object={Object}/>
     )
 }
 
