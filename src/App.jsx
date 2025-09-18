@@ -1,9 +1,18 @@
 import './App.css'
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate, useNavigate } from 'react-router-dom';
-import { collection, loadData, saveData } from './scripts.js';
+import { loadData, saveData } from './scripts.js';
 
-const presentations= ["Income", "Expense", "Asset", "Liability", "Equity"]
+const ListofItems  = (collection,n) => {
+    const keys = Object.keys(collection[0]);
+    const List = collection.map(item=>item[keys[n]]);
+    return List
+}
+
+const getcollection =  (collection)=>{
+    const data = loadData(objects[collection]['collection'])
+    return data
+}
 
 const objects = {
     "Asset":{
@@ -30,7 +39,7 @@ const objects = {
         "name":"General Ledger",
         "schema":[
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Presentation", "datatype":"single", "input":"option", "options":presentations, "use-state":"Income"},
+            {"name": "Presentation", "datatype":"single", "input":"option", "options":["Income", "Expense", "Asset", "Liability", "Equity"], "use-state":"Income"},
         ],
         "collection":"generalledgers"
     },
@@ -38,9 +47,16 @@ const objects = {
         "name":"Profit center",
         "schema":[
             {"name": "Center", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Segment", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+            {"name": "Segment", "datatype":"single", "input":"option", "options":["Kochi","Chennai"], "use-state":""},
         ],
         "collection":"profitcenters"
+    },
+    "Segment":{
+        "name": "Segment",
+        "schema": [
+            {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""}
+        ],
+        "collections":"segments"
     }
 }
 
@@ -48,11 +64,16 @@ const transactions = {
     "name":"Transaction",
     "collection":"transactions",
     "schema": [
-        {"name": "Posting Date", "datatype":"single", "input":"input", "type":"date", "use-state":""},
+        {"name": "Posting Date", "datatype":"single", "input":"input", "type":"date", "use-state":new Date()},
         {"name": "Document Date", "datatype":"single", "input":"input", "type":"date", "use-state":""},
         {"name": "Reference", "datatype":"single", "input":"input", "type":"text", "use-state":""},
         {"name": "Currency", "datatype":"single", "input":"option", "options":["INR", "USD","MYR"], "use-state":"INR"},
-        {"name": "Line Items", "datatype":"collection", "structure":[{"name":"General Ledger","input":"input","type":"text"},{"name":"Amount","input":"input","type":"number"}],"use-state":[{"id":0,"General Ledger":"Plant and Machinery","Amount":"False"}]}
+        {"name": "Line Items", "datatype":"collection", "structure":
+            [
+                {"name":"General Ledger","input":"option","options":ListofItems(loadData('assets'),0)},
+                {"name":"Amount","input":"input","type":"number"}
+            ],
+            "use-state":[{"id":0,"General Ledger":"Plant and Machinery","Amount":"False"}]}
     ]
 }
 
@@ -68,19 +89,6 @@ export function ObjectNavigation({Object}){
             <div className='menu-cell'><Link to="/">Home</Link></div>
             <div className='menu-cell'><Link to={"/create/"+Object}>Create</Link></div>
             {menus.map((menu)=><div className='menu-cell'><Link to={`/query/${Object}/${menu.method}`}>{menu.name}</Link></div>)}
-        </div>
-    )
-}
-
-export function ObjectInfo(){
-    const {Object} = useParams()
-    const collections = (Object in localStorage) ? JSON.parse(localStorage.getItem(Object)) : []
-    return(
-        <div className='objectInfo'>
-            <h2>Overview of Class - {Object}</h2>
-            <ObjectNavigation Object={Object}/>
-            <p>Current Number of {Object} is {collections.length}</p>
-            
         </div>
     )
 }
@@ -118,10 +126,6 @@ export function MultipleEntry({collection,fieldname,structure,onchange,addfuncti
 
 function Create({schema,defaults,collection,id,send}){
 
-    /*const schema = objects[Object]["schema"]
-
-    const defaults = {}
-    schema.map(item=>defaults[item['name']]=item['use-state'])*/
 
     const [masterdata,setmaster] = useState(defaults)
 
@@ -327,7 +331,7 @@ function Home(){
 
   return(
     <div className='home'>
-      <h1 className='title'>Welcome</h1>
+      <h1 className='title'>Simple Costs<sup>&reg;</sup></h1>
     <div className='actions'>{}
       <div className='cell'><Link to="/record">Record</Link></div>
       <div className='cell'><Link to="/manage">Manage</Link></div>
@@ -345,7 +349,8 @@ function Query(){
     navigate('/updateobject/'+object+'/'+method+'/'+selected);
   }
 
-    const collection = loadData(objects[object]['collection']);
+    const collection = getcollection(object);
+    const list = ListofItems(collection,0)
     const field = Object.keys(collection[0])[0];
     const [selected,setselected] = useState(0);
     return(
@@ -354,7 +359,7 @@ function Query(){
         <form onSubmit={sendQuery}>
           <label className='query'><h2>Choose {object}</h2>
             <select value={selected} onChange={(e)=>setselected(e.target.value)}>
-              {collection.map((item,index)=><option value={index}>{item[field]}</option>)}
+                {list.map((item,index)=><option value={index}>{item}</option>)}
             </select>
             </label>
             <input type="submit"/>
@@ -375,74 +380,6 @@ function DisplayAsTable(collection){
     )
 }
 
-
-export function DisplayObjects(){
-
-
-    const {Object} = useParams();
-    const fields = objects[Object].fields;
-
-    const collection = loadData(objects[Object]['collection']);
-
-    return(
-        <div>
-        <ObjectNavigation Object={Object}/>
-        <Display collection={collection} structure={fields}/>
-        </div>
-    )
-}
-
-export function DisplayObject({Object}){
-    const collection = loadData(objects[Object]['collection'])
-    const fields = objects[Object]['fields']
-    const [out,setout] = useState([])
-
-    const [id,setid] = useState();
-    function changeid(e){
-        setid(e.target.value)
-    }
-
-    function getObject(e){
-        e.preventDefault()
-        setout(collection.filter(item=>item.Name === id))
-    }
-
-    return(
-        <div>
-        <ObjectNavigation Object={Object}/>
-        <QueryObject object={Object} onsubmit={getObject} onchange={changeid} idvalue={id}/>
-        <Display collection={out} structure={fields}/>
-            </div>
-
-    )
-}
-
-function QueryObject({object,onsubmit,onchange,idvalue}){
-    return(
-        <form onSubmit={onsubmit}>
-        <label>Display {object} 
-        <input type="text" value={idvalue} onChange={onchange}/>
-        </label>
-        <input type="submit"/>
-        </form>
-    )
-
-}
-
-export function Display({collection,structure}){
-    return(
-        <div className='displayCollection'>
-           {collection.map((item)=><div className='display-item'>{structure.map((fieldname)=><div className='display-data'><div className='display-field'>{fieldname.field}</div><div className='object-field'>{item[fieldname.field]}</div></div>)}</div>)} 
-        </div>
-    )
-}
-
-
-
-
-
-
-
 function App(){
   return(
     <BrowserRouter>
@@ -451,7 +388,6 @@ function App(){
       <Route path='/manage' element={<Manage/>}/>
       <Route path='/record' element={<Record/>}/>
       <Route path='/reports' element={<Menu Menu={"Reports"} list={["Trial Balance","Financial Statements","Cost Statements"]}/>}/>
-      <Route path='/object/:Object' element={<div><ObjectInfo/></div>}/>
       <Route path='/create/:Object' element={<CreateObject/>}/>
       <Route path='/query/:object/:method' element={<Query/>}/>
       <Route path='/updateobject/:Object/:Method/:Id' element={<Update/>}/>

@@ -2,30 +2,30 @@
 .home{
     display: flex;
     flex-direction: column;
-    gap:50px;
   .title{
-    text-align:center;
-    padding-top:50px;
+    text-align:left;
+    padding-top:15%;
+    padding-bottom:15px;
+    width:min(100%,350px);
     cursor: pointer;
     color:var(--blue);
+    border-bottom: 1px solid var(--blue);
   }
   .actions{
     display: flex;
     flex-direction: row;
     justify-content: center;
-    width:min(100%,850px);
     gap:20px;
     padding:10px;
-
-    .cell{
+        .cell{
       display: flex;
       flex-direction: column;
       justify-content: center;
       background: var(--red);
       padding: 20px;
       aspect-ratio: 1/1;
-      border-radius:15px;
       width:100px;
+      border-radius:15px;
       text-align: center;
       cursor: pointer;
       color:white;
@@ -194,7 +194,6 @@
     padding:10px;
     border-radius:10px;
     min-width:100px;
-    font-family: Helvet;
     font-weight: bold;
     cursor: pointer;
   }
@@ -255,6 +254,11 @@
     .home{
       .actions{
         flex-direction: column;
+        justify-content: center;
+
+        .cell{
+          width:unset;
+        }
       }
     }
   }

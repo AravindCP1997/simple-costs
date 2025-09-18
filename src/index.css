@@ -9,8 +9,9 @@
 }
 
 html{
-  font-family: Lex, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  padding-top:50px;
+  font-family: Lex, Helvet,'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding:10px;
+  padding-top:5%;
   background: var(--lightgray);
 }
 
