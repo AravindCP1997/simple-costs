@@ -44,9 +44,13 @@
       opacity:1;
     }
 
-    .cell:nth-child(2n){
+    .cell:nth-child(2n-1){
       background: var(--green);
       border-radius: 50%;
+    }
+
+    .cell:nth-child(3){
+      background: var(--blue);
     }
   }
 }
@@ -130,7 +134,7 @@
     flex-direction: row;
     gap:10px;
     margin-bottom:10px;
-    justify-content: center;
+    justify-content: right;
     padding:5px;
     border-radius: 20px;
 
@@ -177,8 +181,8 @@
   }
 
   .row{
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 50% 50%;
     gap:5px;
     padding:10px;
   }
@@ -193,6 +197,58 @@
     font-family: Helvet;
     font-weight: bold;
     cursor: pointer;
+  }
+
+  .table{
+    background:white;
+    padding:10px;
+    border-radius: 20px;
+    .row{
+      padding:0;
+      text-align: center;
+    }
+
+    .row:nth-child(1){
+      font-weight: bold;
+    }
+  }
+
+  form{
+    display:flex;
+    flex-direction: column;
+    gap:10px;
+  }
+
+  .query{
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    gap:10px;
+
+    select{
+      padding:10px;
+      border:none;
+      border-radius: 15px;
+      cursor:pointer;
+      appearance: none;
+    }
+  }
+
+  
+  input[type="submit"]{
+    border:none;
+    background: var(--red);
+    padding:10px;
+    color:white;
+    font-weight: bold;
+    border-radius: 15px;
+    cursor:pointer;
+  }
+
+  .objectDisplay{
+    display: flex;
+    flex-direction: column;
+    gap:10px;
   }
 
   @media screen and (max-width:500px){
