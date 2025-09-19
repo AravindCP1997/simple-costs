@@ -28,6 +28,9 @@ const ItemsInCollection = (collectionname)=>{
     return data;
 }
 
+
+
+
 const objects = {
     "Asset":{
         "name":"Asset",
@@ -93,7 +96,7 @@ const transactions = {
                 {"name":"General Ledger","input":"option","options":ListofItems(loadData('assets'),0)},
                 {"name":"Amount","input":"input","type":"number"}
             ],
-            "use-state":[{"id":0,"General Ledger":"Plant and Machinery","Amount":"False"}]}
+            "use-state":[{"id":0,"General Ledger":"Plant and Machinery","Amount":0}]}
     ]
 }
 
@@ -288,6 +291,7 @@ export function CreateObject(){
 }
 
 export function Record(){
+    const navigate = useNavigate()
     const collection = transactions['collection']
     const schema = transactions['schema']
     const usestates = {}
@@ -305,7 +309,61 @@ export function Record(){
     }
     return(
         <div className='display'>
+        <h2 style={{textAlign:'center'}}>Record a Transaction</h2>
         <Create schema={schema} defaults={defaults} collection={collection} send={sendObject}/>
+        <button onClick={()=>{navigate("/viewrecord")}}>View</button>
+        <button onClick={()=>{navigate("/")}}>Home</button>
+        </div>
+    )
+}
+
+function SearchRecord(){
+    const navigate = useNavigate();
+
+  function sendQuery(){
+    navigate('/viewrecord/'+selected);
+  }
+
+    const collection = loadData('transactions');
+    const list = ListofItems(collection,2)
+    const field = Object.keys(collection[0])[0];
+    const [selected,setselected] = useState(0);
+    return(
+      <div>
+        <form onSubmit={sendQuery}>
+          <label className='query'><h2>Choose Transaction</h2>
+            <select value={selected} onChange={(e)=>setselected(e.target.value)}>
+                {list.map((item,index)=><option value={index}>{item}</option>)}
+            </select>
+            </label>
+            <input type="submit"/>
+        </form>
+      </div>
+       
+    )
+}
+
+function ViewRecord(){
+    const navigate = useNavigate()
+    const {Id} = useParams()
+    const collection = 'transactions'
+    const schema = transactions['schema']
+    const usestates = {}
+    schema.map(item=>usestates[item['name']]=item['use-state'])
+
+    const existingdata = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
+
+    const defaults = existingdata[Id];
+    function sendObject(e,data){
+        alert('This is view only!')
+    }
+
+    return(
+        <div>
+        <SearchRecord/>
+        <Create schema={schema} defaults={defaults} collection={collection} send={sendObject}/>
+        <button onClick={()=>{navigate("/record")}}>Record</button>
+        <button onClick={()=>{navigate("/")}}>Home</button>
         </div>
     )
 }
@@ -328,6 +386,16 @@ export function Manage(){
         </div>)}
     </div>
   )
+}
+
+function Reports(){
+    return(
+        <div className='manage'>
+      <div className='title'><h3>Reports</h3></div><div className='object'>
+        <Link to="/reports/assets">Assets</Link>
+    </div>
+    </div>
+    )
 }
 
 
@@ -389,7 +457,7 @@ function Query(){
     )
 }
 
-function DisplayAsTable(collection){
+function DisplayAsTable({collection}){
     const fields = Object.keys(collection[0]);
 
     return (
@@ -400,6 +468,16 @@ function DisplayAsTable(collection){
     )
 }
 
+function Assets(){
+    const data = loadData('assets');
+    return(
+        <>
+        <DisplayAsTable collection={data}/>
+        </>
+    )
+
+}
+
 function App(){
   return(
     <BrowserRouter>
@@ -407,7 +485,10 @@ function App(){
       <Route path='/' element={<Home/>}/>
       <Route path='/manage' element={<Manage/>}/>
       <Route path='/record' element={<Record/>}/>
-      <Route path='/reports' element={<Menu Menu={"Reports"} list={["Trial Balance","Financial Statements","Cost Statements"]}/>}/>
+      <Route path="/viewrecord" element={<SearchRecord/>}/>
+      <Route path="/viewrecord/:Id" element={<ViewRecord/>}/>
+      <Route path='/reports' element={<Reports/>}/>
+      <Route path="/reports/assets" element={<Assets/>}/>
       <Route path='/create/:Object' element={<CreateObject/>}/>
       <Route path='/query/:object/:method' element={<Query/>}/>
       <Route path='/updateobject/:Object/:Method/:Id' element={<Update/>}/>
