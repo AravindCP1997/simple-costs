@@ -1,7 +1,15 @@
 import './App.css'
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate, useNavigate } from 'react-router-dom';
-import { loadData, saveData } from './scripts.js';
+
+function loadData(collection){
+    const data = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
+    return data;
+}
+
+function saveData(data,collection){
+  localStorage.setItem(collection,JSON.stringify(data));
+}
 
 const ListofItems  = (collection,n) => {
     const keys = Object.keys(collection[0]);
@@ -14,24 +22,36 @@ const getcollection =  (collection)=>{
     return data
 }
 
+const ItemsInCollection = (collectionname)=>{
+    const collection = getcollection(collectionname);
+    const data = ListofItems(collection,0);
+    return data;
+}
+
 const objects = {
     "Asset":{
         "name":"Asset",
         "schema": [
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Asset Class", "datatype":"single", "input":"option", "options":["Plant & Machinery", "Computer & Accessories"],"use-state":"Computer & Accessories"},
-            {"name": "Useful Life", "datatype":"single", "input":"input", "type":"number","use-state":0},
-            {"name": "Transactions", "datatype":"collection", "structure":[{"name":"Year","input":"input","type":"date"},{"name":"Deleted","input":"option","options":['True','False']}],"use-state":[{"id":0,"Year":0,"Deleted":"False"}]}
+            {"name": "Asset Class", "datatype":"single", "input":"option", "options":ListofItems(loadData("assetclasses"),0),"use-state":"Computer & Accessories"},
+            {"name": "Useful Life", "datatype":"single", "input":"input", "type":"number","use-state":0}
         ],
         "collection":'assets'
+    },
+    "Asset Class":{
+        "name":"Asset Class",
+        "schema": [
+            {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+            {"name": "General Ledgers", "datatype":"single", "input":"option", "options":ListofItems(loadData('generalledgers'),0), "use-state":""}
+        ],
+        "collection":"assetclasses"
     },
     "Employee":{
         "name":"Employee",
         "schema": [
-            {"name": "Name", "datatype":"object", "structure":[{"name":"First Name", "input":"input", "type":"text"},{"name":"Second Name", "input":"input", "type":"text"}], "use-state":{"First Name":"Aravind", "Second Name":"C Pradeep"}},
-            {"name": "Age", "datatype":"single", "input":"input", "type":"number", "use-state":"26"},
-            {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "input":"input", "type":"text"},{"name":"IFSC", "input":"input", "type":"text"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056"}]},
-            {"name": "Transactions", "datatype":"collection", "structure":[{"name":"Year","input":"input","type":"date"},{"name":"Deleted","input":"option","options":['True','False']}],"use-state":[{"id":0,"Year":0,"Deleted":"False"}]}
+            {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+            {"name": "Date of Birth", "datatype":"single", "input":"input", "type":"date", "use-state":0},
+            {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "input":"input", "type":"text"},{"name":"IFSC", "input":"input", "type":"text"},{"name":"Account Number", "input":"input", "type":"number"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000"}]},
         ],
         "collection":'employees'
     },
@@ -47,7 +67,7 @@ const objects = {
         "name":"Profit center",
         "schema":[
             {"name": "Center", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Segment", "datatype":"single", "input":"option", "options":["Kochi","Chennai"], "use-state":""},
+            {"name": "Segment", "datatype":"single", "input":"option", "options":ListofItems(loadData("segments"),0), "use-state":""},
         ],
         "collection":"profitcenters"
     },
@@ -56,7 +76,7 @@ const objects = {
         "schema": [
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""}
         ],
-        "collections":"segments"
+        "collection":"segments"
     }
 }
 
