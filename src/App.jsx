@@ -2,6 +2,24 @@ import './App.css'
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate, useNavigate } from 'react-router-dom';
 
+function SearchBar(){
+    const navigate = useNavigate()
+    const [url,seturl] = useState()
+    function search(){
+        navigate(url)
+        seturl('');
+    }
+
+    function changeUrl(e){
+        seturl(e.target.value)
+    }
+    return(
+        <div className='searchBar'>
+        <input type="text" onChange={changeUrl} placeholder="Your path here . . ."/><button onClick={search}>&rarr;</button>
+        </div>
+    )
+}
+
 function loadData(collection){
     const data = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
     return data;
@@ -37,7 +55,12 @@ const objects = {
         "schema": [
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
             {"name": "Asset Class", "datatype":"single", "input":"option", "options":ListofItems(loadData("assetclasses"),0),"use-state":"Computer & Accessories"},
-            {"name": "Useful Life", "datatype":"single", "input":"input", "type":"number","use-state":0}
+            {"name": "Cost Center", "datatype":"single", "input":"input", "type":"text","use-state":0},
+            {"name": "Useful Life", "datatype":"single", "input":"input", "type":"number","use-state":0},
+            {"name": "Salvage Value", "datatype":"single", "input":"input", "type":"number","use-state":0},
+            {"name": "Date of Capitalisation", "datatype":"single", "input":"input", "type":"date","use-state":0},
+            {"name": "Income Tax Block", "datatype":"single", "input":"input", "type":"text","use-state":0},
+            {"name": "Income Tax Depreciation Rate", "datatype":"single", "input":"input", "type":"number","use-state":0}
         ],
         "collection":'assets'
     },
@@ -48,6 +71,23 @@ const objects = {
             {"name": "General Ledgers", "datatype":"single", "input":"option", "options":ListofItems(loadData('generalledgers'),0), "use-state":""}
         ],
         "collection":"assetclasses"
+    },
+    "Cost Center":{
+        "name": "Cost Center",
+        "schema": [
+            {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+            {"name": "Profit Center", "datatype":"single", "input":"option", "options":ListofItems(loadData('profitcenters'),0), "use-state":""}
+        ],
+        "collection":"costcenters"
+    },
+    "Currency":{
+        "name":"Currency",
+        "schema":[
+            {"name":"Currency","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"Code","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"Exchange Rate","datatype":"single","input":"input","type":"number","use-state":""}
+        ],
+        "collection":"currencies"
     },
     "Employee":{
         "name":"Employee",
@@ -65,6 +105,14 @@ const objects = {
             {"name": "Presentation", "datatype":"single", "input":"option", "options":["Income", "Expense", "Asset", "Liability", "Equity"], "use-state":"Income"},
         ],
         "collection":"generalledgers"
+    },
+    "Location":{
+        "name":"Location",
+        "schema": [
+            {"name":"Name", "datatype":"single", "input":"input", "type":"text"},
+            {"name":"Cost Center", "datatype":"single", "input":"input", "type":"text"},
+        ],
+        "collection":"locations"
     },
     "Profit Center":{
         "name":"Profit center",
@@ -90,12 +138,28 @@ const transactions = {
         {"name": "Posting Date", "datatype":"single", "input":"input", "type":"date", "use-state":new Date()},
         {"name": "Document Date", "datatype":"single", "input":"input", "type":"date", "use-state":""},
         {"name": "Reference", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-        {"name": "Currency", "datatype":"single", "input":"option", "options":["INR", "USD","MYR"], "use-state":"INR"},
+        {"name": "Currency", "datatype":"single", "input":"option", "options":ListofItems(loadData('currencies',0)), "use-state":""},
         {"name": "Line Items", "datatype":"collection", "structure":
             [
                 {"name":"General Ledger","input":"option","options":ListofItems(loadData('assets'),0)},
-                {"name":"Amount","input":"input","type":"number"}
-            ],
+                {"name":"Amount","input":"input","type":"number"},
+                {"name":"Debit/ Credit","input":"option","options":["Debit", "Credit"]},
+                {"name":"Cost Center","input":"option","options":[]},
+                {"name":"Asset","input":"option","options":[]},
+                {"name":"Material","input":"option","options":[]},
+                {"name":"Quantity","input":"option","options":[]},
+                {"name":"Location","input":"option","options":[]},
+                {"name":"Profit Center","input":"option","options":[]},
+                {"name":"Cost Object","input":"option","options":[]},
+                {"name":"Purchase Order","input":"option","options":[]},
+                {"name":"Purchase Order Item","input":"option","options":[]},
+                {"name":"Service Order","input":"option","options":[]},
+                {"name":"Service Order Item","input":"option","options":[]},
+                {"name":"Employee","input":"option","options":[]},
+                {"name":"Consumption Time From","input":"input","type":"date"},
+                {"name":"Consumption Time To","input":"input","type":"date"},
+
+            ],  
             "use-state":[{"id":0,"General Ledger":"Plant and Machinery","Amount":0}]}
     ]
 }
@@ -481,6 +545,8 @@ function Assets(){
 function App(){
   return(
     <BrowserRouter>
+    
+    <SearchBar/>
     <Routes>
       <Route path='/' element={<Home/>}/>
       <Route path='/manage' element={<Manage/>}/>
