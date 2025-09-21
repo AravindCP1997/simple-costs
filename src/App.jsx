@@ -143,41 +143,52 @@ const transactions = {
     ]
 }
 
-function GenerateInput({item,k,value,onthischange,label}){
+function GenerateInput({item,k,value,onthischange,label,disabled}){
     return(
         <>
-            <label className='input'>{label && item['name']}{item['input']==="input"&&<input key={k} value={value} onChange={onthischange} type={item['type']}/>}{item['input']==="option"&&<select key={k} value={value} onChange={onthischange}>{item['options'].map((option)=><option value={option}>{option}</option>)}</select>}</label>
+            <label className='input'>{label && item['name']}{item['input']==="input"&&<input key={k} disabled={disabled} value={value} onChange={onthischange} type={item['type']}/>}{item['input']==="option"&&<select key={k} value={value} onChange={onthischange} disabled={disabled}>{item['options'].map((option)=><option value={option}>{option}</option>)}</select>}</label>
         </>
     )
 }
 
-function InputRow({collection,structure,onchange,fieldname}){
+function InputRow({disabled, collection,structure,onchange,fieldname}){
     return(
         <>
         <label>{fieldname}</label>
-            <div className='row'>{structure.map((field,i)=><GenerateInput item={field} k={i} data-fieldname={fieldname} value={collection[field['name']]} onthischange={(e)=>onchange(fieldname,field['name'],e)} label={true}/>)} </div>
+            <div className='row'>{structure.map((field,i)=><GenerateInput disabled={disabled} item={field} k={i} data-fieldname={fieldname} value={collection[field['name']]} onthischange={(e)=>onchange(fieldname,field['name'],e)} label={true}/>)} </div>
         </>
     )
 }
 
-export function MultipleEntry({collection,fieldname,structure,onchange,addfunction}){
+export function MultipleEntry({disabled, collection,fieldname,structure,onchange,addfunction}){
     return(
         <>
         <label>{fieldname}</label>
         <div className='row'>{structure.map(field=><label>{field['name']}</label>)}</div>
-        <div className='row'>{collection.map((item,index)=><>{structure.map(field=><GenerateInput item={field} k={index} value={collection[index][field['name']]} label={false} onthischange={(e)=>onchange(fieldname,index,field['name'],e)}/>)}</>)}</div>
+        <div className='row'>{collection.map((item,index)=><>{structure.map(field=><GenerateInput disabled={disabled} item={field} k={index} value={collection[index][field['name']]} label={false} onthischange={(e)=>onchange(fieldname,index,field['name'],e)}/>)}</>)}</div>
         <button onClick={addfunction}>Add</button>
         </>
     )
 }
 
 
-function Create({schema,defaults,collection,id,send}){
+function ObjectUI({method}){
+
+    const {object,id} = useParams();
+    const navigate = useNavigate();
+    const collection = objects[object]['collection'];
+    const schema = objects[object]['schema'];
+    const usestates = {};
+    schema.map(item=>usestates[item['name']]=item['use-state']);
+
+    const existingdata = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
+    const defaults = (method==="Create") ? usestates : existingdata[id];
+    const [masterdata,setmaster] = useState(defaults);
+
+    
 
 
-    const [masterdata,setmaster] = useState(defaults)
-
-    function addToList(list,structure,defaults,e){
+    function addToList(list,defaults,e){
         e.preventDefault;
         const oldlist = masterdata[list];
         const newentry = {...defaults,['id']:oldlist.length}
@@ -221,24 +232,44 @@ function Create({schema,defaults,collection,id,send}){
         }))
 
     }
-    
-    
-    const original = loadData(collection);
 
-    function submitObject(e){
-        send(e,masterdata)
+    function createObject(){
+        const datapack = [...existingdata,masterdata];
+        saveData(datapack,collection);
+        alert(`${object} created!`);
+        cancel();
     }
+
+    function updateObject(){
+        const datapack = existingdata.map((item,index)=>(index==id)?masterdata:item);
+        saveData(datapack,collection);
+        alert(`${object} Updated!`);
+        cancel();
+    }
+
+    function cancel(){
+        navigate(`/query/${object}`)
+    }
+
+    
+
+ 
 
     return(
         <div className='objectDisplay'>
         {schema.map(field=>
         <div className='objectField'>
-            {field['datatype']==="single"&&<GenerateInput label={true} item={field} k={0} value={masterdata[field['name']]} onthischange={(e)=>singlechange(field['name'],e)}/>}
-            {field['datatype']==="object"&&<InputRow collection={masterdata[field['name']]} fieldname={field['name']} structure={field['structure']} onchange={objectchange} />}
-            {field['datatype']==="collection"&&<MultipleEntry collection={masterdata[field['name']]} fieldname={field['name']} structure={field['structure']} addfunction={(e)=>addToList(field['name'],field['structure'],field['use-state'][0],e)} onchange={collectionchange}/>}
+            {field['datatype']==="single"&&<GenerateInput disabled={method==="Display"} label={true} item={field} k={0} value={masterdata[field['name']]} onthischange={(e)=>singlechange(field['name'],e)}/>}
+            {field['datatype']==="object"&&<InputRow disabled={method==="Display"} collection={masterdata[field['name']]} fieldname={field['name']} structure={field['structure']} onchange={objectchange} />}
+            {field['datatype']==="collection"&&<MultipleEntry disabled={method==="Display"} collection={masterdata[field['name']]} fieldname={field['name']} structure={field['structure']} addfunction={(e)=>addToList(field['name'],field['use-state'][0],e)} onchange={collectionchange}/>}
             
             </div>)}
-            <button onClick={(e)=>submitObject(e)}>Submit</button>
+            <div>
+            {method!="Display" && <button onClick={cancel}>Cancel</button>}
+            {method=="Display" && <button onClick={cancel}>Back</button>}
+            {method=="Create" && <button onClick={createObject}>Create</button>}
+            {method=="Update" && <button onClick={updateObject}>Update</button>}
+            </div>
         </div>
     )
 }
@@ -344,80 +375,22 @@ function DeleteQuery(){
     )
 }
 
-export function Update({method}){
-    const navigate = useNavigate()
-    const {object,id} = useParams()
-    const collection = objects[object]['collection']
-    const schema = objects[object]['schema']
-    const usestates = {}
-    schema.map(item=>usestates[item['name']]=item['use-state'])
-
-    const existingdata = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
-
-    const defaults = (method==="Create") ? usestates : existingdata[id];
-
-    function sendObject(e,data){
-        let datapack;
-        switch (method) {
-            case 'Update':
-                datapack = existingdata.map((item,index)=>(index==id)?data:item);
-                saveData(datapack,collection);
-                alert(`${object} Updated!`)
-                break;
-            case 'Create':
-                datapack = [...existingdata,data];
-                saveData(datapack,collection);
-                alert(`${object} Created!`)
-                break;
-            case 'DeActivate':
-                datapack = existingdata.filter((item,index)=>index!=id)
-                saveData(datapack,collection);
-                alert(`${object} Deleted!`)
-                break;
-            default:
-                alert('Please put a method in the query')
-        }
-        navigate(`/query/${object}`)
-        
-
-        
-    }
-    return(
-        <div className='display'>
-        <h2>{method} {object}</h2>
-        <Create schema={schema} defaults={defaults} collection={collection} send={sendObject}/>
-        </div>
-    )
-}
-
-export function CreateObject(){
-    const {object} = useParams()
-    const collection = objects[object]['collection']
-    const schema = objects[object]['schema']
-    const usestates = {}
-    schema.map(item=>usestates[item['name']]=item['use-state'])
-
-    const existingdata = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
-
-    const defaults = usestates;
+function Record(){
     const navigate = useNavigate();
-
-    function sendObject(e,data){
-        let datapack;
-        datapack = [...existingdata,data];
-        saveData(datapack,collection);
-        navigate(`/query/${object}`);
-        
-    }
-    return(
-        <div className='display'>
-            <h2>Create {object}</h2>
-        <Create schema={schema} defaults={defaults} collection={collection} send={sendObject}/>
+    return (
+        <div className='manage'>
+        <div className='title'><h3>Record</h3></div>
+            <div className='object'>
+                <h3 onClick={()=>navigate(`/viewrecord`)}>View</h3>
+            </div>
+            <div className='object'>
+                <h3 onClick={()=>navigate(`/transaction`)}>Transaction</h3>
+            </div>
         </div>
     )
 }
 
-export function Record(){
+export function Transaction(){
     const navigate = useNavigate()
     const collection = transactions['collection']
     const schema = transactions['schema']
@@ -444,7 +417,7 @@ export function Record(){
     )
 }
 
-function SearchRecord(){
+function QueryRecord(){
     const navigate = useNavigate();
 
   function sendQuery(){
@@ -472,7 +445,7 @@ function SearchRecord(){
 
 function ViewRecord(){
     const navigate = useNavigate()
-    const {Id} = useParams()
+    const {id} = useParams()
     const collection = 'transactions'
     const schema = transactions['schema']
     const usestates = {}
@@ -480,14 +453,14 @@ function ViewRecord(){
 
     const existingdata = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
 
-    const defaults = existingdata[Id];
+    const defaults = existingdata[id];
     function sendObject(e,data){
         alert('This is view only!')
     }
 
     return(
         <div>
-        <SearchRecord/>
+        <QueryRecord/>
         <Create schema={schema} defaults={defaults} collection={collection} send={sendObject}/>
         <button onClick={()=>{navigate("/record")}}>Record</button>
         <button onClick={()=>{navigate("/")}}>Home</button>
@@ -498,30 +471,18 @@ function ViewRecord(){
 
 
 function Reports(){
+
+    const navigate = useNavigate();
     return(
-        <div className='manage'>
-      <div className='title'><h3>Reports</h3></div><div className='object'>
-        <Link to="/reports/assets">Assets</Link>
+    <div className='manage'>
+    <div className='title'><h3>Reports</h3></div><div className='object'>
+    <h3 onClick={()=>{navigate(`/assets`)}}>Assets</h3>
     </div>
     </div>
     )
 }
 
 
-
-
-
-
-function Menu({Menu,list}){
-
-  return(
-    <div className='menu'>
-      <div className='cell'><h2>{Menu}</h2></div>
-      {list.map(item=><div className='cell'><Link to="/">{item}</Link></div>)}
-      <div className="cell"><Link to="/">Home</Link></div>
-    </div>
-  )
-}
 
 function DisplayAsTable({collection}){
     const fields = Object.keys(collection[0]);
@@ -546,24 +507,28 @@ function Assets(){
 
 function App(){
   return(
+    <div className='container'>
     <BrowserRouter>
-    
     <SearchBar/>
+    <div className="innerContainer">
     <Routes>
       <Route path='/' element={<Home/>}/>
       <Route path='/control' element={<Control/>}/>
       <Route path='/record' element={<Record/>}/>
-      <Route path="/viewrecord" element={<SearchRecord/>}/>
-      <Route path="/viewrecord/:Id" element={<ViewRecord/>}/>
+      <Route path="/transaction" element={<Transaction/>}/>
+      <Route path="/viewrecord" element={<QueryRecord/>}/>
+      <Route path="/viewrecord/:id" element={<ViewRecord/>}/>
       <Route path='/reports' element={<Reports/>}/>
-      <Route path="/reports/assets" element={<Assets/>}/>
+      <Route path="/assets" element={<Assets/>}/>
       <Route path='/query/:object/' element={<Query/>}/>
-      <Route path='/create/:object/' element={<CreateObject/>}/>
-      <Route path='/update/:object/:id' element={<Update method={"Update"}/>}/>
-      <Route path='/display/:object/:id' element={<Update method={"Display"}/>}/>
+      <Route path='/create/:object/' element={<ObjectUI method={"Create"}/>}/>
+      <Route path='/update/:object/:id' element={<ObjectUI method={"Update"}/>}/>
+      <Route path='/display/:object/:id' element={<ObjectUI method={"Display"}/>}/>
       <Route path='/deactivate/:object/:id' element={<DeleteQuery/>}/>
     </Routes>
+    </div>
     </BrowserRouter>
+    </div>
   )
 }
 

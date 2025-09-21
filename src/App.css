@@ -1,12 +1,27 @@
+.container{
+  border:1px solid white;
+  display: flex;
+  flex-direction: column;
+  position:fixed;
+  top:0;
+  height:100%;
+  width:min(100%,850px);
+  padding:10px;
+  border-radius: 25px;
+  gap:20px;
+  overflow: auto;
+}
+.innerContainer{
+  display:flex;
+  flex-direction: row;
+  justify-content: center;
+}
 .searchBar{
   display:flex;
   flex-direction: row;
   justify-content: center;
   gap:10px;
-  position:fixed;
-  top:30px;
   max-height:30px;
-  width:100px;
 
   input{
     border:none;
@@ -20,15 +35,17 @@
     aspect-ratio: 1/1;
   }
 }
+
+
 .home{
     display: flex;
     flex-direction: column;
+    padding:30px;
   .title{
     text-align:left;
-    padding-top:15%;
-    padding-bottom:15px;
-    width:min(100%,350px);
+    padding:20px;
     cursor: pointer;
+    width:min(100%,350px);
     color:var(--blue);
     border-bottom: 1px solid var(--blue);
   }
