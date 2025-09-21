@@ -28,6 +28,39 @@ const ItemsInCollection = (collectionname)=>{
     return data;
 }
 
+const transactions = {
+    "name":"Transaction",
+    "collection":"transactions",
+    "schema": [
+        {"name": "Posting Date", "datatype":"single", "input":"input", "type":"date", "use-state":new Date()},
+        {"name": "Document Date", "datatype":"single", "input":"input", "type":"date", "use-state":""},
+        {"name": "Reference", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+        {"name": "Currency", "datatype":"single", "input":"option", "options":[], "use-state":""},
+        {"name": "Line Items", "datatype":"collection", "structure":
+            [
+                {"name":"General Ledger","input":"option","options":ListofItems(loadData('assets'),0)},
+                {"name":"Amount","input":"input","type":"number"},
+                {"name":"Debit/ Credit","input":"option","options":["Debit", "Credit"]},
+                {"name":"Cost Center","input":"option","options":[]},
+                {"name":"Asset","input":"option","options":[]},
+                {"name":"Material","input":"option","options":[]},
+                {"name":"Quantity","input":"option","options":[]},
+                {"name":"Location","input":"option","options":[]},
+                {"name":"Profit Center","input":"option","options":[]},
+                {"name":"Cost Object","input":"option","options":[]},
+                {"name":"Purchase Order","input":"option","options":[]},
+                {"name":"Purchase Order Item","input":"option","options":[]},
+                {"name":"Service Order","input":"option","options":[]},
+                {"name":"Service Order Item","input":"option","options":[]},
+                {"name":"Employee","input":"option","options":[]},
+                {"name":"Consumption Time From","input":"input","type":"date"},
+                {"name":"Consumption Time To","input":"input","type":"date"},
+
+            ],  
+            "use-state":[{"id":0,"General Ledger":"Plant and Machinery","Amount":0}]}
+    ]
+}
+
 const objects = {
     "Asset":{
         "name":"Asset",
@@ -110,39 +143,6 @@ const objects = {
     }
 }
 
-const transactions = {
-    "name":"Transaction",
-    "collection":"transactions",
-    "schema": [
-        {"name": "Posting Date", "datatype":"single", "input":"input", "type":"date", "use-state":new Date()},
-        {"name": "Document Date", "datatype":"single", "input":"input", "type":"date", "use-state":""},
-        {"name": "Reference", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-        {"name": "Currency", "datatype":"single", "input":"option", "options":[], "use-state":""},
-        {"name": "Line Items", "datatype":"collection", "structure":
-            [
-                {"name":"General Ledger","input":"option","options":ListofItems(loadData('assets'),0)},
-                {"name":"Amount","input":"input","type":"number"},
-                {"name":"Debit/ Credit","input":"option","options":["Debit", "Credit"]},
-                {"name":"Cost Center","input":"option","options":[]},
-                {"name":"Asset","input":"option","options":[]},
-                {"name":"Material","input":"option","options":[]},
-                {"name":"Quantity","input":"option","options":[]},
-                {"name":"Location","input":"option","options":[]},
-                {"name":"Profit Center","input":"option","options":[]},
-                {"name":"Cost Object","input":"option","options":[]},
-                {"name":"Purchase Order","input":"option","options":[]},
-                {"name":"Purchase Order Item","input":"option","options":[]},
-                {"name":"Service Order","input":"option","options":[]},
-                {"name":"Service Order Item","input":"option","options":[]},
-                {"name":"Employee","input":"option","options":[]},
-                {"name":"Consumption Time From","input":"input","type":"date"},
-                {"name":"Consumption Time To","input":"input","type":"date"},
-
-            ],  
-            "use-state":[{"id":0,"General Ledger":"Plant and Machinery","Amount":0}]}
-    ]
-}
-
 function GenerateInput({item,k,value,onthischange,label,disabled}){
     return(
         <>
@@ -164,29 +164,26 @@ export function MultipleEntry({disabled, collection,fieldname,structure,onchange
     return(
         <>
         <label>{fieldname}</label>
+        <div style={{maxWidth:"850px", overflow:"auto"}}>
         <div className='row'>{structure.map(field=><label>{field['name']}</label>)}</div>
         <div className='row'>{collection.map((item,index)=><>{structure.map(field=><GenerateInput disabled={disabled} item={field} k={index} value={collection[index][field['name']]} label={false} onthischange={(e)=>onchange(fieldname,index,field['name'],e)}/>)}</>)}</div>
+        </div>
         <button onClick={addfunction}>Add</button>
         </>
     )
 }
 
 
-function ObjectUI({method}){
-
-    const {object,id} = useParams();
+function ObjectUI({type,method}){
     const navigate = useNavigate();
-    const collection = objects[object]['collection'];
-    const schema = objects[object]['schema'];
+    const {object,id} = useParams();
+    const collection = (type==="Object") ? objects[object]['collection'] : transactions['collection'];
+    const schema = (type==="Object") ? objects[object]['schema'] : transactions['schema'];
     const usestates = {};
     schema.map(item=>usestates[item['name']]=item['use-state']);
-
     const existingdata = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
     const defaults = (method==="Create") ? usestates : existingdata[id];
     const [masterdata,setmaster] = useState(defaults);
-
-    
-
 
     function addToList(list,defaults,e){
         e.preventDefault;
@@ -248,12 +245,9 @@ function ObjectUI({method}){
     }
 
     function cancel(){
-        navigate(`/query/${object}`)
+        (type=="Object") ? navigate(`/query/${object}`) : navigate(`/document`)
     }
 
-    
-
- 
 
     return(
         <div className='objectDisplay'>
@@ -273,6 +267,77 @@ function ObjectUI({method}){
         </div>
     )
 }
+
+function Query({type}){
+  const {object} = useParams()
+  const navigate = useNavigate();
+
+  function objectQuery(method){
+    navigate(`/${method}/${object}/${selected}`);
+  }
+
+  function documentQuery(method){
+    navigate(`/document/${method}/${selected}`)
+  }
+
+    const collection = (type == "Object") ? loadData(objects[object]['collection']) : loadData(transactions['collection']);
+    const list = ListofItems(collection,0)
+    const field = Object.keys(collection[0])[0];
+    const [selected,setselected] = useState(0);
+    return(
+      <div>
+          <label className='query'><h2>Choose { type=="Object" && object} { type=="Transaction" && "Document"}</h2>
+            <select value={selected} onChange={(e)=>setselected(e.target.value)}>
+                {list.map((item,index)=><option value={index}>{item}</option>)}
+            </select>
+            </label>
+            { type == "Object" && 
+            <div style={{display:"flex",flexDirection:"row",gap:"10px",justifyContent:"center",padding:"10px"}}>
+            <button onClick={()=>{objectQuery('display')}}>View</button><button onClick={()=>{objectQuery('update')}}>Update</button><button onClick={()=>{navigate(`/deactivate/${object}/${selected}/`)}}>Deactivate</button>
+            </div> }
+            { type =="Object" && <p style={{textAlign:"center"}}>Or, <button onClick={()=>{navigate(`/create/${object}`)}}>Create {object}</button></p>}
+            { type == "Transaction" && 
+            <div style={{display:"flex",flexDirection:"row",gap:"10px",justifyContent:"center",padding:"10px"}}>
+            <button onClick={()=>{documentQuery('display')}}>View</button><button onClick={()=>{documentQuery('update')}}>Update</button><button onClick={()=>{navigate(`/document/reverse/${selected}/`)}}>Reverse</button>
+            </div> }
+      </div>
+       
+    )
+}
+
+function DeleteQuery({type}){
+    const navigate = useNavigate();
+    const {object,id} = useParams();
+    const collection = (type =="Object") ? objects[object]['collection'] : transactions['collection'];
+    const existingdata = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
+    
+    function deactivate(){
+        const newdata = existingdata.filter((item,index)=>index!=id)
+        saveData(newdata,collection);
+        alert(`${object} Deleted!`);
+        navigate(`/query/${object}`)
+    }
+
+    function reverse(){
+        const newdata = existingdata.filter((item,index)=>index!=id)
+        saveData(newdata,collection);
+        alert(`${type} Reversed!`);
+        navigate(`/document`)
+    }
+    return(
+        <div>
+        <h2>{ type=="Object" &&`Deactivate ${object}`}{ type=="Transaction" && 'Reverse Document'}</h2>
+        <p>Are you sure want to {type=="Object" && `deactivate ${object} ${id}`} {type=="Transaction" && ` reverse transaction ${id}`}</p>
+        <div>
+            {type == "Object" && <button onClick={()=>{navigate(`/query/${object}`)}}>Cancel</button>}
+            {type == "Transaction" && <button onClick={()=>{navigate(`/document`)}}>Cancel</button>}
+            {type == "Object" && <button onClick={deactivate}>Deactivate</button>}
+            {type == "Transaction" && <button onClick={reverse}>Reverse</button>}
+        </div>
+        </div>
+    )
+}
+
 
 function SearchBar(){
     const navigate = useNavigate()
@@ -300,10 +365,23 @@ function Home(){
     <div className='home'>
       <h1 className='title'>Simple Costs<sup>&reg;</sup></h1>
     <div className='actions'>{}
-      <div className='cell'><Link to="/record">Record</Link></div>
-      <div className='cell'><Link to="/control">Control</Link></div>
-      <div className='cell'><Link to="/reports">Reports</Link></div>
+      <div className='menu'><Link to="/record">Record</Link></div>
+      <div className='menu'><Link to="/control">Control</Link></div>
+      <div className='menu'><Link to="/reports">Reports</Link></div>
     </div>
+    </div>
+  )
+}
+
+export function Record(){
+
+    const navigate = useNavigate();
+  
+  return(
+    <div className='menuList'>
+      <div className='menuTitle'><h3>Record</h3></div>
+      <div className='menuItem'><h3 onClick={()=>{navigate(`/document`)}}>Document</h3></div>
+      <div className='menuItem'><h3 onClick={()=>{navigate(`/document/create`)}}>Transaction</h3></div>
     </div>
   )
 }
@@ -314,170 +392,19 @@ export function Control(){
   const list = Object.keys(objects)
   
   return(
-    <div className='manage'>
-      <div className='title'><h3>Control</h3></div>
-      {list.map(item=><div className='object'>
-        <h3 onClick={()=>{navigate(`/query/${item}`)}}>{item}</h3>
-        </div>)}
+    <div className='menuList'>
+      <div className='menuTitle'><h3>Control</h3></div>
+      {list.map(item=><div className='menuItem'><h3 onClick={()=>{navigate(`/query/${item}`)}}>{item}</h3></div>)}
     </div>
   )
 }
-
-function Query(){
-  const {object} = useParams()
-  const navigate = useNavigate();
-
-  function sendQuery(method){
-    navigate(`/${method}/${object}/${selected}`);
-  }
-
-    const collection = getcollection(object);
-    const list = ListofItems(collection,0)
-    const field = Object.keys(collection[0])[0];
-    const [selected,setselected] = useState(0);
-    return(
-      <div>
-          <label className='query'><h2>Choose {object}</h2>
-            <select value={selected} onChange={(e)=>setselected(e.target.value)}>
-                {list.map((item,index)=><option value={index}>{item}</option>)}
-            </select>
-            </label>
-            <div style={{display:"flex",flexDirection:"row",gap:"10px",justifyContent:"center",padding:"10px"}}>
-            <button onClick={()=>{sendQuery('display')}}>View</button><button onClick={()=>{sendQuery('update')}}>Update</button><button onClick={()=>{navigate(`/deactivate/${object}/${selected}/`)}}>Deactivate</button>
-            </div>
-            <p style={{textAlign:"center"}}>Or, <button onClick={()=>{navigate(`/create/${object}`)}}>Create {object}</button></p>
-      </div>
-       
-    )
-}
-
-function DeleteQuery(){
-    const navigate = useNavigate();
-    const {object,id} = useParams();
-    const collection = objects[object]['collection'];
-    const existingdata = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
-    
-    function deactivate(){
-        const newdata = existingdata.filter((item,index)=>index!=id)
-        saveData(newdata,collection);
-        alert(`${object} Deleted!`);
-        navigate(`/query/${object}`)
-    }
-    return(
-        <div>
-        <h2>Deactivate {object}</h2>
-        <p>Are you sure want to deactivate {object} {id}</p>
-        <div>
-            <button onClick={()=>{navigate(`/query/${object}`)}}>Cancel</button>
-            <button onClick={deactivate}>Delete</button>
-        </div>
-        </div>
-    )
-}
-
-function Record(){
-    const navigate = useNavigate();
-    return (
-        <div className='manage'>
-        <div className='title'><h3>Record</h3></div>
-            <div className='object'>
-                <h3 onClick={()=>navigate(`/viewrecord`)}>View</h3>
-            </div>
-            <div className='object'>
-                <h3 onClick={()=>navigate(`/transaction`)}>Transaction</h3>
-            </div>
-        </div>
-    )
-}
-
-export function Transaction(){
-    const navigate = useNavigate()
-    const collection = transactions['collection']
-    const schema = transactions['schema']
-    const usestates = {}
-    schema.map(item=>usestates[item['name']]=item['use-state'])
-
-    const existingdata = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
-
-    const defaults = usestates;
-
-    function sendObject(e,data){
-        let datapack;
-        datapack = [...existingdata,data];
-        saveData(datapack,collection);
-        
-    }
-    return(
-        <div className='display'>
-        <h2 style={{textAlign:'center'}}>Record a Transaction</h2>
-        <Create schema={schema} defaults={defaults} collection={collection} send={sendObject}/>
-        <button onClick={()=>{navigate("/viewrecord")}}>View</button>
-        <button onClick={()=>{navigate("/")}}>Home</button>
-        </div>
-    )
-}
-
-function QueryRecord(){
-    const navigate = useNavigate();
-
-  function sendQuery(){
-    navigate('/viewrecord/'+selected);
-  }
-
-    const collection = loadData('transactions');
-    const list = ListofItems(collection,2)
-    const field = Object.keys(collection[0])[0];
-    const [selected,setselected] = useState(0);
-    return(
-      <div>
-        <form onSubmit={sendQuery}>
-          <label className='query'><h2>Choose Transaction</h2>
-            <select value={selected} onChange={(e)=>setselected(e.target.value)}>
-                {list.map((item,index)=><option value={index}>{item}</option>)}
-            </select>
-            </label>
-            <input type="submit"/>
-        </form>
-      </div>
-       
-    )
-}
-
-function ViewRecord(){
-    const navigate = useNavigate()
-    const {id} = useParams()
-    const collection = 'transactions'
-    const schema = transactions['schema']
-    const usestates = {}
-    schema.map(item=>usestates[item['name']]=item['use-state'])
-
-    const existingdata = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
-
-    const defaults = existingdata[id];
-    function sendObject(e,data){
-        alert('This is view only!')
-    }
-
-    return(
-        <div>
-        <QueryRecord/>
-        <Create schema={schema} defaults={defaults} collection={collection} send={sendObject}/>
-        <button onClick={()=>{navigate("/record")}}>Record</button>
-        <button onClick={()=>{navigate("/")}}>Home</button>
-        </div>
-    )
-}
-
-
 
 function Reports(){
 
     const navigate = useNavigate();
     return(
-    <div className='manage'>
-    <div className='title'><h3>Reports</h3></div><div className='object'>
-    <h3 onClick={()=>{navigate(`/assets`)}}>Assets</h3>
-    </div>
+    <div className='menuList'>
+    <div className='menuTitle'><h3>Reports</h3></div><div className='menuItem'><h3 onClick={()=>{navigate(`/assets`)}}>Assets</h3></div>
     </div>
     )
 }
@@ -513,18 +440,20 @@ function App(){
     <div className="innerContainer">
     <Routes>
       <Route path='/' element={<Home/>}/>
-      <Route path='/control' element={<Control/>}/>
       <Route path='/record' element={<Record/>}/>
-      <Route path="/transaction" element={<Transaction/>}/>
-      <Route path="/viewrecord" element={<QueryRecord/>}/>
-      <Route path="/viewrecord/:id" element={<ViewRecord/>}/>
+      <Route path='/control' element={<Control/>}/>
       <Route path='/reports' element={<Reports/>}/>
+      <Route path="/document" element={<Query type={"Transaction"}/>}/>
+      <Route path="/document/create/" element={<ObjectUI type={"Transaction"} method={"Create"}/>}/>
+      <Route path="/document/display/:id" element={<ObjectUI type={"Transaction"} method={"Display"}/>}/>
+      <Route path="/document/update/:id" element={<ObjectUI type={"Transaction"} method={"Update"}/>}/>
+      <Route path="/document/reverse/:id" element={<DeleteQuery type={"Transaction"}/>}/>
+      <Route path='/query/:object/' element={<Query type={"Object"}/>}/>
+      <Route path='/create/:object/' element={<ObjectUI type={"Object"} method={"Create"}/>}/>
+      <Route path='/update/:object/:id' element={<ObjectUI type={"Object"} method={"Update"}/>}/>
+      <Route path='/display/:object/:id' element={<ObjectUI type={"Object"} method={"Display"}/>}/>
+      <Route path='/deactivate/:object/:id' element={<DeleteQuery type={"Object"}/>}/>
       <Route path="/assets" element={<Assets/>}/>
-      <Route path='/query/:object/' element={<Query/>}/>
-      <Route path='/create/:object/' element={<ObjectUI method={"Create"}/>}/>
-      <Route path='/update/:object/:id' element={<ObjectUI method={"Update"}/>}/>
-      <Route path='/display/:object/:id' element={<ObjectUI method={"Display"}/>}/>
-      <Route path='/deactivate/:object/:id' element={<DeleteQuery/>}/>
     </Routes>
     </div>
     </BrowserRouter>

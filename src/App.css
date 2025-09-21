@@ -1,308 +1,69 @@
 .container{
-  border:1px solid white;
-  display: flex;
-  flex-direction: column;
+  border:1px solid black;
   position:fixed;
   top:0;
   height:100%;
-  width:min(100%,850px);
-  padding:10px;
-  border-radius: 25px;
-  gap:20px;
   overflow: auto;
+  width:min(100%,850px);
+  display: flex;
+  flex-direction: column;
+  gap:30px;
 }
-.innerContainer{
-  display:flex;
-  flex-direction: row;
-  justify-content: center;
-}
+
 .searchBar{
-  display:flex;
+  display: flex;
   flex-direction: row;
   justify-content: center;
-  gap:10px;
-  max-height:30px;
-
-  input{
-    border:none;
-    padding:10px;
-    border-radius: 10px;
-  }
-
-  button{
-    width: 10px;
-    padding: 0;
-    aspect-ratio: 1/1;
-  }
+  gap:20px;
+  border:1px solid purple;
+  padding: 5px;
 }
 
+.innerContainer{
+  border:1px solid black;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding-top: 50px;
+}
 
 .home{
-    display: flex;
-    flex-direction: column;
-    padding:30px;
-  .title{
-    text-align:left;
-    padding:20px;
-    cursor: pointer;
-    width:min(100%,350px);
-    color:var(--blue);
-    border-bottom: 1px solid var(--blue);
-  }
-  .actions{
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    gap:20px;
-    padding:10px;
-        .cell{
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 20px;
-      aspect-ratio: 1/1;
-      width:100px;
-      border-radius:15px;
-      text-align: center;
-      cursor: pointer;
-      opacity: 0.7;
-      transition: 0.5s;
-      background: var(--red);
+  border:1px solid green;
+}
 
+.title{
+  border:1px solid red;
+  padding:20px;
+}
 
-      a{
-        color:white;
-        font-size: 1.5em;
-        font-weight:bold;
-      }
-    }
-
-    .cell:hover{
-      opacity:1;
-      transform: rotate(10deg);
-    }
-
-    .cell:nth-child(2n-1){
-      background: var(--green);
-      border-radius: 50%;
-    }
-
-    .cell:nth-child(3){
-      background: var(--blue);
-      border-radius: 50%;
-    }
-  }
+.actions{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap:20px;
 }
 
 .menu{
-    display: flex;
-    flex-direction: column;
-    gap:10px;
-    width:min(100%,400px);
+  width:200px;
+  border:1px solid yellow;
+  aspect-ratio: 1/1;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
 
-    .cell{
-      display: flex;
-      flex-direction: column;
-      cursor: pointer;
-      text-align: center;
-      color:var(--blue);
+.menuList{
+  display:grid;
+  grid-template-columns: 49% 49%;
+  gap:2%;
+  row-gap: 10px;
+  border:1px solid black;
+  width: 100%;
+}
 
-      a{
-        color:var(--blue);
-        font-weight:bold;
-        font-size: 1.3em;
-        background: white;
-        padding:10px;
-        border-radius: 20px;
-      }
-      
-    }
-  }
-
-  .manage{
-    padding-top:40px;
-    width:min(100%,600px);
-    display:grid;
-    grid-template-columns: calc(50% - 5px) calc(50% - 5px);
-    gap:10px;
-    .title{
-      border-radius: 20px;
-      color:white;
-      background: var(--red);
-      text-align: center;
-      padding:5px;
-    }
-    .object{
-      background: white;
-      padding:5px;
-      border-radius: 20px;
-      cursor: pointer;
-      text-align:center;
-      position:relative;
-      .operations{
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        gap:10px;
-        position: absolute;
-        top:calc(100% + 10px);
-        width:calc(100%);
-        padding:0;
-        z-index:1;
-        max-height:0;
-        overflow: hidden;
-        background: white;
-        border-radius:20px;
-        transition: 0.5s;
-        a{
-          color:var(--red);
-          border-radius: 10px;
-        }
-      }
-    }
-
-    .object:hover{
-      .operations{
-        max-height: 400px;
-      }
-    }
-  }
-
-  .navigation{
-    display:flex;
-    flex-direction: row;
-    gap:10px;
-    margin-bottom:10px;
-    justify-content: right;
-    padding:5px;
-    border-radius: 20px;
-
-    .menu-cell{
-      background:var(--green);
-      padding:10px;
-      border-radius: 15px;
-      opacity:0.7;
-      transition: 0.5s ease-in-out;
-      width:50px;
-      text-align: center;
-
-      a{
-        color:white;
-      }
-    }
-
-    .menu-cell:nth-child(1){
-      background: var(--blue);
-    }
-
-    .menu-cell:hover{
-      opacity: 1;
-    }
-  }
-
-  .display{
-    width:min(100%,850px);
-    display: flex;
-    flex-direction: column;
-    gap:10px;
-  }
-
-  .input{
-    display: grid;
-    grid-template-columns: 50% 50%;
-
-    input,select{
-      border:none;
-      cursor: pointer;
-      padding: 10px;
-      border-radius: 10px;
-    }
-  }
-
-  .row{
-    display: flex;
-    flex-direction: row;
-    gap:5px;
-    padding:10px;
-    .cell {
-      width:100px;
-
-
-    }
-  }
-
-  button{
-    border:none;
-    color:white;
-    background: var(--blue);
-    padding:10px;
-    border-radius:10px;
-    min-width:100px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-
-  .table{
-    background:white;
-    padding:10px;
-    border-radius: 20px;
-    .row{
-      padding:0;
-      text-align: center;
-    }
-
-    .row:nth-child(1){
-      font-weight: bold;
-    }
-  }
-
-  form{
-    display:flex;
-    flex-direction: column;
-    gap:10px;
-  }
-
-  .query{
-    display: flex;
-    flex-direction: column;
-    text-align: center;
-    gap:10px;
-
-    select{
-      padding:10px;
-      border:none;
-      border-radius: 15px;
-      cursor:pointer;
-      appearance: none;
-    }
-  }
-
-  
-  input[type="submit"]{
-    border:none;
-    background: var(--red);
-    padding:10px;
-    color:white;
-    font-weight: bold;
-    border-radius: 15px;
-    cursor:pointer;
-  }
-
-  .objectDisplay{
-    display: flex;
-    flex-direction: column;
-    gap:10px;
-  }
-
-  @media screen and (max-width:500px){
-    .home{
-      .actions{
-        flex-direction: column;
-        justify-content: center;
-
-        .cell{
-          width:unset;
-        }
-      }
-    }
-  }
+.menuItem, .menuTitle{
+  border:1px solid red;
+  text-align: center;
+}

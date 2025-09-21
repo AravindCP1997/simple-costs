@@ -9,7 +9,6 @@
 }
 
 html{
-  font-family: Lex, Helvet,'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   padding:10px;
   padding-top:5%;
   background: var(--lightgray);
@@ -30,4 +29,8 @@ a{
   display: flex;
   flex-direction: row;
   justify-content: center;
+}
+
+html,button, select, option{
+  font-family: Lex, Helvet,'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
