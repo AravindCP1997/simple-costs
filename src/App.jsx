@@ -283,22 +283,21 @@ function Query({type}){
 
     const collection = (type == "Object") ? loadData(objects[object]['collection']) : loadData(transactions['collection']);
     const list = ListofItems(collection,0)
-    const field = Object.keys(collection[0])[0];
     const [selected,setselected] = useState(0);
     return(
-      <div>
-          <label className='query'><h2>Choose { type=="Object" && object} { type=="Transaction" && "Document"}</h2>
-            <select value={selected} onChange={(e)=>setselected(e.target.value)}>
+      <div className='query'>
+          <label className='queryTitle'><h2>Choose { type=="Object" && object} { type=="Transaction" && "Document"}</h2>
+            <select className='querySelect' value={selected} onChange={(e)=>setselected(e.target.value)}>
                 {list.map((item,index)=><option value={index}>{item}</option>)}
             </select>
             </label>
             { type == "Object" && 
-            <div style={{display:"flex",flexDirection:"row",gap:"10px",justifyContent:"center",padding:"10px"}}>
+            <div className='queryButtons'>
             <button onClick={()=>{objectQuery('display')}}>View</button><button onClick={()=>{objectQuery('update')}}>Update</button><button onClick={()=>{navigate(`/deactivate/${object}/${selected}/`)}}>Deactivate</button>
             </div> }
             { type =="Object" && <p style={{textAlign:"center"}}>Or, <button onClick={()=>{navigate(`/create/${object}`)}}>Create {object}</button></p>}
             { type == "Transaction" && 
-            <div style={{display:"flex",flexDirection:"row",gap:"10px",justifyContent:"center",padding:"10px"}}>
+            <div className='queryButtons'>
             <button onClick={()=>{documentQuery('display')}}>View</button><button onClick={()=>{documentQuery('update')}}>Update</button><button onClick={()=>{navigate(`/document/reverse/${selected}/`)}}>Reverse</button>
             </div> }
       </div>
