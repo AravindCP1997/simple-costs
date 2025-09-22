@@ -93,3 +93,40 @@
   gap:10px;
 }
 
+.queryDisplay{
+  border:2px solid green;
+  padding:10px;
+  display: flex;
+  flex-direction: column;
+  gap:5px;
+  width:100%;
+}
+
+.queryField{
+  border:1px solid red;
+  padding:5px;
+}
+
+.querySingle{
+  border:1px solid gold;
+  display: grid;
+  grid-template-columns: 50% 50%;
+}
+
+.queryTable{
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  width:100%;
+}
+
+.queryRow{
+  display:flex;
+  flex-direction:row;
+}
+
+.queryCell{
+  border:1px solid black;
+  min-width:100px;
+
+}

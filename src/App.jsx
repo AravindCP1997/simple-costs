@@ -144,10 +144,10 @@ const objects = {
     }
 }
 
-function GenerateInput({item,k,value,onthischange,label,disabled}){
+function GenerateInput({item,k,value,onthischange,label,disabled, className}){
     return(
         <>
-            <label className='input'>{label && item['name']}{item['input']==="input"&&<input key={k} disabled={disabled} value={value} onChange={onthischange} type={item['type']}/>}{item['input']==="option"&&<select key={k} value={value} onChange={onthischange} disabled={disabled}>{item['options'].map((option)=><option value={option}>{option}</option>)}</select>}</label>
+            <label className={className}>{label && item['name']}{item['input']==="input"&&<input key={k} disabled={disabled} value={value} onChange={onthischange} type={item['type']}/>}{item['input']==="option"&&<select key={k} value={value} onChange={onthischange} disabled={disabled}>{item['options'].map((option)=><option value={option}>{option}</option>)}</select>}</label>
         </>
     )
 }
@@ -156,7 +156,7 @@ function InputRow({disabled, collection,structure,onchange,fieldname}){
     return(
         <>
         <label>{fieldname}</label>
-            <div className='row'>{structure.map((field,i)=><GenerateInput disabled={disabled} item={field} k={i} data-fieldname={fieldname} value={collection[field['name']]} onthischange={(e)=>onchange(fieldname,field['name'],e)} label={true}/>)} </div>
+            <div>{structure.map((field,i)=><GenerateInput className="querySingle" disabled={disabled} item={field} k={i} data-fieldname={fieldname} value={collection[field['name']]} onthischange={(e)=>onchange(fieldname,field['name'],e)} label={true}/>)} </div>
         </>
     )
 }
@@ -164,12 +164,11 @@ function InputRow({disabled, collection,structure,onchange,fieldname}){
 export function MultipleEntry({disabled, collection,fieldname,structure,onchange,addfunction}){
     return(
         <>
-        <label>{fieldname}</label>
-        <div style={{maxWidth:"850px", overflow:"auto"}}>
-        <div className='row'>{structure.map(field=><label>{field['name']}</label>)}</div>
-        <div className='row'>{collection.map((item,index)=><>{structure.map(field=><GenerateInput disabled={disabled} item={field} k={index} value={collection[index][field['name']]} label={false} onthischange={(e)=>onchange(fieldname,index,field['name'],e)}/>)}</>)}</div>
-        </div>
+        <label className='queryTable'>{fieldname}
+        <div className='queryRow'>{structure.map(field=><label className='queryCell'>{field['name']}</label>)}</div>
+        <div>{collection.map((item,index)=><div className="queryRow">{structure.map(field=><GenerateInput className="queryCell" disabled={disabled} item={field} k={index} value={collection[index][field['name']]} label={false} onthischange={(e)=>onchange(fieldname,index,field['name'],e)}/>)}</div>)}</div>
         <button onClick={addfunction}>Add</button>
+        </label>
         </>
     )
 }
@@ -251,15 +250,14 @@ function ObjectUI({type,method}){
 
 
     return(
-        <div className='objectDisplay'>
+        <div className='queryDisplay'>
         {schema.map(field=>
-        <div className='objectField'>
-            {field['datatype']==="single"&&<GenerateInput disabled={method==="Display"} label={true} item={field} k={0} value={masterdata[field['name']]} onthischange={(e)=>singlechange(field['name'],e)}/>}
+        <div className='queryField'>
+            {field['datatype']==="single"&&<GenerateInput className="querySingle" disabled={method==="Display"} label={true} item={field} k={0} value={masterdata[field['name']]} onthischange={(e)=>singlechange(field['name'],e)}/>}
             {field['datatype']==="object"&&<InputRow disabled={method==="Display"} collection={masterdata[field['name']]} fieldname={field['name']} structure={field['structure']} onchange={objectchange} />}
             {field['datatype']==="collection"&&<MultipleEntry disabled={method==="Display"} collection={masterdata[field['name']]} fieldname={field['name']} structure={field['structure']} addfunction={(e)=>addToList(field['name'],field['use-state'][0],e)} onchange={collectionchange}/>}
-            
             </div>)}
-            <div>
+            <div className='queryButtons'>
             {method!="Display" && <button onClick={cancel}>Cancel</button>}
             {method=="Display" && <button onClick={cancel}>Back</button>}
             {method=="Create" && <button onClick={createObject}>Create</button>}
