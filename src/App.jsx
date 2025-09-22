@@ -167,8 +167,8 @@ export function MultipleEntry({disabled, collection,fieldname,structure,onchange
         <label className='queryTable'>{fieldname}
         <div className='queryRow'>{structure.map(field=><label className='queryCell'>{field['name']}</label>)}</div>
         <div>{collection.map((item,index)=><div className="queryRow">{structure.map(field=><GenerateInput className="queryCell" disabled={disabled} item={field} k={index} value={collection[index][field['name']]} label={false} onthischange={(e)=>onchange(fieldname,index,field['name'],e)}/>)}</div>)}</div>
-        <button onClick={addfunction}>Add</button>
         </label>
+        <div className='queryButtons'><button onClick={addfunction}>Add</button></div>
         </>
     )
 }
@@ -251,6 +251,7 @@ function ObjectUI({type,method}){
 
     return(
         <div className='queryDisplay'>
+        <label className='queryTitle'><h2>{ type=="Object" &&`${method} ${object}`} { type=="Transaction" &&`${method} Transaction`}</h2></label>
         {schema.map(field=>
         <div className='queryField'>
             {field['datatype']==="single"&&<GenerateInput className="querySingle" disabled={method==="Display"} label={true} item={field} k={0} value={masterdata[field['name']]} onthischange={(e)=>singlechange(field['name'],e)}/>}
@@ -258,10 +259,10 @@ function ObjectUI({type,method}){
             {field['datatype']==="collection"&&<MultipleEntry disabled={method==="Display"} collection={masterdata[field['name']]} fieldname={field['name']} structure={field['structure']} addfunction={(e)=>addToList(field['name'],field['use-state'][0],e)} onchange={collectionchange}/>}
             </div>)}
             <div className='queryButtons'>
-            {method!="Display" && <button onClick={cancel}>Cancel</button>}
-            {method=="Display" && <button onClick={cancel}>Back</button>}
-            {method=="Create" && <button onClick={createObject}>Create</button>}
-            {method=="Update" && <button onClick={updateObject}>Update</button>}
+            {method!="Display" && <button className='blue' onClick={cancel}>Cancel</button>}
+            {method=="Display" && <button className='blue' onClick={cancel}>Back</button>}
+            {method=="Create" && <button className='green' onClick={createObject}>Create</button>}
+            {method=="Update" && <button className='blue' onClick={updateObject}>Update</button>}
             </div>
         </div>
     )
@@ -291,12 +292,12 @@ function Query({type}){
             </label>
             { type == "Object" && 
             <div className='queryButtons'>
-            <button onClick={()=>{objectQuery('display')}}>View</button><button onClick={()=>{objectQuery('update')}}>Update</button><button onClick={()=>{navigate(`/deactivate/${object}/${selected}/`)}}>Deactivate</button>
+            <button className="blue" onClick={()=>{objectQuery('display')}}>View</button><button className="blue" onClick={()=>{objectQuery('update')}}>Update</button><button className="red" onClick={()=>{navigate(`/deactivate/${object}/${selected}/`)}}>Deactivate</button>
             </div> }
-            { type =="Object" && <p style={{textAlign:"center"}}>Or, <button onClick={()=>{navigate(`/create/${object}`)}}>Create {object}</button></p>}
+            { type =="Object" && <p style={{textAlign:"center"}}>Or, <button className="green" onClick={()=>{navigate(`/create/${object}`)}}>Create {object}</button></p>}
             { type == "Transaction" && 
             <div className='queryButtons'>
-            <button onClick={()=>{documentQuery('display')}}>View</button><button onClick={()=>{documentQuery('update')}}>Update</button><button onClick={()=>{navigate(`/document/reverse/${selected}/`)}}>Reverse</button>
+            <button className="blue" onClick={()=>{documentQuery('display')}}>View</button><button className="blue" onClick={()=>{documentQuery('update')}}>Update</button><button className="red" onClick={()=>{navigate(`/document/reverse/${selected}/`)}}>Reverse</button>
             </div> }
       </div>
        
@@ -323,14 +324,14 @@ function DeleteQuery({type}){
         navigate(`/document`)
     }
     return(
-        <div>
-        <h2>{ type=="Object" &&`Deactivate ${object}`}{ type=="Transaction" && 'Reverse Document'}</h2>
-        <p>Are you sure want to {type=="Object" && `deactivate ${object} ${id}`} {type=="Transaction" && ` reverse transaction ${id}`}</p>
-        <div>
-            {type == "Object" && <button onClick={()=>{navigate(`/query/${object}`)}}>Cancel</button>}
-            {type == "Transaction" && <button onClick={()=>{navigate(`/document`)}}>Cancel</button>}
-            {type == "Object" && <button onClick={deactivate}>Deactivate</button>}
-            {type == "Transaction" && <button onClick={reverse}>Reverse</button>}
+        <div className='query'>
+        <h2 className='queryTitle'>{ type=="Object" &&`Deactivate ${object}`}{ type=="Transaction" && 'Reverse Document'}</h2>
+        <p>Are you sure want to {type=="Object" && `deactivate ${object} ${id}`} {type=="Transaction" && ` reverse transaction ${id}`} ?</p>
+        <div className='queryButtons'>
+            {type == "Object" && <button className="blue" onClick={()=>{navigate(`/query/${object}`)}}>Cancel</button>}
+            {type == "Transaction" && <button className="blue" onClick={()=>{navigate(`/document`)}}>Cancel</button>}
+            {type == "Object" && <button className="red" onClick={deactivate}>Deactivate</button>}
+            {type == "Transaction" && <button className="red" onClick={reverse}>Reverse</button>}
         </div>
         </div>
     )
@@ -350,22 +351,22 @@ function SearchBar(){
     }
     return(
         <div className='searchBar'>
-            <button onClick={()=>navigate(`/`)}>Home</button>
+            <button className='blue' onClick={()=>navigate(`/`)}>Home</button>
             <input type="text" onChange={changeUrl} placeholder="Your path here . . ."/>
-            <button onClick={search}>&rarr;</button>
+            <button className="blue" onClick={search}>&rarr;</button>
         </div>
     )
 }
 
 function Home(){
-
+    const navigate = useNavigate();
   return(
     <div className='home'>
       <h1 className='title'>Simple Costs<sup>&reg;</sup></h1>
     <div className='actions'>{}
-      <div className='menu'><Link to="/record">Record</Link></div>
-      <div className='menu'><Link to="/control">Control</Link></div>
-      <div className='menu'><Link to="/reports">Reports</Link></div>
+      <div className='menu green'><h2 onClick={()=>navigate(`/record`)}>Record</h2></div>
+      <div className='menu red'><h2 onClick={()=>navigate(`/control`)}>Control</h2></div>
+      <div className='menu blue'><h2 onClick={()=>navigate(`/reports`)}>Reports</h2></div>
     </div>
     </div>
   )
@@ -377,7 +378,7 @@ export function Record(){
   
   return(
     <div className='menuList'>
-      <div className='menuTitle'><h3>Record</h3></div>
+      <div className='menuTitle red'><h3>Record</h3></div>
       <div className='menuItem'><h3 onClick={()=>{navigate(`/document`)}}>Document</h3></div>
       <div className='menuItem'><h3 onClick={()=>{navigate(`/document/create`)}}>Transaction</h3></div>
     </div>
@@ -391,7 +392,7 @@ export function Control(){
   
   return(
     <div className='menuList'>
-      <div className='menuTitle'><h3>Control</h3></div>
+      <div className='menuTitle green'><h3>Control</h3></div>
       {list.map(item=><div className='menuItem'><h3 onClick={()=>{navigate(`/query/${item}`)}}>{item}</h3></div>)}
     </div>
   )
@@ -402,7 +403,8 @@ function Reports(){
     const navigate = useNavigate();
     return(
     <div className='menuList'>
-    <div className='menuTitle'><h3>Reports</h3></div><div className='menuItem'><h3 onClick={()=>{navigate(`/assets`)}}>Assets</h3></div>
+    <div className='menuTitle red'><h3>Reports</h3></div>
+    <div className='menuItem'><h3 onClick={()=>{navigate(`/assets`)}}>Assets</h3></div>
     </div>
     )
 }

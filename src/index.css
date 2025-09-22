@@ -16,6 +16,7 @@ html{
 
 :root{
   --blue:rgb(64,82,106);
+  --lightblue: rgb(80,150,220);
   --green:rgb(0,176,80);
   --red:rgb(255,0,0);
   --lightgray:rgb(242,242,245);
@@ -33,4 +34,31 @@ a{
 
 html,button, select, option{
   font-family: Lex, Helvet,'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+button, input, select, option{
+  border-radius:10px;
+  padding: 10px;
+  cursor: pointer;
+  border:none;
+}
+
+.red{
+  background: var(--red);
+  color:white;
+}
+
+.green{
+  background: var(--green);
+  color:white;
+}
+
+.blue{
+  background: var(--blue);
+  color:white;
+}
+
+.lightblue {
+  background: var(--lightblue);
+  color:white;
 }

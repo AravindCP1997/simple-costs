@@ -20,10 +20,11 @@
 }
 
 .innerContainer{
-  border:1px solid black;
+  border:2px solid black;
   display: flex;
   flex-direction: row;
   justify-content: center;
+  padding: 10px;
   padding-top: 50px;
 }
 
@@ -34,6 +35,7 @@
 .title{
   border:1px solid red;
   padding:20px;
+  color:var(--blue);
 }
 
 .actions{
@@ -44,14 +46,23 @@
 }
 
 .menu{
-  width:200px;
-  border:1px solid yellow;
+  width:150px;
   aspect-ratio: 1/1;
   border-radius: 50%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   text-align: center;
+  cursor: pointer;
+  transition: 0.5s;
+}
+
+.menu:nth-child(2){
+  border-radius: 20px;
+}
+
+.menu:hover{
+  transform: rotate(10deg);
 }
 
 .menuList{
@@ -64,9 +75,14 @@
 }
 
 .menuItem, .menuTitle{
-  border:1px solid red;
   text-align: center;
   cursor: pointer;
+  border-radius: 10px;
+}
+
+.menuItem{
+  background: white;
+  color:var(--blue);
 }
 
 .query{
@@ -77,7 +93,7 @@
 }
 
 .queryTitle{
-  color:blue;
+  color:var(--blue);
   text-align: center;
 }
 
@@ -91,6 +107,10 @@
   flex-direction: row;
   justify-content: center;
   gap:10px;
+
+  button{
+    width:100px;
+  }
 }
 
 .queryDisplay{
