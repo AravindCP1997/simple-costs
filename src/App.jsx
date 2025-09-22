@@ -12,8 +12,9 @@ function saveData(data,collection){
 }
 
 const ListofItems  = (collection,n) => {
-    const keys = Object.keys(collection[0]);
-    const List = collection.map(item=>item[keys[n]]);
+
+    const keys = (collection.length!= 0) ? Object.keys(collection[0]) : [];
+    const List = (collection.length!= 0) ? collection.map(item=>item[keys[n]]) : [];
     return List
 }
 
@@ -43,7 +44,7 @@ const transactions = {
                 {"name":"Debit/ Credit","input":"option","options":["Debit", "Credit"]},
                 {"name":"Cost Center","input":"option","options":[]},
                 {"name":"Asset","input":"option","options":[]},
-                {"name":"Material","input":"option","options":[]},
+                {"name":"Material","input":"option","options":ListofItems(loadData('materials'),0)},
                 {"name":"Quantity","input":"option","options":[]},
                 {"name":"Location","input":"option","options":[]},
                 {"name":"Profit Center","input":"option","options":[]},
@@ -67,7 +68,7 @@ const objects = {
         "schema": [
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
             {"name": "Asset Class", "datatype":"single", "input":"option", "options":ListofItems(loadData("assetclasses"),0),"use-state":"Computer & Accessories"},
-            {"name": "Cost Center", "datatype":"single", "input":"input", "type":"text","use-state":0},
+            {"name": "Cost Center", "datatype":"single", "input":"option", "options":ListofItems(loadData("costcenters"),0),"use-state":0},
             {"name": "Useful Life", "datatype":"single", "input":"input", "type":"number","use-state":0},
             {"name": "Salvage Value", "datatype":"single", "input":"input", "type":"number","use-state":0},
             {"name": "Date of Capitalisation", "datatype":"single", "input":"input", "type":"date","use-state":0},
