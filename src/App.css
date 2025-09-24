@@ -114,7 +114,8 @@
 }
 
 .queryDisplay{
-  border:2px solid green;
+  border: 2px solid green;
+  border-radius: 25px;
   padding:10px;
   display: flex;
   flex-direction: column;
@@ -148,5 +149,26 @@
 .queryCell{
   border:1px solid black;
   min-width:100px;
+  overflow:hidden;
 
+}
+
+.displayTable{
+  display: flex;
+  flex-direction: column;
+}
+
+.displayRow{
+  display:flex;
+  flex-direction: row;
+}
+
+.displayCell{
+  width:150px;
+  text-align: center;
+  border:1px solid red;
+}
+
+.assets{
+  width:100%;
 }

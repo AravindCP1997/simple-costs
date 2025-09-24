@@ -12,7 +12,6 @@ function saveData(data,collection){
 }
 
 const ListofItems  = (collection,n) => {
-
     const keys = (collection.length!= 0) ? Object.keys(collection[0]) : [];
     const List = (collection.length!= 0) ? collection.map(item=>item[keys[n]]) : [];
     return List
@@ -22,6 +21,18 @@ const getcollection =  (collection)=>{
     const data = loadData(objects[collection]['collection'])
     return data
 }
+
+const getID = (collection,key, value) =>{
+    const filtered = collection.filter(item=>item[key]==value)[0];
+    const id = collection.indexOf(filtered);
+    return id;
+}
+
+const filterObject = (collection, key, value) =>{
+    const filtered = collection.filter(item=>item[key]==value)[0];
+    return filtered;
+}
+
 
 const ItemsInCollection = (collectionname)=>{
     const collection = getcollection(collectionname);
@@ -39,21 +50,21 @@ const transactions = {
         {"name": "Currency", "datatype":"single", "input":"option", "options":[], "use-state":""},
         {"name": "Line Items", "datatype":"collection", "structure":
             [
-                {"name":"General Ledger","input":"option","options":ListofItems(loadData('assets'),0)},
+                {"name":"General Ledger","input":"option","options":ListofItems(loadData('generalledgers'),0)},
                 {"name":"Amount","input":"input","type":"number"},
                 {"name":"Debit/ Credit","input":"option","options":["Debit", "Credit"]},
-                {"name":"Cost Center","input":"option","options":[]},
-                {"name":"Asset","input":"option","options":[]},
+                {"name":"Cost Center","input":"option","options":ListofItems(loadData('costcenters'),0)},
+                {"name":"Asset","input":"option","options":ListofItems(loadData('assets'),0)},
                 {"name":"Material","input":"option","options":ListofItems(loadData('materials'),0)},
                 {"name":"Quantity","input":"option","options":[]},
-                {"name":"Location","input":"option","options":[]},
-                {"name":"Profit Center","input":"option","options":[]},
-                {"name":"Cost Object","input":"option","options":[]},
-                {"name":"Purchase Order","input":"option","options":[]},
+                {"name":"Location","input":"option","options":ListofItems(loadData('locations'),0)},
+                {"name":"Profit Center","input":"option","options":ListofItems(loadData('profitcenters'),0)},
+                {"name":"Cost Object","input":"option","options":ListofItems(loadData('costobjects'),0)},
+                {"name":"Purchase Order","input":"option","options":ListofItems(loadData('purchaseorders'),0)},
                 {"name":"Purchase Order Item","input":"option","options":[]},
-                {"name":"Service Order","input":"option","options":[]},
+                {"name":"Service Order","input":"option","options":ListofItems(loadData('serviceorders'),0)},
                 {"name":"Service Order Item","input":"option","options":[]},
-                {"name":"Employee","input":"option","options":[]},
+                {"name":"Employee","input":"option","options":ListofItems(loadData('employees'),0)},
                 {"name":"Consumption Time From","input":"input","type":"date"},
                 {"name":"Consumption Time To","input":"input","type":"date"},
 
@@ -67,10 +78,11 @@ const objects = {
         "name":"Asset",
         "schema": [
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Asset Class", "datatype":"single", "input":"option", "options":ListofItems(loadData("assetclasses"),0),"use-state":"Computer & Accessories"},
-            {"name": "Cost Center", "datatype":"single", "input":"option", "options":ListofItems(loadData("costcenters"),0),"use-state":0},
+            {"name": "Asset Class", "datatype":"single", "input":"option", "options":ListofItems(loadData("assetclasses"),0),"use-state":""},
+            {"name": "Cost Center", "datatype":"single", "input":"option", "options":ListofItems(loadData("costcenters"),0),"use-state":""},
             {"name": "Useful Life", "datatype":"single", "input":"input", "type":"number","use-state":0},
             {"name": "Salvage Value", "datatype":"single", "input":"input", "type":"number","use-state":0},
+            {"name": "Derpeciable Amount", "value":"calculated"},
             {"name": "Date of Capitalisation", "datatype":"single", "input":"input", "type":"date","use-state":0},
             {"name": "Income Tax Block", "datatype":"single", "input":"input", "type":"text","use-state":0},
             {"name": "Income Tax Depreciation Rate", "datatype":"single", "input":"input", "type":"number","use-state":0}
@@ -102,10 +114,17 @@ const objects = {
         ],
         "collection":"currencies"
     },
+    "Customer":{
+        "name":"Customer",
+        "collection":"customers",
+        "schema": [
+            {"name":"Name","datatype":"single","input":"input","type":"text"}
+        ]
+    },
     "Employee":{
         "name":"Employee",
         "schema": [
-            {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+            {"name": "Name", "datatype":"object", "structure":[{"name":"First Name","input":"input","type":"text"},{"name":"Last Name","input":"input","type":"text"}], "use-state":{"First Name":"","Last Name":""}},
             {"name": "Date of Birth", "datatype":"single", "input":"input", "type":"date", "use-state":0},
             {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "input":"input", "type":"text"},{"name":"IFSC", "input":"input", "type":"text"},{"name":"Account Number", "input":"input", "type":"number"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000"}]},
         ],
@@ -116,6 +135,7 @@ const objects = {
         "schema":[
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
             {"name": "Presentation", "datatype":"single", "input":"option", "options":["Income", "Expense", "Asset", "Liability", "Equity"], "use-state":"Income"},
+            {"name":"Ledger Type","datatype":"single","input":"option","options":["Fixed Asset", "Cost Element", "Customer", "Material", "Vendor","General"]}
         ],
         "collection":"generalledgers"
     },
@@ -128,12 +148,19 @@ const objects = {
         "collection":"locations"
     },
     "Profit Center":{
-        "name":"Profit center",
+        "name":"Profit Center",
         "schema":[
             {"name": "Center", "datatype":"single", "input":"input", "type":"text", "use-state":""},
             {"name": "Segment", "datatype":"single", "input":"option", "options":ListofItems(loadData("segments"),0), "use-state":""},
         ],
         "collection":"profitcenters"
+    },
+    "Purchase Order":{
+        "name": "Purchase Order",
+        "schema":[
+            {"name": "Description", "datatype":"single", "input":"input", "type":"text", "use-state":""}
+        ],
+        "collection":"purchaseorders"
     },
     "Segment":{
         "name": "Segment",
@@ -141,6 +168,20 @@ const objects = {
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""}
         ],
         "collection":"segments"
+    },
+    "Sale Order":{
+        "name": "Purchase Order",
+        "schema":[
+            {"name": "Description", "datatype":"single", "input":"input", "type":"text", "use-state":""}
+        ],
+        "collection":"saleeorders"
+    },
+    "Vendor":{
+        "name":"Vendor",
+        "collection":"vendors",
+        "schema": [
+            {"name":"Name","datatype":"single","input":"input","type":"text"}
+        ]
     }
 }
 
@@ -168,7 +209,7 @@ export function MultipleEntry({disabled, collection,fieldname,structure,onchange
         <div className='queryRow'>{structure.map(field=><label className='queryCell'>{field['name']}</label>)}</div>
         <div>{collection.map((item,index)=><div className="queryRow">{structure.map(field=><GenerateInput className="queryCell" disabled={disabled} item={field} k={index} value={collection[index][field['name']]} label={false} onthischange={(e)=>onchange(fieldname,index,field['name'],e)}/>)}</div>)}</div>
         </label>
-        <div className='queryButtons'><button onClick={addfunction}>Add</button></div>
+        <div className='queryButtons'><button className="blue" onClick={addfunction}>Add</button></div>
         </>
     )
 }
@@ -268,6 +309,8 @@ function ObjectUI({type,method}){
     )
 }
 
+
+
 function Query({type}){
   const {object} = useParams()
   const navigate = useNavigate();
@@ -364,9 +407,9 @@ function Home(){
     <div className='home'>
       <h1 className='title'>Simple Costs<sup>&reg;</sup></h1>
     <div className='actions'>{}
-      <div className='menu green'><h2 onClick={()=>navigate(`/record`)}>Record</h2></div>
-      <div className='menu red'><h2 onClick={()=>navigate(`/control`)}>Control</h2></div>
-      <div className='menu blue'><h2 onClick={()=>navigate(`/reports`)}>Reports</h2></div>
+      <div className='menu green' onClick={()=>navigate(`/record`)}><h2>Record</h2></div>
+      <div className='menu red' onClick={()=>navigate(`/control`)}><h2>Control</h2></div>
+      <div className='menu blue'  onClick={()=>navigate(`/reports`)}><h2>Reports</h2></div>
     </div>
     </div>
   )
@@ -378,9 +421,9 @@ export function Record(){
   
   return(
     <div className='menuList'>
-      <div className='menuTitle red'><h3>Record</h3></div>
-      <div className='menuItem'><h3 onClick={()=>{navigate(`/document`)}}>Document</h3></div>
-      <div className='menuItem'><h3 onClick={()=>{navigate(`/document/create`)}}>Transaction</h3></div>
+      <div className='menuTitle green'><h3>Record</h3></div>
+      <div className='menuItem' onClick={()=>{navigate(`/document`)}}><h3>Document</h3></div>
+      <div className='menuItem' onClick={()=>{navigate(`/document/create`)}}><h3>Transaction</h3></div>
     </div>
   )
 }
@@ -392,7 +435,7 @@ export function Control(){
   
   return(
     <div className='menuList'>
-      <div className='menuTitle green'><h3>Control</h3></div>
+      <div className='menuTitle red'><h3>Control</h3></div>
       {list.map(item=><div className='menuItem'><h3 onClick={()=>{navigate(`/query/${item}`)}}>{item}</h3></div>)}
     </div>
   )
@@ -403,7 +446,7 @@ function Reports(){
     const navigate = useNavigate();
     return(
     <div className='menuList'>
-    <div className='menuTitle red'><h3>Reports</h3></div>
+    <div className='menuTitle blue'><h3>Reports</h3></div>
     <div className='menuItem'><h3 onClick={()=>{navigate(`/assets`)}}>Assets</h3></div>
     </div>
     )
@@ -415,19 +458,115 @@ function DisplayAsTable({collection}){
     const fields = Object.keys(collection[0]);
 
     return (
-        <div className='table'>
-            <div className='row'>{fields.map(field=><div className='cell'><p>{field}</p></div>)}</div>
-            {collection.map(data=><div className='row'>{fields.map(field=><div className='cell'><p>{data[field]}</p></div>)}</div>)}
+        <div className='displayTable'>
+            <div className='displayRow'>{fields.map(field=><div className='displayCell'><p>{field}</p></div>)}</div>
+            {collection.map(data=><div className='displayRow'>{fields.map(field=><div className='displayCell'><p>{data[field]}</p></div>)}</div>)}
         </div>
     )
 }
 
-function Assets(){
-    const data = loadData('assets');
+function ReportQuery(){
+    const [query,setquery] = useState([
+        {"field":"Asset Class","value":"", "type":"text"}
+    ]);
+
+    const handleChange = (i,e)=>{
+        const {value} = e.target;
+        const olddata = query[i];
+        const newdata = {...olddata,['value']:value};
+        const newquery = query.map((item,index)=>(index ==i)?newdata:item);
+        setquery(newquery);
+    }
+
+    const sendQuery = () =>{
+        alert(JSON.stringify(query));
+    }
+
     return(
-        <>
-        <DisplayAsTable collection={data}/>
-        </>
+        <div>
+            {query.map((item,index)=><label>{item['field']}<input type={item['type']} value={query[index]['value']} onChange={(e)=>handleChange(index,e)}/></label>)}
+            <div className='queryButtons'><button onClick={sendQuery} className='blue'>Send</button></div>
+        </div>
+    )
+
+}
+
+class ControlObject{
+    constructor(name,data){
+        this.name = name;
+        this.schema = objects[this.name]['schema']
+        this.collections = loadData(objects[this.name]['collection'])
+        this.data = data || this.defaults();
+    }
+    calculate(){
+        const data = {}
+        data['Age'] = (this.name=="Employee")?this.data['Date of Birth']+"AA":5;
+        return data;
+    }
+    defaults(){
+        const defaults = {}
+        this.schema.map(item=>defaults[item['name']]=item['use-state']);
+        return defaults;
+    }
+    item(id){
+        return this.collections[id]
+    }
+}
+
+function CreateAssets(){
+    const [employee, setemployee] = useState(new ControlObject("Employee"))
+    const schema = employee.schema;
+    const object = employee.data
+
+    function addToList(list,defaults,e){
+        e.preventDefault;
+        const oldlist = object[list];
+        const newentry = {...defaults,['id']:oldlist.length}
+        const newlist = [...oldlist,newentry]
+        const newdata = {...object,[list]:newlist};
+        setemployee(new ControlObject("Employee",newdata))
+    }
+
+    function singlechange(field,e){
+        const {value} = e.target
+        const newdata = {...object,[field]:value}
+        setemployee(new ControlObject("Employee",newdata))
+    }
+
+    function objectchange(field,key,e){
+        e.preventDefault
+        const {value} = e.target
+        e.preventDefault
+        const oldobject = object[field]
+        const newobject = {...oldobject,[key]:value}
+        const newmaster = {...object,[field]:newobject}
+        setemployee(new ControlObject("Employee",newmaster))
+    }
+
+    function collectionchange(field,index,key,e){
+        e.preventDefault
+        const {value} = e.target
+        const oldlist = object[field]
+        const olddata = oldlist[index]
+        const newdata = {...olddata,[key]:value}
+        const newlist = oldlist.map((item)=>(item.id===index ? newdata : item))
+        const newmaster = {...object,[field]:newlist}
+        setemployee(new ControlObject("Employee",newmaster))
+
+    }
+
+
+    return(
+        <div>
+            {schema.map(field=>
+        <div className='queryField'>
+            {field['datatype']==="single"&&<GenerateInput className="querySingle" disabled={false} label={true} item={field} k={0} value={object[field['name']]} onthischange={(e)=>singlechange(field['name'],e)}/>}
+            {field['datatype']==="object"&&<InputRow disabled={false} collection={object[field['name']]} fieldname={field['name']} structure={field['structure']} onchange={objectchange} />}
+            {field['datatype']==="collection"&&<MultipleEntry disabled={false} collection={object[field['name']]} fieldname={field['name']} structure={field['structure']} addfunction={(e)=>addToList(field['name'],field['use-state'][0],e)} onchange={collectionchange}/>}
+            <p>{employee.calculate()['Age']}</p>
+            </div>)}
+            {JSON.stringify(object)}
+        </div>
     )
 
 }
@@ -453,7 +592,7 @@ function App(){
       <Route path='/update/:object/:id' element={<ObjectUI type={"Object"} method={"Update"}/>}/>
       <Route path='/display/:object/:id' element={<ObjectUI type={"Object"} method={"Display"}/>}/>
       <Route path='/deactivate/:object/:id' element={<DeleteQuery type={"Object"}/>}/>
-      <Route path="/assets" element={<Assets/>}/>
+      <Route path="/assets" element={<CreateAssets/>}/>
     </Routes>
     </div>
     </BrowserRouter>
