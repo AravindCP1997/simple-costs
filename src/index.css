@@ -1,0 +1,68 @@
+@font-face {
+  font-family: "Lex";
+  src: url('../Lexend.woff');
+}
+
+@font-face{
+  font-family: "Helvet";
+  src:url('../Helvetica.woff');
+}
+
+html{
+  padding:10px;
+  padding-top:5%;
+  background: var(--lightgray);
+}
+
+:root{
+  --blue:rgb(64,82,106);
+  --lightblue: rgb(80,150,220);
+  --green:rgb(0,176,80);
+  --red:rgb(255,0,30);
+  --lightgray:rgb(250,250,248);
+}
+
+a{
+  text-decoration: none;
+}
+
+#root{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+html,button, select, option, label{
+  font-family: Lex, Helvet,'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+button, input, select, option, label{
+  border-radius:15px;
+  padding: 10px;
+  cursor: pointer;
+  border:none;
+}
+
+button{
+  font-weight: bold;
+}
+
+.red{
+  background: var(--red);
+  color:white;
+}
+
+.green{
+  background: var(--green);
+  color:white;
+}
+
+.blue{
+  background: var(--blue);
+  color:white;
+}
+
+.lightblue {
+  background: var(--lightblue);
+  color:white;
+}
