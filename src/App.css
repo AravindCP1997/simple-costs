@@ -5,8 +5,19 @@
 .companyInfo{
   display: flex;
   flex-direction: column;
-  text-align: center;
+  gap:10px;
+  justify-content: center;
+  color:var(--blue);
+  width:100%;
+  background: white;
+  border-radius: 25px;
+  padding: 10px;
+  min-height: 350px;
+}
 
+.companyDetail{
+  display: grid;
+  grid-template-columns: 50% 50%;
 }
 
 .createCompany{
@@ -14,6 +25,14 @@
   flex-direction: column;
   gap:10px;
   color:var(--blue);
+  background: white;
+  padding: 10px;
+  width: 100%;
+  border-radius: 25px;
+  text-align: center;
+  justify-content: center;
+  min-height: 350px;
+  margin-top: 10%;
 }
 
 .container{
@@ -110,6 +129,7 @@
   text-align: center;
   cursor: pointer;
   border-radius: 10px;
+  aspect-ratio: 3/1;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -118,10 +138,6 @@
 .menuItem{
   background: white;
   color:var(--blue);
-}
-
-.menuItem:nth-child(4n){
-  grid-row: span 2;
 }
 
 .query{

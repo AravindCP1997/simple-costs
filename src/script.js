@@ -244,6 +244,9 @@ class Company{
     static save(data){
         localStorage.setItem('company',JSON.stringify(data))
     }
+    static delete(){
+        localStorage.removeItem('company')
+    }
 }
 
 class Intelli{
@@ -278,21 +281,21 @@ class Intelli{
     }
 }
 
-const ReportQuerySchema = {
+const QuerySchema = {
     "Financial Statements":[
-        {"Field":"Year"}
+        {"field":"Cost Center"}
     ]
 }
 
 class ReportObject{
     constructor(name){
         this.name = name
-        this.schema = ReportQuerySchema[this.name]
+        this.schema = QuerySchema[this.name]
     }
     process(data){
         switch(this.name){
             case 'Financial Statements':
-                const result = new Intelli().transactionstable().filter(item=>item['Reference']== data['Reference'])
+                const result = new Intelli().transactionstable().filter(item=>item['Cost Center']==data['Cost Center'])
                 return result
         }
     }

@@ -4,7 +4,6 @@ import { BrowserRouter, Routes, Route, Link, useParams, Navigate, useNavigate } 
 import { ListofItems, loadData, saveData, Intelli, Database, objects, SumField, SumFieldIfs, Company, ReportObject } from './script';
 
 function CompanyInfo(){
-    
     const [editable,seteditable] = useState(false)
     const company = new Company()
     const [data,setdata] = useState(company.data)
@@ -23,8 +22,8 @@ function CompanyInfo(){
         return (
             <div className='createCompany'>
                 <h2>Welcome to Simple Cost!</h2>
-                <div>Click <button className='blue' onClick={()=>initialise()}>Quick Initialise</button> to let us set up a sample company for you.</div>
-                <div>Or, Create a <button className='green' onClick={()=>newCompany()}>New Company</button> on your own.</div>
+                <div><button className='blue' onClick={()=>initialise()}>Quick Initialise</button> to set up a sample company.</div>
+                <div>Or, Create a <button className='green' onClick={()=>newCompany()}>New Company</button></div>
             </div>
         )
     }
@@ -35,18 +34,25 @@ function CompanyInfo(){
         window.location.reload()
     }
 
+    const deleteCompany = () =>{
+        Company.delete()
+        alert('Company Deleted')
+        window.location.reload()
+    }
+
     if (status) {
     return(
 
         <div className='companyInfo'>
             <h2>Company Info</h2>
-            <label>Name <input disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Name']:e.target.value}))} value={data['Name']}/></label>
-            <label>Beginning of Year 1 <input onChange={(e)=>setdata(prevdata=>({...prevdata,['Year 1 Start']:e.target.value}))} type="date" disabled={!editable} value={data['Year 1 Start']}/></label>
-            <label>Reporting Date of Year 1 <input type="date" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Year 1 End']:e.target.value}))} value={data['Year 1 End']}/></label>
+            <div className='companyDetail'><label>Name </label><input disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Name']:e.target.value}))} value={data['Name']}/></div>
+            <div className='companyDetail'><label>Beginning of Year 1 </label><input onChange={(e)=>setdata(prevdata=>({...prevdata,['Year 1 Start']:e.target.value}))} type="date" disabled={!editable} value={data['Year 1 Start']}/></div>
+            <div className='companyDetail'><label>Reporting Date of Year 1 </label><input type="date" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Year 1 End']:e.target.value}))} value={data['Year 1 End']}/></div>
             <div>
                 {editable && <button onClick={()=>seteditable(false)}>Cancel</button>}
                 {editable && <button onClick={()=>save()}>Save</button>}
                 {!editable && <button onClick={()=>seteditable(true)}>Edit</button>}
+                {!editable && <button onClick={()=>deleteCompany()}>Delete Company</button>}
             </div>
         </div>
     )
@@ -343,16 +349,19 @@ function Scratch(){
 
     const scratch = new ReportObject('Financial Statements')
     const schema = scratch.schema
-
+    const [query,setquery] = useState({})
+    const [data,setdata] = useState([])
     return(
-        <>
-        <DisplayAsTable collection={scratch.process({"Reference":"Nil"})}/>
-        </>
+        <div>
+        {schema.map(field=><label>{field['field']}<input onChange={(e)=>setquery(prevdata=>({...prevdata,[field['field']]:e.target.value}))} value={query[field['field']]}/></label>)}
+        <button onClick={()=>setdata(scratch.process(query))}>Submit</button>
+        {data.length>0 && <DisplayAsTable collection={data}/>}
+        </div>
     )
 }
 
 function App(){
-
+if (new Company().status){
   return(
     <div className='container'>
     <BrowserRouter>
@@ -377,6 +386,15 @@ function App(){
     </BrowserRouter>
     </div>
   )
+} else {
+    return(
+        <div className='container'>
+            <div className='innerContainer'>
+                <CompanyInfo/>
+            </div>
+        </div>
+    )
+}
 }
 
 export default App;
