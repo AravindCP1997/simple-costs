@@ -215,6 +215,70 @@ function Reports(){
     )
 }
 
+function Report(){
+    
+    const querySchema = {
+    "Financial Statements":[
+        {"field":"Cost Center"}
+    ]
+}
+
+    const {report} = useParams()
+    const schema = querySchema[report]
+    const [query,setquery] = useState({"Name":"Aravind"})
+    const [data,setdata] = useState({})
+
+    const process = (query) =>{
+        const data = query
+        return data
+    }
+
+    function FinancialStatements(){
+        return(
+            <div>This is Financial Statements
+                <p>{JSON.stringify(data)}</p>
+            </div>
+        )
+    }
+    
+    
+    function ReportQuery(){
+        return(
+            <div>
+                <h2>{`This is ${report} Query Section`}</h2>
+                <button onClick={()=>setdata(process(query))}>Submit</button>
+            </div>
+        )
+    }
+
+    function ReportDisplay(){
+        if (data!=null){
+            switch(report){
+                case 'Financial Statements':
+                    return(
+                        <FinancialStatements/>
+                    )
+                default:
+                    return (
+                        <div>Report not found</div>
+                    )
+            }
+        } else {
+            return (
+                <div>Report not found</div>
+            )
+        }
+    }
+
+    return(
+        <div>
+            <h1>{`${report}`}</h1>
+            <ReportQuery/>
+            <ReportDisplay/>
+        </div>
+    )
+}
+
 
 
 function DisplayAsTable({collection}){
@@ -258,9 +322,6 @@ class ControlObject{
         }
         return data;
     }
-    validate(lineItem){
-        (lineItem['Ledger Type']=="Asset")?lineItem['General Ledger']="Plant and Machinery":null
-    }
     defaults(){
         const defaults = {}
         this.schema.map(item=>defaults[item['name']]=item['use-state']);
@@ -268,81 +329,135 @@ class ControlObject{
     }
 }
 
-function FixedAssetsMaster(){
-    return(
-        <>
-        <DisplayAsTable collection={new Intelli().fixedassetsregister()}/>
-        </>
-    )
-
-}
-
-function EmployeeRegister(){
-    return(
-        <>
-        <DisplayAsTable collection={new Intelli().employeeregister()}/>
-        </>
-    )
-
-}
-
-function CRUD({method}){
+function CRUD(){
     const navigate = useNavigate()
-    const {object,id} = useParams()
-    const [masterdata,setmaster] = (method==="Create")?useState(new ControlObject(object)):useState(new ControlObject(object,Database.load(object)[id]));
-    const data = masterdata.output();
-    const schema = masterdata.schema;
-
-    const keyDownHandler = (e) =>{
-        if (e.ctrlKey && e.key==='h'){
-            e.preventDefault();
-            navigate('/');
+    const {object} = useParams()
+    const schema = objects[object]['schema']
+    const defaults = {}
+    schema.map(item=>defaults[item['name']]=item['use-state']);
+    const [data,setdata] = useState(defaults)
+    const output = process()
+    const collection = objects[object]['collection']
+    const collections = loadData(collection)
+    const list = ListofItems(collections,0)
+    const [selected,setselected] = useState(0)
+    const [method,setmethod] = useState('Create')
+    const [editable,seteditable] = useState(false)
+    
+    function process(){
+        const result = data
+        switch(object){
+            case 'Employee':
+                const birthdate = new Date(data['Date of Birth'])
+                const today = new Date()
+                const difference = today.getTime() - birthdate.getTime()
+                const oneyear = 1000*60*60*24*365.25
+                result['Age'] = Math.floor(difference/oneyear)
+                const oldaccounts = data['Bank Accounts']
+                const newaccounts = oldaccounts.map(account=>({...account,['Validated']:(account['Account Number']==account['Confirm Account Number'])?"Yes":"No"}))
+                result['Bank Accounts'] = newaccounts
+                break
+            case 'Transaction':
+                result['Balance'] = SumFieldIfs(data['Line Items'],"Amount",["Debit/ Credit"],["Debit"])-SumFieldIfs(data['Line Items'],"Amount",["Debit/ Credit"],["Credit"])
+                const lineItems = data['Line Items']
+                result['Line Items'] = lineItems.map(item=>({...item,['Cost Center']:(item['Account Type']=="Asset")?"":item['Cost Center']}))
         }
+        return result
     }
 
-    useEffect(()=>{
-        const handle = document.addEventListener('keydown',keyDownHandler);
-
-        return ()=>{
-            document.removeEventListener('keydown',handle)
+    function submitQuery(method){
+        switch (method){
+            case 'Create':
+                setdata(defaults)
+                seteditable(true)
+                break
+            case 'Edit':
+                setdata(collections[selected])
+                seteditable(true)
+                break
+            case 'View':
+                setdata(collections[selected])
+                seteditable(false)
+                break
         }
-    },[])
+        setmethod(method)
 
-    function createObject(){
-        Database.add(object,data)
-        alert(`${object} Created!`);
-        cancel();
     }
 
-    function updateObject(){
-        Database.update(object,id,data)
-        alert(`${object} Updated!`);
-        cancel();
+    function handleChange1(field,e){
+        e.preventDefault;
+        const {value} = e.target
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:value
+        }))
     }
 
-    function cancel(){
-        navigate(`/control`)
+    function handleChange2(field,subfield,e){
+        e.preventDefault;
+        const {value} = e.target
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:{...prevdata[field],[subfield]:value}
+        }))
+    }
+
+    function handlechange3(field,subfield,index,e){
+        e.preventDefault;
+        const {value} = e.target
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].map((item,i)=>(i===index)?{...item,[subfield]:value}:item)
+        }))
+    }
+
+    function addItem(field,defaults,e){
+        e.preventDefault;
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:[...prevdata[field],{...defaults,['id']:prevdata[field].length}]
+        }))
+    }
+
+    function removeItem(field,index,e){
+        e.preventDefault;
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].filter((item,i)=>i!==index)
+        }))
+        
     }
     
-
     return(
+        <div>
+        <div>
+        <h2>{object}</h2>
+        <select value={selected} onChange={(e)=>setselected(e.target.value)}>
+            {list.map((option,i)=><option value={i}>{option}</option>)}
+        </select>
+        <div className='queryButtons'>
+            <button onClick={()=>submitQuery("View")}>View</button>
+            <button onClick={()=>submitQuery("Edit")}>Edit</button>
+            <button onClick={()=>submitQuery("Deactivate")}>Deactivate</button>
+            Or, <button onClick={()=>submitQuery("Create")}>Create {object}</button>
+        </div>
+        </div>
         <div className='queryDisplay'>
             <h2 className='queryTitle'>{`${method} ${object}`}</h2>
         {schema.map(field=>
         <div className='queryField'>
-        {field['value']=="calculated" && <div className="querySingle"><label>{field['name']}</label><input value={data[field['name']]} disabled={true}/></div>}
-        {field['datatype']=="single" && <div className='querySingle'><label>{field['name']}</label>{ field['input'] == "input" && <input disabled={field['disabled']} type={field['type']} onChange={(e)=>setmaster(new ControlObject(object,{...data,[field['name']]:e.target.value}))} value={data[field['name']]}/>}{field['input']=="option" && <select onChange={(e)=>setmaster(new ControlObject(object,{...data,[field['name']]:e.target.value}))} value={data[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}
-        {field['datatype']=="object" && <div><label>{field['name']}</label>{field['structure'].map(subfield=><>{subfield['datatype']=="single"&&<div className='querySingle'><label>{subfield['name']}</label>{subfield['input']=="input" && <input type={subfield['type']} onChange={(e)=>setmaster(new ControlObject(object,{...data,[field['name']]:{...data[field['name']],[subfield['name']]:e.target.value}}))} value={data[field['name']][subfield['name']]} />}{subfield['input'] == "option" && <select onChange={(e)=>setmaster(new ControlObject(object,{...data,[field['name']]:{...data[field['name']],[subfield['name']]:e.target.value}}))} value={data[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}</>)}</div>}
-        {field['datatype']=="collection" && <><label>{field['name']}</label><div className='queryTable'><table><thead><tr><th className='queryCell'></th>{field['structure'].map(subfield=><th className='queryCell'>{subfield['name']}</th>)}</tr></thead>{data[field['name']].map((item,index)=><tbody><tr><td className='queryCell'><button onClick={(e)=>setmaster(new ControlObject(object,{...data,[field['name']]:data[field['name']].filter((item,i)=>i!==index)}))}>-</button></td>{field['structure'].map(subfield=><>{subfield['datatype']=="single" && <td className='queryCell'>{subfield['value']=="calculated" && <input value={data[field['name']][index][subfield['name']]} disabled={true}/>} {subfield['input']=="input"&& <input className='queryCell' onChange={(e)=>setmaster(new ControlObject(object,{...data,[field['name']]:data[field['name']].map((item,i)=>(i==index?{...item,[subfield['name']]:e.target.value}:item))}))} type={subfield['type']} value={data[field['name']][index][subfield['name']]}/>}{subfield['input']=="option" && <select onChange={(e)=>setmaster(new ControlObject(object,{...data,[field['name']]:data[field['name']].map((item,i)=>(i==index?{...item,[subfield['name']]:e.target.value}:item))}))} value={data[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</td>}</>)}</tr></tbody>)}</table></div><div className="queryButtons"><button onClick={(e)=>setmaster(new ControlObject(object,{...data,[field['name']]:[...data[field['name']],{...field['use-state'][0],['id']:data[field['name']].length}]}))} className='blue'>Add</button></div></>}
+        {field['value']=="calculated" && <div className="querySingle"><label>{field['name']}</label><input value={output[field['name']]} disabled={true}/></div>}
+        {field['datatype']=="single" && <div className='querySingle'><label>{field['name']}</label>{ field['input'] == "input" && <input disabled={(field['disabled']||!editable)} type={field['type']} onChange={(e)=>handleChange1(field['name'],e)} value={output[field['name']]}/>}{field['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange1(field['name'],e)} value={output[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}
+        {field['datatype']=="object" && <div><label>{field['name']}</label>{field['structure'].map(subfield=><>{subfield['datatype']=="single"&&<div className='querySingle'><label>{subfield['name']}</label>{subfield['input']=="input" && <input type={subfield['type']} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]} disabled={(field['disabled']||!editable)}/>}{subfield['input'] == "option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}</>)}</div>}
+        {field['datatype']=="collection" && <><label>{field['name']}</label><div className='queryTable'><table><thead><tr><th className='queryCell'></th>{field['structure'].map(subfield=><th className='queryCell'>{subfield['name']}</th>)}</tr></thead>{output[field['name']].map((item,index)=><tbody><tr><td className='queryCell'><button disabled={(field['disabled']||!editable)} onClick={(e)=>removeItem(field['name'],index,e)}>-</button></td>{field['structure'].map(subfield=><>{subfield['datatype']=="single" && <td className='queryCell'>{subfield['value']=="calculated" && <input value={output[field['name']][index][subfield['name']]} disabled={true}/>} {subfield['input']=="input"&& <input disabled={(field['disabled']||!editable)} className='queryCell' onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} type={subfield['type']} value={output[field['name']][index][subfield['name']]}/>}{subfield['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</td>}</>)}</tr></tbody>)}</table></div><div className="queryButtons"><button disabled={(field['disabled']||!editable)} onClick={(e)=>addItem(field['name'],field['use-state'][0],e)} className='blue'>Add</button></div></>}
         </div>)}
         <div className='queryButtons'>
-            {method!="Display" && <button className='blue' onClick={cancel}>Cancel</button>}
-            {method=="Display" && <button className='blue' onClick={cancel}>Back</button>}
-            {method=="Create" && <button className='green' onClick={createObject}>Create</button>}
-            {method=="Update" && <button className='blue' onClick={updateObject}>Update</button>}
+
         </div>
         </div>
-)
+        </div>
+    )
+    
 }
 
 function Scratch(){
@@ -367,13 +482,12 @@ if (new Company().status){
       <Route path='/record' element={<Record/>}/>
       <Route path='/control' element={<Control/>}/>
       <Route path='/reports' element={<Reports/>}/>
+      <Route path="/report/:report" element={<Report/>}/>
       <Route path='/query/:object/' element={<Query type={"Object"}/>}/>
       <Route path='/create/:object/' element={<CRUD method={"Create"}/>}/>
       <Route path='/update/:object/:id' element={<CRUD method={"Update"}/>}/>
       <Route path='/display/:object/:id' element={<CRUD  method={"Display"}/>}/>
       <Route path='/deactivate/:object/:id' element={<DeleteQuery type={"Object"}/>}/>
-      <Route path="/fixedassetsregister" element={<FixedAssetsMaster/>}/>
-      <Route path="/employeeregister" element={<EmployeeRegister/>}/>
       <Route path="/scratch/" element={<Scratch/>}/>
     </Routes>
     </div>
