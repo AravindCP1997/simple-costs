@@ -1,7 +1,7 @@
 import './App.css'
 import { useEffect, useState, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate, useNavigate } from 'react-router-dom';
-import { ListofItems, loadData, saveData, Intelli, Database, objects, SumField, SumFieldIfs, Company, ReportObject } from './script';
+import { ListofItems, loadData, saveData, Intelli, Database, objects, SumField, SumFieldIfs, Company, ReportObject, singleFilter, listFilter, exclListFilter, rangeFilter, exclRangeFilter } from './script';
 
 function CompanyInfo(){
     const [editable,seteditable] = useState(false)
@@ -347,16 +347,10 @@ function CRUD({method}){
 
 function Scratch(){
 
-    const scratch = new ReportObject('Financial Statements')
-    const schema = scratch.schema
-    const [query,setquery] = useState({})
-    const [data,setdata] = useState([])
     return(
-        <div>
-        {schema.map(field=><label>{field['field']}<input onChange={(e)=>setquery(prevdata=>({...prevdata,[field['field']]:e.target.value}))} value={query[field['field']]}/></label>)}
-        <button onClick={()=>setdata(scratch.process(query))}>Submit</button>
-        {data.length>0 && <DisplayAsTable collection={data}/>}
-        </div>
+        <>
+        <DisplayAsTable collection={exclRangeFilter(new Intelli().transactionstable(),"Amount",[[0,1]])}/>
+        </>
     )
 }
 

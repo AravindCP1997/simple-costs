@@ -1,3 +1,4 @@
+
 function loadData(collection){
     const data = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
     return data;
@@ -31,6 +32,35 @@ function SumFieldIfs(collection,field,ranges,criteria){
        if (logic){subtotal+=parseFloat(collection[i][field])}
     }
     return subtotal
+}
+
+function singleFilter(collection,field,value){
+    const result = collection.filter(item=>item[field]===value)
+    return result
+}
+
+function listFilter(collection,field,list){
+    let filtered= []
+    list.map(value=>filtered = [...filtered,...collection.filter(item=>item[field]===value)])
+    return filtered
+}
+
+function exclListFilter(collection,field,list){
+    let filtered = collection
+    list.map(value=>filtered = filtered.filter(item=>item[field]!==value))
+    return filtered
+}
+
+function rangeFilter(collection,field,list){
+    let filtered = [];
+    list.map(range=>filtered = [...filtered,...collection.filter(item=>item[field]>=range[0] && item[field]<=range[1])])
+    return filtered
+}
+
+function exclRangeFilter(collection,field,list){
+    let filtered = collection;
+    list.map(range=>filtered = filtered.filter(item=>item[field]<range[0] || item[field]>range[1]))
+    return filtered
 }
 
 const objects = {
@@ -301,4 +331,4 @@ class ReportObject{
     }
 }
 
-export {Intelli,Database,objects,loadData,saveData,ListofItems,SumField,SumFieldIfs,Company, ReportObject}
+export {Intelli,Database,objects,loadData,saveData,ListofItems,SumField,SumFieldIfs,singleFilter, listFilter, exclListFilter, rangeFilter, exclRangeFilter, Company, ReportObject}
