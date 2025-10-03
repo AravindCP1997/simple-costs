@@ -9,6 +9,12 @@ function SuperRange(collection,range,from,to){
     return filtered
 }
 
+function dayNumber(date){
+    const time = new Date(date).getTime()
+    const day = time/86400000
+    return day
+}
+
 class Intelligence{
     constructor(){
     }
@@ -196,14 +202,6 @@ function SearchBar(){
     )
 }
 
-function Stickey(){
-
-    return(
-        <div className='stickey'>
-        </div>
-    )
-}
-
 function Home(){
     const navigate = useNavigate();
   return(
@@ -224,7 +222,7 @@ export function Record(){
   
   return(
     <div className='menuList'>
-      <div className='menuTitle green'><h3>Record</h3></div>
+      <div className='menuTitle'><h3>Record</h3></div>
       <div className='menuItem' onClick={()=>{navigate(`/query/Transaction`)}}><h3>View</h3></div>
       <div className='menuItem' onClick={()=>{navigate(`/create/Transaction`)}}><h3>Transaction</h3></div>
       <div className='menuItem' onClick={()=>{navigate(`/create/Transaction`)}}><h3>Salary</h3></div>
@@ -242,7 +240,7 @@ export function Control(){
   
   return(
     <div className='menuList'>
-      <div className='menuTitle red'><h3>Control</h3></div>
+      <div className='menuTitle'><h3>Control</h3></div>
       {list.map(item=><div className='menuItem'><h3 onClick={()=>{navigate(`/query/${item}`)}}>{item}</h3></div>)}
     </div>
   )
@@ -253,7 +251,7 @@ function Reports(){
     const navigate = useNavigate();
     return(
     <div className='menuList'>
-    <div className='menuTitle blue'><h3>Reports</h3></div>
+    <div className='menuTitle'><h3>Reports</h3></div>
     <div className='menuItem'><h3 onClick={()=>{navigate(`/fixedassetsregister`)}}>Fixed Assets</h3></div>
     <div className='menuItem'><h3 onClick={()=>{navigate(`/reports`)}}>Financial Statements</h3></div>
     <div className='menuItem'><h3 onClick={()=>{navigate(`/reports`)}}>Cost Statement</h3></div>
@@ -360,10 +358,15 @@ function CRUD({method}){
         switch(object){
             case 'Transaction':
                 (output['Balance']!=0)?list.push("Balance not zero"):null
+                output['Line Items'].map((item,index)=>(item['Amount']==0)?list.push(`At line item ${index}, amount is zero`):()=>{})
                 break
             case 'Asset':
                 (output['Date of Capitalisation']=="")?list.push("Enter Date of Capitalisation"):()=>{}
                 ((new Date(output['Date of Capitalisation']))>(new Date()))?list.push("Date of capitalisation cannot be a future date."):()=>{}
+                break
+            case 'Employee' :
+                output['Bank Accounts'].map((item,i)=>(item['Validated']=="No")?list.push(`Bank Account ${i+1} is not validated`):()=>{});
+                ((new Date(output['Date of Birth']))>(new Date()))?list.push("Date of Birth cannot be a future date."):()=>{}
         }
         return list
     }
@@ -384,7 +387,7 @@ function CRUD({method}){
             case 'Transaction':
                 result['Balance'] = SumFieldIfs(data['Line Items'],"Amount",["Debit/ Credit"],["Debit"])-SumFieldIfs(data['Line Items'],"Amount",["Debit/ Credit"],["Credit"])
                 const lineItems = data['Line Items']
-                result['Line Items'] = lineItems.map(item=>({...item,['Cost Center']:(item['Account Type']=="Asset")?"":item['Cost Center']}))
+                result['Line Items'] = lineItems.map(item=>({...item,...{['Cost Center']:(item['Account Type']=="Asset")?"":item['Cost Center'],['Cost per Day']:(item['Amount']/(dayNumber(item['Consumption Time To'])+1-dayNumber(item['Consumption Time From'])))}}))
         }
         return result
     }
@@ -443,7 +446,7 @@ function CRUD({method}){
         if (errorlist.length==0){
         switch (method) {
             case 'Create':
-                newdata = [...collections,output]
+                newdata = [...collections,{...output,["Entry Date"]:new Date().toLocaleDateString()}]
                 break
             case 'Update':
                 newdata = collections.map((item,i)=>(i==id)?output:item)
@@ -458,9 +461,8 @@ function CRUD({method}){
     }
     
     return(
-        <div>
         <div className='queryDisplay'>
-            <h2 className='queryTitle'>{`${method} ${object}`}</h2>
+            <h2>{`${method} ${object}`}</h2>
         {schema.map(field=>
         <div className='queryField'>
         {field['value']=="calculated" && <div className="querySingle"><label>{field['name']}</label><input value={output[field['name']]} disabled={true}/></div>}
@@ -480,8 +482,6 @@ function CRUD({method}){
             {method==="Display" && <><button className='blue' onClick={()=>cancel()}>Back</button></>}
         </div>
         </div>
-        
-        </div>
     )
     
 }
@@ -490,7 +490,7 @@ function Scratch(){
 
     return(
         <>
-        {JSON.stringify(new Intelligence().salary('a'))}
+        <DisplayAsTable collection={new Intelligence().transactionstable()}/>
         </>
     )
 }

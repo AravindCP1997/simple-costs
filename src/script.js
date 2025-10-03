@@ -193,7 +193,7 @@ const objects = {
         "name":"Transaction",
         "collection":"transactions",
         "schema": [
-            {"name": "Entry Date", "datatype":"single", "input":"input", "type":"date", "disabled":true, "use-state":new Date()},
+            {"name": "Entry Date", "value":"calculated"},
             {"name": "Description", "datatype":"single", "input":"input", "type":"text", "use-state":""},
             {"name": "Posting Date", "datatype":"single", "input":"input", "type":"date", "use-state":new Date()},
             {"name": "Document Date", "datatype":"single", "input":"input", "type":"date", "use-state":""},
@@ -220,9 +220,10 @@ const objects = {
                     {"name":"Employee", "datatype":"single","input":"option","options":ListofItems(loadData('employees'),0)},
                     {"name":"Consumption Time From", "datatype":"single","input":"input","type":"date"},
                     {"name":"Consumption Time To", "datatype":"single","input":"input","type":"date"},
+                    {"name":"Cost per Day","value":"calculated","datatype":"single"}
 
                 ],  
-                "use-state":[{"id":0,"Ledger Type":"Asset","General Ledger":"Plant and Machinery","Amount":0,"Debit/ Credit":"Debit","GST":"Input 5%","Cost Center":"Head Office","Asset":"","Material":"","Quantity":"","Location":"","Profit Center":"","Purchase Order":"","Purchase Order Item":"","Sale Order":"","Sale Order Item":"","Consumption Time From":"","Consumption Time To":"","Employee":""}]}
+                "use-state":[{"id":0,"Ledger Type":"Asset","General Ledger":"Plant and Machinery","Amount":0,"Debit/ Credit":"Debit","GST":"Input 5%","Cost Center":"Head Office","Asset":"","Material":"","Quantity":"","Location":"","Profit Center":"","Purchase Order":"","Purchase Order Item":"","Sale Order":"","Sale Order Item":"","Consumption Time From":"","Consumption Time To":"","Employee":"","Cost per Day":0}]}
         ]
     }
 }
