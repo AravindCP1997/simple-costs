@@ -279,44 +279,6 @@ class Company{
     }
 }
 
-class Intelli{
-    constructor(){
-        this.database = Database.loadAll();
-        this.assets = this.database['Asset'];
-        this.assetclasses = this.database['Asset Class']
-    }
-    search(collectionname,key,value,property){
-        const collection = this.database[collectionname]
-        const result = collection.filter(element=>element[key]==value)[0][property]
-        return result
-    }
-    fixedassetsregister(){
-        const register = this.assets.map(asset=>({...asset,['General Ledger']:this.search('Asset Class','Name',asset['Asset Class'],'General Ledger')}))
-        return register
-    }
-    employeeregister(){
-        const employees = Database.load('General Ledger')
-        return employees
-    }
-    transactionstable(){
-        const data = Database.load('Transaction')
-        const fields = ListofItems(objects['Transaction']['schema'],0).filter(item=>item!="Line Items")
-        const table = []
-        for (let i=0;i<data.length;i++) {
-        const newdata = {}
-        fields.map(field=>newdata[field] = data[i][field])
-        data[i]['Line Items'].map(item=>table.push({...newdata,...item}))
-        }
-        return table
-    }
-}
-
-const QuerySchema = {
-    "Financial Statements":[
-        {"field":"Cost Center"}
-    ]
-}
-
 class ReportObject{
     constructor(name){
         this.name = name
@@ -331,4 +293,4 @@ class ReportObject{
     }
 }
 
-export {Intelli,Database,objects,loadData,saveData,ListofItems,SumField,SumFieldIfs,singleFilter, listFilter, exclListFilter, rangeFilter, exclRangeFilter, Company, ReportObject}
+export {Database,objects,loadData,saveData,ListofItems,SumField,SumFieldIfs,singleFilter, listFilter, exclListFilter, rangeFilter, exclRangeFilter, Company, ReportObject}

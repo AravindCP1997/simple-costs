@@ -1,7 +1,55 @@
 import './App.css'
 import { useEffect, useState, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate, useNavigate } from 'react-router-dom';
-import { ListofItems, loadData, saveData, Intelli, Database, objects, SumField, SumFieldIfs, Company, ReportObject, singleFilter, listFilter, exclListFilter, rangeFilter, exclRangeFilter } from './script';
+import { ListofItems, loadData, saveData, Database, objects, SumField, SumFieldIfs, Company, ReportObject, singleFilter, listFilter, exclListFilter, rangeFilter, exclRangeFilter } from './script';
+
+
+function SuperRange(collection,range,from,to){
+    const filtered = collection.filter(item=>item[from]<=range[0] && item[to]>=range[1])
+    return filtered
+}
+
+class Intelligence{
+    constructor(){
+    }
+    loadCollection(object){
+        const collection = objects[object]['collection']
+        const data = loadData(collection)
+        return data
+    }
+    search(collectionname,key,value,property){
+        const collection = this.loadCollection(collectionname)
+        const result = collection.filter(element=>element[key]==value)[0][property]
+        return result
+    }
+    createLedgers(){
+        const list = []
+        const types = ['General Ledger','Asset']
+        types.map(item=>this.loadCollection(item).map(subitem=>list.push({"Name":subitem['Name'],"Type":item})))
+        return list
+    }
+    fixedassetsregister(){
+        const register = this.assets.map(asset=>({...asset,['General Ledger']:this.search('Asset Class','Name',asset['Asset Class'],'General Ledger')}))
+        return register
+    }
+    salary(period){
+        const list = []
+        const employees = this.loadCollection('Employee')
+        employees.map(employee=>list.push({"Personnel No":employee['Name']['First Name']}))
+        return list
+    }
+    transactionstable(){
+        const data = Database.load('Transaction')
+        const fields = ListofItems(objects['Transaction']['schema'],0).filter(item=>item!="Line Items")
+        const table = []
+        for (let i=0;i<data.length;i++) {
+        const newdata = {}
+        fields.map(field=>newdata[field] = data[i][field])
+        data[i]['Line Items'].map(item=>table.push({...newdata,...item}))
+        }
+        return table
+    }
+}
 
 function CompanyInfo(){
     const [editable,seteditable] = useState(false)
@@ -294,55 +342,17 @@ function DisplayAsTable({collection}){
     )
 }
 
-class ControlObject{
-    constructor(name,data, schema){
-        this.name = name;
-        this.schema = schema || objects[this.name]['schema']
-        this.collections = loadData(objects[this.name]['collection'])
-        this.data = data || this.defaults();
-        this.error = []
-    }
-    output(){
-        let data = {...this.data}
-        switch(this.name){
-            case 'Employee':
-                const birthdate = new Date(this.data['Date of Birth'])
-                const today = new Date()
-                const difference = today.getTime() - birthdate.getTime()
-                const oneyear = 1000*60*60*24*365.25
-                data['Age'] = Math.floor(difference/oneyear)
-                const oldaccounts = this.data['Bank Accounts']
-                const newaccounts = oldaccounts.map(account=>({...account,['Validated']:(account['Account Number']==account['Confirm Account Number'])?"Yes":"No"}))
-                data['Bank Accounts'] = newaccounts
-                break
-            case 'Transaction':
-                data['Balance'] = SumFieldIfs(this.data['Line Items'],"Amount",["Debit/ Credit"],["Debit"])-SumFieldIfs(this.data['Line Items'],"Amount",["Debit/ Credit"],["Credit"])
-                const lineItems = this.data['Line Items']
-                data['Line Items'] = lineItems.map(item=>({...item,['Cost Center']:(item['Account Type']=="Asset")?"":item['Cost Center']}))
-        }
-        return data;
-    }
-    defaults(){
-        const defaults = {}
-        this.schema.map(item=>defaults[item['name']]=item['use-state']);
-        return defaults;
-    }
-}
-
-function CRUD(){
+function CRUD({method}){
     const navigate = useNavigate()
-    const {object} = useParams()
+    const {object,id} = useParams()
+    const collection = objects[object]['collection']
+    const collections = loadData(collection)
     const schema = objects[object]['schema']
     const defaults = {}
     schema.map(item=>defaults[item['name']]=item['use-state']);
-    const [data,setdata] = useState(defaults)
+    const [data,setdata] = (method==="Create")?useState(defaults):useState(collections[id])
     const output = process()
-    const collection = objects[object]['collection']
-    const collections = loadData(collection)
-    const list = ListofItems(collections,0)
-    const [selected,setselected] = useState(0)
-    const [method,setmethod] = useState('Create')
-    const [editable,seteditable] = useState(false)
+    const editable = (method==="Create" || method==="Update")?true:false
     
     function process(){
         const result = data
@@ -363,25 +373,6 @@ function CRUD(){
                 result['Line Items'] = lineItems.map(item=>({...item,['Cost Center']:(item['Account Type']=="Asset")?"":item['Cost Center']}))
         }
         return result
-    }
-
-    function submitQuery(method){
-        switch (method){
-            case 'Create':
-                setdata(defaults)
-                seteditable(true)
-                break
-            case 'Edit':
-                setdata(collections[selected])
-                seteditable(true)
-                break
-            case 'View':
-                setdata(collections[selected])
-                seteditable(false)
-                break
-        }
-        setmethod(method)
-
     }
 
     function handleChange1(field,e){
@@ -427,21 +418,29 @@ function CRUD(){
         }))
         
     }
+
+    function cancel(){
+        navigate(`/query/${object}`)
+        window.location.reload()
+    }
+
+    function save(){
+        let newdata = []
+        switch (method) {
+            case 'Create':
+                newdata = [...collections,output]
+                break
+            case 'Update':
+                newdata = collections.map((item,i)=>(i==id)?output:item)
+                break
+        }
+        saveData(newdata,collection)
+        alert(`${object} saved!`)
+        cancel()
+    }
     
     return(
         <div>
-        <div>
-        <h2>{object}</h2>
-        <select value={selected} onChange={(e)=>setselected(e.target.value)}>
-            {list.map((option,i)=><option value={i}>{option}</option>)}
-        </select>
-        <div className='queryButtons'>
-            <button onClick={()=>submitQuery("View")}>View</button>
-            <button onClick={()=>submitQuery("Edit")}>Edit</button>
-            <button onClick={()=>submitQuery("Deactivate")}>Deactivate</button>
-            Or, <button onClick={()=>submitQuery("Create")}>Create {object}</button>
-        </div>
-        </div>
         <div className='queryDisplay'>
             <h2 className='queryTitle'>{`${method} ${object}`}</h2>
         {schema.map(field=>
@@ -452,7 +451,9 @@ function CRUD(){
         {field['datatype']=="collection" && <><label>{field['name']}</label><div className='queryTable'><table><thead><tr><th className='queryCell'></th>{field['structure'].map(subfield=><th className='queryCell'>{subfield['name']}</th>)}</tr></thead>{output[field['name']].map((item,index)=><tbody><tr><td className='queryCell'><button disabled={(field['disabled']||!editable)} onClick={(e)=>removeItem(field['name'],index,e)}>-</button></td>{field['structure'].map(subfield=><>{subfield['datatype']=="single" && <td className='queryCell'>{subfield['value']=="calculated" && <input value={output[field['name']][index][subfield['name']]} disabled={true}/>} {subfield['input']=="input"&& <input disabled={(field['disabled']||!editable)} className='queryCell' onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} type={subfield['type']} value={output[field['name']][index][subfield['name']]}/>}{subfield['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</td>}</>)}</tr></tbody>)}</table></div><div className="queryButtons"><button disabled={(field['disabled']||!editable)} onClick={(e)=>addItem(field['name'],field['use-state'][0],e)} className='blue'>Add</button></div></>}
         </div>)}
         <div className='queryButtons'>
-
+            {method==="Create" && <><button className='blue' onClick={()=>cancel()}>Cancel</button><button className='green' onClick={()=>save()}>Save</button></>}
+            {method==="Update" && <><button className='blue' onClick={()=>cancel()}>Cancel</button><button className='green' onClick={()=>save()}>Update</button></>}
+            {method==="Display" && <><button className='blue' onClick={()=>cancel()}>Back</button></>}
         </div>
         </div>
         </div>
@@ -464,7 +465,7 @@ function Scratch(){
 
     return(
         <>
-        <DisplayAsTable collection={exclRangeFilter(new Intelli().transactionstable(),"Amount",[[0,1]])}/>
+        {JSON.stringify(new Intelligence().salary('a'))}
         </>
     )
 }
