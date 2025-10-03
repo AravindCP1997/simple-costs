@@ -260,3 +260,15 @@
 .assets{
   width:100%;
 }
+
+@media screen and (max-width: 500px){
+ .home{
+  gap:30px;
+  min-height: unset;
+ }
+ 
+  .actions{
+  display:grid;
+  grid-template-columns: 50% 50%;
+ } 
+}
