@@ -106,10 +106,10 @@ class Intelligence{
         return result
     }
     createLedgers(){
-        const list = [{"Name":"","Type":"Unspecified"}]
+        const list = [{"Name":"","Type":""}]
         const types = ['General Ledger','Asset','Vendor','Customer','Material']
         for (let i=0;i<types.length;i++){
-            (this.itemsInCollection(types[i])>0)?this.loadCollection(types[i]).map(item=>list.push({"Name":`${types[i]} - ${item["Name"]}`,"Type":types[i]})):()=>{}
+            (this.itemsInCollection(types[i])>0)?this.loadCollection(types[i]).map(item=>list.push({"Name":`${item["Name"]}`,"Type":types[i]})):()=>{}
         }
         return list
     }
@@ -134,6 +134,19 @@ class Intelligence{
         }
         return table
     }
+    depreciation(asset,period){
+        const [from,to] = period
+        const days = dayNumber(to) - dayNumber(from) + 1
+        let openingWDV = 98387
+        const SV = asset['Salvage Value']
+        const UL = asset['Useful Life']
+        const capDate = asset['Date of Capitalisation']
+        const spendUL = (dayNumber(from)-dayNumber(capDate))/365
+        const remainingUL = UL - spendUL
+        const depreciation = (openingWDV-SV)/remainingUL * days/365
+        return (depreciation)
+
+    }
 }
 
 
@@ -141,12 +154,14 @@ const objects = {
     "Asset":{
         "name":"Asset",
         "schema": [
+            {"name":"Code", "value":"calculated"},
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
             {"name": "Asset Class", "datatype":"single", "input":"option", "options":ListofItems(loadData("assetclasses"),0),"use-state":""},
             {"name": "Cost Center", "datatype":"single", "input":"option", "options":ListofItems(loadData("costcenters"),0),"use-state":""},
             {"name": "Useful Life", "datatype":"single", "input":"input", "type":"number","use-state":0},
             {"name": "Salvage Value", "datatype":"single", "input":"input", "type":"number","use-state":0},
             {"name": "Date of Capitalisation", "datatype":"single", "input":"input", "type":"date","use-state":0},
+            {"name": "Date of Removal", "datatype":"single", "input":"input", "type":"date","use-state":0},
             {"name": "Income Tax Depreciation Rate", "datatype":"single", "input":"input", "type":"number","use-state":0}
         ],
         "collection":'assets'
@@ -155,7 +170,8 @@ const objects = {
         "name":"Asset Class",
         "schema": [
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "General Ledger", "datatype":"single", "input":"option", "options":ListofItems(loadData('generalledgers'),0), "use-state":""}
+            {"name": "General Ledger - Asset", "datatype":"single", "input":"option", "options":ListofItems(loadData('generalledgers'),0), "use-state":""},
+            {"name": "General Ledger - Depreciation", "datatype":"single", "input":"option", "options":ListofItems(loadData('generalledgers'),0), "use-state":""}
         ],
         "collection":"assetclasses"
     },
@@ -202,7 +218,7 @@ const objects = {
         "schema":[
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
             {"name": "Presentation", "datatype":"single", "input":"option", "options":["Income", "Expense", "Asset", "Liability", "Equity"], "use-state":"Income"},
-            {"name":"Ledger Type","datatype":"single","input":"option","options":["Fixed Asset", "Cost Element", "Customer", "Material", "Vendor","General"]}
+            {"name":"Ledger Type","datatype":"single","input":"option","options":["Asset", "Depreciation", "Cost Element", "Customer", "Material", "Vendor","General"]}
         ],
         "collection":"generalledgers"
     },
@@ -545,12 +561,7 @@ export function Record(){
   return(
     <div className='menuList'>
       <div className='menuTitle'><h3>Record</h3></div>
-      <div className='menuItem' onClick={()=>{navigate(`/query/Transaction`)}}><h3>View</h3></div>
       <div className='menuItem' onClick={()=>{navigate(`/create/Transaction`)}}><h3>Transaction</h3></div>
-      <div className='menuItem' onClick={()=>{navigate(`/create/Transaction`)}}><h3>Salary</h3></div>
-      <div className='menuItem' onClick={()=>{navigate(`/create/Transaction`)}}><h3>Depreciation</h3></div>
-      <div className='menuItem' onClick={()=>{navigate(`/create/Transaction`)}}><h3>Cost Absorption</h3></div>
-      <div className='menuItem' onClick={()=>{navigate(`/create/Transaction`)}}><h3>Cost Settlement</h3></div>
     </div>
   )
 }
@@ -681,6 +692,7 @@ function CRUD({method}){
             case 'Transaction':
                 (output['Balance']!=0)?list.push("Balance not zero"):null
                 output['Line Items'].map((item,index)=>(item['Amount']==0)?list.push(`At line item ${index}, amount is zero`):()=>{})
+                output['Line Items'].map((item,index)=>(item['Account Type']=="Asset"&&item['Profit Center']=="")?list.push(`At line item ${index}, Profit Center required`):()=>{})
                 break
             case 'Asset':
                 (output['Date of Capitalisation']=="")?list.push("Enter Date of Capitalisation"):()=>{}
@@ -831,7 +843,7 @@ function Scratch(){
 
     return(
         <>
-        {JSON.stringify(new Intelligence().ledgerType("Asset - Fork Lift Hitachi"))}
+        {new Intelligence().depreciation({'Useful Life':5,"Salvage Value":5000,'Date of Capitalisation':"2025-10-01"},["2025-11-01","2025-11-30"])}
         </>
     )
 }

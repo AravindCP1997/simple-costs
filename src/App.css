@@ -54,6 +54,7 @@
   padding: 10px;
   border-radius: 25px;
   border:2px solid white;
+  transition:0.5s
 }
 
 .innerContainer{
@@ -145,6 +146,7 @@
 .menuItem{
   background: white;
   color:var(--blue);
+  transition: 0.5s;
 }
 
 .menuTitle{
@@ -196,15 +198,15 @@
   flex-direction: column;
   gap:5px;
   width:100%;
-  background: white;
   overflow: auto;
+  background:var(--lightgray) ;
+  border-radius: 20px;
 }
 
 .queryField{
-  padding:10px;
   position:relative;
   background: white;
-  border-radius: 20px;
+  padding: 5px;
 }
 
 .querySingle{
@@ -227,8 +229,8 @@
   border:1px solid black;
   text-align: center;
   border-radius: 0;
-  width: 150px;
-  padding:5px;
+  font-size: 12px;
+  color:var(--blue)
 }
 
 .display{
