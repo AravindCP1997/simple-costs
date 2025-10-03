@@ -353,6 +353,20 @@ function CRUD({method}){
     const [data,setdata] = (method==="Create")?useState(defaults):useState(collections[id])
     const output = process()
     const editable = (method==="Create" || method==="Update")?true:false
+    const errorlist = findError()
+
+    function findError(){
+        const list = []
+        switch(object){
+            case 'Transaction':
+                (output['Balance']!=0)?list.push("Balance not zero"):null
+                break
+            case 'Asset':
+                (output['Date of Capitalisation']=="")?list.push("Enter Date of Capitalisation"):()=>{}
+                ((new Date(output['Date of Capitalisation']))>(new Date()))?list.push("Date of capitalisation cannot be a future date."):()=>{}
+        }
+        return list
+    }
     
     function process(){
         const result = data
@@ -426,6 +440,7 @@ function CRUD({method}){
 
     function save(){
         let newdata = []
+        if (errorlist.length==0){
         switch (method) {
             case 'Create':
                 newdata = [...collections,output]
@@ -437,6 +452,9 @@ function CRUD({method}){
         saveData(newdata,collection)
         alert(`${object} saved!`)
         cancel()
+        } else {
+        alert("There are still errors unresolved")
+        }
     }
     
     return(
@@ -450,12 +468,19 @@ function CRUD({method}){
         {field['datatype']=="object" && <div><label>{field['name']}</label>{field['structure'].map(subfield=><>{subfield['datatype']=="single"&&<div className='querySingle'><label>{subfield['name']}</label>{subfield['input']=="input" && <input type={subfield['type']} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]} disabled={(field['disabled']||!editable)}/>}{subfield['input'] == "option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}</>)}</div>}
         {field['datatype']=="collection" && <><label>{field['name']}</label><div className='queryTable'><table><thead><tr><th className='queryCell'></th>{field['structure'].map(subfield=><th className='queryCell'>{subfield['name']}</th>)}</tr></thead>{output[field['name']].map((item,index)=><tbody><tr><td className='queryCell'><button disabled={(field['disabled']||!editable)} onClick={(e)=>removeItem(field['name'],index,e)}>-</button></td>{field['structure'].map(subfield=><>{subfield['datatype']=="single" && <td className='queryCell'>{subfield['value']=="calculated" && <input value={output[field['name']][index][subfield['name']]} disabled={true}/>} {subfield['input']=="input"&& <input disabled={(field['disabled']||!editable)} className='queryCell' onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} type={subfield['type']} value={output[field['name']][index][subfield['name']]}/>}{subfield['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</td>}</>)}</tr></tbody>)}</table></div><div className="queryButtons"><button disabled={(field['disabled']||!editable)} onClick={(e)=>addItem(field['name'],field['use-state'][0],e)} className='blue'>Add</button></div></>}
         </div>)}
+        <div className='queryField'>
+            <label>{`${errorlist.length} Error(s)`}</label>
+            <ul>
+                {errorlist.map(item=><li>{item}</li>)}
+                </ul>
+        </div>
         <div className='queryButtons'>
             {method==="Create" && <><button className='blue' onClick={()=>cancel()}>Cancel</button><button className='green' onClick={()=>save()}>Save</button></>}
             {method==="Update" && <><button className='blue' onClick={()=>cancel()}>Cancel</button><button className='green' onClick={()=>save()}>Update</button></>}
             {method==="Display" && <><button className='blue' onClick={()=>cancel()}>Back</button></>}
         </div>
         </div>
+        
         </div>
     )
     

@@ -190,7 +190,7 @@
   flex-direction: column;
   gap:5px;
   width:100%;
-  overflow: auto;
+  background: white;
 }
 
 .queryField{
