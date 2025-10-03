@@ -39,21 +39,21 @@
   position:fixed;
   top:0;
   height:100%;
-  width:min(100%,1000px);
+  width:min(100%,850px);
   display: flex;
   flex-direction: column;
   gap:30px;
-  padding:5px;
+  padding:20px;
 }
 
 .searchBar{
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: left;
   gap:10px;
-  padding: 5px;
-  background: var(--blue);
+  padding: 10px;
   border-radius: 25px;
+  border:2px solid white;
 }
 
 .innerContainer{
@@ -65,15 +65,23 @@
 }
 
 .home{
-  padding:20px;
-  padding-top:50px;
+  padding:50px;
+  background: white;
+  border-radius: 25px;
+  width:100%;
+  display:flex;
+  flex-direction: column;
+  gap:50px;
+  min-height: 450px;
+  justify-content: center;
+
 }
 
 .title{
-  border-bottom:1px solid var(--blue);
-  padding:20px;
+  text-align: center;
   color:var(--blue);
   cursor: pointer;
+  margin: 0;
 
   .reg{
     opacity:0;
@@ -129,7 +137,6 @@
   text-align: center;
   cursor: pointer;
   border-radius: 10px;
-  aspect-ratio: 3/1;
   display: flex;
   flex-direction: column;
   justify-content: center;
