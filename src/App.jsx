@@ -137,15 +137,51 @@ class Intelligence{
     depreciation(asset,period){
         const [from,to] = period
         const days = dayNumber(to) - dayNumber(from) + 1
-        let openingWDV = 98387
+        const openingWDV = this.openingWDV(asset['Code'],from)
+        const transaction = this.transactions(asset['Code'],period)
         const SV = asset['Salvage Value']
         const UL = asset['Useful Life']
         const capDate = asset['Date of Capitalisation']
         const spendUL = (dayNumber(from)-dayNumber(capDate))/365
         const remainingUL = UL - spendUL
-        const depreciation = (openingWDV-SV)/remainingUL * days/365
+        const depreciation = (openingWDV+transaction-SV)/remainingUL * days/365
         return (depreciation)
 
+    }
+    openingWDV(asset,date){
+        const data = this.transactionstable()
+        const filtered = data.filter(item=>item['Account'] == asset && item['Posting Date'] < date)
+        return filtered
+    }
+    transactions(account,period){
+        const [from,to] = period
+        const data = this.transactionstable()
+        const filtered = data.filter(item=>item['Account'] == account && item['Posting Date'] <= to && item['Posting Date'] >= from)
+        return filtered
+    }
+    assetLineItem(data){
+        const notreq = ["Cost Center","Location","Quantity","Cost Object","Purchase Order","Service Order","Purchase Order Item","Service Order Item","Employee","Consumption Time From","Consumption Time To","Cost per Day"]
+        const result = {...data}
+        result["Profit Center"] = "Profit Center"
+        notreq.map(item=>result[item]="")
+        return result
+    }
+    assetLineItemError(data,index){
+        const list = [];
+        (data['Amount']==0)?list.push(`At line item ${index}, amount is zero. Please remove line item if not required`):()=>{}
+        return list
+    }
+    lineItemCalc(data){
+        let result = {...data}
+        const type = this.ledgerType(data['Account']);
+        result['Account Type'] = type;
+        (type=="Asset")?result=this.assetLineItem(result):()=>{}
+        return(result)
+    }
+    lineItemErrors(data,index){
+        let list = [];
+        (data['Account Type']=="Asset")?list = this.assetLineItemError(data,index):()=>{}
+        return list
     }
 }
 
@@ -691,8 +727,7 @@ function CRUD({method}){
         switch(object){
             case 'Transaction':
                 (output['Balance']!=0)?list.push("Balance not zero"):null
-                output['Line Items'].map((item,index)=>(item['Amount']==0)?list.push(`At line item ${index}, amount is zero`):()=>{})
-                output['Line Items'].map((item,index)=>(item['Account Type']=="Asset"&&item['Profit Center']=="")?list.push(`At line item ${index}, Profit Center required`):()=>{})
+                output['Line Items'].map((item,index)=>list.push(...new Intelligence().lineItemErrors(item,index)))
                 break
             case 'Asset':
                 (output['Date of Capitalisation']=="")?list.push("Enter Date of Capitalisation"):()=>{}
@@ -721,7 +756,7 @@ function CRUD({method}){
             case 'Transaction':
                 result['Balance'] = SumFieldIfs(data['Line Items'],"Amount",["Debit/ Credit"],["Debit"])-SumFieldIfs(data['Line Items'],"Amount",["Debit/ Credit"],["Credit"])
                 const lineItems = data['Line Items']
-                result['Line Items'] = lineItems.map(item=>({...item,...{['Account Type']:(new Intelligence().ledgerType(item['Account'])),['Cost Center']:(item['Account Type']=="Asset")?"":item['Cost Center'],['Cost per Day']:(item['Amount']/(dayNumber(item['Consumption Time To'])+1-dayNumber(item['Consumption Time From'])))}}))
+                result['Line Items'] = lineItems.map(item=>new Intelligence().lineItemCalc(item))
         }
         return result
     }
@@ -843,7 +878,7 @@ function Scratch(){
 
     return(
         <>
-        {new Intelligence().depreciation({'Useful Life':5,"Salvage Value":5000,'Date of Capitalisation':"2025-10-01"},["2025-11-01","2025-11-30"])}
+        {JSON.stringify(new Intelligence().lineItemErrors({'Account':"Fork Lift Hitachi",'Account Type':"Asset","Amount":0},3))}
         </>
     )
 }
