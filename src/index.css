@@ -11,7 +11,7 @@
 html{
   padding:10px;
   padding-top:5%;
-  background: var(--blue);
+  background: var(--lightgray)
 }
 
 :root{
@@ -19,7 +19,7 @@ html{
   --lightblue: rgb(80,150,220);
   --green:rgb(0,176,80);
   --red:rgb(255,0,30);
-  --lightgray:rgb(247,247,245);
+  --lightgray:rgb(240,240,230);
 }
 
 a{

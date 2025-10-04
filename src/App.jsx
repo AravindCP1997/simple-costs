@@ -137,27 +137,42 @@ class Intelligence{
     depreciation(asset,period){
         const [from,to] = period
         const days = dayNumber(to) - dayNumber(from) + 1
-        const openingWDV = this.openingWDV(asset['Code'],from)
-        const transaction = this.transactions(asset['Code'],period)
+        const openingWDV = this.openingWDV(asset['Name'],from)
+        const transaction = this.transactions(asset['Name'],period)
         const SV = asset['Salvage Value']
         const UL = asset['Useful Life']
         const capDate = asset['Date of Capitalisation']
         const spendUL = (dayNumber(from)-dayNumber(capDate))/365
         const remainingUL = UL - spendUL
-        const depreciation = (openingWDV+transaction-SV)/remainingUL * days/365
+        const depreciation = ((openingWDV+transaction-SV)/remainingUL * days/365).toFixed(2)
         return (depreciation)
 
     }
     openingWDV(asset,date){
         const data = this.transactionstable()
         const filtered = data.filter(item=>item['Account'] == asset && item['Posting Date'] < date)
-        return filtered
+        const WDV = SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Credit"])
+        return WDV
     }
     transactions(account,period){
         const [from,to] = period
         const data = this.transactionstable()
         const filtered = data.filter(item=>item['Account'] == account && item['Posting Date'] <= to && item['Posting Date'] >= from)
-        return filtered
+        const amount = SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Credit"])
+        return amount
+    }
+    generalledger(data){
+        const result = {...data};
+        (result['Ledger Type']=="Asset")?result['Presentation'] = "Asset":()=>{}
+        (result['Ledger Type']=="Depreciation")?result['Presentation'] = "Expense":()=>{}
+        (result['Ledger Type']=="Cost Element")?result['Presentation'] = "Expense":()=>{}
+        (result['Ledger Type']=="Material")?result['Presentation'] = "Asset":()=>{}
+        return result
+    }
+    generalledgerError(data){
+        const list = [];
+        (data['Name']=="")?list.push(`Provide a name for the asset`):()=>{}
+        return list
     }
     assetLineItem(data){
         const notreq = ["Cost Center","Location","Quantity","Cost Object","Purchase Order","Service Order","Purchase Order Item","Service Order Item","Employee","Consumption Time From","Consumption Time To","Cost per Day"]
@@ -183,6 +198,75 @@ class Intelligence{
         (data['Account Type']=="Asset")?list = this.assetLineItemError(data,index):()=>{}
         return list
     }
+    depreciationRun(period){
+        const list = [];
+        const [from,to] = period
+        const assets = this.loadCollection('Asset')
+        assets.map(asset=>list.push({"Name":asset['Name'],"Opening WDV":this.openingWDV(asset['Name'],from),"Transactions":this.transactions(asset['Name'],period),"Depreciation":this.depreciation(asset,period),"Cost Center":asset["Cost Center"]}))
+        return list
+    }
+    depreciationPOST(period){
+        const [from,to] = period
+        const data = this.depreciationRun(period);
+        const lines = []
+        let entry = {};
+        entry['Posting Date'] = to;
+        entry['Document Date'] = to;
+        entry['Description'] = `Depreciation from ${from} to ${to}.`
+        data.map(item=>lines.push(...[{'Account':"Depreciation","Account Type":"General Ledger","Amount":item['Depreciation'],"Debit/ Credit":"Debit","Cost Center":item["Cost Center"]},{'Account':item['Name'],'Account Type':"Asset",'Amount':item['Depreciation'],"Debit/Credit":"Credit"}]))
+        entry['Line Items'] = lines;
+    }
+}
+
+function ReportQuery(){
+    const [query,setquery] = useState([0,0])
+    const [submittedQuery,setsubmitted] = useState(["2025-06-23","2026-03-31"])
+    const handleChange = (e,i)=>{
+        const {value} = e.target
+        setquery(prevdata=>prevdata.map((item,index)=>(i==index)?value:item))
+    }
+
+    const submitQuery = ()=>{
+        setsubmitted(query)
+    }
+
+    const Intel = new Intelligence()
+
+    
+    const data = Intel.depreciationRun(submittedQuery)
+    const entry = Intel.depreciationPOST(submittedQuery)
+    
+
+    return(
+        <div>
+            <div>
+            <div>
+                <label>Period</label>
+                <label>from <input value={query[0]} onChange={(e)=>handleChange(e,0)} type="date"></input></label>
+                <label>to <input value={query[1]} onChange={(e)=>handleChange(e,1)} type="date"></input></label></div>
+                <button onClick={submitQuery}>Submit</button>
+                </div>
+                {JSON.stringify(query)}
+                <div>
+                    <h2>Depreciation Run</h2>
+                    <p>{`for the period from ${submittedQuery[0]} to ${submittedQuery[1]}`}</p>
+                    <DisplayAsTable collection={data}/>
+                    <button>Post</button>
+                </div>
+        </div>
+    )
+}
+
+class GL {
+    constructor(code){
+        this.code = code
+    }
+    opening(date){
+        const data = new Intelligence().transactionstable()
+        const filtered = data.filter(item=>item['General Ledger'] == this.code && item['Posting Date'] < date)
+        const opening = SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Credit"])
+        return opening
+    }
 }
 
 
@@ -197,8 +281,7 @@ const objects = {
             {"name": "Useful Life", "datatype":"single", "input":"input", "type":"number","use-state":0},
             {"name": "Salvage Value", "datatype":"single", "input":"input", "type":"number","use-state":0},
             {"name": "Date of Capitalisation", "datatype":"single", "input":"input", "type":"date","use-state":0},
-            {"name": "Date of Removal", "datatype":"single", "input":"input", "type":"date","use-state":0},
-            {"name": "Income Tax Depreciation Rate", "datatype":"single", "input":"input", "type":"number","use-state":0}
+            {"name": "Date of Removal", "datatype":"single", "input":"input", "type":"date","use-state":0}
         ],
         "collection":'assets'
     },
@@ -252,6 +335,7 @@ const objects = {
     "General Ledger":{
         "name":"General Ledger",
         "schema":[
+            {"name":"Code", "value":"calculated"},
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
             {"name": "Presentation", "datatype":"single", "input":"option", "options":["Income", "Expense", "Asset", "Liability", "Equity"], "use-state":"Income"},
             {"name":"Ledger Type","datatype":"single","input":"option","options":["Asset", "Depreciation", "Cost Element", "Customer", "Material", "Vendor","General"]}
@@ -330,10 +414,12 @@ const objects = {
             {"name": "Line Items", "datatype":"collection", "structure":
                 [
                     {"name":"Account", "datatype":"single","input":"option","options":ListofItems(new Intelligence().createLedgers(),0),"use-State":""},
+                    {"name":"General Ledger","value":"calculated","datatype":"single"},
                     {"name":"Account Type", "datatype":"single","value":"calculated"},
                     {"name":"Amount", "datatype":"single","input":"input","type":"number"},
                     {"name":"Debit/ Credit", "datatype":"single","input":"option","options":["Debit", "Credit"]},
                     {"name":"GST", "datatype":"single","input":"option","options":["Input 5%", "Input 12%", "Input 18%", "Input 40%","Output 5%", "Output 12%", "Output 18%", "Output 40%"]},
+                    {"name":"Description", "datatype":"single","input":"input","type":"text"},
                     {"name":"Cost Center", "datatype":"single","input":"input","type":"text"},
                     {"name":"Quantity", "datatype":"single","input":"option","options":[]},
                     {"name":"Location", "datatype":"single","input":"option","options":ListofItems(loadData('locations'),0)},
@@ -349,7 +435,7 @@ const objects = {
                     {"name":"Cost per Day","value":"calculated","datatype":"single"}
 
                 ],  
-                "use-state":[{"id":0,"Account":"","Account Type":"Asset","General Ledger":"Plant and Machinery","Amount":0,"Debit/ Credit":"Debit","GST":"Input 5%","Cost Center":"Head Office","Asset":"","Material":"","Quantity":"","Location":"","Profit Center":"","Purchase Order":"","Purchase Order Item":"","Sale Order":"","Sale Order Item":"","Consumption Time From":"","Consumption Time To":"","Employee":"","Cost per Day":0}]}
+                "use-state":[{"id":0,"Account":"","Account Type":"","General Ledger":"","Amount":0,"Debit/ Credit":"Debit","GST":"","Cost Center":"","Asset":"","Material":"","Quantity":"","Location":"","Profit Center":"","Purchase Order":"","Purchase Order Item":"","Sale Order":"","Sale Order Item":"","Consumption Time From":"","Consumption Time To":"","Employee":"","Cost per Day":0}]}
         ]
     }
 }
@@ -621,10 +707,6 @@ function Reports(){
     return(
     <div className='menuList'>
     <div className='menuTitle'><h3>Reports</h3></div>
-    <div className='menuItem'><h3 onClick={()=>{navigate(`/fixedassetsregister`)}}>Fixed Assets</h3></div>
-    <div className='menuItem'><h3 onClick={()=>{navigate(`/reports`)}}>Financial Statements</h3></div>
-    <div className='menuItem'><h3 onClick={()=>{navigate(`/reports`)}}>Cost Statement</h3></div>
-    <div className='menuItem'><h3 onClick={()=>{navigate(`/reports`)}}>Form 16</h3></div>
     <div className='menuItem'><h3 onClick={()=>{navigate(`/scratch`)}}>Scratch</h3></div>
     </div>
     )
@@ -729,6 +811,8 @@ function CRUD({method}){
                 (output['Balance']!=0)?list.push("Balance not zero"):null
                 output['Line Items'].map((item,index)=>list.push(...new Intelligence().lineItemErrors(item,index)))
                 break
+            case 'General Ledger':
+                list.push(...new Intelligence().generalledgerError(output))
             case 'Asset':
                 (output['Date of Capitalisation']=="")?list.push("Enter Date of Capitalisation"):()=>{}
                 ((new Date(output['Date of Capitalisation']))>(new Date()))?list.push("Date of capitalisation cannot be a future date."):()=>{}
@@ -741,8 +825,11 @@ function CRUD({method}){
     }
     
     function process(){
-        const result = data
+        let result = data
         switch(object){
+            case 'General Ledger':
+                result = new Intelligence().generalledger(result)
+                break
             case 'Employee':
                 const birthdate = new Date(data['Date of Birth'])
                 const today = new Date()
@@ -877,9 +964,10 @@ function CRUD({method}){
 function Scratch(){
 
     return(
-        <>
-        {JSON.stringify(new Intelligence().lineItemErrors({'Account':"Fork Lift Hitachi",'Account Type':"Asset","Amount":0},3))}
-        </>
+        <div>
+        {JSON.stringify(new Intelligence().depreciationPOST(["2026-06-23","2027-06-22"]))}
+        <ReportQuery/>
+        </div>
     )
 }
 
