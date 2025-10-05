@@ -11,7 +11,9 @@
 html{
   padding:10px;
   padding-top:5%;
-  background: var(--lightgray)
+  background: var(--lightgray);
+  background-image: url('../texture.png');
+  background-size: 30%;
 }
 
 :root{

@@ -19,6 +19,12 @@ const ListofItems  = (collection,n) => {
     return List
 }
 
+const ListItems = (collection,key)=>{
+    const list = []
+    collection.map(item=>list.push(item[key]))
+    return list
+}
+
 function SumField(collection,field){
     let subtotal = 0;
     collection.map(item=>subtotal+=parseFloat(item[field]))
@@ -68,6 +74,64 @@ function exclRangeFilter(collection,field,list){
     return filtered
 }
 
+class Database{
+    static loadAll(){
+        const database = {}
+        const keys = Object.keys(objects)
+        keys.map(item=>database[objects[item]['name']]=loadData(objects[item]['collection']))
+        return database
+    }
+    static load(collection){
+        const collectionname = {
+            "Asset":"assets",
+            "Asset Class":"assetclasses", 
+            "Cost Center":"costcenters", 
+            "Currency":"currencies",
+            "Customer":"customers",
+            "Employee":"employees",
+            "General Ledger":"generalledgers",
+            "Location":"locations",
+            "Material":"materials",
+            "Profit Center":"profitcenters",
+            "Purchase Order":"purchaseorders",
+            "Segment":"segments",
+            "Sale Order":"saleorders",
+            "Vendor":"vendors"
+        };
+        const database=loadData(collectionname[collection])
+        return database
+    }
+    static add(collection,data){
+        const database=loadData(objects[collection]['collection'])
+        const newdatabase = [...database,data]
+        saveData(newdatabase,objects[collection]['collection'])
+    }
+    static update(collection,id,data){
+        const database=loadData(objects[collection]['collection'])
+        const newdatabase = database.map((item,index)=>(index===id?data:item))
+        saveData(newdatabase,objects[collection]['collection'])
+    }
+    static removeAll(collection){
+        saveData([],objects[collection]['collection'])
+    }
+    static remove(collection,id){
+        const database=loadData(objects[collection]['collection'])
+        const newdatabase = database.filter((item,index)=>(index!==id))
+        saveData(newdatabase,objects[collection]['collection'])
+    }
+}
+
+class GeneralLedger{
+    constructor(name){
+        this.name = name;
+        this.data = GeneralLedger.data.filter(item=>item["Name"]==this.name)[0]
+    }
+    static data = Database.load("General Ledger")
+    static list(){
+        const list = ListItems(this.data,"Name")
+        return list
+    }
+}
 
 class Intelligence{
     constructor(){
@@ -183,7 +247,23 @@ class Intelligence{
     }
     assetLineItemError(data,index){
         const list = [];
-        (data['Amount']==0)?list.push(`At line item ${index}, amount is zero. Please remove line item if not required`):()=>{}
+        (data['Amount']==0)?list.push(`At line item ${index+ 1}, amount is zero.`):()=>{}
+        return list
+    }
+    generalLedgerLineItem(data){
+        const notreq = ["Location","Quantity"]
+        const result = {...data};
+        (!["Cost Element","Depreciation"].includes(new GeneralLedger(data['Account']).data['Ledger Type']))?notreq.push(...['Cost Center','Cost Object']):()=>{}
+        result["General Ledger"] = result['Account']
+        notreq.map(item=>result[item]="")
+        return result
+    }
+    generalLedgerLineItemError(data,index){
+        const list = [];
+        const required = ['Amount'];
+        (["Cost Element","Depreciation"].includes(new GeneralLedger(data['Account']).data['Ledger Type']))?required.push(...['Consumption Time From','Consumption Time To']):()=>{}
+        required.map(item=>(data[item]=="")?list.push(` At line item ${index+1}, ${item} is required`):()=>{});
+        (["Cost Element","Depreciation"].includes(new GeneralLedger(data['Account']).data['Ledger Type']) && data['Cost Center']=="" && data["Cost Object"]=="")?list.push(`At line item ${index +1 }, Cost Center or Cost Object is required`):()=>{}
         return list
     }
     lineItemCalc(data){
@@ -191,11 +271,13 @@ class Intelligence{
         const type = this.ledgerType(data['Account']);
         result['Account Type'] = type;
         (type=="Asset")?result=this.assetLineItem(result):()=>{}
+        (type=="General Ledger")?result=this.generalLedgerLineItem(result):()=>{}
         return(result)
     }
     lineItemErrors(data,index){
         let list = [];
         (data['Account Type']=="Asset")?list = this.assetLineItemError(data,index):()=>{}
+        (data['Account Type']=="General Ledger")?list = this.generalLedgerLineItemError(data,index):()=>{}
         return list
     }
     depreciationRun(period){
@@ -268,6 +350,7 @@ class GL {
         return opening
     }
 }
+
 
 
 const objects = {
@@ -378,6 +461,15 @@ const objects = {
         ],
         "collection":"segments"
     },
+    "Service":{
+        "name":"Service",
+        "schema":[
+            {"name":"Name","datatype":"single","input":"input","type":"text","use-State":""},
+            {"name":"Unit","datatype":"single","input":"input","type":"text","use-State":""},
+            {"name":"General Ledger","datatype":"single","input":"option","options":ListofItems(Database.load('General Ledger'),0),"use-State":""},
+        ],
+        "collection":"services"
+    },
     "Sale Order":{
         "name": "Sale Order",
         "schema":[
@@ -435,50 +527,23 @@ const objects = {
                     {"name":"Cost per Day","value":"calculated","datatype":"single"}
 
                 ],  
-                "use-state":[{"id":0,"Account":"","Account Type":"","General Ledger":"","Amount":0,"Debit/ Credit":"Debit","GST":"","Cost Center":"","Asset":"","Material":"","Quantity":"","Location":"","Profit Center":"","Purchase Order":"","Purchase Order Item":"","Sale Order":"","Sale Order Item":"","Consumption Time From":"","Consumption Time To":"","Employee":"","Cost per Day":0}]}
+                "use-state":[{"id":0,"Account":"","Account Type":"","General Ledger":"","Amount":0,"Debit/ Credit":"Debit","GST":"","Cost Center":"","Cost Object":"","Asset":"","Material":"","Quantity":"","Location":"","Profit Center":"","Purchase Order":"","Purchase Order Item":"","Sale Order":"","Sale Order Item":"","Consumption Time From":"","Consumption Time To":"","Employee":"","Cost per Day":0}]}
         ]
     }
 }
 
-class Database{
-    static loadAll(){
-        const database = {}
-        const keys = Object.keys(objects)
-        keys.map(item=>database[objects[item]['name']]=loadData(objects[item]['collection']))
-        return database
-    }
-    static load(collection){
-        const database=loadData(objects[collection]['collection'])
-        return database
-    }
-    static add(collection,data){
-        const database=loadData(objects[collection]['collection'])
-        const newdatabase = [...database,data]
-        saveData(newdatabase,objects[collection]['collection'])
-    }
-    static update(collection,id,data){
-        const database=loadData(objects[collection]['collection'])
-        const newdatabase = database.map((item,index)=>(index===id?data:item))
-        saveData(newdatabase,objects[collection]['collection'])
-    }
-    static removeAll(collection){
-        saveData([],objects[collection]['collection'])
-    }
-    static remove(collection,id){
-        const database=loadData(objects[collection]['collection'])
-        const newdatabase = database.filter((item,index)=>(index!==id))
-        saveData(newdatabase,objects[collection]['collection'])
-    }
-}
 
 class Company{
     constructor(data){
         this.status = ('company' in localStorage)
-        this.data = (this.status)?JSON.parse(localStorage.getItem('company')):{"Name":"","Year 1 Start":"","Year 1 End":""}
+        this.data = (this.status)?JSON.parse(localStorage.getItem('company')):{"Name":"","GSTIN":"","PAN":"","Year 0":2020,"Financial Year Beginning":3,"Functional Currency":{"Code":"INR","Currency":"Indian Rupee"}}
         this.sample = {
-            "Name":"Sample Cost",
-            "Year 1 Start":"2025-04-01",
-            "Year 1 End":"2026-03-31"
+            "Name":"Sample Company",
+            "GSTIN":"32ABDCS1234E1ZN",
+            "PAN":"ABDCS1234E",
+            "Year 0":2025,
+            "Financial Year Beginning":3,
+            "Functional Currency":{"Code":"INR","Currency":"Indian Rupee"}
         }
     }
     initialise(){
@@ -542,9 +607,29 @@ function CompanyInfo(){
         )
     }
 
+    const errorlist = []
+
+    const errorcheck = () =>{
+        (data['Name']=="")?errorlist.push("Provide company name"):()=>{};
+        (data['Year 0']=="")?errorlist.push("Mention 0th year"):()=>{};
+        (data['Financial Year Beginning']=="")?errorlist.push("Mention beginning month of financial year"):()=>{};
+        (data['Functional Currency']['Code']=="")?errorlist.push("Provide functional currency code"):()=>{};
+        (data['Functional Currency']['Currency']=="")?errorlist.push("Provide functional currency"):()=>{};
+    }
+
     const save = ()=>{
+        errorcheck()
+        if (errorlist.length==0){
         Company.save(data)
         alert('Company Info Saved')
+        window.location.reload()
+        } else {
+            alert("Please: " +"\n"+ errorlist.join("\n"))
+        }
+    }
+
+    const cancel = ()=>{
+        seteditable(false);
         window.location.reload()
     }
 
@@ -554,16 +639,39 @@ function CompanyInfo(){
         window.location.reload()
     }
 
+    const months = [
+        {"Month":"January","Number":0},
+        {"Month":"February","Number":1},
+        {"Month":"March","Number":2},
+        {"Month":"April","Number":3},
+        {"Month":"May","Number":4},
+        {"Month":"June","Number":5},
+        {"Month":"July","Number":6},
+        {"Month":"August","Number":7},
+        {"Month":"September","Number":8},
+        {"Month":"October","Number":9},
+        {"Month":"November","Number":10},
+        {"Month":"December","Number":11},
+    ]
+
     if (status) {
     return(
 
         <div className='companyInfo'>
             <h2>Company Info</h2>
-            <div className='companyDetail'><label>Name </label><input disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Name']:e.target.value}))} value={data['Name']}/></div>
-            <div className='companyDetail'><label>Beginning of Year 1 </label><input onChange={(e)=>setdata(prevdata=>({...prevdata,['Year 1 Start']:e.target.value}))} type="date" disabled={!editable} value={data['Year 1 Start']}/></div>
-            <div className='companyDetail'><label>Reporting Date of Year 1 </label><input type="date" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Year 1 End']:e.target.value}))} value={data['Year 1 End']}/></div>
+            <div className='companyDetail'><label>Name </label><input required disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Name']:e.target.value}))} value={data['Name']}/></div>
+            <div className='companyDetail'><label>GSTIN</label><input onChange={(e)=>setdata(prevdata=>({...prevdata,['GSTIN']:e.target.value}))} type="text" disabled={!editable} value={data['GSTIN']}/></div>
+            <div className='companyDetail'><label>PAN</label><input type="text" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['PAN']:e.target.value}))} value={data['PAN']}/></div>
+            <div className='companyDetail'><label>0<sup>th</sup> Year</label><input required min={1900} max={2050} type="number" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Year 0']:e.target.value}))} value={data['Year 0']}/></div>
+            <div className='companyDetail'><label>Beginning Month of a Financial Year</label><select required value={data['Financial Year Beginning']} onChange={(e)=>setdata(prevdata=>({...prevdata,['Financial Year Beginning']:e.target.value}))}>{months.map(month=><option value={month['Number']}>{month['Month']}</option>)}</select></div>
+            <div className='companyDetail'>
+                <label>Functional Currency</label>
+                <label>Code<input type="text" onChange={(e)=>setdata(prevdata=>({...prevdata,['Functional Currency']:{...prevdata['Functional Currency'],['Code']:e.target.value}}))} value={data['Functional Currency']['Code']}/></label>
+                <label>Currency<input type="text" onChange={(e)=>setdata(prevdata=>({...prevdata,['Functional Currency']:{...prevdata['Functional Currency'],['Currency']:e.target.value}}))} value={data['Functional Currency']['Currency']}/></label>
+                </div>
+            
             <div>
-                {editable && <button onClick={()=>seteditable(false)}>Cancel</button>}
+                {editable && <button onClick={()=>cancel()}>Cancel</button>}
                 {editable && <button onClick={()=>save()}>Save</button>}
                 {!editable && <button onClick={()=>seteditable(true)}>Edit</button>}
                 {!editable && <button onClick={()=>deleteCompany()}>Delete Company</button>}
@@ -965,8 +1073,7 @@ function Scratch(){
 
     return(
         <div>
-        {JSON.stringify(new Intelligence().depreciationPOST(["2026-06-23","2027-06-22"]))}
-        <ReportQuery/>
+        {JSON.stringify(new GeneralLedger("Rent").data)}
         </div>
     )
 }
