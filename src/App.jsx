@@ -74,6 +74,39 @@ function exclRangeFilter(collection,field,list){
     return filtered
 }
 
+class Company{
+    constructor(data){
+        this.status = ('company' in localStorage);
+        this.data = (this.status)?JSON.parse(localStorage.getItem('company')):{"Name":"","GSTIN":"","PAN":"","Year 0":2020,"Financial Year Beginning":"04","Functional Currency":{"Code":"INR","Currency":"Indian Rupee"}}
+        this.startdate = `${this.data['Year 0']}-${this.data['Financial Year Beginning']}-01`
+        this.sample = {
+            "Name":"Sample Company",
+            "GSTIN":"32ABDCS1234E1ZN",
+            "PAN":"ABDCS1234E",
+            "Year 0":2025,
+            "Financial Year Beginning":3,
+            "Functional Currency":{"Code":"INR","Currency":"Indian Rupee"}
+        }
+    }
+    static timeMaintained = ('timecontrol' in localStorage);
+    static timeControls = JSON.parse(localStorage.getItem('timecontrol'));
+    static setTimeControl(periods){
+        localStorage.setItem('timecontrol',JSON.stringify(periods))
+    }
+    static removeTimeControl(){
+        localStorage.removeItem('timecontrol');
+    }
+    initialise(){
+        localStorage.setItem('company',JSON.stringify(this.sample))
+    }
+    static save(data){
+        localStorage.setItem('company',JSON.stringify(data))
+    }
+    static delete(){
+        localStorage.removeItem('company')
+    }
+}
+
 class Database{
     static loadAll(){
         const database = {}
@@ -96,7 +129,8 @@ class Database{
             "Purchase Order":"purchaseorders",
             "Segment":"segments",
             "Sale Order":"saleorders",
-            "Vendor":"vendors"
+            "Vendor":"vendors",
+            "Transaction":'transactions'
         };
         const database=loadData(collectionname[collection])
         return database
@@ -124,12 +158,37 @@ class Database{
 class GeneralLedger{
     constructor(name){
         this.name = name;
-        this.data = GeneralLedger.data.filter(item=>item["Name"]==this.name)[0]
+        this.data = GeneralLedger.data.filter(item=>item["Name"]==this.name)[0];
+        this.type = this.data['Ledger Type'];
+        this.presentation = this.data['Presentation']
     }
     static data = Database.load("General Ledger")
     static list(){
         const list = ListItems(this.data,"Name")
         return list
+    }
+    transactions(period){
+        const [from,to] = period
+        const data = new Intelligence().transactionstable();
+        const filtered = data.filter(item=>item['General Ledger']==this.name && item['Posting Date']>=from && item['Posting Date']<=to)
+        return filtered
+    }
+    debit(period){
+        const data = this.transactions(period);
+        const amount = SumFieldIfs(data,"Amount",["Debit/ Credit"],["Debit"])
+        return amount
+    }
+    credit(period){
+        const data = this.transactions(period);
+        const amount = SumFieldIfs(data,"Amount",["Debit/ Credit"],["Credit"])
+        return amount
+    }
+    opening(date){
+        const data = new Intelligence().transactionstable();
+        const start = (["Income","Expense"].includes(this.presentation))?Intelligence.yearStart(date):new Company().startdate;
+        const filtered = data.filter(item=>item['General Ledger']==this.name && item['Posting Date']>=start && item['Posting Date']<date)
+        const balance = SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Credit"])
+        return balance
     }
 }
 
@@ -298,6 +357,12 @@ class Intelligence{
         data.map(item=>lines.push(...[{'Account':"Depreciation","Account Type":"General Ledger","Amount":item['Depreciation'],"Debit/ Credit":"Debit","Cost Center":item["Cost Center"]},{'Account':item['Name'],'Account Type':"Asset",'Amount':item['Depreciation'],"Debit/Credit":"Credit"}]))
         entry['Line Items'] = lines;
     }
+    static yearStart(dateString){
+        const date = new Date(dateString);
+        const reference = new Date(date.getFullYear(),new Company().data['Financial Year Beginning']-1,1)
+        const result = (date>reference)?`${date.getFullYear()}-${new Company().data['Financial Year Beginning']}-01`:`${date.getFullYear()-1}-${new Company().data['Financial Year Beginning']}-01`;
+        return result
+    }
 }
 
 function ReportQuery(){
@@ -339,17 +404,6 @@ function ReportQuery(){
     )
 }
 
-class GL {
-    constructor(code){
-        this.code = code
-    }
-    opening(date){
-        const data = new Intelligence().transactionstable()
-        const filtered = data.filter(item=>item['General Ledger'] == this.code && item['Posting Date'] < date)
-        const opening = SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Credit"])
-        return opening
-    }
-}
 
 
 
@@ -532,31 +586,6 @@ const objects = {
     }
 }
 
-
-class Company{
-    constructor(data){
-        this.status = ('company' in localStorage)
-        this.data = (this.status)?JSON.parse(localStorage.getItem('company')):{"Name":"","GSTIN":"","PAN":"","Year 0":2020,"Financial Year Beginning":3,"Functional Currency":{"Code":"INR","Currency":"Indian Rupee"}}
-        this.sample = {
-            "Name":"Sample Company",
-            "GSTIN":"32ABDCS1234E1ZN",
-            "PAN":"ABDCS1234E",
-            "Year 0":2025,
-            "Financial Year Beginning":3,
-            "Functional Currency":{"Code":"INR","Currency":"Indian Rupee"}
-        }
-    }
-    initialise(){
-        localStorage.setItem('company',JSON.stringify(this.sample))
-    }
-    static save(data){
-        localStorage.setItem('company',JSON.stringify(data))
-    }
-    static delete(){
-        localStorage.removeItem('company')
-    }
-}
-
 class ReportObject{
     constructor(name){
         this.name = name
@@ -589,6 +618,7 @@ function CompanyInfo(){
     const [status,setstatus] = useState(company.status)
     const initialise = ()=>{
         company.initialise()
+        Company.setTimeControl({"First":{"From":"2025-04-01","To":"2026-03-31"},"Second":{}})
         alert('Company Created')
         window.location.reload()
     }
@@ -620,6 +650,10 @@ function CompanyInfo(){
     const save = ()=>{
         errorcheck()
         if (errorlist.length==0){
+        if (!Company.timeMaintained) {
+            const periods = {"First":{"From":`${data['Year 0']}-${data['Financial Year Beginning']}-01`,"To":`${data['Year 0']}-${data['Financial Year Beginning']}-20`},"Second":{}}
+            Company.setTimeControl(periods)
+        }
         Company.save(data)
         alert('Company Info Saved')
         window.location.reload()
@@ -634,24 +668,25 @@ function CompanyInfo(){
     }
 
     const deleteCompany = () =>{
-        Company.delete()
+        Company.delete();
+        Company.removeTimeControl();
         alert('Company Deleted')
         window.location.reload()
     }
 
     const months = [
-        {"Month":"January","Number":0},
-        {"Month":"February","Number":1},
-        {"Month":"March","Number":2},
-        {"Month":"April","Number":3},
-        {"Month":"May","Number":4},
-        {"Month":"June","Number":5},
-        {"Month":"July","Number":6},
-        {"Month":"August","Number":7},
-        {"Month":"September","Number":8},
-        {"Month":"October","Number":9},
-        {"Month":"November","Number":10},
-        {"Month":"December","Number":11},
+        {"Month":"January","Number":"01"},
+        {"Month":"February","Number":"02"},
+        {"Month":"March","Number":"03"},
+        {"Month":"April","Number":"04"},
+        {"Month":"May","Number":"05"},
+        {"Month":"June","Number":"06"},
+        {"Month":"July","Number":"07"},
+        {"Month":"August","Number":"08"},
+        {"Month":"September","Number":"09"},
+        {"Month":"October","Number":"10"},
+        {"Month":"November","Number":"11"},
+        {"Month":"December","Number":"12"},
     ]
 
     if (status) {
@@ -683,6 +718,44 @@ function CompanyInfo(){
         <CreateCompany/>
     )
 }
+}
+
+function TimeControlling(){
+
+    const status = Company.timeMaintained;
+    const [periods,setperiods] = (status)?useState(Company.timeControls):useState({"First":{"From":"2024-04-01","To":"2025-03-31"},"Second":{"From":"2024-04-01","To":"2025-03-31"}});
+    const [editable,seteditable] = useState(false);
+    const save = () =>{
+        Company.setTimeControl(periods);
+        alert('Time Change Successful!');
+        window.location.reload()
+    }
+    return(
+    <div>
+        <h2>Control of Transaction Time</h2>
+        <div>
+            <h3>Open Time Period</h3>
+            <div>
+                <h4>Period 1</h4>
+                <div>
+                    <label>From</label><input disabled={!editable} onChange={(e)=>setperiods(prevdata=>({...prevdata,["First"]:{...prevdata['First'],['From']:e.target.value}}))} value={periods["First"]["From"]} type="date"/>
+                    <label>To</label><input disabled={!editable} onChange={(e)=>setperiods(prevdata=>({...prevdata,["First"]:{...prevdata['First'],['To']:e.target.value}}))} value={periods["First"]["To"]} type="date"/>
+                </div>
+            </div>
+            <div>
+                <h4>Period 2</h4>
+                <div>
+                    <label>From</label><input disabled={!editable} onChange={(e)=>setperiods(prevdata=>({...prevdata,["Second"]:{...prevdata['Second'],['From']:e.target.value}}))} value={periods["Second"]["From"]} type="date"/>
+                    <label>To</label><input disabled={!editable} onChange={(e)=>setperiods(prevdata=>({...prevdata,["Second"]:{...prevdata['Second'],['To']:e.target.value}}))} value={periods["Second"]["To"]} type="date"/>
+                </div>
+            </div>
+            {JSON.stringify(periods)}
+            {!editable && <button onClick={()=>seteditable(true)}>Change</button>}
+            {editable && <button onClick={()=>save()}>Save</button>}
+            {editable && <button onClick={()=>window.location.reload()}>Cancel</button>}
+        </div>
+    </div>
+    )
 }
 
 function Query(){
@@ -804,7 +877,8 @@ export function Control(){
   return(
     <div className='menuList'>
       <div className='menuTitle'><h3>Control</h3></div>
-      {list.map(item=><div className='menuItem'><h3 onClick={()=>{navigate(`/query/${item}`)}}>{item}</h3></div>)}
+      <div className='menuItem' onClick={()=>navigate('/timecontrol')}><h3>Time Control</h3></div>
+      {list.map(item=><div className='menuItem' onClick={()=>{navigate(`/query/${item}`)}}><h3>{item}</h3></div>)}
     </div>
   )
 }
@@ -1073,7 +1147,9 @@ function Scratch(){
 
     return(
         <div>
-        {JSON.stringify(new GeneralLedger("Rent").data)}
+        {new GeneralLedger('Rent').opening("2025-06-24")}
+        {new GeneralLedger('Rent').opening("2026-06-25")}
+        {new GeneralLedger('Furniture and Fittings').opening("2040-06-24")}
         </div>
     )
 }
@@ -1098,6 +1174,7 @@ if (new Company().status){
       <Route path='/display/:object/:id' element={<CRUD  method={"Display"}/>}/>
       <Route path='/deactivate/:object/:id' element={<CRUD method={"Deactivate"}/>}/>
       <Route path="/scratch/" element={<Scratch/>}/>
+      <Route path="/timecontrol" element={<TimeControlling/>}/>
     </Routes>
     </div>
     </BrowserRouter>
