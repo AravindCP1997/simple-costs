@@ -11,7 +11,7 @@
 html{
   padding:10px;
   padding-top:5%;
-  background: var(--blue);
+  background: var(--lightgray);
   background-image: url('../texture.png');
   background-size:cover;
 }
@@ -23,11 +23,11 @@ html{
   --red:rgb(255,0,30);
   --fontcolor:rgb(80,80,80);
   --lightgray:rgb(245,245,240);
-  --greent:rgb(0,255,0,0.1);
+  --greent:rgb(100,255,100,0.1);
   --bluet:rgb(150,180,255,0.2);
   --redt:rgb(255,150,120,0.1);
   --lightgrayt:rgb(245,245,240,0.8);
-  --whitet:rgb(255,255,255,0.2);
+  --whitet:rgb(255,255,255,0.75);
 }
 
 a{
@@ -52,6 +52,11 @@ button, input, select, option, label{
 
 button{
   font-weight: bold;
+  transition: 0.5s;
+}
+
+button:hover{
+  background: gray;
 }
 
 .red{

@@ -24,10 +24,10 @@
   display: flex;
   flex-direction: column;
   gap:20px;
-  color:white;
+  color:var(--blue);
   padding: 10px;
   backdrop-filter: blur(5px);
-  background:var(--whitet);
+  background:var(--greent);
   width: min(100%,640px);
   border-radius: 25px;
   text-align: center;
@@ -36,7 +36,7 @@
 }
 
 .createWelcome{
-  color:white;
+  color:var(--blue);
   border-radius: 20px;
   padding:20px;
   backdrop-filter: blur(20px);
@@ -77,8 +77,9 @@
   padding: 10px;
   border-radius: 25px;
   transition:0.5s;
-  background: var(--redt);
-  backdrop-filter:blur(3px);
+  background: var(--bluet);
+  backdrop-filter:blur(5px);
+  overflow-x: auto;
 }
 
 .innerContainer{
@@ -91,7 +92,6 @@
 
 .home{
   padding:50px;
-  background: white;
   border-radius: 25px;
   width:100%;
   display:flex;
@@ -99,7 +99,8 @@
   gap:50px;
   min-height: 450px;
   justify-content: center;
-
+  box-shadow: 1px 1px 3px 2px var(--bluet);
+  background: var(--whitet);
 }
 
 .title{
@@ -168,7 +169,7 @@
 }
 
 .menuItem{
-  background: white;
+  background: var(--whitet);
   color:var(--blue);
   transition: 0.5s;
 }
@@ -258,9 +259,9 @@
 }
 
 .crudUI{
-  background: var(--whitet);
+  background: var(--bluet);
   border-radius: 20px;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(20px);
   padding:5%;
   width:100%;
   display: flex;
@@ -270,26 +271,30 @@
 }
 
 .crudTitle{
-  color:white;
+  color:var(--blue);
   text-align: center;
   padding:2%;
   border-radius: 15px;
-  border: 2px solid var(--lightgray);
   backdrop-filter: blur(20px);
   margin:0;
+  border: 2px solid var(--lightgray);
 }
 
 .crudFields{
   display:flex;
   flex-direction: column;
   gap:10px;
-  color:white;
+  color:var(--blue);
 }
 
 .crudField{
   padding: 5px;
   border-radius: 15px;
-  border:2px solid var(--lightgray);
+  backdrop-filter: blur(20px);
+  border: 2px solid var(--lightgray);
+  input,select{
+    border-radius: 10px;
+  }
 }
 
 .crudRow{
@@ -316,13 +321,18 @@
 
 .crudTableCell{
   border:1px solid var(--blue);
+  input,select{
+    border-radius: 0;
+  }
 }
 
 .crudError{
   background: var(--redt);
   padding: 10px;
   border-radius: 15px;
-  color:white
+  backdrop-filter: blur(20px);
+  color:var(--blue);
+  border: 2px solid var(--lightgray);
 }
 
 .crudButtons{

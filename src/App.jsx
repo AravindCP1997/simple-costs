@@ -473,8 +473,9 @@ const objects = {
     "Cost Center":{
         "name": "Cost Center",
         "schema": [
-            {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Profit Center", "datatype":"single", "input":"option", "options":ListofItems(loadData('profitcenters'),0), "use-state":""}
+            {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":"Chennai"},
+            {"name": "Profit Center", "datatype":"single", "input":"option", "options":ListofItems(loadData('profitcenters'),0), "use-state":"No"},
+            {"name":"Apportionment Ratio","datatype":"nest","structure":[{"name":"From", "datatype":"single", "input":"input", "type":"text"},{"name":"To", "datatype":"single", "input":"input", "type":"text"},{"name":"Ratio", "datatype":"collection", "structure":[{"name":"To", "datatype":"single", "input":"input", "type":"text"},{"name":"Ratio", "datatype":"single", "input":"input", "type":"text"}]}],"use-state":[{"From":"2025-04-01","To":"2026-03-31","Ratio":[{"To":"Head Office","Ratio":0.50}]}]}
         ],
         "collection":"costcenters"
     },
@@ -545,7 +546,7 @@ const objects = {
     "Profit Center":{
         "name":"Profit Center",
         "schema":[
-            {"name": "Center", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+            {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
             {"name": "Segment", "datatype":"single", "input":"option", "options":ListofItems(loadData("segments"),0), "use-state":""},
         ],
         "collection":"profitcenters"
@@ -558,8 +559,11 @@ const objects = {
             {"name": "Item Details", "datatype":"collection", "structure":[
                 {"name":"Material/ Service","datatype":"single","input":"input","type":"text"},
                 {"name":"Quantity","datatype":"single","input":"input","type":"number"},
-                {"name":"Price","datatype":"single","input":"input","type":"number"}
-            ],"use-state":[{"id":0,"Material/ Service":"","Quantity":0,"Price":0}]}
+                {"name":"Price","datatype":"single","input":"input","type":"number"},
+                {"name":"Value","datatype":"single","value":"calculated"},
+                {"name":"Cost Center","datatype":"single","input":"input","type":"text"},
+                {"name":"Cost Object","datatype":"single","input":"input","type":"text"},
+            ],"use-state":[{"id":0,"Material/ Service":"","Quantity":0,"Price":0, "Value":0,"Cost Center":"","Cost Object":""}]}
         ],
         "collection":"purchaseorders"
     },
@@ -1195,6 +1199,7 @@ function CRUD({method}){
         {field['datatype']=="single" && <div className='crudField'><div className='crudRow'><label>{field['name']}</label>{ field['input'] == "input" && <input disabled={(field['disabled']||!editable)} type={field['type']} onChange={(e)=>handleChange1(field['name'],e)} value={output[field['name']]}/>}{field['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange1(field['name'],e)} value={output[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}</div></div>}
         {field['datatype']=="object" && <div className='crudField'><div className='crudObject'><label>{field['name']}</label>{field['structure'].map(subfield=><>{subfield['datatype']=="single"&&<div className='crudRow'><label>{subfield['name']}</label>{subfield['input']=="input" && <input type={subfield['type']} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]} disabled={(field['disabled']||!editable)}/>}{subfield['input'] == "option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}</>)}</div></div>}
         {field['datatype']=="collection" && <div className='crudField'><div className='crudObject'><label>{field['name']}</label><div className='crudTable'><table><thead><tr><th className='crudTableCell'></th>{field['structure'].map(subfield=><th className='crudTableCell'>{subfield['name']}</th>)}</tr></thead>{output[field['name']].map((item,index)=><tbody><tr><td className='crudTableCell'><button disabled={(field['disabled']||!editable)} onClick={(e)=>removeItem(field['name'],index,e)}>-</button></td>{field['structure'].map(subfield=><>{subfield['datatype']=="single" && <td className='crudTableCell'>{subfield['value']=="calculated" && <input value={output[field['name']][index][subfield['name']]} disabled={true}/>} {subfield['input']=="input"&& <input disabled={(field['disabled']||!editable)} onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} type={subfield['type']} value={output[field['name']][index][subfield['name']]}/>}{subfield['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</td>}</>)}</tr></tbody>)}</table></div><div className='crudObjectButtons'><button disabled={(field['disabled']||!editable)} onClick={(e)=>addItem(field['name'],field['use-state'][0],e)}>Add</button></div></div></div>}
+        {field['datatype']=="nest" && <div className="crudField"><div className="crudObject"><label>{field['name']}</label><button>Add</button><div className='crudGrid'>{output[field['name']].map((item,index)=><div className="crudFields">{field['structure'].map(subfield=><div className='crudField'>{subfield['datatype']=="single" && <div className='crudRow'><label>{subfield['name']}</label></div>}{subfield['datatype']=="collection" && <div className='crudObject'><label>{subfield['name']}</label><div className='crudTable'><table><thead><tr><th className='crudTableCell'></th>{subfield['structure'].map(thirdfield=><th className='crudTableCell'>{thirdfield['name']}</th>)}</tr></thead><tbody>{output[field['name']].map((subitem,subindex)=><tr><td><div className='crudTableCell'><button></button></div></td>{subfield['structure'].map(thirdfield=><td><div className='crudTableCell'><input value={output[field['name']][index][subfield['name']][subindex][thirdfield]}/></div></td>)}</tr>)}</tbody></table></div></div> }</div>)}</div>)}</div></div></div>}
         </>)}</div>
         <div className='crudError'>
             <label>{`${errorlist.length} Error(s)`}</label>
