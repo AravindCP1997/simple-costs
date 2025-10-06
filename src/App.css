@@ -23,23 +23,46 @@
 .createCompany{
   display: flex;
   flex-direction: column;
-  gap:10px;
-  color:var(--blue);
-  background: white;
+  gap:20px;
+  color:white;
   padding: 10px;
-  width: 100%;
+  backdrop-filter: blur(5px);
+  background:var(--whitet);
+  width: min(100%,640px);
   border-radius: 25px;
   text-align: center;
-  justify-content: center;
-  min-height: 350px;
   margin-top: 10%;
+  padding: 20px;
+}
+
+.createWelcome{
+  color:white;
+  border-radius: 20px;
+  padding:20px;
+  backdrop-filter: blur(20px);
+  border: 2px solid var(--lightgray);
+  margin:0;
+}
+
+.createOptions{
+  display:grid;
+  grid-template-columns: calc(50% - 1px) calc(50% - 1px);
+  gap:2px;
+}
+.createOption{
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border-radius: 15px;
+  backdrop-filter: blur(5px);
+  border: 2px solid var(--lightgray);
 }
 
 .container{
-  position:fixed;
+  position: fixed;
   top:0;
-  height:100%;
   width:min(100%,850px);
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap:30px;
@@ -49,19 +72,20 @@
 .searchBar{
   display: flex;
   flex-direction: row;
-  justify-content: left;
+  justify-content: center;
   gap:10px;
   padding: 10px;
   border-radius: 25px;
-  border:2px solid white;
-  transition:0.5s
+  transition:0.5s;
+  background: var(--redt);
+  backdrop-filter:blur(3px);
 }
 
 .innerContainer{
   display: flex;
   flex-direction: row;
   justify-content: center;
-  padding: 0;
+  padding: 10px;
   overflow: auto;
 }
 
@@ -233,9 +257,84 @@
   color:var(--blue)
 }
 
+.crudUI{
+  background: var(--whitet);
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+  padding:5%;
+  width:100%;
+  display: flex;
+  flex-direction: column;
+  gap:20px;
+  height:fit-content;
+}
+
+.crudTitle{
+  color:white;
+  text-align: center;
+  padding:2%;
+  border-radius: 15px;
+  border: 2px solid var(--lightgray);
+  backdrop-filter: blur(20px);
+  margin:0;
+}
+
+.crudFields{
+  display:flex;
+  flex-direction: column;
+  gap:10px;
+  color:white;
+}
+
+.crudField{
+  padding: 5px;
+  border-radius: 15px;
+  border:2px solid var(--lightgray);
+}
+
+.crudRow{
+  display: grid;
+  grid-template-columns: 50% 50%;
+}
+
+.crudObject{
+  display:flex;
+  flex-direction: column;
+  gap:2px;
+}
+
+.crudObjectButtons{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding:2px;
+}
+
+.crudTable{
+  overflow: auto;
+}
+
+.crudTableCell{
+  border:1px solid var(--blue);
+}
+
+.crudError{
+  background: var(--redt);
+  padding: 10px;
+  border-radius: 15px;
+  color:white
+}
+
+.crudButtons{
+  display:flex;
+  flex-direction: row;
+  justify-content: right;
+  gap:5px;
+  padding: 2px;
+}
+
 .display{
   padding: 5px;
-  overflow: auto;
   display: flex;
   flex-direction: column;
   position: relative;

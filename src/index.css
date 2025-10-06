@@ -11,9 +11,9 @@
 html{
   padding:10px;
   padding-top:5%;
-  background: var(--lightgray);
+  background: var(--blue);
   background-image: url('../texture.png');
-  background-size: 30%;
+  background-size:cover;
 }
 
 :root{
@@ -21,7 +21,13 @@ html{
   --lightblue: rgb(80,150,220);
   --green:rgb(0,176,80);
   --red:rgb(255,0,30);
-  --lightgray:rgb(240,240,230);
+  --fontcolor:rgb(80,80,80);
+  --lightgray:rgb(245,245,240);
+  --greent:rgb(0,255,0,0.1);
+  --bluet:rgb(150,180,255,0.2);
+  --redt:rgb(255,150,120,0.1);
+  --lightgrayt:rgb(245,245,240,0.8);
+  --whitet:rgb(255,255,255,0.2);
 }
 
 a{
@@ -39,8 +45,7 @@ html,button, select, option, label{
 }
 
 button, input, select, option, label{
-  border-radius:15px;
-  padding: 10px;
+  padding: 8px;
   cursor: pointer;
   border:none;
 }

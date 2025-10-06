@@ -125,6 +125,7 @@ class Database{
             "General Ledger":"generalledgers",
             "Location":"locations",
             "Material":"materials",
+            "Payment Term":"paymentterms",
             "Profit Center":"profitcenters",
             "Purchase Order":"purchaseorders",
             "Segment":"segments",
@@ -190,6 +191,37 @@ class GeneralLedger{
         const balance = SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Credit"])
         return balance
     }
+    accountBalance(period){
+        const [from,to] = period;
+        const opening = this.opening(from)
+        const data = {"Ledger":this.name,"Opening Balance":this.opening(from).toFixed(2),"Debit":this.debit(period).toFixed(2),"Credit":this.credit(period).toFixed(2),"Closing Balance":(this.opening(from)+this.debit(period)-this.credit(period)).toFixed(2)}
+
+        return data
+    }
+    static trialbalance(period){
+        const list = [];
+        const ledgers = this.list()
+        ledgers.map(ledger=>list.push(new GeneralLedger(ledger).accountBalance(period)))
+        return list
+    }
+}
+
+function TrialBalance(){
+    const [query,setquery] = useState(["2025-04-01","2026-03-31"])
+    const [period,setperiod] = useState(["2025-04-01","2026-03-31"])
+    const data = GeneralLedger.trialbalance(period)
+    return(
+        <div>
+            <div className='query'>
+                <label>Period</label>
+                <label>From</label><input onChange={(e)=>setquery(prevdata=>[e.target.value,prevdata[1]])} value={query[0]} onCh type="date"/>
+                <label>To</label><input onChange={(e)=>setquery(prevdata=>[prevdata[0],e.target.value])} value={query[1]} type="date"/>
+                <button onClick={()=>setperiod(query)}>Get</button>
+            </div>
+            <DisplayAsTable collection={data}/>
+        </div>
+
+    )
 }
 
 class Intelligence{
@@ -204,6 +236,7 @@ class Intelligence{
             "General Ledger":"generalledgers",
             "Location":"locations",
             "Material":"materials",
+            "Payment Term":"paymentterms",
             "Profit Center":"profitcenters",
             "Purchase Order":"purchaseorders",
             "Segment":"segments",
@@ -230,7 +263,7 @@ class Intelligence{
     }
     createLedgers(){
         const list = [{"Name":"","Type":""}]
-        const types = ['General Ledger','Asset','Vendor','Customer','Material']
+        const types = ['General Ledger','Asset','Employee','Vendor','Customer','Material']
         for (let i=0;i<types.length;i++){
             (this.itemsInCollection(types[i])>0)?this.loadCollection(types[i]).map(item=>list.push({"Name":`${item["Name"]}`,"Type":types[i]})):()=>{}
         }
@@ -295,6 +328,12 @@ class Intelligence{
     generalledgerError(data){
         const list = [];
         (data['Name']=="")?list.push(`Provide a name for the asset`):()=>{}
+        return list
+    }
+    vendorError(data){
+        const list = []
+        const req = ["Name"];
+        req.map(item=>(data[item]=="")?list.push(`${item} is required`):()=>{});
         return list
     }
     assetLineItem(data){
@@ -452,7 +491,15 @@ const objects = {
         "name":"Customer",
         "collection":"customers",
         "schema": [
-            {"name":"Name","datatype":"single","input":"input","type":"text"}
+            {"name":"Name","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"Address","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"PIN","datatype":"single","input":"input","type":"number","use-state":""},
+            {"name":"Phone","datatype":"single","input":"input","type":"number","use-state":""},
+            {"name":"E-mail","datatype":"single","input":"input","type":"number","use-state":""},
+            {"name":"PAN","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"GSTIN","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Validated", "value":"calculated", "datatype":"single"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
+            {"name":"Payment Terms","datatype":"single","input":"option","options":[],"use-state":""},
         ]
     },
     "Employee":{
@@ -482,10 +529,18 @@ const objects = {
     "Location":{
         "name":"Location",
         "schema": [
-            {"name":"Name", "datatype":"single", "input":"input", "type":"text"},
-            {"name":"Cost Center", "datatype":"single", "input":"input", "type":"text"},
+            {"name":"Name", "datatype":"single", "input":"input", "type":"text","use-state":""},
+            {"name":"Cost Center", "datatype":"single", "input":"input", "type":"text","use-state":""},
         ],
         "collection":"locations"
+    },
+    "Payment Term":{
+        "name":"Payment Term",
+        "schema":[
+            {"name":"Description","datatype":"single", "input":"input", "type":"text","use-state":"45 Days Net"},
+            {"name":"Discounting Criteria", "datatype":"collection","structure":[{"name":"Days from Supply","datatype":"single","input":"input","type":"number"},{"name":"Discount %","datatype":"single","input":"input","type":"number"}] , "use-state":[{"Days from Supply":45,"Discount %":0}]}
+        ],
+        "collection":"paymentterms"
     },
     "Profit Center":{
         "name":"Profit Center",
@@ -542,7 +597,15 @@ const objects = {
         "name":"Vendor",
         "collection":"vendors",
         "schema": [
-            {"name":"Name","datatype":"single","input":"input","type":"text"}
+            {"name":"Name","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"Address","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"PIN","datatype":"single","input":"input","type":"number","use-state":""},
+            {"name":"Phone","datatype":"single","input":"input","type":"number","use-state":""},
+            {"name":"E-mail","datatype":"single","input":"input","type":"number","use-state":""},
+            {"name":"PAN","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"GSTIN","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Validated", "value":"calculated", "datatype":"single"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
+            {"name":"Payment Terms","datatype":"single","input":"option","options":[],"use-state":""},
         ]
     },
     "Transaction" : {
@@ -582,6 +645,16 @@ const objects = {
 
                 ],  
                 "use-state":[{"id":0,"Account":"","Account Type":"","General Ledger":"","Amount":0,"Debit/ Credit":"Debit","GST":"","Cost Center":"","Cost Object":"","Asset":"","Material":"","Quantity":"","Location":"","Profit Center":"","Purchase Order":"","Purchase Order Item":"","Sale Order":"","Sale Order Item":"","Consumption Time From":"","Consumption Time To":"","Employee":"","Cost per Day":0}]}
+        ]
+    },
+    "Virtual Account":{
+        "name":"Virtual Account",
+        "collection":"virtualaccounts",
+        "schema":[
+            {"name":"Virtual Account Number","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"Bank Account","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"Credit Ledger","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"Profit Center","datatype":"single","input":"input","type":"text","use-state":""}
         ]
     }
 }
@@ -630,9 +703,11 @@ function CompanyInfo(){
     function CreateCompany(){
         return (
             <div className='createCompany'>
-                <h2>Welcome to Simple Cost!</h2>
-                <div><button className='blue' onClick={()=>initialise()}>Quick Initialise</button> to set up a sample company.</div>
-                <div>Or, Create a <button className='green' onClick={()=>newCompany()}>New Company</button></div>
+                <h1 className="createWelcome">Welcome</h1>
+                <div className="createOptions">
+                    <div className="createOption"><button className='blue' onClick={()=>initialise()}>Quick Initialise</button><p>Instantly creates a sample company</p></div>
+                    <div className="createOption"><button className='green' onClick={()=>newCompany()}>New Company</button><p>Manual set-up of company</p></div>
+                </div>
             </div>
         )
     }
@@ -889,6 +964,7 @@ function Reports(){
     return(
     <div className='menuList'>
     <div className='menuTitle'><h3>Reports</h3></div>
+    <div className='menuItem'><h3 onClick={()=>{navigate(`/trialbalance`)}}>General Ledger Balance</h3></div>
     <div className='menuItem'><h3 onClick={()=>{navigate(`/scratch`)}}>Scratch</h3></div>
     </div>
     )
@@ -1002,6 +1078,10 @@ function CRUD({method}){
             case 'Employee' :
                 output['Bank Accounts'].map((item,i)=>(item['Validated']=="No")?list.push(`Bank Account ${i+1} is not validated`):()=>{});
                 ((new Date(output['Date of Birth']))>(new Date()))?list.push("Date of Birth cannot be a future date."):()=>{}
+                break
+            case 'Vendor':
+                list.push(...new Intelligence().vendorError(output))
+                break
         }
         return list
     }
@@ -1106,25 +1186,26 @@ function CRUD({method}){
     }
     
     return(<>
-        {method != "Deactivate" && <div className='queryDisplay'>
-            <h2>{`${method} ${object}`}</h2>
+        {method != "Deactivate" && <div className='crudUI'>
+            <h2 className='crudTitle'>{`${method} ${object}`}</h2>
+        <div className='crudFields'>
         {schema.map(field=>
-        <div className='queryField'>
-        {field['value']=="calculated" && <div className="querySingle"><label>{field['name']}</label><input value={output[field['name']]} disabled={true}/></div>}
-        {field['datatype']=="single" && <div className='querySingle'><label>{field['name']}</label>{ field['input'] == "input" && <input disabled={(field['disabled']||!editable)} type={field['type']} onChange={(e)=>handleChange1(field['name'],e)} value={output[field['name']]}/>}{field['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange1(field['name'],e)} value={output[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}
-        {field['datatype']=="object" && <div><label>{field['name']}</label>{field['structure'].map(subfield=><>{subfield['datatype']=="single"&&<div className='querySingle'><label>{subfield['name']}</label>{subfield['input']=="input" && <input type={subfield['type']} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]} disabled={(field['disabled']||!editable)}/>}{subfield['input'] == "option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}</>)}</div>}
-        {field['datatype']=="collection" && <><label>{field['name']}</label><div className='queryTable'><table><thead><tr><th className='queryCell'></th>{field['structure'].map(subfield=><th className='queryCell'>{subfield['name']}</th>)}</tr></thead>{output[field['name']].map((item,index)=><tbody><tr><td className='queryCell'><button disabled={(field['disabled']||!editable)} onClick={(e)=>removeItem(field['name'],index,e)}>-</button></td>{field['structure'].map(subfield=><>{subfield['datatype']=="single" && <td className='queryCell'>{subfield['value']=="calculated" && <input value={output[field['name']][index][subfield['name']]} disabled={true}/>} {subfield['input']=="input"&& <input disabled={(field['disabled']||!editable)} className='queryCell' onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} type={subfield['type']} value={output[field['name']][index][subfield['name']]}/>}{subfield['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</td>}</>)}</tr></tbody>)}</table></div><div className="queryButtons"><button disabled={(field['disabled']||!editable)} onClick={(e)=>addItem(field['name'],field['use-state'][0],e)} className='blue'>Add</button></div></>}
-        </div>)}
-        <div className='queryField'>
+        <>
+        {field['value']=="calculated" && <div className='crudField'><div className='crudRow'><label>{field['name']}</label><input value={output[field['name']]} disabled={true}/></div></div>}
+        {field['datatype']=="single" && <div className='crudField'><div className='crudRow'><label>{field['name']}</label>{ field['input'] == "input" && <input disabled={(field['disabled']||!editable)} type={field['type']} onChange={(e)=>handleChange1(field['name'],e)} value={output[field['name']]}/>}{field['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange1(field['name'],e)} value={output[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}</div></div>}
+        {field['datatype']=="object" && <div className='crudField'><div className='crudObject'><label>{field['name']}</label>{field['structure'].map(subfield=><>{subfield['datatype']=="single"&&<div className='crudRow'><label>{subfield['name']}</label>{subfield['input']=="input" && <input type={subfield['type']} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]} disabled={(field['disabled']||!editable)}/>}{subfield['input'] == "option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}</>)}</div></div>}
+        {field['datatype']=="collection" && <div className='crudField'><div className='crudObject'><label>{field['name']}</label><div className='crudTable'><table><thead><tr><th className='crudTableCell'></th>{field['structure'].map(subfield=><th className='crudTableCell'>{subfield['name']}</th>)}</tr></thead>{output[field['name']].map((item,index)=><tbody><tr><td className='crudTableCell'><button disabled={(field['disabled']||!editable)} onClick={(e)=>removeItem(field['name'],index,e)}>-</button></td>{field['structure'].map(subfield=><>{subfield['datatype']=="single" && <td className='crudTableCell'>{subfield['value']=="calculated" && <input value={output[field['name']][index][subfield['name']]} disabled={true}/>} {subfield['input']=="input"&& <input disabled={(field['disabled']||!editable)} onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} type={subfield['type']} value={output[field['name']][index][subfield['name']]}/>}{subfield['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</td>}</>)}</tr></tbody>)}</table></div><div className='crudObjectButtons'><button disabled={(field['disabled']||!editable)} onClick={(e)=>addItem(field['name'],field['use-state'][0],e)}>Add</button></div></div></div>}
+        </>)}</div>
+        <div className='crudError'>
             <label>{`${errorlist.length} Error(s)`}</label>
             <ul>
                 {errorlist.map(item=><li>{item}</li>)}
                 </ul>
         </div>
-        <div className='queryButtons'>
-            {method==="Create" && <><button className='blue' onClick={()=>cancel()}>Cancel</button><button className='green' onClick={()=>save()}>Save</button></>}
-            {method==="Update" && <><button className='blue' onClick={()=>cancel()}>Cancel</button><button className='green' onClick={()=>save()}>Update</button></>}
-            {method==="Display" && <><button className='blue' onClick={()=>cancel()}>Back</button></>}
+        <div className='crudButtons'>
+            {method==="Create" && <><button onClick={()=>cancel()}>Cancel</button><button onClick={()=>save()}>Save</button></>}
+            {method==="Update" && <><button onClick={()=>cancel()}>Cancel</button><button onClick={()=>save()}>Update</button></>}
+            {method==="Display" && <><button onClick={()=>cancel()}>Back</button></>}
         </div>
         </div>
         }
@@ -1147,9 +1228,7 @@ function Scratch(){
 
     return(
         <div>
-        {new GeneralLedger('Rent').opening("2025-06-24")}
-        {new GeneralLedger('Rent').opening("2026-06-25")}
-        {new GeneralLedger('Furniture and Fittings').opening("2040-06-24")}
+        {JSON.stringify(GeneralLedger.trialbalance(['2025-04-01','2026-03-31']))}
         </div>
     )
 }
@@ -1162,7 +1241,7 @@ if (new Company().status){
     <SearchBar/>
     <div className="innerContainer">
     <Routes>
-        <Route path="/company" element={<CompanyInfo/>}/>
+    <Route path="/company" element={<CompanyInfo/>}/>
       <Route path='/' element={<Home/>}/>
       <Route path='/record' element={<Record/>}/>
       <Route path='/control' element={<Control/>}/>
@@ -1175,6 +1254,7 @@ if (new Company().status){
       <Route path='/deactivate/:object/:id' element={<CRUD method={"Deactivate"}/>}/>
       <Route path="/scratch/" element={<Scratch/>}/>
       <Route path="/timecontrol" element={<TimeControlling/>}/>
+      <Route path="/trialbalance" element={<TrialBalance/>}/>
     </Routes>
     </div>
     </BrowserRouter>
