@@ -24,11 +24,14 @@ html{
   --yellow:rgb(255,192,0);
   --fontcolor:rgb(80,80,80);
   --lightgray:rgb(245,245,240);
-  --greent:rgb(100,255,100,0.1);
-  --bluet:rgb(150,180,255,0.2);
-  --redt:rgb(255,150,120,0.1);
+  --greent:rgb(0,176,80,0.7);
+  --bluet:rgb(64,82,106,0.7);
+  --lightbluet:rgb(150,180,255,0.2);
+  --redt:rgb(255,0,30,0.7);
   --lightgrayt:rgb(245,245,240,0.8);
-  --whitet:rgb(255,255,255,0.75);
+  --whitet:rgb(255,255,255,0.7);
+  --blackt:rgb(0,0,0,0.2);
+  --lightredt:rgb(255,180,200,0.2);
 }
 
 a{
@@ -61,17 +64,17 @@ button:hover{
 }
 
 .red{
-  background: var(--red);
+  background: var(--redt);
   color:white;
 }
 
 .green{
-  background: var(--green);
+  background: var(--greent);
   color:white;
 }
 
 .blue{
-  background: var(--blue);
+  background: var(--bluet);
   color:white;
 }
 

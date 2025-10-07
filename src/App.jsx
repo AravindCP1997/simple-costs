@@ -911,19 +911,22 @@ function CompanyInfo(){
     return(
 
         <div className='companyInfo'>
-            <h2>Company Info</h2>
-            <div className='companyDetail'><label>Name </label><input required disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Name']:e.target.value}))} value={data['Name']}/></div>
-            <div className='companyDetail'><label>GSTIN</label><input onChange={(e)=>setdata(prevdata=>({...prevdata,['GSTIN']:e.target.value}))} type="text" disabled={!editable} value={data['GSTIN']}/></div>
-            <div className='companyDetail'><label>PAN</label><input type="text" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['PAN']:e.target.value}))} value={data['PAN']}/></div>
-            <div className='companyDetail'><label>0<sup>th</sup> Year</label><input required min={1900} max={2050} type="number" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Year 0']:e.target.value}))} value={data['Year 0']}/></div>
-            <div className='companyDetail'><label>Beginning Month of a Financial Year</label><select required value={data['Financial Year Beginning']} onChange={(e)=>setdata(prevdata=>({...prevdata,['Financial Year Beginning']:e.target.value}))}>{months.map(month=><option value={month['Number']}>{month['Month']}</option>)}</select></div>
-            <div className='companyDetail'>
-                <label>Functional Currency</label>
-                <label>Code<input type="text" onChange={(e)=>setdata(prevdata=>({...prevdata,['Functional Currency']:{...prevdata['Functional Currency'],['Code']:e.target.value}}))} value={data['Functional Currency']['Code']}/></label>
-                <label>Currency<input type="text" onChange={(e)=>setdata(prevdata=>({...prevdata,['Functional Currency']:{...prevdata['Functional Currency'],['Currency']:e.target.value}}))} value={data['Functional Currency']['Currency']}/></label>
+            <h2 className='companyInfoTitle'>Company Info</h2>
+            <div className='companyDetails'>
+                <div className='companyDetail'><label>Name </label><input required disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Name']:e.target.value}))} value={data['Name']}/></div>
+                <div className='companyDetail'><label>GSTIN</label><input onChange={(e)=>setdata(prevdata=>({...prevdata,['GSTIN']:e.target.value}))} type="text" disabled={!editable} value={data['GSTIN']}/></div>
+                <div className='companyDetail'><label>PAN</label><input type="text" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['PAN']:e.target.value}))} value={data['PAN']}/></div>
+                <div className='companyDetail'><label>0<sup>th</sup> Year</label><input required min={1900} max={2050} type="number" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Year 0']:e.target.value}))} value={data['Year 0']}/></div>
+                <div className='companyDetail'><label>Beginning Month of a Financial Year</label><select required value={data['Financial Year Beginning']} onChange={(e)=>setdata(prevdata=>({...prevdata,['Financial Year Beginning']:e.target.value}))}>{months.map(month=><option value={month['Number']}>{month['Month']}</option>)}</select></div>
+                <div className='companyDetailObject'>
+                    <label>Functional Currency</label>
+                    <div className='companyDetail'><label>Code</label><input type="text" onChange={(e)=>setdata(prevdata=>({...prevdata,['Functional Currency']:{...prevdata['Functional Currency'],['Code']:e.target.value}}))} value={data['Functional Currency']['Code']}/></div>
+                    <div className='companyDetail'><label>Currency</label><input type="text" onChange={(e)=>setdata(prevdata=>({...prevdata,['Functional Currency']:{...prevdata['Functional Currency'],['Currency']:e.target.value}}))} value={data['Functional Currency']['Currency']}/></div>
+
                 </div>
+            </div>
             
-            <div>
+            <div className='companyInfoButtons'>
                 {editable && <button onClick={()=>cancel()}>Cancel</button>}
                 {editable && <button onClick={()=>save()}>Save</button>}
                 {!editable && <button onClick={()=>seteditable(true)}>Edit</button>}
@@ -989,15 +992,16 @@ function Query(){
     const [selected,setselected] = useState(0);
     return(
       <div className='query'>
-          <label className='queryTitle'><h2>Choose {object}</h2>
+          <div className='queryTitle'><h2>Choose {object}</h2></div>
             <select className='querySelect' value={selected} onChange={(e)=>setselected(e.target.value)}>
                 {list.map((item,index)=><option value={index}>{item}</option>)}
             </select>
-            </label>
             <div className='queryButtons'>
-            <button className="blue" onClick={()=>{objectQuery('display')}}>View</button><button className="blue" onClick={()=>{objectQuery('update')}}>Update</button><button className="red" onClick={()=>{navigate(`/deactivate/${object}/${selected}/`)}}>Deactivate</button>
+            <button className='green' onClick={()=>{navigate(`/create/${object}`)}}>Create {object}</button>
+            <button className='blue' onClick={()=>{objectQuery('display')}}>View</button>
+            <button className='blue' onClick={()=>{objectQuery('update')}}>Update</button>
+            <button className='red' onClick={()=>{navigate(`/deactivate/${object}/${selected}/`)}}>Deactivate</button>
             </div>
-            <p style={{textAlign:"center"}}>Or, <button className="green" onClick={()=>{navigate(`/create/${object}`)}}>Create {object}</button></p>
       </div>
        
     )
@@ -1075,13 +1079,13 @@ function Home(){
   )
 }
 
-export function Record(){
+function Record(){
 
     const navigate = useNavigate();
   
   return(
     <div className='menuList'>
-      <div className='menuTitle'><h3>Record</h3></div>
+      <div className='menuTitle green'><h3>Record</h3></div>
       <div className='menuItem' onClick={()=>{navigate(`/create/Transaction`)}}><h3>Transaction</h3></div>
     </div>
   )
@@ -1094,7 +1098,7 @@ export function Control(){
   
   return(
     <div className='menuList'>
-      <div className='menuTitle'><h3>Control</h3></div>
+      <div className='menuTitle red'><h3>Control</h3></div>
       <div className='menuItem' onClick={()=>navigate('/timecontrol')}><h3>Time Control</h3></div>
       {list.map(item=><div className='menuItem' onClick={()=>{navigate(`/query/${item}`)}}><h3>{item}</h3></div>)}
     </div>
@@ -1106,7 +1110,7 @@ function Reports(){
     const navigate = useNavigate();
     return(
     <div className='menuList'>
-    <div className='menuTitle'><h3>Reports</h3></div>
+    <div className='menuTitle blue'><h3>Reports</h3></div>
     <div className='menuItem'><h3 onClick={()=>{navigate(`/trialbalance`)}}>General Ledger Balance</h3></div>
     <div className='menuItem'><h3 onClick={()=>{navigate(`/costobjectbalance`)}}>Cost Object Balance</h3></div>
     <div className='menuItem'><h3 onClick={()=>{navigate(`/scratch`)}}>Scratch</h3></div>
@@ -1363,9 +1367,9 @@ function CRUD({method}){
                 </ul>
         </div>
         <div className='crudButtons'>
-            {method==="Create" && <><button onClick={()=>cancel()}>Cancel</button><button onClick={()=>save()}>Save</button></>}
-            {method==="Update" && <><button onClick={()=>cancel()}>Cancel</button><button onClick={()=>save()}>Update</button></>}
-            {method==="Display" && <><button onClick={()=>cancel()}>Back</button></>}
+            {method==="Create" && <><button className='blue' onClick={()=>cancel()}>Cancel</button><button className='green' onClick={()=>save()}>Save</button></>}
+            {method==="Update" && <><button  className='blue' onClick={()=>cancel()}>Cancel</button><button className='green' onClick={()=>save()}>Update</button></>}
+            {method==="Display" && <><button className='blue' onClick={()=>cancel()}>Back</button></>}
         </div>
         </div>
         }
