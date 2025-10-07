@@ -13,7 +13,7 @@ html{
   padding-top:5%;
   background: var(--lightgray);
   background-image: url('../texture.png');
-  background-size:cover;
+  background-size:100%;
 }
 
 :root{
@@ -21,6 +21,7 @@ html{
   --lightblue: rgb(80,150,220);
   --green:rgb(0,176,80);
   --red:rgb(255,0,30);
+  --yellow:rgb(255,192,0);
   --fontcolor:rgb(80,80,80);
   --lightgray:rgb(245,245,240);
   --greent:rgb(100,255,100,0.1);
@@ -71,6 +72,11 @@ button:hover{
 
 .blue{
   background: var(--blue);
+  color:white;
+}
+
+.yellow{
+  background: var(--yellow);
   color:white;
 }
 
