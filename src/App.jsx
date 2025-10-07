@@ -118,7 +118,8 @@ class Database{
         const collectionname = {
             "Asset":"assets",
             "Asset Class":"assetclasses", 
-            "Cost Center":"costcenters", 
+            "Cost Center":"costcenters",
+            "Cost Object":"costobjects", 
             "Currency":"currencies",
             "Customer":"customers",
             "Employee":"employees",
@@ -153,6 +154,18 @@ class Database{
         const database=loadData(objects[collection]['collection'])
         const newdatabase = database.filter((item,index)=>(index!==id))
         saveData(newdatabase,objects[collection]['collection'])
+    }
+}
+
+class Asset{
+    constructor(name){
+        this.name = name;
+        this.data = Asset.data.filter(item=>item['Name']==this.name)[0]
+    }
+    static data = Database.load("Asset")
+    static list(){
+        const list = ListItems(this.data,"Name")
+        return list
     }
 }
 
@@ -206,6 +219,69 @@ class GeneralLedger{
     }
 }
 
+class CostCenter{
+    constructor(name){
+        this.name = name;
+        this.data = CostObject.data.filter(item=>item['Name']==this.name)[0];
+    }
+    static data = Database.load("Cost Center")
+    static list(){
+        const list = ListItems(this.data,"Name")
+        return list
+    }
+}
+
+class CostObject{
+    constructor(name){
+        this.name = name;
+        this.data = CostObject.data.filter(item=>item['Description']==this.name)[0];
+        this.ratio = this.data['Settlement Ratio']
+    }
+    transactions(){
+        const data = new Intelligence().transactionstable();
+        const filtered = data.filter(item=>item['Cost Object']==this.name);
+        return filtered
+    }
+    accumulatedCost(){
+        let sum = 0;
+        sum+=SumFieldIfs(this.transactions(),"Amount",["Debit/ Credit"],["Debit"]);
+        sum-=SumFieldIfs(this.transactions(),"Amount",["Debit/ Credit"],["Credit"]);
+        return sum;
+    }
+    static data = Database.load("Cost Object")
+    static list(){
+        const list = ListItems(this.data,"Description")
+        return list
+    }
+    static transferablesData (){
+        const data = [{"Name":"","Type":""}];
+        Asset.list().map(item=>data.push({["Name"]:item,["Type"]:"Asset"}));
+        Material.list().map(item=>data.push({["Name"]:item,["Type"]:"Material"}));
+        CostCenter.list().map(item=>data.push({["Name"]:item,["Type"]:"Cost Center"}));
+        this.list().map(item=>data.push({["Name"]:item,["Type"]:"Cost Object"}));
+        return data
+    }
+    static transferablesList(){
+        const list = ListItems(this.transferablesData(),"Name");
+        return list
+    }
+    static getTransferableType(name){
+        const type = this.transferablesData().filter(item=>item['Name']==name)[0]['Type'];
+        return type
+    }
+}
+
+class Material{
+    constructor(name){
+        this.name = name;
+    }
+    static data = Database.load("Material");
+    static list(){
+        const list = ListItems(this.data,"Description")
+        return list
+    }
+}
+
 function TrialBalance(){
     const [query,setquery] = useState(["2025-04-01","2026-03-31"])
     const [period,setperiod] = useState(["2025-04-01","2026-03-31"])
@@ -230,6 +306,7 @@ class Intelligence{
             "Asset":"assets",
             "Asset Class":"assetclasses", 
             "Cost Center":"costcenters", 
+            "Cost Object":"costobjects",
             "Currency":"currencies",
             "Customer":"customers",
             "Employee":"employees",
@@ -317,6 +394,22 @@ class Intelligence{
         const amount = SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Credit"])
         return amount
     }
+    costobject(data){
+        const result = {...data};
+        result['Settlement Ratio'] = result['Settlement Ratio'].map((item,index)=>({...item,['Type']:CostObject.getTransferableType(item['To'])}))
+        return result
+    }
+    costobjectError(data){
+        const list = [];
+        (data['Description']=="")?list.push(`Provide a description for the object.`):()=>{};
+        (data['Settlement Ratio'].length==0)?list.push(`Provide Settlement Ratio.`):()=>{};
+        (data['Cost Accumulation Period']['From']=="" || data['Cost Accumulation Period']['To']=="")?list.push(`Provide Accumulation Period`):()=>{};
+        if (data['Settlement Ratio'].length>0){
+            (SumField(data['Settlement Ratio'],"Proportion")!=100)?list.push("Total of proportion be 100"):()=>{};
+            (data['Settlement Ratio'].map((item, index)=>((item['Type']=="Cost Center" && (item["Consumption Time From"] == "" || item["Consumption Time To"] == ""))?list.push(`Settlement Item ${index + 1} requires Consumption Period`):()=>{})))
+        }
+        return list
+    }
     generalledger(data){
         const result = {...data};
         (result['Ledger Type']=="Asset")?result['Presentation'] = "Asset":()=>{}
@@ -327,7 +420,7 @@ class Intelligence{
     }
     generalledgerError(data){
         const list = [];
-        (data['Name']=="")?list.push(`Provide a name for the asset`):()=>{}
+        (data['Name']=="")?list.push(`Provide a name for the General Ledger`):()=>{}
         return list
     }
     vendorError(data){
@@ -470,6 +563,16 @@ const objects = {
         ],
         "collection":"assetclasses"
     },
+    "Bank Account":{
+        "name":"Bank Account",
+        "collection":"bankaccounts",
+        "schema":[
+            {"name":"Bank Name","datatype":"single","input":"input","type":"text","use-state":"State Bank of India"},
+            {"name":"IFSC","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"Account Number","datatype":"single","input":"input","type":"number","use-state":""},
+            {"name":"General Ledger","datatype":"single","input":"input","type":"number","use-state":""}
+        ]
+    },
     "Cost Center":{
         "name": "Cost Center",
         "schema": [
@@ -478,6 +581,23 @@ const objects = {
             {"name":"Apportionment Ratio","datatype":"nest","structure":[{"name":"From", "datatype":"single", "input":"input", "type":"text"},{"name":"To", "datatype":"single", "input":"input", "type":"text"},{"name":"Ratio", "datatype":"collection", "structure":[{"name":"To", "datatype":"single", "input":"input", "type":"text"},{"name":"Ratio", "datatype":"single", "input":"input", "type":"text"}]}],"use-state":[{"From":"2025-04-01","To":"2026-03-31","Ratio":[{"To":"Head Office","Ratio":0.50}]}]}
         ],
         "collection":"costcenters"
+    },
+    "Cost Object":{
+        "name":"Cost Object",
+        "collection":"costobjects",
+        "schema":[
+            {"name":"Description","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"Cost Accumulation Period","datatype":"object","structure":[{"name":"From", "datatype":"single", "input":"input", "type":"date"},{"name":"To", "datatype":"single", "input":"input", "type":"date"}],"use-state":{"From":"","To":""}},
+            {"name":"Settlement Ratio","datatype":"collection","structure":[
+                {"name":"To","datatype":"single","input":"option","options":CostObject.transferablesList()},
+                {"name":"Proportion","datatype":"single","input":"input","type":"number"},
+                {"name":"Type","datatype":"single","value":"calculated"},
+                {"name":"Consumption Time From", "datatype":"single","input":"input","type":"date"},
+                {"name":"Consumption Time To", "datatype":"single","input":"input","type":"date"}
+            ],
+            "use-state":[{"To":"","Proportion":"","Consumption Time From":"","Consumption Time To":""}]},
+
+        ]
     },
     "Currency":{
         "name":"Currency",
@@ -506,14 +626,24 @@ const objects = {
     "Employee":{
         "name":"Employee",
         "schema": [
-            {"name":"Personnel No", "datatype":"single", "input":"input", "type":"text", "use-state":0},
-            {"name": "Name", "datatype":"object", "structure":[{"name":"First Name","datatype":"single","input":"input","type":"text"},{"name":"Last Name", "datatype":"single", "input":"input","type":"text"}], "use-state":{"First Name":"","Last Name":""}},
+            {"name":"ID", "value":"calculated"},
+            {"name": "Name", "datatype":"single", "input":"input","type":"text","use-state":""},
+            {"name": "Address", "datatype":"single", "input":"input","type":"text","use-state":""},
+            {"name": "PIN", "datatype":"single", "input":"input","type":"number","use-state":""},
+            {"name": "Phone", "datatype":"single", "input":"input","type":"number","use-state":""},
+            {"name": "E-mail", "datatype":"single", "input":"input","type":"text","use-state":""},
+            {"name": "PAN", "datatype":"single", "input":"input", "type":"text", "use-state":""},
             {"name": "Date of Birth", "datatype":"single", "input":"input", "type":"date", "use-state":0},
-            {"name": "PAN", "datatype":"single", "input":"input", "type":"text", "use-state":0},
             {"name":"Age","value":"calculated"},
+            {"name": "Date of Hiring", "datatype":"single", "input":"input", "type":"date", "use-state":0},
             {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Validated", "value":"calculated", "datatype":"single"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
-            {"name":"Date of Hiring", "datatype":"single", "input":"input", "type":"date", "use-state":0},
-            {"name":"Employment Details", "datatype":"collection","structure":[{"name":"Organisational Unit", "datatype":"single", "input":"input", "type":"text"},{"name":"Designation", "datatype":"single", "input":"input", "type":"text"},{"name":"Basic Pay", "datatype":"single", "input":"input", "type":"number"},{"name":"From Date", "datatype":"single", "input":"input", "type":"date"},{"name":"To Date", "datatype":"single", "input":"input", "type":"date"}], "use-state":[{"id":0,"Organisational Unit":"Finance","Designation":"Assistant Manager","Basic Pay":100000,"From Date":0,"To Date":0}]}
+            {"name":"Employment Details", "datatype":"collection","structure":[{"name":"Organisational Unit", "datatype":"single", "input":"input", "type":"text"},{"name":"Position", "datatype":"single", "input":"input", "type":"text"},{"name":"Scale", "datatype":"single", "input":"input", "type":"number"},{"name":"From", "datatype":"single", "input":"input", "type":"date"},{"name":"To", "datatype":"single", "input":"input", "type":"date"}], "use-state":[{"id":0,"Organisational Unit":"Finance","Position":"Assistant Manager","Scale":100000,"From":0,"To":0}]},
+            {"name":"Deductions - Recurring","datatype":"collection","structure":[{"name":"Description","datatype":"single", "input":"input", "type":"text"},{"name":"From","datatype":"single", "input":"input", "type":"date"},{"name":"To","datatype":"single", "input":"input", "type":"date"},{"name":"Amount","datatype":"single", "input":"input", "type":"number"}], "use-state":[{"Description":"","From":"","To":"","Amount":""}]},
+            {"name":"Deductions - Onetime","datatype":"collection","structure":[{"name":"Description","datatype":"single", "input":"input", "type":"text"},{"name":"Date","datatype":"single", "input":"input", "type":"date"},{"name":"Amount","datatype":"single", "input":"input", "type":"number"}], "use-state":[{"Description":"","Date":"","Amount":""}]},
+            {"name":"Incometax Regime","datatype":"single","input":"option","options":["115 BAC","Opt out"],"use-state":""},
+            {"name":"Incometax - Additional Income","datatype":"collection"},
+            {"name":"Incometax - Deductions","datatype":"collection"},
+            {"name":"Leaves","datatype":"collection"},
         ],
         "collection":'employees'
     },
@@ -522,8 +652,9 @@ const objects = {
         "schema":[
             {"name":"Code", "value":"calculated"},
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+            {"name":"Ledger Type","datatype":"single","input":"option","options":["Asset", "Depreciation", "Cost Element", "Customer", "Material", "Vendor","General","Bank Account"]},
             {"name": "Presentation", "datatype":"single", "input":"option", "options":["Income", "Expense", "Asset", "Liability", "Equity"], "use-state":"Income"},
-            {"name":"Ledger Type","datatype":"single","input":"option","options":["Asset", "Depreciation", "Cost Element", "Customer", "Material", "Vendor","General"]}
+            {"name": "Enable Clearing", "datatype":"single", "input":"option","options":["True","False"], "use-state":"True"},
         ],
         "collection":"generalledgers"
     },
@@ -534,6 +665,13 @@ const objects = {
             {"name":"Cost Center", "datatype":"single", "input":"input", "type":"text","use-state":""},
         ],
         "collection":"locations"
+    },
+    "Material":{
+        "name":"Material",
+        "schema":[
+            {"name":"Description", "datatype":"single", "input":"input", "type":"text","use-state":""}
+        ],
+        "collection":"materials"
     },
     "Payment Term":{
         "name":"Payment Term",
@@ -637,7 +775,7 @@ const objects = {
                     {"name":"Quantity", "datatype":"single","input":"option","options":[]},
                     {"name":"Location", "datatype":"single","input":"option","options":ListofItems(loadData('locations'),0)},
                     {"name":"Profit Center", "datatype":"single","input":"option","options":ListofItems(loadData('profitcenters'),0)},
-                    {"name":"Cost Object", "datatype":"single","input":"option","options":ListofItems(loadData('costobjects'),0)},
+                    {"name":"Cost Object", "datatype":"single","input":"option","options":["",...CostObject.list()]},
                     {"name":"Purchase Order", "datatype":"single","input":"option","options":ListofItems(loadData('purchaseorders'),0)},
                     {"name":"Purchase Order Item", "datatype":"single","input":"option","options":[]},
                     {"name":"Sale Order", "datatype":"single","input":"option","options":ListofItems(loadData('serviceorders'),0)},
@@ -645,10 +783,11 @@ const objects = {
                     {"name":"Employee", "datatype":"single","input":"option","options":ListofItems(loadData('employees'),0)},
                     {"name":"Consumption Time From", "datatype":"single","input":"input","type":"date"},
                     {"name":"Consumption Time To", "datatype":"single","input":"input","type":"date"},
-                    {"name":"Cost per Day","value":"calculated","datatype":"single"}
+                    {"name":"Cost per Day","value":"calculated","datatype":"single"},
+                    {"name":"Cleared","value":"calculated","datatype":"single"}
 
                 ],  
-                "use-state":[{"id":0,"Account":"","Account Type":"","General Ledger":"","Amount":0,"Debit/ Credit":"Debit","GST":"","Cost Center":"","Cost Object":"","Asset":"","Material":"","Quantity":"","Location":"","Profit Center":"","Purchase Order":"","Purchase Order Item":"","Sale Order":"","Sale Order Item":"","Consumption Time From":"","Consumption Time To":"","Employee":"","Cost per Day":0}]}
+                "use-state":[{"id":0,"Account":"","Account Type":"","General Ledger":"","Amount":0,"Debit/ Credit":"Debit","GST":"","Cost Center":"","Cost Object":"","Asset":"","Material":"","Quantity":"","Location":"","Profit Center":"","Purchase Order":"","Purchase Order Item":"","Sale Order":"","Sale Order Item":"","Consumption Time From":"","Consumption Time To":"","Employee":"","Cost per Day":0,"Cleared":false}]}
         ]
     },
     "Virtual Account":{
@@ -969,6 +1108,7 @@ function Reports(){
     <div className='menuList'>
     <div className='menuTitle'><h3>Reports</h3></div>
     <div className='menuItem'><h3 onClick={()=>{navigate(`/trialbalance`)}}>General Ledger Balance</h3></div>
+    <div className='menuItem'><h3 onClick={()=>{navigate(`/costobjectbalance`)}}>Cost Object Balance</h3></div>
     <div className='menuItem'><h3 onClick={()=>{navigate(`/scratch`)}}>Scratch</h3></div>
     </div>
     )
@@ -1041,6 +1181,8 @@ function Report(){
 
 
 function DisplayAsTable({collection}){
+
+    if (collection.length!=0){
     const fields = Object.keys(collection[0]);
 
     return (
@@ -1051,6 +1193,13 @@ function DisplayAsTable({collection}){
             </table>
         </div>
     )
+} else {
+    return (
+        <div className='display'>
+            Sorry! No data found.
+        </div>
+    )
+}
 }
 
 function CRUD({method}){
@@ -1069,6 +1218,9 @@ function CRUD({method}){
     function findError(){
         const list = []
         switch(object){
+            case 'Cost Object':
+                list.push(...new Intelligence().costobjectError(output));
+                break
             case 'Transaction':
                 (output['Balance']!=0)?list.push("Balance not zero"):null
                 output['Line Items'].map((item,index)=>list.push(...new Intelligence().lineItemErrors(item,index)))
@@ -1093,6 +1245,9 @@ function CRUD({method}){
     function process(){
         let result = data
         switch(object){
+            case 'Cost Object':
+                result = new Intelligence().costobject(result)
+                break
             case 'General Ledger':
                 result = new Intelligence().generalledger(result)
                 break
@@ -1229,11 +1384,29 @@ function CRUD({method}){
     
 }
 
+function CostObjectBalance(){
+    const [object,setobject] = useState(CostObject.list()[0]);
+    const [selected,setselected] = useState(CostObject.list()[0]);
+    return(
+        <div>
+            <div>
+                <label>Cost Object</label>
+                <select value={object} onChange={(e)=>setobject(e.target.value)}>{CostObject.list().map(item=><option value={item}>{item}</option>)}</select>
+                <button onClick={()=>setselected(object)}>Get</button>
+            </div>
+            <div>
+                <DisplayAsTable collection={new CostObject(selected).transactions()}/>
+                <p>{new CostObject(selected).accumulatedCost()}</p>
+            </div>
+        </div>
+    )
+}
+
 function Scratch(){
 
     return(
         <div>
-        {JSON.stringify(GeneralLedger.trialbalance(['2025-04-01','2026-03-31']))}
+        {JSON.stringify(new CostObject("IAT Plant").ratio)}
         </div>
     )
 }
@@ -1260,6 +1433,7 @@ if (new Company().status){
       <Route path="/scratch/" element={<Scratch/>}/>
       <Route path="/timecontrol" element={<TimeControlling/>}/>
       <Route path="/trialbalance" element={<TrialBalance/>}/>
+      <Route path="/costobjectbalance" element={<CostObjectBalance/>}/>
     </Routes>
     </div>
     </BrowserRouter>
