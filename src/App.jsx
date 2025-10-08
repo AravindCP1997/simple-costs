@@ -181,6 +181,11 @@ class GeneralLedger{
         const list = ListItems(this.data,"Name")
         return list
     }
+    static listtype(type){
+        const data = this.data.filter(item=>item['Ledger Type']==type);
+        const list = ListItems(data,"Name");
+        return list
+    }
     transactions(period){
         const [from,to] = period
         const data = new Intelligence().transactionstable();
@@ -223,6 +228,28 @@ class CostCenter{
     constructor(name){
         this.name = name;
         this.data = CostObject.data.filter(item=>item['Name']==this.name)[0];
+    }
+    transactions(){
+        const data = new Intelligence().transactionstable();
+        const filtered = data.filter(item=>item['Cost Center']==this.name);
+        return filtered
+    }
+    itemsOfDate(date){
+        const data = this.transactions().filter(item=>item['Consumption Time From']<=date && item['Consumption Time To']>=date)
+        const result = data.map(item=>({...item,['Cost per Day']:CostCenter.costPerDay(item)}))
+        return result;
+    }
+    costOfDate(date){
+        const data = this.itemsOfDate(date)
+        const cost  = SumField(data,'Cost per Day')
+        return cost
+    }
+    static costPerDay(lineitem){
+        const from = lineitem['Consumption Time From'];
+        const to = lineitem['Consumption Time To'];
+        const days = dayNumber(to) - dayNumber(from)+ 1
+        const costperday = lineitem['Amount']/days
+        return costperday
     }
     static data = Database.load("Cost Center")
     static list(){
@@ -394,6 +421,17 @@ class Intelligence{
         const amount = SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Credit"])
         return amount
     }
+    bankAccount(data){
+        const result = {...data};
+        return result
+    }
+    bankAccountError(data){
+        const list = [];
+        const req = ["Name","IFSC","Account Number","General Ledger","Profit Center"];
+        req.map(item=>(data[item]=="")?list.push(`${item} is required`):()=>{});
+        data['Virtual Accounts'].map((item,index)=>(item["Virtual Account Number"]!="" && item['Ledger']=="")?list.push(`VAN ${item['Virtual Account Number']} requires a ledger`):()=>{})
+        return list
+    }
     costobject(data){
         const result = {...data};
         result['Settlement Ratio'] = result['Settlement Ratio'].map((item,index)=>({...item,['Type']:CostObject.getTransferableType(item['To'])}))
@@ -421,6 +459,23 @@ class Intelligence{
     generalledgerError(data){
         const list = [];
         (data['Name']=="")?list.push(`Provide a name for the General Ledger`):()=>{}
+        return list
+    }
+    gst(data){
+        const result = {...data};
+        const lineitems = [...result['Line Items']];
+        result['Line Items'].map(item=>(item['GST']!="")?lineitems.push({...item,['GST']:""}):()=>{})
+        result['Line Items'] = lineitems
+        return result
+    }
+    material(data){
+        const result = {...data};
+        return result
+    }
+    materialError(data){
+        const list = [];
+        const req = ["Description", "General Legder", "Unit"];
+        req.map(item=>(data[item]=="")?list.push(`${item} is required`):()=>{});
         return list
     }
     vendorError(data){
@@ -570,7 +625,12 @@ const objects = {
             {"name":"Bank Name","datatype":"single","input":"input","type":"text","use-state":"State Bank of India"},
             {"name":"IFSC","datatype":"single","input":"input","type":"text","use-state":""},
             {"name":"Account Number","datatype":"single","input":"input","type":"number","use-state":""},
-            {"name":"General Ledger","datatype":"single","input":"input","type":"number","use-state":""}
+            {"name":"General Ledger","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('Bank Account')],"use-state":""},
+            {"name":"Profit Center","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"Virtual Accounts","datatype":"collection","structure":[
+                {"name":"Virtual Account Number","datatype":"single","input":"input","type":"text","use-state":""},
+                {"name":"Ledger","datatype":"single","input":"input","type":"text","use-state":""},
+            ],"use-state":[{"Virtual Account Number":"","Ledger":""}]},
         ]
     },
     "Cost Center":{
@@ -652,7 +712,7 @@ const objects = {
         "schema":[
             {"name":"Code", "value":"calculated"},
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name":"Ledger Type","datatype":"single","input":"option","options":["Asset", "Depreciation", "Cost Element", "Customer", "Material", "Vendor","General","Bank Account"]},
+            {"name":"Ledger Type","datatype":"single","input":"option","options":["Asset", "Bank Account", "Cost Element", "Customer", "Depreciation" ,"General",  "Material", "Vendor"]},
             {"name": "Presentation", "datatype":"single", "input":"option", "options":["Income", "Expense", "Asset", "Liability", "Equity"], "use-state":"Income"},
             {"name": "Enable Clearing", "datatype":"single", "input":"option","options":["True","False"], "use-state":"True"},
         ],
@@ -669,7 +729,10 @@ const objects = {
     "Material":{
         "name":"Material",
         "schema":[
-            {"name":"Description", "datatype":"single", "input":"input", "type":"text","use-state":""}
+            {"name":"Description", "datatype":"single", "input":"input", "type":"text","use-state":""},
+            {"name":"General Ledger", "datatype":"single", "input":"option", "options":GeneralLedger.list(),"use-state":""},
+            {"name":"Unit", "datatype":"single", "input":"input", "type":"text","use-state":""},
+            {"name":"Price", "datatype":"collection", "structure":[{"name":"Location","datatype":"single","input":"input","type":"text"},{"name":"Date","datatype":"single","input":"input","type":"date"},{"name":"Price","datatype":"single","input":"input","type":"number"}],"use-state":[{"Location":"","Date":"","Price":""}]},
         ],
         "collection":"materials"
     },
@@ -917,11 +980,11 @@ function CompanyInfo(){
                 <div className='companyDetail'><label>GSTIN</label><input onChange={(e)=>setdata(prevdata=>({...prevdata,['GSTIN']:e.target.value}))} type="text" disabled={!editable} value={data['GSTIN']}/></div>
                 <div className='companyDetail'><label>PAN</label><input type="text" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['PAN']:e.target.value}))} value={data['PAN']}/></div>
                 <div className='companyDetail'><label>0<sup>th</sup> Year</label><input required min={1900} max={2050} type="number" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Year 0']:e.target.value}))} value={data['Year 0']}/></div>
-                <div className='companyDetail'><label>Beginning Month of a Financial Year</label><select required value={data['Financial Year Beginning']} onChange={(e)=>setdata(prevdata=>({...prevdata,['Financial Year Beginning']:e.target.value}))}>{months.map(month=><option value={month['Number']}>{month['Month']}</option>)}</select></div>
+                <div className='companyDetail'><label>Beginning Month of a Financial Year</label><select required disabled={!editable} value={data['Financial Year Beginning']} onChange={(e)=>setdata(prevdata=>({...prevdata,['Financial Year Beginning']:e.target.value}))}>{months.map(month=><option value={month['Number']}>{month['Month']}</option>)}</select></div>
                 <div className='companyDetailObject'>
                     <label>Functional Currency</label>
-                    <div className='companyDetail'><label>Code</label><input type="text" onChange={(e)=>setdata(prevdata=>({...prevdata,['Functional Currency']:{...prevdata['Functional Currency'],['Code']:e.target.value}}))} value={data['Functional Currency']['Code']}/></div>
-                    <div className='companyDetail'><label>Currency</label><input type="text" onChange={(e)=>setdata(prevdata=>({...prevdata,['Functional Currency']:{...prevdata['Functional Currency'],['Currency']:e.target.value}}))} value={data['Functional Currency']['Currency']}/></div>
+                    <div className='companyDetail'><label>Code</label><input type="text" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Functional Currency']:{...prevdata['Functional Currency'],['Code']:e.target.value}}))} value={data['Functional Currency']['Code']}/></div>
+                    <div className='companyDetail'><label>Currency</label><input type="text" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Functional Currency']:{...prevdata['Functional Currency'],['Currency']:e.target.value}}))} value={data['Functional Currency']['Currency']}/></div>
 
                 </div>
             </div>
@@ -1222,6 +1285,9 @@ function CRUD({method}){
     function findError(){
         const list = []
         switch(object){
+            case 'Bank Account':
+                list.push(...new Intelligence().bankAccountError(data))
+                break
             case 'Cost Object':
                 list.push(...new Intelligence().costobjectError(output));
                 break
@@ -1247,7 +1313,7 @@ function CRUD({method}){
     }
     
     function process(){
-        let result = data
+        let result = data;
         switch(object){
             case 'Cost Object':
                 result = new Intelligence().costobject(result)
@@ -1410,7 +1476,7 @@ function Scratch(){
 
     return(
         <div>
-        {JSON.stringify(new CostObject("IAT Plant").ratio)}
+        {JSON.stringify(new Intelligence().gst({"Line Items":[{"GST":"Input 5%"}]}))}
         </div>
     )
 }

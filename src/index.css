@@ -32,6 +32,7 @@ html{
   --whitet:rgb(255,255,255,0.7);
   --blackt:rgb(0,0,0,0.2);
   --lightredt:rgb(255,180,200,0.2);
+  --lightgreent:rgb(150,255,150,0.2);
 }
 
 a{
@@ -44,7 +45,7 @@ a{
   justify-content: center;
 }
 
-html,button, select, option, label{
+html,button, input, select, option, label{
   font-family: Lex, Helvet,'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -67,6 +68,7 @@ button:hover{
   background: var(--redt);
   color:white;
 }
+
 
 .green{
   background: var(--greent);
