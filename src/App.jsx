@@ -1150,7 +1150,7 @@ function Reports(){
     return(
     <div className='menuList'>
     <div className='menuTitle blue'><h4>Reports</h4></div>
-    <div className='menuItem' onClick={()=>{navigate(`/ledger`)}}><h4>Ledger</h4></div>
+    <div className='menuItem' onClick={()=>{navigate(`/report/Ledger`)}}><h4>Ledger Display</h4></div>
     <div className='menuItem' onClick={()=>{navigate(`/scratch`)}}><h4>Scratch</h4></div>
     </div>
     )
@@ -1385,7 +1385,7 @@ function CostObjectBalance(){
 function Scratch(){
 
     return(
-        <></>
+        <>{JSON.stringify(new Report('ledger').default())}</>
     )
 }
 
@@ -1394,32 +1394,151 @@ class Report{
         this.name = name;
         this.schema = Report.schema[this.name];
         this.url = Report.url[this.name];
-        this.usestate = Report.usestate[this.name];
+    }
+    default(){
+        const result = {};
+        this.schema.map(item=>result[item['name']]=Report.defaultobject(item['fields']))
+        return result
+    }
+    static defaultobject(fields){
+        const result = {}
+        fields.map(field=>result[field]=this.defaults(field))
+        return result
+    }
+    static defaults(field){
+        let result = ""
+        switch (field){
+            case 'value':
+                result =  ''
+                break
+            case 'values':
+                result = ['']
+                break
+            case 'exclValues':
+            result = ['']
+            break
+            case 'range' :
+                result = ['','']
+                break
+            case 'ranges' :
+                result =  [['','']]
+                break
+            case 'exclRanges' :
+                result =  [['','']]
+                break
+        }
+        return result
     }
     static schema = {
-        "ledger":[
-            {"name":"ledger","label":"Ledger","fields":["SingleValue","SingleRange","Values","ExclValues","Ranges","ExclRanges"]},
-            {"name":"segment","label":"Segment","fields":["SingleValue","SingleRange","Values","ExclValues","Ranges","ExclRanges"]}
+        "Ledger":[
+            {"name":"ledger","label":"Ledger","fields":["values"]},
+            {"name":"period","label":"Period","fields":["range"]},
+        ],
+        "sample":[
+            {"name":"ledger","label":"Ledger","fields":["value","values","exclValues", "range","ranges","exclRanges"]},
+            {"name":"segment","label":"Segment","fields":["value","values","exclValues", "range","ranges","exclRanges"]},
         ]
     }
     static url = {
-        "ledger":"/ledger"
-    }
-    static usestate = {
-        "ledger":{
-            "ledger":{
-                "SingleValue":""
-            }
-        }
+        "Ledger":"/ledger"
     }
 }
 
+function ReportQuery(){
+    const {report} = useParams();
+    const reportobject = new Report(report);
+    const [query,setquery] = useState(reportobject.default());
+    const {schema,url} = reportobject
+    const navigate = useNavigate();
+
+    function submitQuery(){
+        navigate(url, {state: query})
+    }
+
+    function valueChange(itemname,field,e){
+        const {value} = e.target;
+        setquery(prevdata=>({
+            ...prevdata,[itemname]:{...prevdata[itemname],[field]:value}
+        }))
+    }
+
+    function rangeChange(itemname,field,i,e){
+        const {value} = e.target;
+        const prevrange = [...query[itemname][field]];
+        const newrange = prevrange.map((item,index)=>(i==index)?value:item);
+        setquery(prevdata=>({
+            ...prevdata,[itemname]:{...prevdata[itemname],[field]:newrange}
+        }))
+    }
+
+    function valuesChange(itemname,field,i,e){
+        const {value} = e.target;
+        const prevvalues = [...query[itemname][field]];
+        const newvalues = prevvalues.map((item,index)=>(i==index)?value:item);
+        setquery(prevdata=>({
+            ...prevdata,[itemname]:{...prevdata[itemname],[field]:newvalues}
+        }))
+    }
+
+    function rangesChange(itemname,field,i,j,e){
+        const {value} = e.target;
+        const prevranges = [...query[itemname][field]];
+        const prevrange = prevranges[i];
+        const newrange = prevrange.map((item,index)=>(j==index)?value:item);
+        const newranges = prevranges.map((item,index)=>(i==index)?newrange:item);
+        setquery(prevdata=>({
+            ...prevdata,[itemname]:{...prevdata[itemname],[field]:newranges}
+        }))
+    }
+
+    function addValues(itemname,field){
+        const defaults = Report.defaults(field);
+        const newvalues = [...query[itemname][field],...defaults]
+        setquery(prevdata=>({
+            ...prevdata,[itemname]:{...prevdata[itemname],[field]:newvalues}}))
+    }
+
+    function addRanges(itemname,field){
+        const defaults = Report.defaults(field);
+        const newvalues = [...query[itemname][field],...defaults]
+        setquery(prevdata=>({
+            ...prevdata,[itemname]:{...prevdata[itemname],[field]:newvalues}}))
+    }
+
+    return(
+        <div className='reportQuery'>
+            <h2 className='reportQueryTitle'>Query</h2>
+        {schema.map(item=>
+            <div className="reportQueryField">
+                <label>{item['label']}</label>
+                {item["fields"].map(field=>
+                    <div className='reportQuerySubfield'>
+                        <label>{field}</label>
+                        {field == "option" && <>option</>}
+                        {field =="value" && <input className='reportQueryCell' onChange={(e)=>valueChange(item['name'],field,e)} value={query[item['name']][field]}/>}
+                        {field =="values" && <div className='reportQueryColumn'>{query[item['name']][field].map((values,i)=><div><input className='reportQueryCell' onChange={(e)=>valuesChange(item['name'],field,i,e)} value={query[item['name']][field][i]}/></div>)} <button onClick={()=>addValues(item['name'],field)}>+</button></div>}
+                        {field =="exclValues" && <div className='reportQueryColumn'>{query[item['name']][field].map((values,i)=><div><input className='reportQueryCell' onChange={(e)=>valuesChange(item['name'],field,i,e)} value={query[item['name']][field][i]}/></div>)} <button onClick={()=>addValues(item['name'],field)}>+</button></div>}
+                        {field =="range" && <div className='reportQueryRow'><input className='reportQueryCell' onChange={(e)=>rangeChange(item['name'],field,0,e)} value={query[item['name']][field][0]}/><input className='reportQueryCell' onChange={(e)=>rangeChange(item['name'],field,1,e)} value={query[item['name']][field][1]}/></div>}
+                        {field =="ranges" && <div className='reportQueryColumn'>{query[item['name']][field].map((ranges,i)=><div><div className='reportQueryRow'><input className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,0,e)} value={query[item['name']][field][i][0]}/><input className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,1,e)} value={query[item['name']][field][i][1]}/></div></div>)} <button onClick={()=>addRanges(item['name'],field)}>+</button></div>}
+                        {field =="exclRanges" && <div className='reportQueryColumn'>{query[item['name']][field].map((ranges,i)=><div><div className='reportQueryRow'><input  className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,0,e)} value={query[item['name']][field][i][0]}/><input className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,1,e)} value={query[item['name']][field][i][1]}/></div></div>)} <button onClick={()=>addRanges(item['name'],field)}>+</button></div>}
+                        </div>
+                )}
+                </div>
+        )}
+        
+        <button onClick={()=>submitQuery()}>Submit</button>
+        </div>
+    )
+}
+
 function Ledger(){
-    const list = [...Asset.list(), ...GeneralLedger.list(), ...Material.list()]
-    const period = ["2025-04-01","2026-03-31"]
+    const location = useLocation()
+    const data = location.state || {"list":[],"period":[]}
+    const list = data['ledger']['values']
+    const period = data['period']['range']
     return(
         <div className='ledgers'>
-            <h3>Asset Ledger Display</h3>
+            <h3>Ledger Display</h3>
             {list.map(item=>
             <div className='ledger'>
                 <h4>{item}</h4>
@@ -1443,6 +1562,7 @@ if (new Company().status){
       <Route path='/record' element={<Record/>}/>
       <Route path='/control' element={<Control/>}/>
       <Route path='/reports' element={<Reports/>}/>
+      <Route path="/report/:report" element={<ReportQuery/>}/>
       <Route path="/ledger" element={<Ledger/>}/> 
       <Route path='/query/:object/' element={<Query type={"Object"}/>}/>
       <Route path='/create/:object/' element={<CRUD method={"Create"}/>}/>
@@ -1453,6 +1573,7 @@ if (new Company().status){
       <Route path="/timecontrol" element={<TimeControlling/>}/>
       <Route path="/trialbalance" element={<TrialBalance/>}/>
       <Route path="/costobjectbalance" element={<CostObjectBalance/>}/>
+      <Route path="*" element={<Home/>}/>
     </Routes>
     </div>
     </BrowserRouter>
@@ -1469,4 +1590,4 @@ if (new Company().status){
 }
 }
 
-export default App;
+export default App; 
