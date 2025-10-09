@@ -131,6 +131,7 @@ class Database{
             "Purchase Order":"purchaseorders",
             "Segment":"segments",
             "Sale Order":"saleorders",
+            "Unit":"units",
             "Vendor":"vendors",
             "Transaction":'transactions'
         };
@@ -312,6 +313,29 @@ class CostObject{
     static getTransferableType(name){
         const type = this.transferablesData().filter(item=>item['Name']==name)[0]['Type'];
         return type
+    }
+}
+
+class Employee{
+    constructor(id){
+        this.id = id;
+        this.data = Employee.data.filter(item=>item['ID']==this.id)[0];
+    }
+    daysalary(date){
+        const data = this.data['Employment Details'];
+        const filtered = data.filter(item=>item['From']<=date && item['To']>=date)[0]
+        return filtered['Scale']
+    }
+    periodsalary(period){
+        const dates = datesInPeriod(period);
+        const list = [];
+        dates.map(date=>list.push({"Date":date,"Salary":this.daysalary(date)}))
+        return list
+    }
+    static data = Database.load("Employee")
+    static list(){
+        const list = ListItems(this.data,"ID")
+        return list
     }
 }
 
@@ -580,6 +604,16 @@ class Intelligence{
     }
 }
 
+class Unit{
+    constructor(code){
+        this.code = code
+    }
+    static data = Database.load("Unit")
+    static list(){
+        const list = ListItems(this.data,"Code")
+        return list
+    }
+}
 const objects = {
     "Asset":{
         "name":"Asset",
@@ -683,13 +717,13 @@ const objects = {
             {"name":"Age","value":"calculated"},
             {"name": "Date of Hiring", "datatype":"single", "input":"input", "type":"date", "use-state":0},
             {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Validated", "value":"calculated", "datatype":"single"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
-            {"name":"Employment Details", "datatype":"collection","structure":[{"name":"Organisational Unit", "datatype":"single", "input":"input", "type":"text"},{"name":"Position", "datatype":"single", "input":"input", "type":"text"},{"name":"Scale", "datatype":"single", "input":"input", "type":"number"},{"name":"From", "datatype":"single", "input":"input", "type":"date"},{"name":"To", "datatype":"single", "input":"input", "type":"date"}], "use-state":[{"id":0,"Organisational Unit":"Finance","Position":"Assistant Manager","Scale":100000,"From":0,"To":0}]},
+            {"name":"Employment Details", "datatype":"collection","structure":[{"name":"Organisational Unit", "datatype":"single", "input":"option", "options":[""]},{"name":"Position", "datatype":"single", "input":"input", "type":"text"},{"name":"Scale", "datatype":"single", "input":"input", "type":"number"},{"name":"From", "datatype":"single", "input":"input", "type":"date"},{"name":"To", "datatype":"single", "input":"input", "type":"date"}], "use-state":[{"id":0,"Organisational Unit":"Finance","Position":"Assistant Manager","Scale":100000,"From":0,"To":0}]},
             {"name":"Deductions - Recurring","datatype":"collection","structure":[{"name":"Description","datatype":"single", "input":"input", "type":"text"},{"name":"From","datatype":"single", "input":"input", "type":"date"},{"name":"To","datatype":"single", "input":"input", "type":"date"},{"name":"Amount","datatype":"single", "input":"input", "type":"number"}], "use-state":[{"Description":"","From":"","To":"","Amount":""}]},
             {"name":"Deductions - Onetime","datatype":"collection","structure":[{"name":"Description","datatype":"single", "input":"input", "type":"text"},{"name":"Date","datatype":"single", "input":"input", "type":"date"},{"name":"Amount","datatype":"single", "input":"input", "type":"number"}], "use-state":[{"Description":"","Date":"","Amount":""}]},
-            {"name":"Incometax Regime","datatype":"single","input":"option","options":["115 BAC","Opt out"],"use-state":""},
-            {"name":"Incometax - Additional Income","datatype":"collection"},
-            {"name":"Incometax - Deductions","datatype":"collection"},
-            {"name":"Leaves","datatype":"collection"},
+            {"name":"Incometax Regime","datatype":"single","input":"option","options":["New","Old"],"use-state":""},
+            {"name":"Incometax - Additional Income","datatype":"collection","structure":[{"name": "Tax Year", "datatype":"single", "input":"input","type":"number"},{"name": "Description", "datatype":"single", "input":"input","type":"text"},{"name": "Amount", "datatype":"single", "input":"input","type":"number"}],"use-state":[{"Tax Year":"","Description":"","Amount":""}]},
+            {"name":"Incometax - Deductions","datatype":"collection","structure":[{"name": "Tax Year", "datatype":"single", "input":"input","type":"number"},{"name": "Description", "datatype":"single", "input":"input","type":"text"},{"name": "Amount", "datatype":"single", "input":"input","type":"number"}],"use-state":[{"Tax Year":"","Description":"","Amount":""}]},
+            {"name":"Leaves","datatype":"collection","structure":[{"name": "From", "datatype":"single", "input":"input","type":"date"},{"name": "To", "datatype":"single", "input":"input","type":"date"},{"name": "Type of Leave", "datatype":"single", "input":"input","type":"text"}],"use-state":[{"From":"","To":"","Type of Leave":""}]},
         ],
         "collection":'employees'
     },
@@ -716,11 +750,19 @@ const objects = {
         "name":"Material",
         "schema":[
             {"name":"Description", "datatype":"single", "input":"input", "type":"text","use-state":""},
-            {"name":"General Ledger", "datatype":"single", "input":"option", "options":GeneralLedger.list(),"use-state":""},
-            {"name":"Unit", "datatype":"single", "input":"input", "type":"text","use-state":""},
+            {"name":"General Ledger", "datatype":"single", "input":"option", "options":["",...GeneralLedger.listtype('Material')],"use-state":""},
+            {"name":"Unit", "datatype":"single", "input":"option", "options":["",...Unit.list()],"use-state":""},
             {"name":"Price", "datatype":"collection", "structure":[{"name":"Location","datatype":"single","input":"input","type":"text"},{"name":"Date","datatype":"single","input":"input","type":"date"},{"name":"Price","datatype":"single","input":"input","type":"number"}],"use-state":[{"Location":"","Date":"","Price":""}]},
         ],
         "collection":"materials"
+    },
+    "Organisational Unit":{
+        "name":"Organisational Unit",
+        "collection":"organisationalunits",
+        "schema":[
+            {"name":"Name", "datatype":"single", "input":"input", "type":"text","use-state":""},
+            {"name":"Cost Center", "datatype":"single", "input":"option", "options":["",...CostCenter.list()],"use-state":""}
+        ]
     },
     "Payment Term":{
         "name":"Payment Term",
@@ -784,6 +826,14 @@ const objects = {
         
         "collection":"saleeorders"
     },
+    "Unit":{
+        "name":"Unit",
+        "collection":"units",
+        "schema":[
+            {"name":"Code","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"Description","datatype":"single","input":"input","type":"text","use-state":""},
+        ]
+    },
     "Vendor":{
         "name":"Vendor",
         "collection":"vendors",
@@ -813,7 +863,7 @@ const objects = {
             {"name":"Balance", "value":"calculated"},
             {"name": "Line Items", "datatype":"collection", "structure":
                 [
-                    {"name":"Account", "datatype":"single","input":"option","options":ListofItems(new Intelligence().createLedgers(),0),"use-State":""},
+                    {"name":"Account", "datatype":"single","input":"option","options":[...Material.list(),...Asset.list(),...GeneralLedger.list()],"use-State":""},
                     {"name":"General Ledger","value":"calculated","datatype":"single"},
                     {"name":"Account Type", "datatype":"single","value":"calculated"},
                     {"name":"Amount", "datatype":"single","input":"input","type":"number"},
@@ -822,6 +872,7 @@ const objects = {
                     {"name":"Description", "datatype":"single","input":"input","type":"text"},
                     {"name":"Cost Center", "datatype":"single","input":"input","type":"text"},
                     {"name":"Quantity", "datatype":"single","input":"option","options":[]},
+                    {"name":"Value Date", "datatype":"single","input":"input","type":"date"},
                     {"name":"Location", "datatype":"single","input":"option","options":ListofItems(loadData('locations'),0)},
                     {"name":"Profit Center", "datatype":"single","input":"option","options":ListofItems(loadData('profitcenters'),0)},
                     {"name":"Cost Object", "datatype":"single","input":"option","options":["",...CostObject.list()]},
@@ -864,6 +915,24 @@ function dayNumber(date){
     const time = new Date(date).getTime()
     const day = time/86400000
     return day
+}
+
+function numberDay(number){
+    const milliseconds = number*86400000;
+    const date = new Date(milliseconds);
+    const text = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`
+    return text
+
+}
+
+function datesInPeriod(period){
+    const [from,to] = period
+    const interval = dayNumber(to) - dayNumber(from)
+    const list = []
+    for (let i = 0; i<=interval;i++){
+        list.push(numberDay(dayNumber(from)+i))
+    }
+    return list
 }
 
 function CompanyInfo(){
@@ -1095,11 +1164,13 @@ function SearchBar(){
         seturl(e.target.value)
     }
     return(
+        <div className='searchBarOuter'>
         <div className='searchBar'>
             <button className="green" onClick={()=>navigate('/company')}>Company</button>
             <button className='red' onClick={()=>navigate(`/`)}>Home</button>
             <input type="text" value={url} ref={inputRef} onChange={changeUrl} placeholder="Go to . . ."/>
             <button className="green" onClick={search}>&rarr;</button>
+        </div>
         </div>
     )
 }
@@ -1382,13 +1453,6 @@ function CostObjectBalance(){
     )
 }
 
-function Scratch(){
-
-    return(
-        <>{JSON.stringify(new Report('ledger').default())}</>
-    )
-}
-
 class Report{
     constructor(name){
         this.name = name;
@@ -1549,6 +1613,96 @@ function Ledger(){
     )
 }
 
+class HolidayCalendar{
+    constructor(year){
+        this.year = year;
+        this.key = "y"+year;
+        this.data = HolidayCalendar.data[this.key] || [{"Date":"","Description":"Blank"}];
+        
+    }
+    save(data){
+        const allYearData = HolidayCalendar.data
+        allYearData[this.key] = data;
+        saveData(allYearData,'holidays')
+    }
+    static data = ('holidays' in localStorage)?JSON.parse(localStorage.getItem('holidays')):{};
+
+}
+
+function Holidays(){
+    const [year,setyear] = useState("2025");
+    const [editable,seteditable] = useState(false);
+    const [selected,setselected] = useState(0);
+    const [data,setdata] = useState(new HolidayCalendar(selected).data);
+
+    const view =()=>{
+        setselected(year);
+        setdata(new HolidayCalendar(year).data)
+    }
+    const handleChange = (index,field,e) =>{
+        const {value} = e.target;
+        setdata(data.map((item,i)=>(i==index)?{...item,[field]:value}:item))
+    }
+
+    const addHoliday = ()=>{
+        setdata([...data,{"Date":"","Description":""}])
+    }
+
+    const removeHoliday = (index)=>{
+        setdata(data.filter((item,i)=>i!==index))
+    }
+
+    const save = ()=>{
+        new HolidayCalendar(selected).save(data)
+        alert('Saved!')
+        window.location.reload()
+    }
+
+    return(
+        <div className='holidays'>
+            <div className='holidaysQuery'>
+                <input onChange={(e)=>setyear(e.target.value)} value={year} type="number"/>
+                <button onClick={()=>view()}>View</button>
+            </div>
+
+            {!editable && 
+                <div className='holidaysDisplay'>
+                    <h3 className='holidaysTitle'>{'Holidays of ' + selected}</h3>
+                    <DisplayAsTable collection={data}/>
+                    <button onClick={()=>seteditable(true)}>Edit</button>
+                </div>
+            }
+
+            {editable && 
+                <div className='holidaysDisplay'>
+                    <h3 className='holidaysTitle'>{'Holidays of ' + selected}</h3>
+                    <table>
+                        <thead>
+                            <tr><th></th><th>Date</th><th>Description</th></tr>
+                        </thead>
+                        <tbody>
+                            {data.map((item,i)=><tr><td><button onClick={()=>removeHoliday(i)}>-</button></td><td><input type="date" onChange={(e)=>handleChange(i,'Date',e)} value={item['Date']}/></td><td><input onChange={(e)=>handleChange(i,'Description',e)} value={item['Description']}/></td></tr>)}
+                        </tbody>
+                    </table>
+                    <button onClick={()=>addHoliday()}>+</button>
+                    <button onClick={()=>save()}>Save</button>
+                </div>
+                
+            }
+        </div>
+    )
+}
+
+
+function Scratch(){
+
+    return(
+        <>
+        <DisplayAsTable collection={new Employee(1).periodsalary(["2024-04-01","2024-04-30"])}/>
+        </>
+    )
+}
+
 function App(){
 if (new Company().status){
   return(
@@ -1573,6 +1727,7 @@ if (new Company().status){
       <Route path="/timecontrol" element={<TimeControlling/>}/>
       <Route path="/trialbalance" element={<TrialBalance/>}/>
       <Route path="/costobjectbalance" element={<CostObjectBalance/>}/>
+      <Route path="/holidays" element={<Holidays/>}/>
       <Route path="*" element={<Home/>}/>
     </Routes>
     </div>

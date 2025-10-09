@@ -108,6 +108,11 @@
   padding:20px;
 }
 
+.searchBarOuter{
+  padding:10px;
+  padding-top:0;
+}
+
 .searchBar{
   display: flex;
   flex-direction: row;
@@ -118,7 +123,8 @@
   transition:0.5s;
   background: var(--lightbluet);
   backdrop-filter:blur(5px);
-
+  overflow: auto;
+  resize: both;
   button{
     border-radius: 15px;
   }
@@ -174,7 +180,6 @@
 }
 
 .menu{
-  width:150px;
   aspect-ratio: 1/1;
   border-radius: 50%;
   display: flex;
@@ -183,6 +188,8 @@
   text-align: center;
   cursor: pointer;
   transition: 0.5s;
+  width:150px;
+  padding:5px;
 }
 
 .menu:nth-child(2){
@@ -449,6 +456,14 @@
   width:100%;
 }
 
+.holidays{
+  border-radius:20px;
+  background: var(--lightredt);
+  backdrop-filter: blur(3px);
+  padding: 5%;
+  width:100%;
+}
+
 .reportQuery{
   border-radius: 25px;
   background: var(--lightredt);
@@ -502,6 +517,11 @@
  .home{
   gap:30px;
   min-height: unset;
+ }
+
+ .menu{
+  width:unset;
+  border-radius: 15px;
  }
  
   .actions{
