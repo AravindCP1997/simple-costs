@@ -195,13 +195,14 @@
 
 .menuList{
   display:grid;
-  grid-template-columns: 32% 32% 32%;
+  grid-template-columns: 23.5% 23.5% 23.5% 23.5%;
   gap:2%;
   row-gap: 10px;
   width: 100%;
-  padding:2%;
+  padding:5%;
   border-radius: 25px;
   height:fit-content;
+  background: var(--lightgreent);
 }
 
 .menuItem, .menuTitle{
@@ -211,12 +212,18 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  aspect-ratio: 1/1;
 }
 
 .menuItem{
-  background: var(--whitet);
   color:var(--blue);
   transition: 0.5s;
+  background: white;
+  backdrop-filter: blur(5px);
+}
+
+.menuItem:hover{
+  background: var(--lightgreent);
 }
 
 .menuTitle{
@@ -390,20 +397,37 @@
   padding: 2px;
 }
 
-.display{
+.ledgers{
+  display:flex;
+  flex-direction: column;
+  gap:20px;
+  width:100%;
+  color:var(--blue);
+  border-radius: 25px;
+  background: var(--lightgreent);
+  backdrop-filter: blur(3px);
+  padding:5%;
+  height:fit-content;
+}
+
+.ledger{
+  border-radius:15px;
+  backdrop-filter: blur(20px);
+  padding:5px;
+  border:2px solid var(--lightgray);
+}
+
+.displayAsTable{
   padding: 5px;
   display: flex;
   flex-direction: column;
-  position: relative;
   width:100%;
-  height:500px;
+  height:fit-content;
+  overflow: auto;
 }
 
 .displayTable{
   justify-content: left;
-  position: absolute;
-  border:2px solid gold;
-  font-size: 70%;
 }
 
 .displayColumn{
@@ -411,14 +435,13 @@
   border:1px solid blue;
 }
 
-.displayCell{
+.displayTableCell{
   text-align: center;
-  border:1px solid red;
-  min-width:100px;
-  padding: 0;
+  border:1px solid var(--blue);
 
   p{
-    margin:0
+    margin:0;
+    padding:0;
   }
 }
 

@@ -1,7 +1,7 @@
 import './App.css'
 import { TiTimes } from "react-icons/ti";
 import { useEffect, useState, useRef } from 'react';
-import { BrowserRouter, Routes, Route, Link, useParams, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useParams, Navigate, useNavigate, useLocation } from 'react-router-dom';
 
 
 function loadData(collection){
@@ -162,6 +162,12 @@ class Asset{
         this.name = name;
         this.data = Asset.data.filter(item=>item['Name']==this.name)[0]
     }
+    transactions(period){
+        const data = new Intelligence().transactionstable();
+        const [from,to] = period;
+        const filtered = data.filter(item=>item['Account']==this.name && item['Posting Date']>=from && item['Posting Date']<=to);
+        return filtered
+    }
     static data = Database.load("Asset")
     static list(){
         const list = ListItems(this.data,"Name")
@@ -220,6 +226,17 @@ class GeneralLedger{
         const list = [];
         const ledgers = this.list()
         ledgers.map(ledger=>list.push(new GeneralLedger(ledger).accountBalance(period)))
+        return list
+    }
+}
+
+class Customer{
+    constructor(name){
+        this.name = name;
+    }
+    static data = Database.load("Customer")
+    static list(){
+        const list = ListItems(this.data,"Name")
         return list
     }
 }
@@ -305,6 +322,17 @@ class Material{
     static data = Database.load("Material");
     static list(){
         const list = ListItems(this.data,"Description")
+        return list
+    }
+}
+
+class Vendor{
+    constructor(name){
+        this.name = name;
+    }
+    static data = Database.load("Vendor")
+    static list(){
+        const list = ListItems(this.data,"Name")
         return list
     }
 }
@@ -551,48 +579,6 @@ class Intelligence{
         return result
     }
 }
-
-function ReportQuery(){
-    const [query,setquery] = useState([0,0])
-    const [submittedQuery,setsubmitted] = useState(["2025-06-23","2026-03-31"])
-    const handleChange = (e,i)=>{
-        const {value} = e.target
-        setquery(prevdata=>prevdata.map((item,index)=>(i==index)?value:item))
-    }
-
-    const submitQuery = ()=>{
-        setsubmitted(query)
-    }
-
-    const Intel = new Intelligence()
-
-    
-    const data = Intel.depreciationRun(submittedQuery)
-    const entry = Intel.depreciationPOST(submittedQuery)
-    
-
-    return(
-        <div>
-            <div>
-            <div>
-                <label>Period</label>
-                <label>from <input value={query[0]} onChange={(e)=>handleChange(e,0)} type="date"></input></label>
-                <label>to <input value={query[1]} onChange={(e)=>handleChange(e,1)} type="date"></input></label></div>
-                <button onClick={submitQuery}>Submit</button>
-                </div>
-                {JSON.stringify(query)}
-                <div>
-                    <h2>Depreciation Run</h2>
-                    <p>{`for the period from ${submittedQuery[0]} to ${submittedQuery[1]}`}</p>
-                    <DisplayAsTable collection={data}/>
-                    <button>Post</button>
-                </div>
-        </div>
-    )
-}
-
-
-
 
 const objects = {
     "Asset":{
@@ -851,16 +837,6 @@ const objects = {
 
                 ],  
                 "use-state":[{"id":0,"Account":"","Account Type":"","General Ledger":"","Amount":0,"Debit/ Credit":"Debit","GST":"","Cost Center":"","Cost Object":"","Asset":"","Material":"","Quantity":"","Location":"","Profit Center":"","Purchase Order":"","Purchase Order Item":"","Sale Order":"","Sale Order Item":"","Consumption Time From":"","Consumption Time To":"","Employee":"","Cost per Day":0,"Cleared":false}]}
-        ]
-    },
-    "Virtual Account":{
-        "name":"Virtual Account",
-        "collection":"virtualaccounts",
-        "schema":[
-            {"name":"Virtual Account Number","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"Bank Account","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"Credit Ledger","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"Profit Center","datatype":"single","input":"input","type":"text","use-state":""}
         ]
     }
 }
@@ -1148,8 +1124,8 @@ function Record(){
   
   return(
     <div className='menuList'>
-      <div className='menuTitle green'><h3>Record</h3></div>
-      <div className='menuItem' onClick={()=>{navigate(`/create/Transaction`)}}><h3>Transaction</h3></div>
+      <div className='menuTitle green'><h4>Record</h4></div>
+      <div className='menuItem' onClick={()=>{navigate(`/create/Transaction`)}}><h4>Transaction</h4></div>
     </div>
   )
 }
@@ -1161,9 +1137,9 @@ export function Control(){
   
   return(
     <div className='menuList'>
-      <div className='menuTitle red'><h3>Control</h3></div>
-      <div className='menuItem' onClick={()=>navigate('/timecontrol')}><h3>Time Control</h3></div>
-      {list.map(item=><div className='menuItem' onClick={()=>{navigate(`/query/${item}`)}}><h3>{item}</h3></div>)}
+      <div className='menuTitle red'><h4>Control</h4></div>
+      <div className='menuItem' onClick={()=>navigate('/timecontrol')}><h4>Time Control</h4></div>
+      {list.map(item=><div className='menuItem' onClick={()=>{navigate(`/query/${item}`)}}><h4>{item}</h4></div>)}
     </div>
   )
 }
@@ -1173,78 +1149,12 @@ function Reports(){
     const navigate = useNavigate();
     return(
     <div className='menuList'>
-    <div className='menuTitle blue'><h3>Reports</h3></div>
-    <div className='menuItem'><h3 onClick={()=>{navigate(`/trialbalance`)}}>General Ledger Balance</h3></div>
-    <div className='menuItem'><h3 onClick={()=>{navigate(`/costobjectbalance`)}}>Cost Object Balance</h3></div>
-    <div className='menuItem'><h3 onClick={()=>{navigate(`/scratch`)}}>Scratch</h3></div>
+    <div className='menuTitle blue'><h4>Reports</h4></div>
+    <div className='menuItem' onClick={()=>{navigate(`/ledger`)}}><h4>Ledger</h4></div>
+    <div className='menuItem' onClick={()=>{navigate(`/scratch`)}}><h4>Scratch</h4></div>
     </div>
     )
 }
-
-function Report(){
-    
-    const querySchema = {
-    "Financial Statements":[
-        {"field":"Cost Center"}
-    ]
-}
-
-    const {report} = useParams()
-    const schema = querySchema[report]
-    const [query,setquery] = useState({"Name":"Aravind"})
-    const [data,setdata] = useState({})
-
-    const process = (query) =>{
-        const data = query
-        return data
-    }
-
-    function FinancialStatements(){
-        return(
-            <div>This is Financial Statements
-                <p>{JSON.stringify(data)}</p>
-            </div>
-        )
-    }
-    
-    
-    function ReportQuery(){
-        return(
-            <div>
-                <h2>{`This is ${report} Query Section`}</h2>
-                <button onClick={()=>setdata(process(query))}>Submit</button>
-            </div>
-        )
-    }
-
-    function ReportDisplay(){
-        if (data!=null){
-            switch(report){
-                case 'Financial Statements':
-                    return(
-                        <FinancialStatements/>
-                    )
-                default:
-                    return (
-                        <div>Report not found</div>
-                    )
-            }
-        } else {
-            return (
-                <div>Report not found</div>
-            )
-        }
-    }
-
-    return(
-        <div>
-            <h1>{`${report}`}</h1>
-            <ReportQuery/>
-            <ReportDisplay/>
-        </div>
-    )
-}
-
 
 
 function DisplayAsTable({collection}){
@@ -1253,16 +1163,16 @@ function DisplayAsTable({collection}){
     const fields = Object.keys(collection[0]);
 
     return (
-        <div className='display'>
+        <div className='displayAsTable'>
             <table className='displayTable'>
-                <thead><tr>{fields.map(field=><th>{field}</th>)}</tr></thead>
-                <tbody>{collection.map(data=><tr>{fields.map(field=><td>{data[field]}</td>)}</tr>)}</tbody>
+                <thead><tr>{fields.map(field=><th className='displayTableCell'>{field}</th>)}</tr></thead>
+                <tbody>{collection.map(data=><tr>{fields.map(field=><td className='displayTableCell'>{data[field]}</td>)}</tr>)}</tbody>
             </table>
         </div>
     )
 } else {
     return (
-        <div className='display'>
+        <div className='displayAsTable'>
             Sorry! No data found.
         </div>
     )
@@ -1475,8 +1385,47 @@ function CostObjectBalance(){
 function Scratch(){
 
     return(
-        <div>
-        {JSON.stringify(new Intelligence().gst({"Line Items":[{"GST":"Input 5%"}]}))}
+        <></>
+    )
+}
+
+class Report{
+    constructor(name){
+        this.name = name;
+        this.schema = Report.schema[this.name];
+        this.url = Report.url[this.name];
+        this.usestate = Report.usestate[this.name];
+    }
+    static schema = {
+        "ledger":[
+            {"name":"ledger","label":"Ledger","fields":["SingleValue","SingleRange","Values","ExclValues","Ranges","ExclRanges"]},
+            {"name":"segment","label":"Segment","fields":["SingleValue","SingleRange","Values","ExclValues","Ranges","ExclRanges"]}
+        ]
+    }
+    static url = {
+        "ledger":"/ledger"
+    }
+    static usestate = {
+        "ledger":{
+            "ledger":{
+                "SingleValue":""
+            }
+        }
+    }
+}
+
+function Ledger(){
+    const list = [...Asset.list(), ...GeneralLedger.list(), ...Material.list()]
+    const period = ["2025-04-01","2026-03-31"]
+    return(
+        <div className='ledgers'>
+            <h3>Asset Ledger Display</h3>
+            {list.map(item=>
+            <div className='ledger'>
+                <h4>{item}</h4>
+                <DisplayAsTable collection={new Asset(item).transactions(period)}/>
+            </div>
+            )}
         </div>
     )
 }
@@ -1494,7 +1443,7 @@ if (new Company().status){
       <Route path='/record' element={<Record/>}/>
       <Route path='/control' element={<Control/>}/>
       <Route path='/reports' element={<Reports/>}/>
-      <Route path="/report/:report" element={<Report/>}/>
+      <Route path="/ledger" element={<Ledger/>}/> 
       <Route path='/query/:object/' element={<Query type={"Object"}/>}/>
       <Route path='/create/:object/' element={<CRUD method={"Create"}/>}/>
       <Route path='/update/:object/:id' element={<CRUD method={"Update"}/>}/>
