@@ -84,7 +84,7 @@ class Company{
             "GSTIN":"32ABDCS1234E1ZN",
             "PAN":"ABDCS1234E",
             "Year 0":2025,
-            "Financial Year Beginning":3,
+            "Financial Year Beginning":'04',
             "Functional Currency":{"Code":"INR","Currency":"Indian Rupee"}
         }
     }
@@ -118,6 +118,7 @@ class Database{
         const collectionname = {
             "Asset":"assets",
             "Asset Class":"assetclasses", 
+            "Bank Account":"bankaccounts",
             "Cost Center":"costcenters",
             "Cost Object":"costobjects", 
             "Currency":"currencies",
@@ -172,6 +173,30 @@ class Asset{
     static data = Database.load("Asset")
     static list(){
         const list = ListItems(this.data,"Name")
+        return list
+    }
+}
+
+class AssetClass{
+   constructor(name){
+        this.name = name;
+   }
+    static data = Database.load("Asset Class");
+    static active = this.data.filter(item=>!item['Deactivated'])
+    static list(){
+        const list = ListItems(this.active,"Name")
+        return list
+    }
+}
+
+class BankAccount{
+    constructor(name){
+        this.name = name;
+    }
+    static data = Database.load("Bank Account")
+    static active = this.data.filter(item=>!item['Deactivated'])
+    static list(){
+        const list = ListItems(this.active,"Name")
         return list
     }
 }
@@ -322,20 +347,27 @@ class Employee{
         this.data = Employee.data.filter(item=>item['ID']==this.id)[0];
     }
     daysalary(date){
+        let scale = 0;
         const data = this.data['Employment Details'];
-        const filtered = data.filter(item=>item['From']<=date && item['To']>=date)[0]
-        return filtered['Scale']
+        const filtered = data.filter(item=>new Date((item['From']))<=new Date(date) && new Date(item['To'])>=new Date(date))
+        scale = (filtered.length>0)? filtered[0]['Scale'] : 0;
+        return scale
     }
-    periodsalary(period){
-        const dates = datesInPeriod(period);
+    salary(year,month){
+        const dates = datesInMonth(year,month);
         const list = [];
-        dates.map(date=>list.push({"Date":date,"Salary":this.daysalary(date)}))
+        dates.map(date=>list.push({"Date":date,"Salary":(this.daysalary(date)/daysInMonth(year,month))}))
         return list
     }
     static data = Database.load("Employee")
     static list(){
         const list = ListItems(this.data,"ID")
         return list
+    }
+    static salaryrun(year,month){
+        const data = [];
+        this.list().map(item=>data.push({"ID":item,"Salary":SumField(new Employee(item).salary(year,month),"Salary")}))
+        return data
     }
 }
 
@@ -346,6 +378,28 @@ class Material{
     static data = Database.load("Material");
     static list(){
         const list = ListItems(this.data,"Description")
+        return list
+    }
+}
+
+class ProfitCenter{
+    constructor(name){
+        this.name = name;
+    }
+    static data = Database.load("Profit Center")
+    static list(){
+        const list = ListItems(this.data,"Name")
+        return list
+    }
+}
+
+class Segment{
+    constructor(name){
+        this.name = name;
+    }
+    static data = Database.load("Segment")
+    static list(){
+        const list = ListItems(this.data,"Name")
         return list
     }
 }
@@ -513,6 +567,18 @@ class Intelligence{
         (data['Name']=="")?list.push(`Provide a name for the General Ledger`):()=>{}
         return list
     }
+    profitCenterError(data){
+        const list = [];
+        const req = ["Name", "Segment"];
+        req.map(item=>(data[item]=="")?list.push(`${item} is required`):()=>{});
+        return list
+    }
+    segmentError(data){
+        const list = [];
+        const req = ["Name"];
+        req.map(item=>(data[item]=="")?list.push(`${item} is required`):()=>{});
+        return list
+    }
     gst(data){
         const result = {...data};
         const lineitems = [...result['Line Items']];
@@ -533,6 +599,12 @@ class Intelligence{
     vendorError(data){
         const list = []
         const req = ["Name"];
+        req.map(item=>(data[item]=="")?list.push(`${item} is required`):()=>{});
+        return list
+    }
+    assetError(data){
+        const list = []
+        const req = ["Name", "Asset Class", "Cost Center", "Useful Life", "Date of Capitalisation","Salvage value"];
         req.map(item=>(data[item]=="")?list.push(`${item} is required`):()=>{});
         return list
     }
@@ -602,6 +674,12 @@ class Intelligence{
         const result = (date>reference)?`${date.getFullYear()}-${new Company().data['Financial Year Beginning']}-01`:`${date.getFullYear()-1}-${new Company().data['Financial Year Beginning']}-01`;
         return result
     }
+    static yearEnd(dateString){
+        const yearStart = new Date(this.yearStart(dateString));
+        const yearEnd = new Date(yearStart.getFullYear()+1,yearStart.getMonth(),0) 
+        const result = `${yearEnd.getFullYear()}-${yearEnd.getMonth()+1}-${yearEnd.getDate()}`
+        return result
+    }
 }
 
 class Unit{
@@ -620,8 +698,8 @@ const objects = {
         "schema": [
             {"name":"Code", "value":"calculated"},
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Asset Class", "datatype":"single", "input":"option", "options":ListofItems(loadData("assetclasses"),0),"use-state":""},
-            {"name": "Cost Center", "datatype":"single", "input":"option", "options":ListofItems(loadData("costcenters"),0),"use-state":""},
+            {"name": "Asset Class", "datatype":"single", "input":"option", "options":["",...AssetClass.list()],"use-state":""},
+            {"name": "Cost Center", "datatype":"single", "input":"option", "options":["",...CostCenter.list()],"use-state":""},
             {"name": "Useful Life", "datatype":"single", "input":"input", "type":"number","use-state":0},
             {"name": "Salvage Value", "datatype":"single", "input":"input", "type":"number","use-state":0},
             {"name": "Date of Capitalisation", "datatype":"single", "input":"input", "type":"date","use-state":0},
@@ -642,14 +720,15 @@ const objects = {
         "name":"Bank Account",
         "collection":"bankaccounts",
         "schema":[
-            {"name":"Bank Name","datatype":"single","input":"input","type":"text","use-state":"State Bank of India"},
+            {"name":"Name","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"Bank Name","datatype":"single","input":"input","type":"text","use-state":""},
             {"name":"IFSC","datatype":"single","input":"input","type":"text","use-state":""},
             {"name":"Account Number","datatype":"single","input":"input","type":"number","use-state":""},
             {"name":"General Ledger","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('Bank Account')],"use-state":""},
-            {"name":"Profit Center","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"Profit Center","datatype":"single","input":"option","options":["",...ProfitCenter.list()],"use-state":""},
             {"name":"Virtual Accounts","datatype":"collection","structure":[
                 {"name":"Virtual Account Number","datatype":"single","input":"input","type":"text","use-state":""},
-                {"name":"Ledger","datatype":"single","input":"input","type":"text","use-state":""},
+                {"name":"Ledger","datatype":"single","input":"option","options":["",...Customer.list()],"use-state":""},
             ],"use-state":[{"Virtual Account Number":"","Ledger":""}]},
         ]
     },
@@ -742,7 +821,7 @@ const objects = {
         "name":"Location",
         "schema": [
             {"name":"Name", "datatype":"single", "input":"input", "type":"text","use-state":""},
-            {"name":"Cost Center", "datatype":"single", "input":"input", "type":"text","use-state":""},
+            {"name":"Cost Center", "datatype":"single", "input":"option", "options":["",...CostCenter.list()],"use-state":""},
         ],
         "collection":"locations"
     },
@@ -776,7 +855,7 @@ const objects = {
         "name":"Profit Center",
         "schema":[
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Segment", "datatype":"single", "input":"option", "options":ListofItems(loadData("segments"),0), "use-state":""},
+            {"name": "Segment", "datatype":"single", "input":"option", "options":["",...Segment.list()], "use-state":""},
         ],
         "collection":"profitcenters"
     },
@@ -863,7 +942,7 @@ const objects = {
             {"name":"Balance", "value":"calculated"},
             {"name": "Line Items", "datatype":"collection", "structure":
                 [
-                    {"name":"Account", "datatype":"single","input":"option","options":[...Material.list(),...Asset.list(),...GeneralLedger.list()],"use-State":""},
+                    {"name":"Account", "datatype":"single","input":"option","options":[...Material.list(),...Asset.list(),...GeneralLedger.listtype('General'),...GeneralLedger.listtype('Cost Element'),...BankAccount.list()],"use-State":""},
                     {"name":"General Ledger","value":"calculated","datatype":"single"},
                     {"name":"Account Type", "datatype":"single","value":"calculated"},
                     {"name":"Amount", "datatype":"single","input":"input","type":"number"},
@@ -920,7 +999,7 @@ function dayNumber(date){
 function numberDay(number){
     const milliseconds = number*86400000;
     const date = new Date(milliseconds);
-    const text = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`
+    const text = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,0)}-${(date.getDate()).toString().padStart(2,0)}`
     return text
 
 }
@@ -933,6 +1012,26 @@ function datesInPeriod(period){
         list.push(numberDay(dayNumber(from)+i))
     }
     return list
+}
+
+function daysInPeriod(period){
+    const [from,to] = period
+    const interval = dayNumber(to) - dayNumber(from) +1
+    return interval
+}
+
+function datesInMonth(year,month){
+    const startDate = new Date(`${year}-${month}-01`)
+    const endDate = new Date(startDate.getFullYear(),startDate.getMonth()+1,0)
+    const list = datesInPeriod([`${startDate.getFullYear()}-${startDate.getMonth()+1}-01`,`${endDate.getFullYear()}-${endDate.getMonth()+1}-${endDate.getDate()}`])
+    return list
+}
+
+function daysInMonth(year,month){
+    const startDate = new Date(`${year}-${month}-01`)
+    const endDate = new Date(startDate.getFullYear(),startDate.getMonth()+1,0)
+    const interval = daysInPeriod([`${startDate.getFullYear()}-${startDate.getMonth()+1}-01`,`${endDate.getFullYear()}-${endDate.getMonth()+1}-${endDate.getDate()}`])
+    return interval
 }
 
 function CompanyInfo(){
@@ -1115,30 +1214,6 @@ function Query(){
     )
 }
 
-function DeleteQuery(){
-    const navigate = useNavigate();
-    const {object,id} = useParams();
-    const collection =objects[object]['collection']
-    const existingdata = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
-    
-    function deactivate(){
-        Database.remove(object,id)
-        alert(`${object} Deleted!`);
-        navigate(`/control`)
-    }
-    
-    return(
-        <div className='query'>
-        <h2 className='queryTitle'>{`Deactivate ${object}`}</h2>
-        <p>Are you sure want to {`deactivate ${object} ${id}`} ?</p>
-        <div className='queryButtons'>
-            <button className="blue" onClick={()=>{navigate(`/query/${object}`)}}>Cancel</button>
-            <button className="red" onClick={deactivate}>Deactivate</button>
-        </div>
-        </div>
-    )
-}
-
 function SearchBar(){
     const navigate = useNavigate()
     const [url,seturl] = useState()
@@ -1201,7 +1276,7 @@ function Record(){
   )
 }
 
-export function Control(){
+function Control(){
 
     const navigate = useNavigate();
   const list = Object.keys(objects).filter(item=>item!=="Transaction")
@@ -1210,6 +1285,7 @@ export function Control(){
     <div className='menuList'>
       <div className='menuTitle red'><h4>Control</h4></div>
       <div className='menuItem' onClick={()=>navigate('/timecontrol')}><h4>Time Control</h4></div>
+      <div className='menuItem' onClick={()=>navigate('/holidays')}><h4>Holidays</h4></div>
       {list.map(item=><div className='menuItem' onClick={()=>{navigate(`/query/${item}`)}}><h4>{item}</h4></div>)}
     </div>
   )
@@ -1219,11 +1295,24 @@ function Reports(){
 
     const navigate = useNavigate();
     return(
-    <div className='menuList'>
-    <div className='menuTitle blue'><h4>Reports</h4></div>
-    <div className='menuItem' onClick={()=>{navigate(`/report/Ledger`)}}><h4>Ledger Display</h4></div>
-    <div className='menuItem' onClick={()=>{navigate(`/scratch`)}}><h4>Scratch</h4></div>
-    </div>
+        <div className='menuContainer'>
+            <h3 className='menuContainerTitle'>Reports</h3>
+            <div className='menuList'>
+                <div className='menuTitle red'><h4>Costing</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/costobjectbalance`)}}><h4>Cost Object Balance</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/costobjecttransactions`)}}><h4>Cost Object Transactions</h4></div>
+            </div>
+            <div className='menuList'>
+                <div className='menuTitle red'><h4>Payroll</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/paycalc`)}}><h4>Salary Calculator</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/salaryrun`)}}><h4>Salary Posting</h4></div>
+            </div>
+            <div className='menuList'>
+                <div className='menuTitle red'><h4>Miscellaneous</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/ledger`)}}><h4>Ledger Display</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/scratch`)}}><h4>Scratch</h4></div>
+            </div>
+        </div>
     )
 }
 
@@ -1260,7 +1349,8 @@ function CRUD({method}){
     schema.map(item=>defaults[item['name']]=item['use-state']);
     const [data,setdata] = (method==="Create")?useState(defaults):useState(collections[id])
     const output = process()
-    const editable = (method==="Create" || method==="Update")?true:false
+    const deactivated = output['Deactivated'];
+    const editable = (!deactivated && (method==="Create" || method==="Update"))?true:false
     const errorlist = findError()
 
     function findError(){
@@ -1279,7 +1369,7 @@ function CRUD({method}){
             case 'General Ledger':
                 list.push(...new Intelligence().generalledgerError(output))
             case 'Asset':
-                (output['Date of Capitalisation']=="")?list.push("Enter Date of Capitalisation"):()=>{}
+                list.push(...new Intelligence().assetError(output));
                 ((new Date(output['Date of Capitalisation']))>(new Date()))?list.push("Date of capitalisation cannot be a future date."):()=>{}
                 break
             case 'Employee' :
@@ -1288,6 +1378,12 @@ function CRUD({method}){
                 break
             case 'Vendor':
                 list.push(...new Intelligence().vendorError(output))
+                break
+            case 'Profit Center':
+                list.push(...new Intelligence().profitCenterError(output))
+                break
+            case 'Segment':
+                list.push(...new Intelligence().segmentError(output))
                 break
         }
         return list
@@ -1398,6 +1494,7 @@ function CRUD({method}){
     return(<>
         {method != "Deactivate" && <div className='crudUI'>
             <h2 className='crudTitle'>{`${method} ${object}`}</h2>
+            {deactivated && <h4>The {object} has been deactivated and can only been viewed.</h4>}
         <div className='crudFields'>
         {schema.map(field=>
         <>
@@ -1405,7 +1502,7 @@ function CRUD({method}){
         {field['datatype']=="single" && <div className='crudField'><div className='crudRow'><label>{field['name']}</label>{ field['input'] == "input" && <input disabled={(field['disabled']||!editable)} type={field['type']} onChange={(e)=>handleChange1(field['name'],e)} value={output[field['name']]}/>}{field['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange1(field['name'],e)} value={output[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}</div></div>}
         {field['datatype']=="object" && <div className='crudField'><div className='crudObject'><label>{field['name']}</label>{field['structure'].map(subfield=><>{subfield['datatype']=="single"&&<div className='crudRow'><label>{subfield['name']}</label>{subfield['input']=="input" && <input type={subfield['type']} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]} disabled={(field['disabled']||!editable)}/>}{subfield['input'] == "option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}</>)}</div></div>}
         {field['datatype']=="collection" && <div className='crudField'><div className='crudObject'><label>{field['name']}</label><div className='crudTable'><table><thead><tr><th className='crudTableCell'></th>{field['structure'].map(subfield=><th className='crudTableCell'>{subfield['name']}</th>)}</tr></thead>{output[field['name']].map((item,index)=><tbody><tr><td className='crudTableCell'><button disabled={(field['disabled']||!editable)} onClick={(e)=>removeItem(field['name'],index,e)}>-</button></td>{field['structure'].map(subfield=><>{subfield['datatype']=="single" && <td className='crudTableCell'>{subfield['value']=="calculated" && <input value={output[field['name']][index][subfield['name']]} disabled={true}/>} {subfield['input']=="input"&& <input disabled={(field['disabled']||!editable)} onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} type={subfield['type']} value={output[field['name']][index][subfield['name']]}/>}{subfield['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</td>}</>)}</tr></tbody>)}</table></div><div className='crudObjectButtons'><button className="blue" disabled={(field['disabled']||!editable)} onClick={(e)=>addItem(field['name'],field['use-state'][0],e)}>Add</button></div></div></div>}
-        {field['datatype']=="nest" && <div className="crudField"><div className="crudObject"><label>{field['name']}</label><button>Add</button><div className='crudGrid'>{output[field['name']].map((item,index)=><div className="crudFields">{field['structure'].map(subfield=><div className='crudField'>{subfield['datatype']=="single" && <div className='crudRow'><label>{subfield['name']}</label></div>}{subfield['datatype']=="collection" && <div className='crudObject'><label>{subfield['name']}</label><div className='crudTable'><table><thead><tr><th className='crudTableCell'></th>{subfield['structure'].map(thirdfield=><th className='crudTableCell'>{thirdfield['name']}</th>)}</tr></thead><tbody>{output[field['name']].map((subitem,subindex)=><tr><td><div className='crudTableCell'><button></button></div></td>{subfield['structure'].map(thirdfield=><td><div className='crudTableCell'><input value={output[field['name']][index][subfield['name']][subindex][thirdfield]}/></div></td>)}</tr>)}</tbody></table></div></div> }</div>)}</div>)}</div></div></div>}
+        {field['datatype']=="nest" && <div className="crudField"><div className="crudObject"><label>{field['name']}</label><button>Add</button><div className='crudGrid'>{output[field['name']].map((item,index)=><div className="crudFields">{field['structure'].map(subfield=><div className='crudField'>{subfield['datatype']=="single" && <div className='crudRow'><label>{subfield['name']}</label><input value={output[field['name']][index][subfield['name']]} type={subfield['type']}/></div>}{subfield['datatype']=="collection" && <div className='crudObject'><label>{subfield['name']}</label><div className='crudTable'><table><thead><tr><th className='crudTableCell'></th>{subfield['structure'].map(thirdfield=><th className='crudTableCell'>{thirdfield['name']}</th>)}</tr></thead><tbody>{output[field['name']].map((subitem,subindex)=><tr><td><div className='crudTableCell'><button></button></div></td>{subfield['structure'].map(thirdfield=><td><div className='crudTableCell'><input value={output[field['name']][index][subfield['name']][subindex][thirdfield]}/></div></td>)}</tr>)}</tbody></table></div></div> }</div>)}</div>)}</div></div></div>}
         </>)}</div>
         <div className='crudError'>
             <label>{`${errorlist.length} Error(s)`}</label>
@@ -1414,20 +1511,30 @@ function CRUD({method}){
                 </ul>
         </div>
         <div className='crudButtons'>
-            {method==="Create" && <><button className='blue' onClick={()=>cancel()}>Cancel</button><button className='green' onClick={()=>save()}>Save</button></>}
-            {method==="Update" && <><button  className='blue' onClick={()=>cancel()}>Cancel</button><button className='green' onClick={()=>save()}>Update</button></>}
-            {method==="Display" && <><button className='blue' onClick={()=>cancel()}>Back</button></>}
+            {(!deactivated && method==="Create") && <><button className='blue' onClick={()=>cancel()}>Cancel</button><button className='green' onClick={()=>save()}>Save</button></>}
+            {(!deactivated && method==="Update") && <><button  className='blue' onClick={()=>cancel()}>Cancel</button><button className='green' onClick={()=>save()}>Update</button></>}
+            {(method==="Display" || deactivated) && <><button className='blue' onClick={()=>cancel()}>Back</button></>}
         </div>
         </div>
         }
         {method == "Deactivate" && 
             <div className='query'>
         <label className='queryTitle'>{`Deactivate ${object}`}</label>
+        {!deactivated && <>
         <p>Are you sure want to {`deactivate ${object} ${id}`} ?</p>
         <div className='queryButtons'>
             <button className="blue" onClick={()=>{cancel()}}>Cancel</button>
             <button className="red" onClick={()=>deactivate()}>Deactivate</button>
         </div>
+        </>
+}
+
+    {deactivated && <>
+        <p>{object} has already been deactivated!</p>
+        <div className='queryButtons'>
+        <button className="blue" onClick={()=>{cancel()}}>Back</button>
+        </div>
+   </> }
         </div>
         }
         </>
@@ -1435,29 +1542,10 @@ function CRUD({method}){
     
 }
 
-function CostObjectBalance(){
-    const [object,setobject] = useState(CostObject.list()[0]);
-    const [selected,setselected] = useState(CostObject.list()[0]);
-    return(
-        <div>
-            <div>
-                <label>Cost Object</label>
-                <select value={object} onChange={(e)=>setobject(e.target.value)}>{CostObject.list().map(item=><option value={item}>{item}</option>)}</select>
-                <button onClick={()=>setselected(object)}>Get</button>
-            </div>
-            <div>
-                <DisplayAsTable collection={new CostObject(selected).transactions()}/>
-                <p>{new CostObject(selected).accumulatedCost()}</p>
-            </div>
-        </div>
-    )
-}
-
 class Report{
     constructor(name){
         this.name = name;
         this.schema = Report.schema[this.name];
-        this.url = Report.url[this.name];
     }
     default(){
         const result = {};
@@ -1494,17 +1582,25 @@ class Report{
         return result
     }
     static schema = {
-        "Ledger":[
+        "costobjectbalance":[
+            {"name":"objects","label":"Cost Objects","fields":['values']}
+        ],
+        "costobjecttransactions":[
+            {"name":"objects","label":"Cost Objects","fields":['values']}
+        ],
+        "ledger":[
             {"name":"ledger","label":"Ledger","fields":["values"]},
             {"name":"period","label":"Period","fields":["range"]},
         ],
-        "sample":[
-            {"name":"ledger","label":"Ledger","fields":["value","values","exclValues", "range","ranges","exclRanges"]},
-            {"name":"segment","label":"Segment","fields":["value","values","exclValues", "range","ranges","exclRanges"]},
+        "paycalc":[
+            {"name":"id", "label":"Employee ID","fields":["value"]},
+            {"name":"year", "label":"Year","fields":["value"]},
+            {"name":"month", "label":"Month","fields":["value"]},
+        ],
+        "salaryrun":[
+            {"name":"year", "label":"Year","fields":["value"]},
+            {"name":"month", "label":"Month","fields":["value"]},
         ]
-    }
-    static url = {
-        "Ledger":"/ledger"
     }
 }
 
@@ -1512,11 +1608,11 @@ function ReportQuery(){
     const {report} = useParams();
     const reportobject = new Report(report);
     const [query,setquery] = useState(reportobject.default());
-    const {schema,url} = reportobject
+    const {schema} = reportobject
     const navigate = useNavigate();
 
     function submitQuery(){
-        navigate(url, {state: query})
+        navigate('/reportdisplay/'+report, {state: query})
     }
 
     function valueChange(itemname,field,e){
@@ -1595,6 +1691,81 @@ function ReportQuery(){
     )
 }
 
+function ReportDisplay(){
+    const {report} = useParams();
+    const location = useLocation()
+    const query = location.state
+
+    function CostObjectBalance({query}){
+    const {objects} = query
+    const data = [];
+    objects['values'].map(item=>data.push({"Cost Object":item,"Accumulated Cost":new CostObject(item).accumulatedCost()}))
+    
+    return(
+        <div>
+            <DisplayAsTable collection={data}/>
+        </div>
+    )
+}
+
+    function CostObjectTransactions({query}){
+        const {objects} = query;
+        const data = [];
+        objects['values'].map(item=>data.push({"Object":item,"data":new CostObject(item).transactions()}))
+        return(
+            <div>
+                {data.map(item=>
+                    <div>
+                        <h3>{item["Object"]}</h3>
+                        <DisplayAsTable collection={item['data']}/>
+                    </div>
+                )}
+            </div>
+        )
+    }
+
+    function PayCalc({query}){
+        const location = useLocation();
+        const {id,year,month} = query;
+        const data = new Employee(id['value']).salary(year['value'],month['value'])
+        return(
+            <>
+            <DisplayAsTable collection={data}/>
+            </>
+        )
+    }
+
+    function SalaryRun({query}){
+        const {year,month} = query
+        const data = Employee.salaryrun(year['value'],month['value']);
+        return(
+            <>
+            <DisplayAsTable collection={data}/>
+            </>
+        )
+}
+
+    switch (report){
+        case 'costobjectbalance':
+            return(
+            <CostObjectBalance query={query}/>
+        )
+        case 'costobjecttransactions':
+            return(
+            <CostObjectTransactions query={query}/>
+        )
+        case 'paycalc':
+            return(
+                <PayCalc query={query}/>
+            )
+        case 'salaryrun':
+            return(
+                <SalaryRun query={query}/>
+            )
+
+}
+}
+
 function Ledger(){
     const location = useLocation()
     const data = location.state || {"list":[],"period":[]}
@@ -1618,6 +1789,8 @@ class HolidayCalendar{
         this.year = year;
         this.key = "y"+year;
         this.data = HolidayCalendar.data[this.key] || [{"Date":"","Description":"Blank"}];
+        this.yearStart = `${this.year}-${new Company().data['Financial Year Beginning']}-01`
+        this.yearEnd = Intelligence.yearEnd(this.yearStart);
         
     }
     save(data){
@@ -1625,7 +1798,21 @@ class HolidayCalendar{
         allYearData[this.key] = data;
         saveData(allYearData,'holidays')
     }
+    error(data){
+        const list = [];
+        data.map((item,i)=>(dayNumber(item['Date'])<dayNumber(this.yearStart) || dayNumber(item['Date'])>dayNumber(this.yearEnd) )? list.push(`Date ${i+1} not in the year`):()=>{})
+        return list
+    }
     static data = ('holidays' in localStorage)?JSON.parse(localStorage.getItem('holidays')):{};
+    static years = Object.keys(this.data);
+    static isHoliday(date){
+        let result = false;
+        const year= new Date(Intelligence.yearStart(date)).getFullYear()
+        const yeardata = this.data["y"+year];
+        (yeardata.filter(item=>item['Date']==date).length>0)?result=true:result=false;
+        return result
+    }
+    
 
 }
 
@@ -1634,6 +1821,7 @@ function Holidays(){
     const [editable,seteditable] = useState(false);
     const [selected,setselected] = useState(0);
     const [data,setdata] = useState(new HolidayCalendar(selected).data);
+    const error = new HolidayCalendar(selected).error(data)
 
     const view =()=>{
         setselected(year);
@@ -1684,8 +1872,14 @@ function Holidays(){
                             {data.map((item,i)=><tr><td><button onClick={()=>removeHoliday(i)}>-</button></td><td><input type="date" onChange={(e)=>handleChange(i,'Date',e)} value={item['Date']}/></td><td><input onChange={(e)=>handleChange(i,'Description',e)} value={item['Description']}/></td></tr>)}
                         </tbody>
                     </table>
+                    <div className='holidayErrors'>
+                        <ul>
+                    {error.map(item=><li>{item}</li>)}
+                    </ul>
+                    </div>
                     <button onClick={()=>addHoliday()}>+</button>
                     <button onClick={()=>save()}>Save</button>
+                    
                 </div>
                 
             }
@@ -1694,11 +1888,13 @@ function Holidays(){
 }
 
 
+
+
 function Scratch(){
 
     return(
         <>
-        <DisplayAsTable collection={new Employee(1).periodsalary(["2024-04-01","2024-04-30"])}/>
+        {JSON.stringify(new Employee(1).salary(2023,10))}
         </>
     )
 }
@@ -1717,6 +1913,7 @@ if (new Company().status){
       <Route path='/control' element={<Control/>}/>
       <Route path='/reports' element={<Reports/>}/>
       <Route path="/report/:report" element={<ReportQuery/>}/>
+      <Route path="/reportdisplay/:report" element={<ReportDisplay/>}/>
       <Route path="/ledger" element={<Ledger/>}/> 
       <Route path='/query/:object/' element={<Query type={"Object"}/>}/>
       <Route path='/create/:object/' element={<CRUD method={"Create"}/>}/>
@@ -1726,7 +1923,6 @@ if (new Company().status){
       <Route path="/scratch/" element={<Scratch/>}/>
       <Route path="/timecontrol" element={<TimeControlling/>}/>
       <Route path="/trialbalance" element={<TrialBalance/>}/>
-      <Route path="/costobjectbalance" element={<CostObjectBalance/>}/>
       <Route path="/holidays" element={<Holidays/>}/>
       <Route path="*" element={<Home/>}/>
     </Routes>
