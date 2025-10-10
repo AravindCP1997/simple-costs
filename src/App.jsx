@@ -318,6 +318,13 @@ class CostObject{
         sum-=SumFieldIfs(this.transactions(),"Amount",["Debit/ Credit"],["Credit"]);
         return sum;
     }
+    allocation(){
+        const cost = this.accumulatedCost();
+        const ratio = this.ratio
+        const list = [];
+        ratio.map(item=>list.push({...item,["Allocable Amount"]:(cost*item['Proportion']/100)}))
+        return list
+    }
     static data = Database.load("Cost Object")
     static list(){
         const list = ListItems(this.data,"Description")
@@ -407,6 +414,11 @@ class Segment{
 class Vendor{
     constructor(name){
         this.name = name;
+    }
+    openitems(date){
+        const transactions = new Intelligence().transactionstable()
+        const result = transactions.filter(item=>item['Account']==this.name && new Date(item['Posting Date'])<=new Date(date) && !item['Cleared'])
+        return result
     }
     static data = Database.load("Vendor")
     static list(){
@@ -942,7 +954,7 @@ const objects = {
             {"name":"Balance", "value":"calculated"},
             {"name": "Line Items", "datatype":"collection", "structure":
                 [
-                    {"name":"Account", "datatype":"single","input":"option","options":[...Material.list(),...Asset.list(),...GeneralLedger.listtype('General'),...GeneralLedger.listtype('Cost Element'),...BankAccount.list()],"use-State":""},
+                    {"name":"Account", "datatype":"single","input":"option","options":[...Material.list(),...Asset.list(),...GeneralLedger.listtype('General'),...GeneralLedger.listtype('Cost Element'),...BankAccount.list(),...Vendor.list()],"use-State":""},
                     {"name":"General Ledger","value":"calculated","datatype":"single"},
                     {"name":"Account Type", "datatype":"single","value":"calculated"},
                     {"name":"Amount", "datatype":"single","input":"input","type":"number"},
@@ -1269,9 +1281,20 @@ function Record(){
     const navigate = useNavigate();
   
   return(
-    <div className='menuList'>
-      <div className='menuTitle green'><h4>Record</h4></div>
-      <div className='menuItem' onClick={()=>{navigate(`/create/Transaction`)}}><h4>Transaction</h4></div>
+    <div className='menuContainer'>
+            <h3 className='menuContainerTitle'>Record</h3>
+            <div className='menuList'>
+                <div className='menuTitle red'><h4>Generic</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/create/transaction`)}}><h4>Transaction</h4></div>
+            </div>
+            <div className='menuList'>
+                <div className='menuTitle red'><h4>Costing</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/costobjectsettlement`)}}><h4>Cost Object Settlement</h4></div>
+            </div>
+            <div className='menuList'>
+                <div className='menuTitle red'><h4>Payroll</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/salaryrun`)}}><h4>Salary Posting</h4></div>
+            </div>
     </div>
   )
 }
@@ -1305,7 +1328,10 @@ function Reports(){
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Payroll</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/paycalc`)}}><h4>Salary Calculator</h4></div>
-                <div className='menuItem' onClick={()=>{navigate(`/report/salaryrun`)}}><h4>Salary Posting</h4></div>
+            </div>
+            <div className='menuList'>
+                <div className='menuTitle red'><h4>Receivables & Payables</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/vendoropenitem`)}}><h4>Open Item</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Miscellaneous</h4></div>
@@ -1588,6 +1614,9 @@ class Report{
         "costobjecttransactions":[
             {"name":"objects","label":"Cost Objects","fields":['values']}
         ],
+        "costobjectsettlement":[
+            {"name":"object","label":"Cost Object","fields":["value"]}
+        ],
         "ledger":[
             {"name":"ledger","label":"Ledger","fields":["values"]},
             {"name":"period","label":"Period","fields":["range"]},
@@ -1600,6 +1629,10 @@ class Report{
         "salaryrun":[
             {"name":"year", "label":"Year","fields":["value"]},
             {"name":"month", "label":"Month","fields":["value"]},
+        ],
+        "vendoropenitem":[
+            {'name':"vendor","label":"Vendor","fields":["values"]},
+            {'name':"date","label":"Date","fields":["value"]},
         ]
     }
 }
@@ -1724,6 +1757,24 @@ function ReportDisplay(){
         )
     }
 
+    function CostObjectSettlement({query}){
+        const {object} = query;
+        const name = object['value']
+        const costObject = new CostObject(name)
+        const totalCost = costObject.accumulatedCost()
+        const allocation = costObject.allocation()
+        return(
+            <div>
+                <h2>Cost Object Settlement</h2>
+                <h4>Object - {name}</h4>
+                <p>Total Cost Accumulated: {totalCost}</p>
+                <DisplayAsTable collection={allocation}/>
+                <button>Cancel</button>
+                <button>Post</button>
+            </div>
+        )
+    }
+
     function PayCalc({query}){
         const location = useLocation();
         const {id,year,month} = query;
@@ -1745,6 +1796,21 @@ function ReportDisplay(){
         )
 }
 
+    function VendorOpenItem({query}){
+        const {vendor,date} = query
+        return(
+            <div>
+                {vendor['values'].map(item=>
+                    <div>
+                        <h4>{item}</h4>
+                        <DisplayAsTable collection={new Vendor(item).openitems(date['value'])}/>
+                    </div>
+                )}
+            </div>
+        )
+    }
+
+
     switch (report){
         case 'costobjectbalance':
             return(
@@ -1754,6 +1820,10 @@ function ReportDisplay(){
             return(
             <CostObjectTransactions query={query}/>
         )
+        case 'costobjectsettlement':
+            return(
+            <CostObjectSettlement query={query}/>
+        )
         case 'paycalc':
             return(
                 <PayCalc query={query}/>
@@ -1761,6 +1831,10 @@ function ReportDisplay(){
         case 'salaryrun':
             return(
                 <SalaryRun query={query}/>
+            )
+        case 'vendoropenitem':
+            return(
+                <VendorOpenItem query={query}/>
             )
 
 }
@@ -1894,7 +1968,7 @@ function Scratch(){
 
     return(
         <>
-        {JSON.stringify(new Employee(1).salary(2023,10))}
+        {JSON.stringify(new Vendor('T K Salim').openitems("2025-10-31"))}
         </>
     )
 }

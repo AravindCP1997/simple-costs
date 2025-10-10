@@ -122,7 +122,6 @@
   border-radius: 25px;
   transition:0.5s;
   background: var(--lightbluet);
-  backdrop-filter:blur(5px);
   overflow: auto;
   resize: both;
   button{
@@ -209,20 +208,19 @@
   width:100%;
   height: fit-content;
   border-radius: 25px;
-  backdrop-filter: blur(3px);
 }
 
 .menuContainerTitle{
   border-radius: 15px;
-  backdrop-filter: blur(10px);
+  background: var(--lightredt);
   padding:10px;
   text-align: center;
   border:2px solid var(--lightgray);
 }
 
 .menuList{
-  display:grid;
-  grid-template-columns: 23.5% 23.5% 23.5% 23.5%;
+  display:flex;
+  flex-direction: row;
   gap:2%;
   row-gap: 10px;
   width: 100%;
@@ -231,6 +229,7 @@
   height:fit-content;
   overflow: auto;
   border:2px solid var(--lightgray);
+  background: var(--lightredt);
 }
 
 .menuItem, .menuTitle{
@@ -242,6 +241,7 @@
   justify-content: center;
   aspect-ratio: 1/1;
   padding: 10px;
+  width:150px;
 }
 
 .menuItem{
