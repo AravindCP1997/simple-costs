@@ -431,7 +431,39 @@ class Material{
     }
     static data = Database.load("Material");
     static list(){
-        const list = ListItems(this.data,"Description")
+        const list = ListItems(this.data,"Name")
+        return list
+    }
+}
+
+class MaterialInLocation{
+    constructor(material,location){
+        this.material = material;
+        this.location = location;
+    }
+    transactions(period){
+        const [from,to] = period;
+        const data = new Intelligence().transactionstable()
+        const filtered = data.filter(item=>item['Account']==this.material && item['Location']==this.location && new Date(item['Posting Date']) >= new Date(from) && new Date(item['Posting Date']) <= new Date(to) )
+        return filtered
+    }
+    opening(date){
+        const data = new Intelligence().transactionstable()
+        const filtered = data.filter(item=>item['Account']==this.material && item['Location']==this.location && new Date(item['Posting Date']) < new Date(date))
+        const opening = (filtered.length>0)? SumFieldIfs(filtered,'Quantity',["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,'Quantity',["Debit/ Credit"],["Credit"]):0
+        return opening
+    }
+    closing(date){
+        const data = new Intelligence().transactionstable()
+        const filtered = data.filter(item=>item['Account']==this.material && item['Location']==this.location && new Date(item['Posting Date']) <= new Date(date))
+        const opening = (filtered.length>0)?SumFieldIfs(filtered,'Quantity',["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,'Quantity',["Debit/ Credit"],["Credit"]):0
+        return opening
+    }
+    movementData(period){
+        const [from,to] = period;
+        const list = [{"Date":from,"Description":"Opening","Quantity":this.opening(from)}];
+        this.transactions(period).map(item=>list.push({"Date":item['Posting Date'],"Description":item['Description'],"Quantity":item['Quantity']}))
+        list.push({"Date":to,"Description":"Closing","Quantity":this.closing(to)})
         return list
     }
 }
@@ -651,7 +683,7 @@ class Intelligence{
     }
     materialError(data){
         const list = [];
-        const req = ["Description", "General Legder", "Unit"];
+        const req = ["Name", "General Legder", "Unit"];
         req.map(item=>(data[item]=="")?list.push(`${item} is required`):()=>{});
         return list
     }
@@ -887,7 +919,7 @@ const objects = {
     "Material":{
         "name":"Material",
         "schema":[
-            {"name":"Description", "datatype":"single", "input":"input", "type":"text","use-state":""},
+            {"name":"Name", "datatype":"single", "input":"input", "type":"text","use-state":""},
             {"name":"General Ledger", "datatype":"single", "input":"option", "options":["",...GeneralLedger.listtype('Material')],"use-state":""},
             {"name":"Unit", "datatype":"single", "input":"option", "options":["",...Unit.list()],"use-state":""},
             {"name":"Price", "datatype":"collection", "structure":[{"name":"Location","datatype":"single","input":"input","type":"text"},{"name":"Date","datatype":"single","input":"input","type":"date"},{"name":"Price","datatype":"single","input":"input","type":"number"}],"use-state":[{"Location":"","Date":"","Price":""}]},
@@ -1009,9 +1041,9 @@ const objects = {
                     {"name":"GST", "datatype":"single","input":"option","options":["Input 5%", "Input 12%", "Input 18%", "Input 40%","Output 5%", "Output 12%", "Output 18%", "Output 40%"]},
                     {"name":"Description", "datatype":"single","input":"input","type":"text"},
                     {"name":"Cost Center", "datatype":"single","input":"input","type":"text"},
-                    {"name":"Quantity", "datatype":"single","input":"option","options":[]},
+                    {"name":"Quantity", "datatype":"single","input":"input","type":"number"},
                     {"name":"Value Date", "datatype":"single","input":"input","type":"date"},
-                    {"name":"Location", "datatype":"single","input":"option","options":ListofItems(loadData('locations'),0)},
+                    {"name":"Location", "datatype":"single","input":"input","type":"text"},
                     {"name":"Profit Center", "datatype":"single","input":"option","options":ListofItems(loadData('profitcenters'),0)},
                     {"name":"Cost Object", "datatype":"single","input":"option","options":["",...CostObject.list()]},
                     {"name":"Purchase Order", "datatype":"single","input":"option","options":ListofItems(loadData('purchaseorders'),0)},
@@ -1329,7 +1361,7 @@ function Record(){
   
   return(
     <div className='menuContainer'>
-            <h3 className='menuContainerTitle'>Record</h3>
+            <h3 className='menuContainerTitle' onClick={()=>navigate('/control')}>Record</h3>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Generic</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/create/Transaction`)}}><h4>Transaction</h4></div>
@@ -1361,7 +1393,7 @@ function Control(){
   
     return(
         <div className='menuContainer'>
-            <h3 className='menuContainerTitle'>Control</h3>
+            <h3 className='menuContainerTitle' onClick={()=>navigate('/reports')}>Control</h3>
             {list.map(item=>
                 <div className='menuList'>
                     <div className='menuTitle red'><h4>{item["Group"]}</h4></div>
@@ -1385,7 +1417,7 @@ function Reports(){
     const navigate = useNavigate();
     return(
         <div className='menuContainer'>
-            <h3 className='menuContainerTitle'>Reports</h3>
+            <h3 className='menuContainerTitle' onClick={()=>navigate('/record')}>Reports</h3>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Costing</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/costobjectbalance`)}}><h4>Cost Object Balance</h4></div>
@@ -1395,6 +1427,10 @@ function Reports(){
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Payroll</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/paycalc`)}}><h4>Salary Calculator</h4></div>
+            </div>
+            <div className='menuList'>
+                <div className='menuTitle red'><h4>Materials</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/materialmovement`)}}><h4>Material Movement</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Receivables & Payables</h4></div>
@@ -1699,6 +1735,11 @@ class Report{
             {"name":"ledger","label":"Ledger","fields":["values"]},
             {"name":"period","label":"Period","fields":["range"]},
         ],
+        "materialmovement":[
+            {"name":"material","label":"Material","type":"text","fields":["value"]},
+            {"name":"location","label":"Location","type":"text","fields":["value"]},
+            {"name":"period","label":"Period","type":"date","fields":["range"]},
+        ],
         "paycalc":[
             {"name":"id", "label":"Employee ID","fields":["value"]},
             {"name":"year", "label":"Year","fields":["value"]},
@@ -1786,12 +1827,12 @@ function ReportQuery(){
                     <div className='reportQuerySubfield'>
                         <label>{field}</label>
                         {field == "option" && <>option</>}
-                        {field =="value" && <input className='reportQueryCell' onChange={(e)=>valueChange(item['name'],field,e)} value={query[item['name']][field]}/>}
-                        {field =="values" && <div className='reportQueryColumn'>{query[item['name']][field].map((values,i)=><div><input className='reportQueryCell' onChange={(e)=>valuesChange(item['name'],field,i,e)} value={query[item['name']][field][i]}/></div>)} <button onClick={()=>addValues(item['name'],field)}>+</button></div>}
-                        {field =="exclValues" && <div className='reportQueryColumn'>{query[item['name']][field].map((values,i)=><div><input className='reportQueryCell' onChange={(e)=>valuesChange(item['name'],field,i,e)} value={query[item['name']][field][i]}/></div>)} <button onClick={()=>addValues(item['name'],field)}>+</button></div>}
-                        {field =="range" && <div className='reportQueryRow'><input className='reportQueryCell' onChange={(e)=>rangeChange(item['name'],field,0,e)} value={query[item['name']][field][0]}/><input className='reportQueryCell' onChange={(e)=>rangeChange(item['name'],field,1,e)} value={query[item['name']][field][1]}/></div>}
-                        {field =="ranges" && <div className='reportQueryColumn'>{query[item['name']][field].map((ranges,i)=><div><div className='reportQueryRow'><input className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,0,e)} value={query[item['name']][field][i][0]}/><input className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,1,e)} value={query[item['name']][field][i][1]}/></div></div>)} <button onClick={()=>addRanges(item['name'],field)}>+</button></div>}
-                        {field =="exclRanges" && <div className='reportQueryColumn'>{query[item['name']][field].map((ranges,i)=><div><div className='reportQueryRow'><input  className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,0,e)} value={query[item['name']][field][i][0]}/><input className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,1,e)} value={query[item['name']][field][i][1]}/></div></div>)} <button onClick={()=>addRanges(item['name'],field)}>+</button></div>}
+                        {field =="value" && <input type={item["type"]} className='reportQueryCell' onChange={(e)=>valueChange(item['name'],field,e)} value={query[item['name']][field]}/>}
+                        {field =="values" && <div className='reportQueryColumn'>{query[item['name']][field].map((values,i)=><div><input type={item["type"]} className='reportQueryCell' onChange={(e)=>valuesChange(item['name'],field,i,e)} value={query[item['name']][field][i]}/></div>)} <button onClick={()=>addValues(item['name'],field)}>+</button></div>}
+                        {field =="exclValues" && <div className='reportQueryColumn'>{query[item['name']][field].map((values,i)=><div><input className='reportQueryCell' type={item["type"]} onChange={(e)=>valuesChange(item['name'],field,i,e)} value={query[item['name']][field][i]}/></div>)} <button onClick={()=>addValues(item['name'],field)}>+</button></div>}
+                        {field =="range" && <div className='reportQueryRow'><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangeChange(item['name'],field,0,e)} value={query[item['name']][field][0]}/><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangeChange(item['name'],field,1,e)} value={query[item['name']][field][1]}/></div>}
+                        {field =="ranges" && <div className='reportQueryColumn'>{query[item['name']][field].map((ranges,i)=><div><div className='reportQueryRow'><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,0,e)} value={query[item['name']][field][i][0]}/><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,1,e)} value={query[item['name']][field][i][1]}/></div></div>)} <button onClick={()=>addRanges(item['name'],field)}>+</button></div>}
+                        {field =="exclRanges" && <div className='reportQueryColumn'>{query[item['name']][field].map((ranges,i)=><div><div className='reportQueryRow'><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,0,e)} value={query[item['name']][field][i][0]}/><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,1,e)} value={query[item['name']][field][i][1]}/></div></div>)} <button onClick={()=>addRanges(item['name'],field)}>+</button></div>}
                         </div>
                 )}
                 </div>
@@ -1888,6 +1929,16 @@ function ReportDisplay(){
         )
     }
 
+    function MaterialMovement({query}){
+        const {material,location,period} = query
+        const data = new MaterialInLocation(material['value'],location['value']).movementData(period['range'])
+        return(
+            <div>
+                <DisplayAsTable collection={data}/>
+            </div>
+        )
+    }
+
     function PayCalc({query}){
         const location = useLocation();
         const {id,year,month} = query;
@@ -1930,6 +1981,7 @@ function ReportDisplay(){
             {report=="costobjectbalance" && <CostObjectBalance query={query}/>}
             {report=="costobjecttransactions" && <CostObjectTransactions query={query}/>}
             {report=="costobjectsettlement" && <CostObjectSettlement query={query}/>}
+            {report=="materialmovement" && <MaterialMovement query={query}/>}
             {report=="paycalc" && <PayCalc query={query}/>}
             {report=="salaryrun" && <SalaryRun query={query}/>}
             {report=="vendoropenitem" && <VendorOpenItem query={query}/>}
@@ -2065,24 +2117,60 @@ class Transaction{
     constructor(type){
         this.type = type
     }
+    mandatoryLineItems(){
+        
+    }
+    lineItems(){
+        let list = [];
+    }
     static lineItemTypes = ["Asset","Bank Account","General Ledger","Customer","Material","Vendor"]
     static headerFields = ["Posting Date","Document Date","Reference","Text"]
+    static fieldInfo = {
+        "Posting Date":{
+            "Type":"date",
+        },
+        "Document Date":{
+            "Type":"date",
+        },
+        "Reference":{
+            "Type":"text"
+        },
+        "Text":{
+            "Type":"text"
+        }
+    }
 }
 
 function TransactionUI(){
+    const transaction = new Transaction()
+    const {headerFields,fieldInfo} = Transaction
     return(
         <div>
+            <div className="header">
+                {headerFields.map(item=>
+                    <div><label>{item}</label><input type={fieldInfo[item]['Type']}/></div>
+                )}
+            </div>
+            <div className='lineItems'>
+                <table>
+                    <thead>
+                        <tr><th>Account</th></tr>
+                    </thead>
+                </table>
+            </div>
         </div>
     )
 }
 
 
 function Scratch(){
+    const material = 'Phosphoric Acid'
+    const location = 'Front Gate'
+    const bin = new MaterialInLocation(material,location)
 
     return(
         <>
-        <DisplayAsTable collection={CostCenter.prepaidCostData("2024-06-22")}/>
-        {JSON.stringify(CostCenter.activeList)}
+        {JSON.stringify(bin.movementData(["2025-10-01","2025-10-31"]))}
         </>
     )
 }
@@ -2111,6 +2199,7 @@ if (new Company().status){
       <Route path="/scratch/" element={<Scratch/>}/>
       <Route path="/timecontrol" element={<TimeControlling/>}/>
       <Route path="/trialbalance" element={<TrialBalance/>}/>
+      <Route path="/transaction" element={<TransactionUI/>}/>
       <Route path="/holidays" element={<Holidays/>}/>
       <Route path="*" element={<Home/>}/>
     </Routes>

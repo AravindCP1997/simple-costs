@@ -111,17 +111,22 @@
 .searchBarOuter{
   padding:10px;
   padding-top:0;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
 }
 
 .searchBar{
   display: flex;
   flex-direction: row;
   justify-content: left;
+  width:fit-content;
   gap:10px;
   padding: 10px;
   border-radius: 25px;
   transition:0.5s;
-  background: var(--lightbluet);
+  background: white;
+  backdrop-filter: blur(5px);
   overflow: auto;
   resize: both;
   button{
@@ -140,22 +145,17 @@
 .home{
   padding:50px;
   border-radius: 25px;
-  width:100%;
+  width:fit-content;
   display:flex;
   flex-direction: column;
   gap:50px;
   min-height: 450px;
   justify-content: center;
-  background: transparent;
+  background: white;
   height: fit-content;
-  box-shadow: 0px 1px 5px 2px var(--lightbluet);
   transition: 0.5s;
 }
 
-.home:hover{
-  background: white;
-  box-shadow: none;
-}
 
 .title{
   text-align: center;
@@ -174,6 +174,7 @@
 }
 
 .title:hover{
+
   .reg{
     opacity:1
   }
@@ -225,6 +226,12 @@
   padding:10px;
   text-align: center;
   border:2px solid var(--lightgray);
+  transition: 0.5s;
+  cursor: pointer;
+}
+
+.menuContainerTitle:hover{
+  background: var(--lightgreent);
 }
 
 .menuList{
@@ -580,6 +587,7 @@
   min-height: unset;
   padding: 25px;
   gap:25px;
+  width:100%;
  }
 
  .menu{
