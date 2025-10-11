@@ -170,10 +170,33 @@ class Asset{
         const filtered = data.filter(item=>item['Account']==this.name && item['Posting Date']>=from && item['Posting Date']<=to);
         return filtered
     }
+    opening(date){
+        const data = new Intelligence().transactionstable();
+        const filtered = data.filter(item=>item['Account'] == this.name && item['Posting Date'] < date)
+        const opening = SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Credit"])
+        return opening
+    }
+    depreciation(period){
+        const [from,to] = period
+        const days = dayNumber(to) - dayNumber(from) + 1
+        const opening = this.opening(from)
+        const transactions = this.transactions(period)
+        const SV = this.data["Salvage Value"];
+        const UL = this.data["Useful Life"];
+        const capDate = this.data['Date of Capitalisation']
+        const spendUL = (dayNumber(from)-dayNumber(capDate))/365
+        const remainingUL = UL - spendUL
+        const depreciation = ((opening+transactions-SV)/remainingUL * days/365).toFixed(2)
+        return depreciation
+    }
     static data = Database.load("Asset")
     static list(){
         const list = ListItems(this.data,"Name")
         return list
+    }
+    static activedata= this.data.filter(item=>!item['Deactivated'])
+    static activeList(){
+        return ListItems(this.activedata,"Name")
     }
 }
 
@@ -279,13 +302,23 @@ class CostCenter{
     }
     itemsOfDate(date){
         const data = this.transactions().filter(item=>item['Consumption Time From']<=date && item['Consumption Time To']>=date)
-        const result = data.map(item=>({...item,['Cost per Day']:CostCenter.costPerDay(item)}))
+        const result = data.map(item=>({'Cost Element':item['Account'],'General Ledger':item['General Ledger'],'Cost per Day':CostCenter.costPerDay(item)}))
         return result;
     }
     costOfDate(date){
         const data = this.itemsOfDate(date)
         const cost  = SumField(data,'Cost per Day')
         return cost
+    }
+    prepaid(date){
+        const data = this.transactions().filter(item=>new Date(item['Consumption Time To'])>new Date(date) && new Date(item['Consumption Time From'])<=new Date(date))
+        const result = data.map(item=>({...item,...{'Prepaid Days':CostCenter.prepaiddays(item,date),'Prepaid Cost':CostCenter.prepaidCost(item,date)}}))
+        return result
+    }
+    static prepaiddays(lineitem,date){
+        const to = lineitem['Consumption Time To'];
+        const days = dayNumber(to) - dayNumber(date)+ 1
+        return days
     }
     static costPerDay(lineitem){
         const from = lineitem['Consumption Time From'];
@@ -294,11 +327,25 @@ class CostCenter{
         const costperday = lineitem['Amount']/days
         return costperday
     }
+    static prepaidCost(lineitem,date){
+        const days = this.prepaiddays(lineitem,date);
+        const costperday = this.costPerDay(lineitem);
+        const prepaidcost = days * costperday
+        return prepaidcost
+    }
+    static prepaidCostData(date){
+        const centers = this.activeList
+        const list = []
+        centers.map(center=>list.push(...new CostCenter(center).prepaid(date)))
+        return list
+    }
     static data = Database.load("Cost Center")
+    static activeData = this.data.filter(item=>!item['Deactivated'])
     static list(){
         const list = ListItems(this.data,"Name")
         return list
     }
+    static activeList = ListItems(this.activeData,"Name");
 }
 
 class CostObject{
@@ -748,7 +795,7 @@ const objects = {
         "name": "Cost Center",
         "schema": [
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":"Chennai"},
-            {"name": "Profit Center", "datatype":"single", "input":"option", "options":ListofItems(loadData('profitcenters'),0), "use-state":"No"},
+            {"name": "Profit Center", "datatype":"single", "input":"option", "options":["",...ProfitCenter.list()], "use-state":"No"},
             {"name":"Apportionment Ratio","datatype":"nest","structure":[{"name":"From", "datatype":"single", "input":"input", "type":"text"},{"name":"To", "datatype":"single", "input":"input", "type":"text"},{"name":"Ratio", "datatype":"collection", "structure":[{"name":"To", "datatype":"single", "input":"input", "type":"text"},{"name":"Ratio", "datatype":"single", "input":"input", "type":"text"}]}],"use-state":[{"From":"2025-04-01","To":"2026-03-31","Ratio":[{"To":"Head Office","Ratio":0.50}]}]}
         ],
         "collection":"costcenters"
@@ -1285,11 +1332,12 @@ function Record(){
             <h3 className='menuContainerTitle'>Record</h3>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Generic</h4></div>
-                <div className='menuItem' onClick={()=>{navigate(`/create/transaction`)}}><h4>Transaction</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/create/Transaction`)}}><h4>Transaction</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Costing</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/costobjectsettlement`)}}><h4>Cost Object Settlement</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/costtoprepaid`)}}><h4>Cost to Prepaid</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Payroll</h4></div>
@@ -1302,16 +1350,34 @@ function Record(){
 function Control(){
 
     const navigate = useNavigate();
-  const list = Object.keys(objects).filter(item=>item!=="Transaction")
+    const list = [
+        {"Group":"Asset Accounting","items":["Asset","Asset Class"]},
+        {"Group":"Costing","items":["Cost Center","Cost Object"]},
+        {"Group":"Financial Accounting","items":["General Ledger","Profit Center","Segment","Currency"]},
+        {"Group":"Material","items":["Material","Service","Purchase Order","Sale Order","Location","Unit"]},
+        {"Group":"Payroll","items":["Employee", "Organisational Unit"]},
+        {"Group":"Receivables & Payables","items":["Bank Account", "Customer","Vendor","Payment Terms"]}
+    ]
   
-  return(
-    <div className='menuList'>
-      <div className='menuTitle red'><h4>Control</h4></div>
-      <div className='menuItem' onClick={()=>navigate('/timecontrol')}><h4>Time Control</h4></div>
-      <div className='menuItem' onClick={()=>navigate('/holidays')}><h4>Holidays</h4></div>
-      {list.map(item=><div className='menuItem' onClick={()=>{navigate(`/query/${item}`)}}><h4>{item}</h4></div>)}
-    </div>
-  )
+    return(
+        <div className='menuContainer'>
+            <h3 className='menuContainerTitle'>Control</h3>
+            {list.map(item=>
+                <div className='menuList'>
+                    <div className='menuTitle red'><h4>{item["Group"]}</h4></div>
+                    {item['items'].map(object=>
+                        <div className='menuItem' onClick={()=>{navigate(`/query/${object}`)}}><h4>{object}</h4></div>
+                    )}
+                    
+                </div>
+            )}
+            <div className='menuList'>
+            <div className='menuTitle red'><h4>Config</h4></div>
+            <div className='menuItem' onClick={()=>navigate('/timecontrol')}><h4>Time Control</h4></div>
+            <div className='menuItem' onClick={()=>navigate('/holidays')}><h4>Holidays</h4></div>
+            </div>
+        </div>
+    )
 }
 
 function Reports(){
@@ -1324,6 +1390,7 @@ function Reports(){
                 <div className='menuTitle red'><h4>Costing</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/costobjectbalance`)}}><h4>Cost Object Balance</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/costobjecttransactions`)}}><h4>Cost Object Transactions</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/costcenteritems`)}}><h4>Cost Center Items</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Payroll</h4></div>
@@ -1331,6 +1398,10 @@ function Reports(){
             </div>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Receivables & Payables</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/vendoropenitem`)}}><h4>Vendor Open Item</h4></div>
+            </div>
+            <div className='menuList'>
+                <div className='menuTitle red'><h4>Assets</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/vendoropenitem`)}}><h4>Open Item</h4></div>
             </div>
             <div className='menuList'>
@@ -1608,6 +1679,10 @@ class Report{
         return result
     }
     static schema = {
+        "costcenteritems":[
+            {"name":"centers","label":"Cost Centers","fields":['values']},
+            {"name":"date","label":"Date","fields":['values']}
+        ],
         "costobjectbalance":[
             {"name":"objects","label":"Cost Objects","fields":['values']}
         ],
@@ -1616,6 +1691,9 @@ class Report{
         ],
         "costobjectsettlement":[
             {"name":"object","label":"Cost Object","fields":["value"]}
+        ],
+        "costtoprepaid":[
+            {"name":"date","label":"Date","fields":["value"]}
         ],
         "ledger":[
             {"name":"ledger","label":"Ledger","fields":["values"]},
@@ -1719,7 +1797,9 @@ function ReportQuery(){
                 </div>
         )}
         
-        <button onClick={()=>submitQuery()}>Submit</button>
+        <div className='reportQueryButtons'>
+            <button className='blue' onClick={()=>submitQuery()}>Submit</button>
+        </div>
         </div>
     )
 }
@@ -1727,7 +1807,28 @@ function ReportQuery(){
 function ReportDisplay(){
     const {report} = useParams();
     const location = useLocation()
-    const query = location.state
+    const query = location.state || {}
+    const navigate = useNavigate()
+
+    function CostCenterItems({query}){
+        const {centers,date} = query
+
+        return (
+            <>
+                {centers['values'].map(center=>
+                    <div>
+                        <h4>{center}</h4>
+                        {date['values'].map(item=>
+                            <div>
+                                <h5>{item}</h5>
+                                <DisplayAsTable collection={new CostCenter(center).itemsOfDate(item)}/>
+                            </div>
+                        )}
+                    </div>
+                )}   
+            </>
+        )
+    }
 
     function CostObjectBalance({query}){
     const {objects} = query
@@ -1737,6 +1838,7 @@ function ReportDisplay(){
     return(
         <div>
             <DisplayAsTable collection={data}/>
+            <button onClick={()=>navigate('/reportdisplay/costobjecttransactions', {state: query})}>Transactions</button>
         </div>
     )
 }
@@ -1771,6 +1873,17 @@ function ReportDisplay(){
                 <DisplayAsTable collection={allocation}/>
                 <button>Cancel</button>
                 <button>Post</button>
+            </div>
+        )
+    }
+
+    function CostToPrepaid({query}){
+        const {date}  = query;
+        const data = CostCenter.prepaidCostData(date['value']);
+
+        return(
+            <div>
+                <DisplayAsTable collection={data}/>
             </div>
         )
     }
@@ -1810,34 +1923,21 @@ function ReportDisplay(){
         )
     }
 
-
-    switch (report){
-        case 'costobjectbalance':
-            return(
-            <CostObjectBalance query={query}/>
-        )
-        case 'costobjecttransactions':
-            return(
-            <CostObjectTransactions query={query}/>
-        )
-        case 'costobjectsettlement':
-            return(
-            <CostObjectSettlement query={query}/>
-        )
-        case 'paycalc':
-            return(
-                <PayCalc query={query}/>
-            )
-        case 'salaryrun':
-            return(
-                <SalaryRun query={query}/>
-            )
-        case 'vendoropenitem':
-            return(
-                <VendorOpenItem query={query}/>
-            )
-
-}
+    return (
+        <div className='reportDisplay'>
+            {report=="costcenteritems" && <CostCenterItems query={query}/>}
+            {report=="costtoprepaid" && <CostToPrepaid query={query}/>}
+            {report=="costobjectbalance" && <CostObjectBalance query={query}/>}
+            {report=="costobjecttransactions" && <CostObjectTransactions query={query}/>}
+            {report=="costobjectsettlement" && <CostObjectSettlement query={query}/>}
+            {report=="paycalc" && <PayCalc query={query}/>}
+            {report=="salaryrun" && <SalaryRun query={query}/>}
+            {report=="vendoropenitem" && <VendorOpenItem query={query}/>}
+            <div className='reportDisplayButtons'>
+                <button className="blue" onClick={()=>navigate('/report/'+report)}>Back</button>
+            </div>
+        </div>
+    )
 }
 
 function Ledger(){
@@ -1961,14 +2061,28 @@ function Holidays(){
     )
 }
 
+class Transaction{
+    constructor(type){
+        this.type = type
+    }
+    static lineItemTypes = ["Asset","Bank Account","General Ledger","Customer","Material","Vendor"]
+    static headerFields = ["Posting Date","Document Date","Reference","Text"]
+}
 
+function TransactionUI(){
+    return(
+        <div>
+        </div>
+    )
+}
 
 
 function Scratch(){
 
     return(
         <>
-        {JSON.stringify(new Vendor('T K Salim').openitems("2025-10-31"))}
+        <DisplayAsTable collection={CostCenter.prepaidCostData("2024-06-22")}/>
+        {JSON.stringify(CostCenter.activeList)}
         </>
     )
 }

@@ -116,7 +116,7 @@
 .searchBar{
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: left;
   gap:10px;
   padding: 10px;
   border-radius: 25px;
@@ -146,16 +146,25 @@
   gap:50px;
   min-height: 450px;
   justify-content: center;
-  border: 2px solid white;
-  background: white;
+  background: transparent;
   height: fit-content;
+  box-shadow: 0px 1px 5px 2px var(--lightbluet);
+  transition: 0.5s;
+}
+
+.home:hover{
+  background: white;
+  box-shadow: none;
 }
 
 .title{
   text-align: center;
-  color:var(--blue);
+  color:white;
   cursor: pointer;
   margin: 0;
+  background: var(--bluet);
+  padding: 10px;
+  border-radius: 15px;
 
   .reg{
     opacity:0;
@@ -241,7 +250,10 @@
   justify-content: center;
   aspect-ratio: 1/1;
   padding: 10px;
-  width:150px;
+  
+  h4{
+    width:120px;
+  }
 }
 
 .menuItem{
@@ -341,7 +353,6 @@
 .crudUI{
   background: var(--lightbluet);
   border-radius: 20px;
-  backdrop-filter: blur(20px);
   padding:5%;
   width:100%;
   display: flex;
@@ -355,7 +366,7 @@
   text-align: center;
   padding:2%;
   border-radius: 15px;
-  backdrop-filter: blur(20px);
+  background: var(--lightbluet);
   margin:0;
   border: 2px solid var(--lightgray);
 }
@@ -370,7 +381,7 @@
 .crudField{
   padding: 5px;
   border-radius: 15px;
-  backdrop-filter: blur(20px);
+  background: var(--lightbluet);
   border: 2px solid var(--lightgray);
   input,select{
     border-radius: 10px;
@@ -413,7 +424,6 @@
   background: var(--lightredt);
   padding: 10px;
   border-radius: 15px;
-  backdrop-filter: blur(20px);
   color:var(--blue);
   border: 2px solid var(--lightgray);
 }
@@ -495,6 +505,7 @@
   display: flex;
   flex-direction: column;
   gap:20px;
+  height: fit-content;
 }
 
 .reportQueryTitle{
@@ -535,10 +546,40 @@
   border-radius: 15px;
 }
 
+.reportQueryButtons{
+  display: flex;
+  flex-direction: row;
+  justify-content: right;
+  padding: 10px;
+}
+
+.reportDisplay{
+  background: var(--lightbluet);
+  height: fit-content;
+  border-radius: 25px;
+  padding: 5%;
+  width: 100%;
+}
+
+.reportDisplayButtons{
+  display: flex;
+  flex-direction: row;
+  justify-content: right;
+  padding: 10px;
+}
+
+
 @media screen and (max-width: 600px){
+
+  .container{
+    gap:10px;
+  }
+
  .home{
   gap:30px;
   min-height: unset;
+  padding: 25px;
+  gap:25px;
  }
 
  .menu{
