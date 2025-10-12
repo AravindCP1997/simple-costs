@@ -453,18 +453,34 @@ class MaterialInLocation{
         const opening = (filtered.length>0)? SumFieldIfs(filtered,'Quantity',["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,'Quantity',["Debit/ Credit"],["Credit"]):0
         return opening
     }
+    openingValue(date){
+        const data = new Intelligence().transactionstable()
+        const filtered = data.filter(item=>item['Account']==this.material && item['Location']==this.location && new Date(item['Posting Date']) < new Date(date))
+        const opening = (filtered.length>0)? SumFieldIfs(filtered,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,'Amount',["Debit/ Credit"],["Credit"]):0
+        return opening
+    }
     closing(date){
         const data = new Intelligence().transactionstable()
         const filtered = data.filter(item=>item['Account']==this.material && item['Location']==this.location && new Date(item['Posting Date']) <= new Date(date))
         const opening = (filtered.length>0)?SumFieldIfs(filtered,'Quantity',["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,'Quantity',["Debit/ Credit"],["Credit"]):0
         return opening
     }
+    closingValue(date){
+        const data = new Intelligence().transactionstable()
+        const filtered = data.filter(item=>item['Account']==this.material && item['Location']==this.location && new Date(item['Posting Date']) <= new Date(date))
+        const opening = (filtered.length>0)?SumFieldIfs(filtered,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,'Amount',["Debit/ Credit"],["Credit"]):0
+        return opening
+    }
     movementData(period){
         const [from,to] = period;
-        const list = [{"Date":from,"Description":"Opening","Quantity":this.opening(from)}];
-        this.transactions(period).map(item=>list.push({"Date":item['Posting Date'],"Description":item['Description'],"Quantity":item['Quantity']}))
-        list.push({"Date":to,"Description":"Closing","Quantity":this.closing(to)})
+        const list = [{"Date":from,"Description":"Opening","Quantity":this.opening(from), "Amount":this.openingValue(from)}];
+        this.transactions(period).map(item=>list.push({"Date":item['Posting Date'],"Description":item['Description'],"Quantity":item['Quantity'], "Amount":item['Amount']}))
+        list.push({"Date":to,"Description":"Closing","Quantity":this.closing(to), "Amount":this.closingValue(to)})
         return list
+    }
+    unitCost(date){
+        const unitCost = this.closingValue(date)/this.closing(date);
+        return unitCost
     }
 }
 
@@ -498,6 +514,31 @@ class Vendor{
         const transactions = new Intelligence().transactionstable()
         const result = transactions.filter(item=>item['Account']==this.name && new Date(item['Posting Date'])<=new Date(date) && !item['Cleared'])
         return result
+    }
+    opening(date){
+        const data = new Intelligence().transactionstable()
+        const filtered = data.filter(item=>item['Account']==this.name && new Date(item['Posting Date']) < new Date(date))
+        const opening = (filtered.length>0)? SumFieldIfs(filtered,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,'Amount',["Debit/ Credit"],["Credit"]):0
+        return opening
+    }
+    closing(date){
+        const data = new Intelligence().transactionstable()
+        const filtered = data.filter(item=>item['Account']==this.name && new Date(item['Posting Date']) <= new Date(date))
+        const opening = (filtered.length>0)? SumFieldIfs(filtered,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,'Amount',["Debit/ Credit"],["Credit"]):0
+        return opening
+    }
+    transactions(period){
+        const [from,to] = period;
+        const data = new Intelligence().transactionstable()
+        const filtered = data.filter(item=>item['Account']==this.name && new Date(item['Posting Date']) >= new Date(from) && new Date(item['Posting Date']) <= new Date(to) )
+        return filtered
+    }
+    ledger(period){
+        const [from,to] = period;
+        const list = [{"Date":from,"Description":"Opening", "Debit/ Credit":"", "Amount":this.opening(from)}];
+        this.transactions(period).map(item=>list.push({"Date":item['Posting Date'],"Description":item['Description'],"Debit/ Credit":item['Debit/ Credit'], "Amount":item['Amount']}))
+        list.push({"Date":to,"Description":"Closing","Debit/ Credit":"", "Amount":this.closing(to)})
+        return list
     }
     static data = Database.load("Vendor")
     static list(){
@@ -1349,7 +1390,7 @@ function Home(){
     <div className='actions'>{}
       <div className='menu green' onClick={()=>navigate(`/record`)}><h2>Record</h2></div>
       <div className='menu red' onClick={()=>navigate(`/control`)}><h2>Control</h2></div>
-      <div className='menu blue'  onClick={()=>navigate(`/reports`)}><h2>Reports</h2></div>
+      <div className='menu blue'  onClick={()=>navigate(`/reports`)}><h2>Report</h2></div>
     </div>
     </div>
   )
@@ -1417,7 +1458,7 @@ function Reports(){
     const navigate = useNavigate();
     return(
         <div className='menuContainer'>
-            <h3 className='menuContainerTitle' onClick={()=>navigate('/record')}>Reports</h3>
+            <h3 className='menuContainerTitle' onClick={()=>navigate('/record')}>Report</h3>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Costing</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/costobjectbalance`)}}><h4>Cost Object Balance</h4></div>
@@ -1435,6 +1476,7 @@ function Reports(){
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Receivables & Payables</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/vendoropenitem`)}}><h4>Vendor Open Item</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/vendorledger`)}}><h4>Vendor Ledger</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Assets</h4></div>
@@ -1729,7 +1771,7 @@ class Report{
             {"name":"object","label":"Cost Object","fields":["value"]}
         ],
         "costtoprepaid":[
-            {"name":"date","label":"Date","fields":["value"]}
+            {"name":"date","type":"date","label":"Date","fields":["value"]}
         ],
         "ledger":[
             {"name":"ledger","label":"Ledger","fields":["values"]},
@@ -1748,6 +1790,10 @@ class Report{
         "salaryrun":[
             {"name":"year", "label":"Year","fields":["value"]},
             {"name":"month", "label":"Month","fields":["value"]},
+        ],
+        "vendorledger":[
+            {'name':"vendor","label":"Vendor","type":"text" ,"fields":["value"]},
+            {'name':"period","label":"Period","type":"date","fields":["range"]},
         ],
         "vendoropenitem":[
             {'name':"vendor","label":"Vendor","fields":["values"]},
@@ -1974,6 +2020,17 @@ function ReportDisplay(){
         )
     }
 
+    function VendorLedger({query}){
+        const {vendor,period} = query
+        const data = new Vendor(vendor['value']).ledger(period['range']);
+
+        return(
+            <div>
+                <DisplayAsTable collection={data}/>
+            </div>
+        )
+    }
+
     return (
         <div className='reportDisplay'>
             {report=="costcenteritems" && <CostCenterItems query={query}/>}
@@ -1985,6 +2042,7 @@ function ReportDisplay(){
             {report=="paycalc" && <PayCalc query={query}/>}
             {report=="salaryrun" && <SalaryRun query={query}/>}
             {report=="vendoropenitem" && <VendorOpenItem query={query}/>}
+            {report=="vendorledger" && <VendorLedger query={query}/>}
             <div className='reportDisplayButtons'>
                 <button className="blue" onClick={()=>navigate('/report/'+report)}>Back</button>
             </div>
@@ -2117,46 +2175,154 @@ class Transaction{
     constructor(type){
         this.type = type
     }
-    mandatoryLineItems(){
-        
+    firstLineItem(){
+        let items = Transaction.lineItems
+        switch (this.type){
+            case 'purchase':
+                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Vendor.list()]}:item)
+        }
+        return items
     }
-    lineItems(){
-        let list = [];
+    process(data){
+        const result = {...data};
+
+        return result
+    }
+    validate(data){
+        const list = [];
+        const req = ["Posting Date","Document Date"];
+        req.map(item=>(data[item]=="")?list.push(`${item} required.`):()=>{})
+        return list
     }
     static lineItemTypes = ["Asset","Bank Account","General Ledger","Customer","Material","Vendor"]
-    static headerFields = ["Posting Date","Document Date","Reference","Text"]
-    static fieldInfo = {
-        "Posting Date":{
-            "Type":"date",
-        },
-        "Document Date":{
-            "Type":"date",
-        },
-        "Reference":{
-            "Type":"text"
-        },
-        "Text":{
-            "Type":"text"
+    static headerFields = [
+        {"name":"Posting Date","type":"date"},
+        {"name":"Document Date","type":"date"},
+        {"name":"Reference","type":"text"},
+        {"name":"Text","type":"text"},
+    ]
+    static lineItems = [
+        {"name":"Account", "type":"text", "input":"option", "options":["",...GeneralLedger.list()]},
+        {"name":"Account Type", "input":"calculated"},
+        {"name":"Amount", "type":"number", "input":"input"},
+        {"name":"General Ledger", "input":"calculated"},
+        {"name":"HSN", "type":"number", "input":"input"},
+    ]
+    static restOfFields(account){
+        const type = new Intelligence().ledgerType(account)
+        let [first,...restOfFields] = Transaction.lineItems
+        switch (type){
+            case 'Vendor':
+                restOfFields = restOfFields.map(item=>(item['name']=="HSN")?{...item,['input']:"calculated"}:item)
         }
+        return restOfFields 
+    }
+    static defaults = {
+        "Posting Date":"",
+        "Document Date":"2025-03-31",
+        "Reference":"Random Ref",
+        "Text":"Random",
+        "Line Items":[
+            {"calculated":false,"Account":"","Amount":0}
+        ]
     }
 }
 
 function TransactionUI(){
-    const transaction = new Transaction()
-    const {headerFields,fieldInfo} = Transaction
+    const transaction = new Transaction('purchase');
+    const firstLineItem = transaction.firstLineItem();
+    const [Account,...restOfField] = firstLineItem;
+    const {headerFields, lineItems} = Transaction;
+    const [restOfAccount,...restOfFields] = lineItems;
+    const [input,setinput] = useState(Transaction.defaults)
+    const output = transaction.process(input);
+    const [firstLine,...restOfLines] = output['Line Items'].filter(item=>!item['calculated']);
+    const calculatedLines = output['Line Items'].filter(item=>item['calculated']);
+    const errors = transaction.validate(input);
+    
+    const headerChange = (field,e) =>{
+        const {value} = e.target;
+        setinput(prevdata=>({
+            ...prevdata,[field]:value
+        }))
+    }
+
+    const lineItemChange = (index,field,e)=>{
+        const {value} = e.target;
+        setinput(prevdata=>({
+            ...prevdata,['Line Items']:prevdata['Line Items'].map((item,i)=>(i==index)?{...item,[field]:value}:item)
+        }))
+    }
+
+    const addLine = ()=>{
+        setinput(prevdata=>({
+            ...prevdata,['Line Items']:[...prevdata['Line Items'],{...Transaction.defaults['Line Items'][0],["calculated"]:true}]
+        }))
+    }
+
+    const removeLine = (index)=>{
+        setinput(prevdata=>({
+            ...prevdata,['Line Items']:prevdata['Line Items'].filter((item,i)=>i!==index)
+        }))
+    }
+    
     return(
         <div>
             <div className="header">
-                {headerFields.map(item=>
-                    <div><label>{item}</label><input type={fieldInfo[item]['Type']}/></div>
+                {headerFields.map((item,index)=>
+                    <div key={index}><label>{item['name']}</label><input onChange={(e)=>headerChange(item['name'],e)} type={item['type']} value={output[item['name']]}/></div>
                 )}
             </div>
             <div className='lineItems'>
                 <table>
                     <thead>
-                        <tr><th>Account</th></tr>
+                        <tr><th></th>{firstLineItem.map(item=><th>{item['name']}</th>)}</tr>  
                     </thead>
+                    <tbody>
+                    <tr><td></td>
+                            <td>
+                                {Account['input']=="input" && <input onChange={(e)=>lineItemChange(0,"Account",e)} type={Account['type']} value={firstLine[field['name']]}/>}
+                                {Account['input']=="option" && <select onChange={(e)=>lineItemChange(0,"Account",e)} value={firstLine['Account']}>{Account['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                            </td>
+                            {Transaction.restOfFields(firstLine['Account']).map(field=>
+                            <td>
+                                {field['input']=="input" && <input onChange={(e)=>lineItemChange(0,field['name'],e)} type={field['type']} value={firstLine[field['name']]}/>}
+                                {field['input']=="option" && <select onChange={(e)=>lineItemChange(0,field['name'],e)} value={firstLine[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                            </td>)}
+                    </tr>
+                        {restOfLines.map((item,i)=>
+                            <tr><td><button onClick={()=>removeLine(i+1)}>-</button></td>
+                            <td>
+                                {restOfAccount['input']=="input" && <input onChange={(e)=>lineItemChange(i+1,'Account',e)} type={restOfAccount['type']} value={item['Account']}/>}
+                                    {restOfAccount['input']=="option" && <select onChange={(e)=>lineItemChange(i+1,'Account',e)} value={item['Account']}>{restOfAccount['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                            </td>
+                            
+                            {Transaction.restOfFields(item['Account']).map(field=>
+                                <td>
+                                    {field['input']=="input" && <input onChange={(e)=>lineItemChange(i+1,field['name'],e)} type={field['type']} value={item[field['name']]}/>}
+                                    {field['input']=="option" && <select onChange={(e)=>lineItemChange(i+1,field['name'],e)} value={item[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                                </td>
+                            )}</tr>
+                        )}
+                        {calculatedLines.map(item=>
+                            <tr>
+                                <td></td>
+                                <td>{item['Account']}</td>
+                                {restOfField.map(field=>
+                                <td>{item[field['name']]}</td>
+                                )}
+                            
+                            </tr>
+                        )}
+                    </tbody>
                 </table>
+            <button onClick={()=>addLine()}>+</button>
+            </div>
+            <div className='errors'>
+                <h4>Errors</h4>
+                <ul>
+                    {errors.map((item,i)=><li key={i}>{item}</li>)}
+                </ul>
             </div>
         </div>
     )
@@ -2165,12 +2331,12 @@ function TransactionUI(){
 
 function Scratch(){
     const material = 'Phosphoric Acid'
-    const location = 'Front Gate'
+    const location = 'Back Gate'
     const bin = new MaterialInLocation(material,location)
 
     return(
         <>
-        {JSON.stringify(bin.movementData(["2025-10-01","2025-10-31"]))}
+        {JSON.stringify(new Vendor('T K Salim').ledger(["2025-04-01","2026-03-31"]))}
         </>
     )
 }

@@ -10,7 +10,6 @@
   flex-direction: column;
   width:100%;
   height:fit-content;
-  backdrop-filter: blur(10px);
 }
 
 .companyInfoTitle{
@@ -19,7 +18,7 @@
   border:2px solid var(--lightgray);
   border-radius: 20px;
   padding: 20px;
-  backdrop-filter: blur(20px);
+  background: var(--lightredt);
 }
 
 .companyDetails{
@@ -34,7 +33,7 @@
   grid-template-columns: 50% 50%;
   padding: 5px;
   border-radius: 15px;
-  backdrop-filter: blur(20px);
+  background: var(--lightredt);
   border: 2px solid var(--lightgray);
   input,select{
     border-radius: 10px;
@@ -42,7 +41,7 @@
 }
 
 .companyDetailObject{
-  backdrop-filter: blur(20px);
+  background: var(--lightredt);
   border: 2px solid var(--lightgray);
   display:flex;
   flex-direction: column;
@@ -65,9 +64,8 @@
   gap:20px;
   color:var(--blue);
   padding: 10px;
-  backdrop-filter: blur(10px);
   background:var(--lightgreent);
-  width: min(100%,640px);
+  width: fit-content;
   border-radius: 25px;
   text-align: center;
   margin-top: 10%;
@@ -78,7 +76,7 @@
   color:var(--blue);
   border-radius: 20px;
   padding:20px;
-  backdrop-filter: blur(20px);
+  background: var(--lightgreent);
   border: 2px solid var(--lightgray);
   margin:0;
 }
@@ -93,7 +91,7 @@
   flex-direction: column;
   padding: 20px;
   border-radius: 15px;
-  backdrop-filter: blur(5px);
+  background: var(--lightgreent);
   border: 2px solid var(--lightgray);
 }
 
