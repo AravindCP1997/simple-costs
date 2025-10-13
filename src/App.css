@@ -64,12 +64,18 @@
   gap:20px;
   color:var(--blue);
   padding: 10px;
-  background:var(--lightgreent);
+  background:var(--lightbluet);
   width: fit-content;
   border-radius: 25px;
   text-align: center;
   margin-top: 10%;
   padding: 20px;
+}
+
+.titleCard{
+  background: var(--blue);
+  border-radius: 15px;
+  color:white;
 }
 
 .createWelcome{
@@ -89,10 +95,15 @@
 .createOption{
   display: flex;
   flex-direction: column;
+  justify-content: top;
   padding: 20px;
   border-radius: 15px;
   background: var(--lightgreent);
   border: 2px solid var(--lightgray);
+
+  button{
+    border-radius: 15px;
+  }
 }
 
 .container{
@@ -147,7 +158,7 @@
   display:flex;
   flex-direction: column;
   gap:50px;
-  min-height: 450px;
+  height:fit-content;
   justify-content: center;
   background: white;
   height: fit-content;
@@ -211,7 +222,7 @@
   display:flex;
   flex-direction: column;
   gap:10px;
-  background: var(--lightredt);
+  background: var(--lightbluet);
   padding:5%;
   width:100%;
   height: fit-content;
@@ -220,7 +231,7 @@
 
 .menuContainerTitle{
   border-radius: 15px;
-  background: var(--lightredt);
+  background: var(--lightbluet);
   padding:10px;
   text-align: center;
   border:2px solid var(--lightgray);
@@ -243,7 +254,7 @@
   height:fit-content;
   overflow: auto;
   border:2px solid var(--lightgray);
-  background: var(--lightredt);
+  background: var(--lightbluet);
 }
 
 .menuItem, .menuTitle{
@@ -274,6 +285,42 @@
 
 .menuTitle{
   color:white
+}
+
+.timeControlUI{
+  width:fit-content;
+  background: var(--lightbluet);
+  padding: 5%;
+  color:var(--blue);
+  border-radius: 25px;
+  display:flex;
+  flex-direction: column;
+  gap:10px;
+}
+
+.timeControlTitle{
+  border: 2px solid var(--lightgray);
+  padding:10px;
+  border-radius: 15px;
+  cursor: pointer;
+  margin: 0;
+  text-align: center;
+}
+
+.timePeriod{
+  background: var(--lightbluet);
+  color:var(--blue);
+  padding: 10px;
+  border-radius: 15px;
+  border: 2px solid var(--lightgray);
+}
+
+.timePeriodButtons{
+  display: flex;
+  flex-direction: row;
+  gap:10px;
+  justify-content: right;
+  padding: 10px;
 }
 
 .query{
@@ -357,6 +404,7 @@
 
 .crudUI{
   background: var(--lightbluet);
+  backdrop-filter: blur(3px);
   border-radius: 20px;
   padding:5%;
   width:100%;

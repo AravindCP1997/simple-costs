@@ -74,6 +74,12 @@ function exclRangeFilter(collection,field,list){
     return filtered
 }
 
+function valueInRange(value,range){
+    const [from,to] = range;
+    const result = (value>=from && value<=to)?true:false;
+    return result
+}
+
 class Company{
     constructor(data){
         this.status = ('company' in localStorage);
@@ -274,16 +280,31 @@ class GeneralLedger{
         const balance = SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Credit"])
         return balance
     }
+    closing(date){
+        const data = new Intelligence().transactionstable();
+        const start = (["Income","Expense"].includes(this.presentation))?Intelligence.yearStart(date):new Company().startdate;
+        const filtered = data.filter(item=>item['General Ledger']==this.name && item['Posting Date']>=start && item['Posting Date']<=date)
+        const balance = SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Credit"])
+        return balance
+    }
     accountBalance(period){
         const [from,to] = period;
         const opening = this.opening(from)
         const data = {"Ledger":this.name,"Opening Balance":opening.toFixed(2),"Debit":this.debit(period).toFixed(2),"Credit":this.credit(period).toFixed(2),"Closing Balance":(this.opening(from)+this.debit(period)-this.credit(period)).toFixed(2)}
         return data
     }
+    ledger(period){
+        const [from,to] = period;
+        const list = [];
+        list.push({"Posting Date":from,"Description":"Opening Balance","Amount":this.opening(from), "Debit/ Credit":""});
+        this.transactions(period).map(item=>list.push({"Posting Date":item["Posting Date"], "Description":item["Description"], "Amount":item["Amount"], "Debit/ Credit":item["Debit/ Credit"]}))
+        list.push({"Posting Date":to,"Description":"Closing Balance","Amount":this.closing(to), "Debit/ Credit":""});
+        return list;
+    }
     static accountBalances(period){
         const list = [];
-        const ledgers = this.list()
-        ledgers.map(ledger=>list.push(new GeneralLedger(ledger).accountBalance(period)))
+        const ledgers = this.list();
+        ledgers.map(ledger=>list.push(new GeneralLedger(ledger).accountBalance(period)));
         return list
     }
 }
@@ -431,6 +452,17 @@ class Employee{
         const data = [];
         this.list().map(item=>data.push({"ID":item,"Salary":SumField(new Employee(item).salary(year,month),"Salary")}))
         return data
+    }
+}
+
+class Location{
+    constructor(name){
+        this.name = name;
+    }
+    static data = Database.load("Location");
+    static list(){
+        const list = ListItems(this.data,"Name")
+        return list
     }
 }
 
@@ -1194,7 +1226,10 @@ function CompanyInfo(){
     function CreateCompany(){
         return (
             <div className='createCompany'>
-                <h1 className="createWelcome">Welcome</h1>
+                <div className="titleCard">
+                    <h1>Simple Costs<sup>&reg;</sup></h1>
+                    <p>Enterprise Information System</p>
+                </div>
                 <div className="createOptions">
                     <div className="createOption"><button className='blue' onClick={()=>initialise()}>Quick Initialise</button><p>Instantly creates a sample company</p></div>
                     <div className="createOption"><button className='green' onClick={()=>newCompany()}>New Company</button><p>Manual set-up of company</p></div>
@@ -1300,9 +1335,9 @@ function TimeControlling(){
         window.location.reload()
     }
     return(
-    <div>
-        <h2>Control of Transaction Time</h2>
-        <div>
+    <div className='timeControlUI'>
+        <h2 className='timeControlTitle'>Control of Transaction Time</h2>
+        <div className='timePeriod'>
             <h3>Open Time Period</h3>
             <div>
                 <h4>Period 1</h4>
@@ -1318,10 +1353,12 @@ function TimeControlling(){
                     <label>To</label><input disabled={!editable} onChange={(e)=>setperiods(prevdata=>({...prevdata,["Second"]:{...prevdata['Second'],['To']:e.target.value}}))} value={periods["Second"]["To"]} type="date"/>
                 </div>
             </div>
-            {JSON.stringify(periods)}
+            
+        </div>
+        <div className='timePeriodButtons'>
             {!editable && <button onClick={()=>seteditable(true)}>Change</button>}
-            {editable && <button onClick={()=>save()}>Save</button>}
-            {editable && <button onClick={()=>window.location.reload()}>Cancel</button>}
+            {editable && <button className="green" onClick={()=>save()}>Save</button>}
+            {editable && <button className="blue" onClick={()=>window.location.reload()}>Cancel</button>}
         </div>
     </div>
     )
@@ -1481,6 +1518,7 @@ function Reports(){
              <div className='menuList'>
                 <div className='menuTitle blue'><h4>Financial Accounting</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/accountbalances`)}}><h4>Account Balances</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/generalledger`)}}><h4>Ledger</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Materials</h4></div>
@@ -1787,6 +1825,10 @@ class Report{
         "depreciation":[
             {"name":"period", "type":"date","fields":["range"]}
         ],
+        "generalledger":[
+            {"name":"ledger", "type":"text","label":"General Ledger","fields":["value"]},
+            {"name":"period","type":"date","label":"Period","fields":["range"]}
+        ],
         "ledger":[
             {"name":"ledger","label":"Ledger","fields":["values"]},
             {"name":"period","label":"Period","fields":["range"]},
@@ -2008,6 +2050,17 @@ function ReportDisplay(){
         )
     }
 
+    function GenLedger({query}){
+        const {ledger,period}  = query;
+        const data = new GeneralLedger(ledger['value']).ledger(period['range']);
+
+        return(
+            <div>
+                <DisplayAsTable collection={data}/>
+            </div>
+        )
+    }
+
     function MaterialMovement({query}){
         const {material,location,period} = query
         const data = new MaterialInLocation(material['value'],location['value']).movementData(period['range'])
@@ -2072,12 +2125,13 @@ function ReportDisplay(){
             {report=="costobjectbalance" && <CostObjectBalance query={query}/>}
             {report=="costobjecttransactions" && <CostObjectTransactions query={query}/>}
             {report=="costobjectsettlement" && <CostObjectSettlement query={query}/>}
+            {report=="depreciation" && <Depreciation query={query}/>}
+            {report=="generalledger" && <GenLedger query={query}/>}
             {report=="materialmovement" && <MaterialMovement query={query}/>}
             {report=="paycalc" && <PayCalc query={query}/>}
             {report=="salaryrun" && <SalaryRun query={query}/>}
             {report=="vendoropenitem" && <VendorOpenItem query={query}/>}
             {report=="vendorledger" && <VendorLedger query={query}/>}
-            {report=="depreciation" && <Depreciation query={query}/>}
             <div className='reportDisplayButtons'>
                 <button className="blue" onClick={()=>navigate('/report/'+report)}>Back</button>
             </div>
@@ -2215,21 +2269,29 @@ class Transaction{
         switch (this.type){
             case 'Purchase':
                 items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Vendor.list()]}:item)
+                break
+            case 'Sale':
+                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Customer.list()]}:item)
         }
         return items
     }
     process(data){
         const result = {...data};
-
+        result["Balance"] = SumFieldIfs(data['Line Items'],'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data['Line Items'],'Amount',["Debit/ Credit"],["Credit"])
         return result
     }
     validate(data){
-        const list = [];
+        const list = [];    
+        const firstPeriod = [Company.timeControls['First']['From'],Company.timeControls['First']['To']];
+        const secondPeriod = [Company.timeControls['Second']['From'],Company.timeControls['Second']['To']]
         const req = ["Posting Date","Document Date"];
-        req.map(item=>(data[item]=="")?list.push(`${item} required.`):()=>{})
+        req.map(item=>(data[item]=="")?list.push(`${item} required.`):()=>{});
+        (new Date(data['Posting Date'])>new Date())?list.push('Posting Date cannot be future.'):()=>{};
+        (!valueInRange(new Date(data['Posting Date']),[new Date(firstPeriod[0]),new Date(firstPeriod[1])]) && !valueInRange(new Date(data['Posting Date']),[new Date(secondPeriod[0]),new Date(secondPeriod[1])]))?list.push('Posting Date not in Open Period(s)'):()=>{}
+        (new Date(data['Document Date'])>new Date())?list.push('Document Date cannot be future.'):()=>{};
+        (data["Balance"]!=0)?list.push('Balance not zero.'):()=>{};
         return list
     }
-    static lineItemTypes = ["Asset","Bank Account","General Ledger","Customer","Material","Vendor"]
     static headerFields = [
         {"name":"Posting Date","type":"date"},
         {"name":"Document Date","type":"date"},
@@ -2239,9 +2301,25 @@ class Transaction{
     static lineItems = [
         {"name":"Account", "type":"text", "input":"option", "options":["",...GeneralLedger.list()]},
         {"name":"Account Type", "input":"calculated"},
-        {"name":"Amount", "type":"number", "input":"input"},
         {"name":"General Ledger", "input":"calculated"},
+        {"name":"Amount", "type":"number", "input":"input"},
+        {"name":"Debit/ Credit", "type":"number", "input":"option","options":["","Debit","Credit"]},
+        {"name":"GST","input":"option","options":["","Input 5%", "Input 12%", "Input 18%", "Input 28%", "Input 40%", "Output 5%", "Output 12%", "Output 18%", "Output 28%", "Output 40%"]},
+        {"name":"Text","input":"input","type":"text"},
+        {"name":"Profit Center","input":"option","options":["",...ProfitCenter.list()]},
+        {"name":"Cost Center","input":"option","options":["",...CostCenter.list()]},
+        {"name":"Cost Object","input":"option","options":["",...CostObject.list()]},
+        {"name":"Consumption Time From","input":"input","type":"date"},
+        {"name":"Consumption Time To","input":"input","type":"date"},
+        {"name":"Location","input":"option","options":["",...Location.list()]},
+        {"name":"Quantity","input":"input","type":"number"},
+        {"name":"Value Date","input":"input","type":"date"},
         {"name":"HSN", "type":"number", "input":"input"},
+        {"name":"Purchase Order","input":"input","type":"number"},
+        {"name":"Service Order","input":"input","type":"number"},
+        {"name":"Item","input":"input","type":"number"},
+        {"name":"Clearing Document","input":"calculated"},
+        {"name":"Clearing Date","input":"calculated"}
     ]
     static restOfFields(account){
         const type = new Intelligence().ledgerType(account)
@@ -2258,7 +2336,7 @@ class Transaction{
         "Reference":"Random Ref",
         "Text":"Random",
         "Line Items":[
-            {"calculated":false,"Account":"","Amount":0}
+            {"calculated":false,"Account":"","Amount":0, "Debit/ Credit":"Debit"}
         ]
     }
 }
@@ -2274,7 +2352,7 @@ function TransactionUI(){
     const output = transaction.process(input);
     const [firstLine,...restOfLines] = output['Line Items'].filter(item=>!item['calculated']);
     const calculatedLines = output['Line Items'].filter(item=>item['calculated']);
-    const errors = transaction.validate(input);
+    const errors = transaction.validate(output);
     
     const headerChange = (field,e) =>{
         const {value} = e.target;
@@ -2301,6 +2379,14 @@ function TransactionUI(){
             ...prevdata,['Line Items']:prevdata['Line Items'].filter((item,i)=>i!==index)
         }))
     }
+
+    const save= ()=>{
+        if (errors.length==0){
+            alert('saveable')
+        } else {
+            alert('Please consider the errors before proceeding to save!')
+        }
+    }
     
     return(
         <div className="transaction">
@@ -2309,6 +2395,7 @@ function TransactionUI(){
                 {headerFields.map((item,index)=>
                     <div className='headerField' key={index}><label>{item['name']}</label><input onChange={(e)=>headerChange(item['name'],e)} type={item['type']} value={output[item['name']]}/></div>
                 )}
+                <div className='headerField'><label>Balance</label><label>{output['Balance']}</label></div>
             </div>
             <div className='lineItems'>
                 <table>
@@ -2356,11 +2443,14 @@ function TransactionUI(){
             <div className='lineItemsButtons'><button className='blue' onClick={()=>addLine()}>+</button></div>
             </div>
             <div className='errors'>
-                <h4>Errors</h4>
+                <h4>Please consider:</h4>
                 <ul>
                     {errors.map((item,i)=><li key={i}>{item}</li>)}
                 </ul>
             </div>
+            <div className="transactionButtons">
+                <button onClick={()=>save()} className='green'>Save</button>
+                </div>
         </div>
     )
 }
@@ -2373,7 +2463,7 @@ function Scratch(){
 
     return(
         <>
-        {JSON.stringify(GeneralLedger.accountBalances(["2025-04-01","2026-03-31"]))}
+        {JSON.stringify(new GeneralLedger('Rent').ledger(["2025-04-01","2026-03-31"]))}
         </>
     )
 }
