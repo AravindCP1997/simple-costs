@@ -441,6 +441,72 @@
   padding: 2px;
 }
 
+.transaction{
+  background: var(--lightbluet);
+  border-radius: 20px;
+  padding:5%;
+  width:100%;
+  display: flex;
+  flex-direction: column;
+  gap:20px;
+  height:fit-content;
+}
+
+.transactionTitle{
+  padding: 10px;
+  background: var(--lightbluet);
+  border-radius: 15px;
+  text-align: center;
+  border: 2px solid var(--lightgray);
+}
+
+.header{
+  display: grid;
+  grid-template-columns: 50% 50%;
+  row-gap: 5px;
+  background: var(--lightbluet);
+  padding: 10px;
+  border-radius: 15px;
+  border: 2px solid var(--lightgray);
+}
+
+.headerField{
+  display: grid;
+  grid-template-columns: 50% 50%;
+}
+
+.lineItems{
+  overflow: auto;
+  padding: 10px;
+  background: var(--lightbluet);
+  border-radius: 15px;
+  border: 2px solid var(--lightgray);
+}
+
+.lineItemCell{
+    border:1px solid var(--blue);
+  input,select{
+    border-radius: 0;
+    width:100%;
+    font-size: 100%;
+  }
+}
+
+.lineItemsButtons{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding:2px;
+}
+
+.errors{
+  background: var(--lightredt);
+  padding: 10px;
+  border-radius: 15px;
+  color:var(--blue);
+  border: 2px solid var(--lightgray);
+}
+
 .ledgers{
   display:flex;
   flex-direction: column;
