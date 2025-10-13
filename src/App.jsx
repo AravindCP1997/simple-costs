@@ -469,6 +469,7 @@ class Location{
 class Material{
     constructor(name){
         this.name = name;
+        this.data = Material.data.filter(item=>item['Name']==this.name)[0]
     }
     static data = Database.load("Material");
     static list(){
@@ -2278,6 +2279,29 @@ class Transaction{
     process(data){
         const result = {...data};
         result["Balance"] = SumFieldIfs(data['Line Items'],'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data['Line Items'],'Amount',["Debit/ Credit"],["Credit"])
+        result['Line Items'] = result['Line Items'].map(item=>this.lineItemProcess(item));
+        return result
+    }
+    lineItemProcess(lineItemData){
+        const result = {...lineItemData};
+        result['Account Type'] = new Intelligence().ledgerType(result['Account']);
+        switch (result['Account Type']){
+            case 'General Ledger':
+                result['General Ledger'] = result['Account'];
+                break;
+            case 'Vendor':
+                result['General Ledger'] = result['Presentation'];
+                break
+            case 'Customer':
+                result['General Ledger'] = result['Presentation'];
+                break
+            case 'Material':
+                result['General Ledger'] = new Material(result['Account']).data['General Ledger']
+                break
+            case 'Asset':
+                result['General Ledger'] = new AssetClass(new Asset(result['Account']).data['Asset Class']).data['General Ledger - Asset']
+                break
+        }
         return result
     }
     validate(data){
@@ -2299,8 +2323,9 @@ class Transaction{
         {"name":"Text","type":"text"},
     ]
     static lineItems = [
-        {"name":"Account", "type":"text", "input":"option", "options":["",...GeneralLedger.list()]},
+        {"name":"Account", "type":"text", "input":"option", "options":["",...Asset.activeList(),...GeneralLedger.list(), ...Material.list(),...Vendor.list()]},
         {"name":"Account Type", "input":"calculated"},
+        {"name":"Presentation", "input":"notrequired"},
         {"name":"General Ledger", "input":"calculated"},
         {"name":"Amount", "type":"number", "input":"input"},
         {"name":"Debit/ Credit", "type":"number", "input":"option","options":["","Debit","Credit"]},
@@ -2326,7 +2351,8 @@ class Transaction{
         let [first,...restOfFields] = Transaction.lineItems
         switch (type){
             case 'Vendor':
-                restOfFields = restOfFields.map(item=>(item['name']=="HSN")?{...item,['input']:"calculated"}:item)
+                restOfFields = restOfFields.map(item=>(item['name']=="HSN")?{...item,['input']:"calculated"}:item);
+                restOfFields = restOfFields.map(item=>(item['name']=="Presentation")?{...item,...{'input':"option","options":["","Accounts Payable","Advance to Supliers"]}}:item)
         }
         return restOfFields 
     }
@@ -2339,10 +2365,16 @@ class Transaction{
             {"calculated":false,"Account":"","Amount":0, "Debit/ Credit":"Debit"}
         ]
     }
+    static save(data){
+        const database  = ('transactions' in localStorage)?JSON.parse(localStorage.getItem('transactions')):[];
+        const newdatabase = database.push(data);
+        saveData(newdatabase,'transactions');
+    }
 }
 
 function TransactionUI(){
-    const {trans} = useParams()
+    const {trans} = useParams();
+    const navigate = useNavigate();
     const transaction = new Transaction(trans);
     const firstLineItem = transaction.firstLineItem();
     const [Account,...restOfField] = firstLineItem;
@@ -2380,11 +2412,16 @@ function TransactionUI(){
         }))
     }
 
-    const save= ()=>{
+    const save = ()=>{
+        let newdata = [];
+        const collections = loadData('transactions');
         if (errors.length==0){
-            alert('saveable')
+            newdata = [...collections,{...output,["Entry Date"]:new Date().toLocaleDateString()}]
+            saveData(newdata,'transactions')
+            alert(`Saved!`)
+            cancel()
         } else {
-            alert('Please consider the errors before proceeding to save!')
+            alert("There are still errors unresolved")
         }
     }
     
@@ -2412,6 +2449,7 @@ function TransactionUI(){
                             <td className='lineItemCell'>
                                 {field['input']=="input" && <input onChange={(e)=>lineItemChange(0,field['name'],e)} type={field['type']} value={firstLine[field['name']]}/>}
                                 {field['input']=="option" && <select onChange={(e)=>lineItemChange(0,field['name'],e)} value={firstLine[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                                {field['input']=="calculated" && <label>{firstLine[field['name']]}</label>}
                             </td>)}
                     </tr>
                         {restOfLines.map((item,i)=>
@@ -2425,6 +2463,7 @@ function TransactionUI(){
                                 <td className='lineItemCell'>
                                     {field['input']=="input" && <input onChange={(e)=>lineItemChange(i+1,field['name'],e)} type={field['type']} value={item[field['name']]}/>}
                                     {field['input']=="option" && <select onChange={(e)=>lineItemChange(i+1,field['name'],e)} value={item[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                                    {field['input']=="calculated" && <label>{item[field['name']]}</label>}
                                 </td>
                             )}</tr>
                         )}
