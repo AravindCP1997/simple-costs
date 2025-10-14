@@ -137,6 +137,7 @@ class Database{
             "Profit Center":"profitcenters",
             "Purchase Order":"purchaseorders",
             "Segment":"segments",
+            "Service":"services",
             "Sale Order":"saleorders",
             "Unit":"units",
             "Vendor":"vendors",
@@ -548,6 +549,16 @@ class Segment{
     }
 }
 
+class Service{
+    constructor(name){
+        this.name = name;
+    }
+    static data = Database.load('Service');
+    static list(){
+        return  ListItems(this.data,"Name");
+    }
+}
+
 class Vendor{
     constructor(name){
         this.name = name;
@@ -624,6 +635,7 @@ class Intelligence{
             "Profit Center":"profitcenters",
             "Purchase Order":"purchaseorders",
             "Segment":"segments",
+            "Service":"services",
             "Sale Order":"saleorders",
             "Vendor":"vendors"
         }
@@ -647,7 +659,7 @@ class Intelligence{
     }
     createLedgers(){
         const list = [{"Name":"","Type":""}]
-        const types = ['General Ledger','Asset','Employee','Vendor','Customer','Material']
+        const types = ['General Ledger','Asset','Employee','Vendor','Customer','Material', 'Service']
         for (let i=0;i<types.length;i++){
             (this.itemsInCollection(types[i])>0)?this.loadCollection(types[i]).map(item=>list.push({"Name":`${item["Name"]}`,"Type":types[i]})):()=>{}
         }
@@ -1337,9 +1349,9 @@ function TimeControlling(){
     }
     return(
     <div className='timeControlUI'>
-        <h2 className='timeControlTitle'>Control of Transaction Time</h2>
+        <h2 className='timeControlTitle'>Time Control</h2>
         <div className='timePeriod'>
-            <h3>Open Time Period</h3>
+            <h4 className='timeControlSubTitle'>Open Time Period</h4>
             <div>
                 <h4>Period 1</h4>
                 <div>
@@ -1357,7 +1369,7 @@ function TimeControlling(){
             
         </div>
         <div className='timePeriodButtons'>
-            {!editable && <button onClick={()=>seteditable(true)}>Change</button>}
+            {!editable && <button className="blue" onClick={()=>seteditable(true)}>Change</button>}
             {editable && <button className="green" onClick={()=>save()}>Save</button>}
             {editable && <button className="blue" onClick={()=>window.location.reload()}>Cancel</button>}
         </div>
@@ -1468,6 +1480,10 @@ function Record(){
                 <div className='menuItem' onClick={()=>{navigate(`/materialissue`)}}><h4>Material Issue</h4></div>
             </div>
             <div className='menuList'>
+                <div className='menuTitle red'><h4>Payables & Receivables</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/transaction/Sale`)}}><h4>Sale</h4></div>
+            </div>
+            <div className='menuList'>
                 <div className='menuTitle red'><h4>Payroll</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/salaryrun`)}}><h4>Salary Posting</h4></div>
             </div>
@@ -1515,11 +1531,11 @@ function Reports(){
         <div className='menuContainer'>
             <h3 className='menuContainerTitle' onClick={()=>navigate('/record')}>Report</h3>
             <div className='menuList'>
-                <div className='menuTitle red'><h4>Assets</h4></div>
+                <div className='menuTitle blue'><h4>Assets</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/depreciation`)}}><h4>Depreciation</h4></div>
             </div>
             <div className='menuList'>
-                <div className='menuTitle red'><h4>Costing</h4></div>
+                <div className='menuTitle blue'><h4>Costing</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/costobjectbalance`)}}><h4>Cost Object Balance</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/costobjecttransactions`)}}><h4>Cost Object Transactions</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/costcenteritems`)}}><h4>Cost Center Items</h4></div>
@@ -1530,16 +1546,16 @@ function Reports(){
                 <div className='menuItem' onClick={()=>{navigate(`/report/generalledger`)}}><h4>Ledger</h4></div>
             </div>
             <div className='menuList'>
-                <div className='menuTitle red'><h4>Materials</h4></div>
-                <div className='menuItem' onClick={()=>{navigate(`/report/materialmovement`)}}><h4>Material Movement</h4></div>
+                <div className='menuTitle blue'><h4>Materials</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/materialledger`)}}><h4>Material Ledger</h4></div>
             </div>
             <div className='menuList'>
-                <div className='menuTitle red'><h4>Payables & Receivables</h4></div>
+                <div className='menuTitle blue'><h4>Payables & Receivables</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/vendoropenitem`)}}><h4>Vendor Open Item</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/vendorledger`)}}><h4>Vendor Ledger</h4></div>
             </div>
             <div className='menuList'>
-                <div className='menuTitle red'><h4>Payroll</h4></div>
+                <div className='menuTitle blue'><h4>Payroll</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/paycalc`)}}><h4>Salary Calculator</h4></div>
             </div>
         </div>
@@ -1842,7 +1858,7 @@ class Report{
             {"name":"ledger","label":"Ledger","fields":["values"]},
             {"name":"period","label":"Period","fields":["range"]},
         ],
-        "materialmovement":[
+        "materialledger":[
             {"name":"material","label":"Material","type":"text","fields":["value"]},
             {"name":"location","label":"Location","type":"text","fields":["value"]},
             {"name":"period","label":"Period","type":"date","fields":["range"]},
@@ -2070,7 +2086,7 @@ function ReportDisplay(){
         )
     }
 
-    function MaterialMovement({query}){
+    function MaterialLedger({query}){
         const {material,location,period} = query
         const data = new MaterialInLocation(material['value'],location['value']).movementData(period['range'])
         return(
@@ -2136,7 +2152,7 @@ function ReportDisplay(){
             {report=="costobjectsettlement" && <CostObjectSettlement query={query}/>}
             {report=="depreciation" && <Depreciation query={query}/>}
             {report=="generalledger" && <GenLedger query={query}/>}
-            {report=="materialmovement" && <MaterialMovement query={query}/>}
+            {report=="materialledger" && <MaterialLedger query={query}/>}
             {report=="paycalc" && <PayCalc query={query}/>}
             {report=="salaryrun" && <SalaryRun query={query}/>}
             {report=="vendoropenitem" && <VendorOpenItem query={query}/>}
@@ -2286,6 +2302,14 @@ class Transaction{
     }
     lineItems(){
         let items = Transaction.lineItems
+        let notreq = [];
+        switch (this.type){
+            case 'Sale':
+                notreq = ["Cost Center", "Cost Object","Consumption Time From", "Consumption Time To", "Purchase Order", "Sale Order", "Item", "Clearing Document", "Clearing Date"]
+                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Material.list(),...Service.list()]}:item);
+                break
+        }
+        items = items.filter(item=>!notreq.includes(item['name']));
         return items
     }
     restOfFields(account){
@@ -2345,7 +2369,7 @@ class Transaction{
         {"name":"Text","type":"text"},
     ]
     static lineItems = [
-        {"name":"Account", "type":"text", "input":"option", "options":["",...Asset.activeList(),...GeneralLedger.list(), ...Material.list(),...Vendor.list()]},
+        {"name":"Account", "placeholder":"Account","type":"text", "input":"option", "options":["",...Asset.activeList(),...GeneralLedger.list(), ...Material.list(),...Vendor.list()]},
         {"name":"Account Type", "input":"calculated"},
         {"name":"Presentation", "input":"notrequired"},
         {"name":"General Ledger", "input":"calculated"},
@@ -2512,18 +2536,38 @@ class MaterialIssue{
     constructor(){
 
     }
+    static lineItems(data){
+        let lineItems = MaterialIssue.template;
+        let notreq = []
+        switch (data['Issue Type']){
+            case 'Stock Transfer':
+                notreq = ["Value Date","To Product","To Cost Element", "Cost Center","Cost Object","Consumption Time From", "Consumption Time To", "To Asset"]
+                break
+            case 'Consumption - Product':
+                notreq = ["To Cost Element", "Cost Center","Cost Object","Consumption Time From", "Consumption Time To", "To Asset"]
+                break
+            case 'Consumption - Cost Element':
+                notreq = ["To Product", "To Asset", "To Location", "Value Date"]
+                break
+            case 'Consumption - Asset':
+                notreq = ["To Product", "To Cost Element", "Cost Center","Cost Object","Consumption Time From", "Consumption Time To", "To Location", "Value Date"]
+                break
+        }
+        lineItems = lineItems.map(item=>(notreq.includes(item['name']))?{...item,['input']:"notrequired"}:item);
+        return lineItems
+    }
     static headerFields = [
         {"name":"Value Date","type":"date"},
         {"name":"Text","type":"text"},
     ]
-    static lineItems = [
+    static template = [
         {"name":"Material Issued","input":"option","options":["",...Material.list()]},
         {"name":"From Location","input":"option","options":["",...Location.list()]},
-        {"name":"Issue Type","input":"option","options":["","Stock Tranfer","Consumption"]},
+        {"name":"Issue Type","input":"option","options":["","Stock Transfer","Consumption - Product", "Consumption - Cost Element", "Consumption - Asset"]},
         {"name":"Quantity","input":"input","type":"number"},
-        {"name":"Value","input":"calculated"},
         {"name":"To Location","input":"option","options":["",...Location.list()]},
-        {"name":"Value Date","input":"calculated"},
+        {"name":"To Product","input":"option","options":["",...Material.list()]},
+        {"name":"Value Date","input":"input","type":"date"},
         {"name":"To Cost Element","input":"option","options":["",...GeneralLedger.listtype('Cost Element')]},
         {"name":"Cost Center","input":"option","options":["",...CostCenter.list()]},
         {"name":"Cost Object","input":"option","options":["",...CostObject.list()]},
@@ -2597,11 +2641,11 @@ function MaterialIssueUI(){
             <div className='lineItems'>
                 <table>
                     <thead>
-                        <tr><th></th>{lineItems.map(item=><th>{item['name']}</th>)}</tr>
+                        <tr><th></th>{MaterialIssue.template.map(item=><th>{item['name']}</th>)}</tr>
                     </thead>
                     <tbody>
                         {output['Line Items'].map((item,i)=>
-                            <tr><td><button onClick={()=>removeLine(i)}>-</button></td>{lineItems.map(field=>
+                            <tr><td><button onClick={()=>removeLine(i)}>-</button></td>{MaterialIssue.lineItems(item).map(field=>
                             <td>
                                 {field['input']=="input" && <input onChange={(e)=>lineItemChange(i,field['name'],e)} type={field['type']} value={output['Line Items'][i][field['name']]}/>}
                                 {field['input']=="option" && <select onChange={(e)=>lineItemChange(i,field['name'],e)} value={output['Line Items'][i][field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}

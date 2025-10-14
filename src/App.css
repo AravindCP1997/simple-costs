@@ -4,28 +4,28 @@
 
 .companyInfo{
   border-radius: 25px;
-  background: var(--lightbluet);
   padding:5%;
   display:flex;
   flex-direction: column;
   width:fit-content;
   height:fit-content;
+  color:var(--blue);
+  background: var(--lightbluet);
+  box-shadow: 0px 0.5px 1px 0px black;
 }
 
 .companyInfoTitle{
   text-align: center;
-  color:var(--blue);
   border:2px solid var(--lightgray);
+  background: var(--lightbluet);
   border-radius: 20px;
   padding: 20px;
-  background: var(--lightbluet);
 }
 
 .companyDetails{
   display:flex;
   flex-direction: column;
   gap:20px;
-  color:var(--blue);
 }
 
 .companyDetail{
@@ -41,13 +41,13 @@
 }
 
 .companyDetailObject{
-  background: var(--lightbluet);
   border: 2px solid var(--lightgray);
   display:flex;
   flex-direction: column;
   gap:2px;
   padding: 5px;
   border-radius: 15px;
+  background: var(--lightbluet);
 }
 
 .companyInfoButtons{
@@ -70,11 +70,20 @@
   text-align: center;
   margin-top: 10%;
   padding: 20px;
+  box-shadow: 0px 0.5px 1px 0px black;
 }
 
 .titleCard{
   color:var(--blue);
   border-bottom: 2px solid var(--lightgray);
+  display: flex;
+  flex-direction: column;
+  gap:10px;
+  padding:10px;
+
+  h1,p{
+    margin:0;
+  }
 }
 
 .createWelcome{
@@ -293,6 +302,7 @@
 .timeControlUI{
   width:fit-content;
   background: var(--lightbluet);
+  box-shadow: 0px 0.5px 1px 0px black;
   padding: 5%;
   color:var(--blue);
   border-radius: 25px;
@@ -308,6 +318,17 @@
   cursor: pointer;
   margin: 0;
   text-align: center;
+  background: var(--lightbluet);
+}
+
+.timeControlSubTitle{
+  border: 2px solid var(--lightgray);
+  padding:5px;
+  border-radius: 15px;
+  cursor: pointer;
+  margin: 0;
+  text-align: center;
+  background: var(--lightbluet);
 }
 
 .timePeriod{
@@ -502,6 +523,7 @@
   flex-direction: column;
   gap:20px;
   height:fit-content;
+  box-shadow: 0px 0.5px 1px 0px black;
 }
 
 .transactionTitle{
@@ -538,10 +560,10 @@
 .lineItemCell{
     border:1px solid var(--blue);
     width:fit-content;
-    padding: 0;
+    padding: 2px;
   input,select{
     border-radius: 0;
-    width:fit-content;
+    width:100%;
     max-width: 200px;
     font-size: 100%;
     height:100%;
