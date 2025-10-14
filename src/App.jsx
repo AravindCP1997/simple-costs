@@ -1393,8 +1393,10 @@ function Query(){
     )
 }
 
+
 function SearchBar(){
     const navigate = useNavigate()
+    const location = useLocation()
     const [url,seturl] = useState()
     function search(){
         navigate(url)
@@ -1404,7 +1406,9 @@ function SearchBar(){
     const inputRef = useRef();
 
     const keyDownHandler = (e) =>{
-        (e.ctrlKey && e.key === '/')?inputRef.current.focus():null;
+        if (e.ctrlKey && key==="/"){
+            inputRef.current.focus()
+        }
     }
     
     useEffect(()=>{
@@ -1452,12 +1456,16 @@ function Record(){
             <h3 className='menuContainerTitle' onClick={()=>navigate('/control')}>Record</h3>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Generic</h4></div>
-                <div className='menuItem' onClick={()=>{navigate(`/create/Transaction`)}}><h4>Transaction</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/transaction/general`)}}><h4>Transaction</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Costing</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/costobjectsettlement`)}}><h4>Cost Object Settlement</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/costtoprepaid`)}}><h4>Cost to Prepaid</h4></div>
+            </div>
+            <div className='menuList'>
+                <div className='menuTitle red'><h4>Material</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/materialissue`)}}><h4>Material Issue</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Payroll</h4></div>
@@ -2266,7 +2274,7 @@ class Transaction{
         this.type = type
     }
     firstLineItem(){
-        let items = Transaction.lineItems
+        let items = this.lineItems();
         switch (this.type){
             case 'Purchase':
                 items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Vendor.list()]}:item)
@@ -2275,6 +2283,20 @@ class Transaction{
                 items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Customer.list()]}:item)
         }
         return items
+    }
+    lineItems(){
+        let items = Transaction.lineItems
+        return items
+    }
+    restOfFields(account){
+        const type = new Intelligence().ledgerType(account)
+        let [first,...restOfFields] = this.lineItems()
+        switch (type){
+            case 'Vendor':
+                restOfFields = restOfFields.map(item=>(item['name']=="HSN")?{...item,['input']:"calculated"}:item);
+                restOfFields = restOfFields.map(item=>(item['name']=="Presentation")?{...item,...{'input':"option","options":["","Accounts Payable","Advance to Supliers"]}}:item)
+        }
+        return restOfFields 
     }
     process(data){
         const result = {...data};
@@ -2341,21 +2363,12 @@ class Transaction{
         {"name":"Value Date","input":"input","type":"date"},
         {"name":"HSN", "type":"number", "input":"input"},
         {"name":"Purchase Order","input":"input","type":"number"},
-        {"name":"Service Order","input":"input","type":"number"},
+        {"name":"Sale Order","input":"input","type":"number"},
         {"name":"Item","input":"input","type":"number"},
         {"name":"Clearing Document","input":"calculated"},
         {"name":"Clearing Date","input":"calculated"}
     ]
-    static restOfFields(account){
-        const type = new Intelligence().ledgerType(account)
-        let [first,...restOfFields] = Transaction.lineItems
-        switch (type){
-            case 'Vendor':
-                restOfFields = restOfFields.map(item=>(item['name']=="HSN")?{...item,['input']:"calculated"}:item);
-                restOfFields = restOfFields.map(item=>(item['name']=="Presentation")?{...item,...{'input':"option","options":["","Accounts Payable","Advance to Supliers"]}}:item)
-        }
-        return restOfFields 
-    }
+    
     static defaults = {
         "Posting Date":"",
         "Document Date":"2025-03-31",
@@ -2377,8 +2390,9 @@ function TransactionUI(){
     const navigate = useNavigate();
     const transaction = new Transaction(trans);
     const firstLineItem = transaction.firstLineItem();
+    const lineItems = transaction.lineItems();
     const [Account,...restOfField] = firstLineItem;
-    const {headerFields, lineItems} = Transaction;
+    const {headerFields} = Transaction;
     const [restOfAccount,...restOfFields] = lineItems;
     const [input,setinput] = useState(Transaction.defaults)
     const output = transaction.process(input);
@@ -2445,7 +2459,7 @@ function TransactionUI(){
                                 {Account['input']=="input" && <input onChange={(e)=>lineItemChange(0,"Account",e)} type={Account['type']} value={firstLine[field['name']]}/>}
                                 {Account['input']=="option" && <select onChange={(e)=>lineItemChange(0,"Account",e)} value={firstLine['Account']}>{Account['options'].map(option=><option value={option}>{option}</option>)}</select>}
                             </td>
-                            {Transaction.restOfFields(firstLine['Account']).map(field=>
+                            {transaction.restOfFields(firstLine['Account']).map(field=>
                             <td className='lineItemCell'>
                                 {field['input']=="input" && <input onChange={(e)=>lineItemChange(0,field['name'],e)} type={field['type']} value={firstLine[field['name']]}/>}
                                 {field['input']=="option" && <select onChange={(e)=>lineItemChange(0,field['name'],e)} value={firstLine[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
@@ -2459,7 +2473,7 @@ function TransactionUI(){
                                     {restOfAccount['input']=="option" && <select onChange={(e)=>lineItemChange(i+1,'Account',e)} value={item['Account']}>{restOfAccount['options'].map(option=><option value={option}>{option}</option>)}</select>}
                             </td>
                             
-                            {Transaction.restOfFields(item['Account']).map(field=>
+                            {transaction.restOfFields(item['Account']).map(field=>
                                 <td className='lineItemCell'>
                                     {field['input']=="input" && <input onChange={(e)=>lineItemChange(i+1,field['name'],e)} type={field['type']} value={item[field['name']]}/>}
                                     {field['input']=="option" && <select onChange={(e)=>lineItemChange(i+1,field['name'],e)} value={item[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
@@ -2494,6 +2508,114 @@ function TransactionUI(){
     )
 }
 
+class MaterialIssue{
+    constructor(){
+
+    }
+    static headerFields = [
+        {"name":"Value Date","type":"date"},
+        {"name":"Text","type":"text"},
+    ]
+    static lineItems = [
+        {"name":"Material Issued","input":"option","options":["",...Material.list()]},
+        {"name":"From Location","input":"option","options":["",...Location.list()]},
+        {"name":"Issue Type","input":"option","options":["","Stock Tranfer","Consumption"]},
+        {"name":"Quantity","input":"input","type":"number"},
+        {"name":"Value","input":"calculated"},
+        {"name":"To Location","input":"option","options":["",...Location.list()]},
+        {"name":"Value Date","input":"calculated"},
+        {"name":"To Cost Element","input":"option","options":["",...GeneralLedger.listtype('Cost Element')]},
+        {"name":"Cost Center","input":"option","options":["",...CostCenter.list()]},
+        {"name":"Cost Object","input":"option","options":["",...CostObject.list()]},
+        {"name":"Consumption Time From","input":"input","type":"date"},
+        {"name":"Consumption Time To","input":"input","type":"date"},
+        {"name":"To Asset","input":"option","options":["",...Asset.activeList()]},
+    ]
+    static defaults = {
+        "Posting Date":"",
+        "Document Date":"2025-03-31",
+        "Reference":"Random Ref",
+        "Text":"Random",
+        "Line Items":[
+            {"calculated":false,"Material":"", "Location":"", "Quantity":""}
+        ]
+    }
+}
+
+function MaterialIssueUI(){
+    const materialIssue = new MaterialIssue();
+    const {headerFields,defaults, lineItems} = MaterialIssue;
+    const [input,setinput] = useState(defaults);
+    const output = input;
+
+    const headerChange = (field,e) =>{
+        const {value} = e.target;
+        setinput(prevdata=>({
+            ...prevdata,[field]:value
+        }))
+    }
+
+    const lineItemChange = (index,field,e)=>{
+        const {value} = e.target;
+        setinput(prevdata=>({
+            ...prevdata,['Line Items']:prevdata['Line Items'].map((item,i)=>(i==index)?{...item,[field]:value}:item)
+        }))
+    }
+
+    const addLine = ()=>{
+        setinput(prevdata=>({
+            ...prevdata,['Line Items']:[...prevdata['Line Items'],defaults['Line Items'][0]]
+        }))
+    }
+
+    const removeLine = (index)=>{
+        setinput(prevdata=>({
+            ...prevdata,['Line Items']:prevdata['Line Items'].filter((item,i)=>i!==index)
+        }))
+    }
+
+    const save = ()=>{
+        let newdata = [];
+        const collections = loadData('transactions');
+        if (errors.length==0){
+            newdata = [...collections,{...output,["Entry Date"]:new Date().toLocaleDateString()}]
+            saveData(newdata,'transactions')
+            alert(`Saved!`)
+            cancel()
+        } else {
+            alert("There are still errors unresolved")
+        }
+    }
+
+    return (
+        <div className='transaction'>
+            <div className="header">
+                {headerFields.map((item,index)=>
+                    <div className='headerField' key={index}><label>{item['name']}</label><input onChange={(e)=>headerChange(item['name'],e)} type={item['type']} value={output[item['name']]}/></div>
+                )}
+            </div>
+            <div className='lineItems'>
+                <table>
+                    <thead>
+                        <tr><th></th>{lineItems.map(item=><th>{item['name']}</th>)}</tr>
+                    </thead>
+                    <tbody>
+                        {output['Line Items'].map((item,i)=>
+                            <tr><td><button onClick={()=>removeLine(i)}>-</button></td>{lineItems.map(field=>
+                            <td>
+                                {field['input']=="input" && <input onChange={(e)=>lineItemChange(i,field['name'],e)} type={field['type']} value={output['Line Items'][i][field['name']]}/>}
+                                {field['input']=="option" && <select onChange={(e)=>lineItemChange(i,field['name'],e)} value={output['Line Items'][i][field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                                {field['input']=="calculated" && <label>{output['Line Items'][i][field['name']]}</label>}
+                            </td>)}
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+                <button onClick={()=>addLine()}>+</button>
+            </div>
+        </div>
+    )
+}
 
 function Scratch(){
     const material = 'Phosphoric Acid'
@@ -2532,6 +2654,7 @@ if (new Company().status){
       <Route path="/timecontrol" element={<TimeControlling/>}/>
       <Route path="/trialbalance" element={<TrialBalance/>}/>
       <Route path="/transaction/:trans" element={<TransactionUI/>}/>
+      <Route path="/materialissue" element={<MaterialIssueUI/>}/>
       <Route path="/holidays" element={<Holidays/>}/>
       <Route path="*" element={<Home/>}/>
     </Routes>
