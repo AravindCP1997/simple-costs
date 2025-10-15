@@ -88,6 +88,9 @@ class Company{
         this.sample = {
             "Name":"Sample Company",
             "GSTIN":"32ABDCS1234E1ZN",
+            "Address":"",
+            "State":"Kerala",
+            "PIN":682017,
             "PAN":"ABDCS1234E",
             "Year 0":2025,
             "Financial Year Beginning":'04',
@@ -104,6 +107,7 @@ class Company{
     }
     initialise(){
         localStorage.setItem('company',JSON.stringify(this.sample))
+        localStorage.setItem('currencies',JSON.stringify(Intelligence.Currency));
     }
     static save(data){
         localStorage.setItem('company',JSON.stringify(data))
@@ -239,6 +243,16 @@ class BankAccount{
         const list = ListItems(this.active,"Name")
         return list
     }
+}
+
+class Currency{
+    constructor(name){
+        this.name = name;
+    }
+    static data = Database.load("Currency");
+    static activeData = this.data.filter(item=>!item['Deactivated']);
+    static activeList = ListItems(this.activeData,"Name");
+
 }
 
 class GeneralLedger{
@@ -390,6 +404,12 @@ class CostObject{
         const filtered = data.filter(item=>item['Cost Object']==this.name);
         return filtered
     }
+    accumulated(){
+        const CostElements = [...new Set(ListItems(this.transactions(),"Account"))];
+        const list = [];
+        CostElements.map(element=>list.push({'Account':element,'Accumulated Cost':(SumFieldIfs(this.transactions(),'Amount',["Debit/ Credit", "Account"],["Debit",element])-SumFieldIfs(this.transactions(),'Amount',["Debit/ Credit", "Account"],["Credit",element]))}))
+        return list;
+    }
     accumulatedCost(){
         let sum = 0;
         sum+=SumFieldIfs(this.transactions(),"Amount",["Debit/ Credit"],["Debit"]);
@@ -397,11 +417,21 @@ class CostObject{
         return sum;
     }
     allocation(){
-        const cost = this.accumulatedCost();
+        const data = this.accumulated();
         const ratio = this.ratio
         const list = [];
-        ratio.map(item=>list.push({...item,["Allocable Amount"]:(cost*item['Proportion']/100)}))
+        ratio.map(item=>data.map(cost=>list.push({...item,...{'Cost Element':cost['Account'],'Allocable Amount':cost['Accumulated Cost']*item['Proportion']/100}})))
         return list
+    }
+    allocationEntry(){
+        const allocation = this.allocation();
+        const entry = {
+            "Text":"Cost Object Settlement of "+this.name,
+            "Line Items":[]
+        }
+        allocation.map(item=>entry['Line Items'].push({'Account':item['To'],'Amount':item['Allocable Amount']}))
+        allocation.map(item=>entry['Line Items'].push({'Account':item['Cost Element'],'Amount':item['Allocable Amount']}))
+        return entry
     }
     static data = Database.load("Cost Object")
     static list(){
@@ -640,6 +670,20 @@ class Intelligence{
             "Vendor":"vendors"
         }
     }
+    static States = ["Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bengal", "Bihar", "Chattisgarh", "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu & Kashmir", "Jharkhand", "Karnataka", "Kerala","Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telengana", "Tripura", "Uttarakhand", "Uttar Pradesh","West Bengal"]
+    static UTs = ["Andaman Nicobar", "Chandigarh", "Dadra Nagar Haveli and Daman Diu", "Lakshadweep", "Ladakh"]
+    static Currency = [
+        {"Name":"US Dollar", "Code":"USD"},
+        {"Name":"Euro", "Code":"EUR"},
+        {"Name":"Canadian Dollar", "Code":"CAD"},
+        {"Name":"Yuan", "Code":"CNY"},
+        {"Name":"Indian Rupee", "Code":"INR"},
+        {"Name":"Pound Sterling", "Code":"GBP"},
+        {"Name":"Yen", "Code":"JPY"},
+        {"Name":"Swiss Franc", "Code":"CHF"},
+        {"Name":"Australian Dollar", "Code":"AUD"},
+        {"Name":"Qatari Rial", "Code":"QAR"},
+    ]
     collection(name){
         return(this.collectioninfo[name])
     }
@@ -1105,6 +1149,7 @@ const objects = {
         "schema": [
             {"name":"Name","datatype":"single","input":"input","type":"text","use-state":""},
             {"name":"Address","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"State","datatype":"single","input":"option","options":["",...Intelligence.States,...Intelligence.UTs,"Outside India"],"use-state":""},
             {"name":"PIN","datatype":"single","input":"input","type":"number","use-state":""},
             {"name":"Phone","datatype":"single","input":"input","type":"number","use-state":""},
             {"name":"E-mail","datatype":"single","input":"input","type":"number","use-state":""},
@@ -1231,6 +1276,7 @@ function CompanyInfo(){
         alert('Company Created')
         window.location.reload()
     }
+    const currencies = (Currency.activeList.length>0)?Currency.activeList:ListItems(Intelligence.Currency,"Name")
     const newCompany = () =>{
         setstatus(true)
         seteditable(true)
@@ -1257,7 +1303,6 @@ function CompanyInfo(){
         (data['Name']=="")?errorlist.push("Provide company name"):()=>{};
         (data['Year 0']=="")?errorlist.push("Mention 0th year"):()=>{};
         (data['Financial Year Beginning']=="")?errorlist.push("Mention beginning month of financial year"):()=>{};
-        (data['Functional Currency']['Code']=="")?errorlist.push("Provide functional currency code"):()=>{};
         (data['Functional Currency']['Currency']=="")?errorlist.push("Provide functional currency"):()=>{};
     }
 
@@ -1268,7 +1313,7 @@ function CompanyInfo(){
             const periods = {"First":{"From":`${data['Year 0']}-${data['Financial Year Beginning']}-01`,"To":`${data['Year 0']}-${data['Financial Year Beginning']}-20`},"Second":{}}
             Company.setTimeControl(periods)
         }
-        Company.save(data)
+        Company.save(data);
         alert('Company Info Saved')
         window.location.reload()
         } else {
@@ -1303,6 +1348,8 @@ function CompanyInfo(){
         {"Month":"December","Number":"12"},
     ]
 
+    const stateOrUT = ["",...Intelligence.States,...Intelligence.UTs, "Outside India"];
+
     if (status) {
     return(
 
@@ -1310,16 +1357,13 @@ function CompanyInfo(){
             <h2 className='companyInfoTitle'>Company Info</h2>
             <div className='companyDetails'>
                 <div className='companyDetail'><label>Name </label><input required disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Name']:e.target.value}))} value={data['Name']}/></div>
+                <div className='companyDetail'><label>Address</label><input onChange={(e)=>setdata(prevdata=>({...prevdata,['Address']:e.target.value}))} type="text" disabled={!editable} value={data['Address']}/></div>
+                <div className='companyDetail'><label>State</label><select onChange={(e)=>setdata(prevdata=>({...prevdata,['State']:e.target.value}))} disabled={!editable} value={data['State']}>{stateOrUT.map(option=><option value={option}>{option}</option>)}</select></div>
                 <div className='companyDetail'><label>GSTIN</label><input onChange={(e)=>setdata(prevdata=>({...prevdata,['GSTIN']:e.target.value}))} type="text" disabled={!editable} value={data['GSTIN']}/></div>
                 <div className='companyDetail'><label>PAN</label><input type="text" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['PAN']:e.target.value}))} value={data['PAN']}/></div>
                 <div className='companyDetail'><label>0<sup>th</sup> Year</label><input required min={1900} max={2050} type="number" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Year 0']:e.target.value}))} value={data['Year 0']}/></div>
                 <div className='companyDetail'><label>Beginning Month of a Financial Year</label><select required disabled={!editable} value={data['Financial Year Beginning']} onChange={(e)=>setdata(prevdata=>({...prevdata,['Financial Year Beginning']:e.target.value}))}>{months.map(month=><option value={month['Number']}>{month['Month']}</option>)}</select></div>
-                <div className='companyDetailObject'>
-                    <label>Functional Currency</label>
-                    <div className='companyDetail'><label>Code</label><input type="text" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Functional Currency']:{...prevdata['Functional Currency'],['Code']:e.target.value}}))} value={data['Functional Currency']['Code']}/></div>
-                    <div className='companyDetail'><label>Currency</label><input type="text" disabled={!editable} onChange={(e)=>setdata(prevdata=>({...prevdata,['Functional Currency']:{...prevdata['Functional Currency'],['Currency']:e.target.value}}))} value={data['Functional Currency']['Currency']}/></div>
-
-                </div>
+                <div className='companyDetail'><label>Functional Currency</label><select required disabled={!editable} value={data['Functional Currency']} onChange={(e)=>setdata(prevdata=>({...prevdata,['Functional Currency']:e.target.value}))}>{currencies.map(option=><option value={option}>{option}</option>)}</select></div>
             </div>
             
             <div className='companyInfoButtons'>
@@ -2291,13 +2335,19 @@ class Transaction{
     }
     firstLineItem(){
         let items = this.lineItems();
+        let notreq = [];
         switch (this.type){
             case 'Purchase':
                 items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Vendor.list()]}:item)
                 break
             case 'Sale':
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Customer.list()]}:item)
+                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Customer.list()]}:item);
+                notreq = ["Account Type","Debit/ Credit","General Ledger","GST", "Profit Center", "Cost Center", "HSN", "Quantity", "Value Date", "Location"]
+                break
+            case 'General':
+                items = [];
         }
+        items = items.filter(item=>!notreq.includes(item['name']));
         return items
     }
     lineItems(){
@@ -2305,7 +2355,7 @@ class Transaction{
         let notreq = [];
         switch (this.type){
             case 'Sale':
-                notreq = ["Cost Center", "Cost Object","Consumption Time From", "Consumption Time To", "Purchase Order", "Sale Order", "Item", "Clearing Document", "Clearing Date"]
+                notreq = ["Cost Center", "Cost Object","Consumption Time From", "Consumption Time To", "Presentation","Purchase Order", "Sale Order", "Item", "Clearing Document", "Clearing Date"]
                 items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Material.list(),...Service.list()]}:item);
                 break
         }
@@ -2315,17 +2365,21 @@ class Transaction{
     restOfFields(account){
         const type = new Intelligence().ledgerType(account)
         let [first,...restOfFields] = this.lineItems()
+        let notreq = [];
         switch (type){
             case 'Vendor':
-                restOfFields = restOfFields.map(item=>(item['name']=="HSN")?{...item,['input']:"calculated"}:item);
+                notreq = ["HSN", "Cost Center", "Cost Object", "Consumption Time From", "Consumption Time To", "GST","Location", "Quantity", "Value Date", "Purchase Order", "Sale Order", "Item", "GST Supplier"]
                 restOfFields = restOfFields.map(item=>(item['name']=="Presentation")?{...item,...{'input':"option","options":["","Accounts Payable","Advance to Supliers"]}}:item)
         }
+        restOfFields = restOfFields.map(item=>(notreq.includes(item['name']))?{...item,["input"]:"notrequired"}:item)
         return restOfFields 
     }
     process(data){
         const result = {...data};
-        result["Balance"] = SumFieldIfs(data['Line Items'],'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data['Line Items'],'Amount',["Debit/ Credit"],["Credit"])
         result['Line Items'] = result['Line Items'].map(item=>this.lineItemProcess(item));
+        result['Line Items'].map(item=>(!item['GST']=="")?result['Line Items'].push(this.calcGST(item)):()=>{})
+        result['Line Items'].map(item=>(!item['TDS']=="")?result['Line Items'].push(this.calcTDS(item)):()=>{})
+        result["Balance"] = SumFieldIfs(result['Line Items'],'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(result['Line Items'],'Amount',["Debit/ Credit"],["Credit"])
         return result
     }
     lineItemProcess(lineItemData){
@@ -2348,6 +2402,29 @@ class Transaction{
                 result['General Ledger'] = new AssetClass(new Asset(result['Account']).data['Asset Class']).data['General Ledger - Asset']
                 break
         }
+        return result
+    }
+    calcGST(data){
+        const constants = {
+            "Input 5%":{
+                "Rate":0.05,
+                "Debit/ Credit":"Debit"
+        }
+    }
+        let result = {'calculated':true};
+        result = (Object.keys(constants).includes(data['GST']))?{...result,...{'Amount':data['Amount']*constants[data['GST']]['Rate'],'Debit/ Credit':constants[data['GST']]['Debit/ Credit']}}:result;
+        return result
+        
+    }
+
+    calcTDS(data){
+        const constants = {
+            "194C-Individual":{
+                "Rate":0.01
+            }
+        }
+        let result = {'calculated':true};
+        result = (Object.keys(constants).includes(data['TDS']))?{...result,...{'Amount':data['TDS Base']*constants[data['TDS']]['Rate'],'Debit/ Credit':"Credit"}}:result;
         return result
     }
     validate(data){
@@ -2376,6 +2453,8 @@ class Transaction{
         {"name":"Amount", "type":"number", "input":"input"},
         {"name":"Debit/ Credit", "type":"number", "input":"option","options":["","Debit","Credit"]},
         {"name":"GST","input":"option","options":["","Input 5%", "Input 12%", "Input 18%", "Input 28%", "Input 40%", "Output 5%", "Output 12%", "Output 18%", "Output 28%", "Output 40%"]},
+        {"name":"TDS Base","input":"input","type":"number"},
+        {"name":"TDS","input":"option","options":["","194C-Individual"]},
         {"name":"Text","input":"input","type":"text"},
         {"name":"Profit Center","input":"option","options":["",...ProfitCenter.list()]},
         {"name":"Cost Center","input":"option","options":["",...CostCenter.list()]},
@@ -2385,6 +2464,8 @@ class Transaction{
         {"name":"Location","input":"option","options":["",...Location.list()]},
         {"name":"Quantity","input":"input","type":"number"},
         {"name":"Value Date","input":"input","type":"date"},
+        {"name":"GST Supplier", "type":"number", "input":"option","options":["",Vendor.list(),Customer.list()]},
+        {"name":"TDS Deductee", "type":"number", "input":"option","options":["",Vendor.list(),Customer.list()]},
         {"name":"HSN", "type":"number", "input":"input"},
         {"name":"Purchase Order","input":"input","type":"number"},
         {"name":"Sale Order","input":"input","type":"number"},
@@ -2411,6 +2492,7 @@ class Transaction{
 
 function TransactionUI(){
     const {trans} = useParams();
+    const URLcheck = ["Sale","General","Purchase"].includes(trans);
     const navigate = useNavigate();
     const transaction = new Transaction(trans);
     const firstLineItem = transaction.firstLineItem();
@@ -2464,32 +2546,29 @@ function TransactionUI(){
     }
     
     return(
+        <>
+        {URLcheck && 
         <div className="transaction">
+            
             <h2 className='transactionTitle'>{trans}</h2>
             <div className="header">
                 {headerFields.map((item,index)=>
                     <div className='headerField' key={index}><label>{item['name']}</label><input onChange={(e)=>headerChange(item['name'],e)} type={item['type']} value={output[item['name']]}/></div>
+                )}
+                {firstLineItem.map((item,index)=>
+                    <div className='headerField' key={index}><label>{item['name']}</label>
+                        {item['input']=='input' && <input onChange={(e)=>lineItemChange(0,item['name'],e)} type={item['type']} value={firstLine[item['name']]}/>}
+                        {item['input']=='option' && <select onChange={(e)=>lineItemChange(0,item['name'],e)} value={firstLine[item['name']]}>{item['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                    </div>
                 )}
                 <div className='headerField'><label>Balance</label><label>{output['Balance']}</label></div>
             </div>
             <div className='lineItems'>
                 <table>
                     <thead>
-                        <tr><th className='lineItemCell'></th>{firstLineItem.map(item=><th className='lineItemCell'>{item['name']}</th>)}</tr>  
+                        <tr><th className='lineItemCell'></th>{lineItems.map(item=><th className='lineItemCell'>{item['name']}</th>)}</tr>  
                     </thead>
                     <tbody>
-                    <tr><td className='lineItemCell'></td>
-                            <td className='lineItemCell'>
-                                {Account['input']=="input" && <input onChange={(e)=>lineItemChange(0,"Account",e)} type={Account['type']} value={firstLine[field['name']]}/>}
-                                {Account['input']=="option" && <select onChange={(e)=>lineItemChange(0,"Account",e)} value={firstLine['Account']}>{Account['options'].map(option=><option value={option}>{option}</option>)}</select>}
-                            </td>
-                            {transaction.restOfFields(firstLine['Account']).map(field=>
-                            <td className='lineItemCell'>
-                                {field['input']=="input" && <input onChange={(e)=>lineItemChange(0,field['name'],e)} type={field['type']} value={firstLine[field['name']]}/>}
-                                {field['input']=="option" && <select onChange={(e)=>lineItemChange(0,field['name'],e)} value={firstLine[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
-                                {field['input']=="calculated" && <label>{firstLine[field['name']]}</label>}
-                            </td>)}
-                    </tr>
                         {restOfLines.map((item,i)=>
                             <tr><td className='lineItemCell'><button onClick={()=>removeLine(i+1)}>-</button></td>
                             <td className='lineItemCell'>
@@ -2508,8 +2587,7 @@ function TransactionUI(){
                         {calculatedLines.map(item=>
                             <tr>
                                 <td className='lineItemCell'></td>
-                                <td className='lineItemCell'>{item['Account']}</td>
-                                {restOfField.map(field=>
+                                {lineItems.map(field=>
                                 <td className='lineItemCell'>{item[field['name']]}</td>
                                 )}
                             
@@ -2528,7 +2606,16 @@ function TransactionUI(){
             <div className="transactionButtons">
                 <button onClick={()=>save()} className='green'>Save</button>
                 </div>
+        {JSON.stringify(output)}
+        
+        </div>}
+        {!URLcheck && 
+        <div className='transaction'>
+            <p>Uh-oh! We couldn't get you what you were searching for!</p>
+            <Record/>
         </div>
+        }
+        </>
     )
 }
 
@@ -2668,7 +2755,7 @@ function Scratch(){
 
     return(
         <>
-        {JSON.stringify(new GeneralLedger('Rent').ledger(["2025-04-01","2026-03-31"]))}
+        {JSON.stringify(new CostObject('IAT Plant').allocationEntry())}
         </>
     )
 }
