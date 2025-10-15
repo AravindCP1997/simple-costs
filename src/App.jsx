@@ -174,20 +174,31 @@ class Asset{
     constructor(name){
         this.name = name;
         this.data = Asset.data.filter(item=>item['Name']==this.name)[0];
+        this.assetclass = new AssetClass(this.data['Asset Class']);
+        this.costcenter = new CostCenter(this.data['Cost Center']);
+        this.profitcenter = new ProfitCenter(this.costcenter.data['Profit Center']);
+        this.segment = new Segment(this.profitcenter.data['Segment']);
+        this.register = {...this.data,...{"Profit Center":this.profitcenter.name, "General Ledger - Asset":this.assetclass.data['General Ledger - Asset'], "General Ledger - Depreciation":this.assetclass.data['General Ledger - Depreciation'], "Segment":this.segment.name}}
     }
     isDepreciable(date){
-        const depreciable = (new Date(this.data['Date of Capitalisation'])<= new Date(date));
+        const depreciable = (new Date(this.data['Date of Capitalisation'])<= new Date(date) && (this.data['Date of Removal']=="" || new Date(this.data['Date of Removal']) >new Date(date) ));
         return depreciable
     }
     transactions(period){
         const data = new Intelligence().transactionstable();
         const [from,to] = period;
-        const filtered = data.filter(item=>item['Account']==this.name && item['Posting Date']>=from && item['Posting Date']<=to);
+        const filtered = data.filter(item=>item['Account']==this.name && item['Account Type']=="Asset" && item['Posting Date']>=from && item['Posting Date']<=to);
         return filtered
     }
     opening(date){
         const data = new Intelligence().transactionstable();
         const filtered = data.filter(item=>item['Account'] == this.name && item['Posting Date'] < date)
+        const opening = SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Credit"])
+        return opening
+    }
+    closing(date){
+        const data = new Intelligence().transactionstable();
+        const filtered = data.filter(item=>item['Account'] == this.name && item['Posting Date'] <= date)
         const opening = SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Credit"])
         return opening
     }
@@ -204,7 +215,21 @@ class Asset{
         const depreciation = ((opening+transactions-SV)/remainingUL * days/365).toFixed(2)
         return depreciation
     }
+    ledger(period){
+        const [from,to] = period;
+        const list = [];
+        list.push({"Posting Date":from,"Description":"Opening Balance","Amount":this.opening(from), "Debit/ Credit":""});
+        this.transactions(period).map(item=>list.push({"Posting Date":item["Posting Date"], "Description":item["Description"], "Amount":item["Amount"], "Debit/ Credit":item["Debit/ Credit"]}))
+        list.push({"Posting Date":to,"Description":"Closing Balance","Amount":this.closing(to), "Debit/ Credit":""});
+        return list;
+    }
     static data = Database.load("Asset")
+    static register(){
+        const data = this.data;
+        const list = [];
+        data.map(item=>list.push(new Asset(item['Name']).register));
+        return list;
+    }
     static list(){
         const list = ListItems(this.data,"Name")
         return list
@@ -320,6 +345,19 @@ class GeneralLedger{
         const list = [];
         const ledgers = this.list();
         ledgers.map(ledger=>list.push(new GeneralLedger(ledger).accountBalance(period)));
+        return list
+    }
+    static convertToLineItem(data){
+        const fields = ["Posting Date", "Reference", "Account", "Amount","Debit/ Credit", "Description", "Profit Center", "Cost Center"];
+        const result = {};
+        fields.map(item=>result[item]=data[item]);
+        return result
+    }
+    static lineItemJournal(period){
+        const [from,to] = period;
+        const transactions = new Intelligence().transactionstable().filter(item=>item['Posting Date']>=from && item['Posting Date']<=to);
+        const list = [];
+        transactions.map(item=>list.push(this.convertToLineItem(item)));
         return list
     }
 }
@@ -560,6 +598,7 @@ class MaterialInLocation{
 class ProfitCenter{
     constructor(name){
         this.name = name;
+        this.data = ProfitCenter.data.filter(item=>item['Name']==this.name)[0];
     }
     static data = Database.load("Profit Center")
     static list(){
@@ -571,6 +610,7 @@ class ProfitCenter{
 class Segment{
     constructor(name){
         this.name = name;
+        this.data = Segment.data.filter(item=>item['Name']==this.name)[0]
     }
     static data = Database.load("Segment")
     static list(){
@@ -1576,6 +1616,8 @@ function Reports(){
             <h3 className='menuContainerTitle' onClick={()=>navigate('/record')}>Report</h3>
             <div className='menuList'>
                 <div className='menuTitle blue'><h4>Assets</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/assetregister`)}}><h4>Asset Register</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/assetledger`)}}><h4>Asset Ledger</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/depreciation`)}}><h4>Depreciation</h4></div>
             </div>
             <div className='menuList'>
@@ -1873,6 +1915,18 @@ class Report{
     }
     static schema = {
         "accountbalances":[
+            {"name":"period","label":"Period","type":"date","fields":["range"]}
+        ],
+        "assetregister":[
+            {"name":"segment", "label":"Segment", "type":"text", "fields":["values"]},
+            {"name":"profitcenter", "label":"Profit Center", "type":"text", "fields":["values"]},
+            {"name":"costcenter", "label":"Cost Center", "type":"text", "fields":["values"]},
+            {"name":"assetgl", "label":"General Ledger - Asset", "type":"text", "fields":["values"]},
+            {"name":"depreciationgl", "label":"General Ledger - Depreciation", "type":"text", "fields":["values"]},
+            {"name":"assetclass", "label":"Asset Class", "type":"text", "fields":["values"]},
+        ],
+        "assetledger":[
+            {"name":"asset", "type":"text", "fields":["value"]},
             {"name":"period","type":"date","fields":["range"]}
         ],
         "costcenteritems":[
@@ -2033,6 +2087,34 @@ function ReportDisplay(){
         )
     }
 
+    function AssetRegister({query}){
+
+        const {segment,profitcenter,costcenter,assetclass,assetgl,depreciationgl} = query;
+        
+        let data = Asset.register();
+        data = (segment['values'].length>0 && segment['values'][0]!="")?data.filter(item=>segment['values'].includes(item['Segment'])):data;
+        data = (profitcenter['values'].length>0 && profitcenter['values'][0]!="")?data.filter(item=>profitcenter['values'].includes(item['Profit Center'])):data;
+        data = (costcenter['values'].length>0 && costcenter['values'][0]!="")?data.filter(item=>costcenter['values'].includes(item['Cost Center'])):data;
+        data = (assetclass['values'].length>0 && assetclass['values'][0]!="")?data.filter(item=>assetclass['values'].includes(item['Asset Class'])):data;
+        data = (assetgl['values'].length>0 && assetgl['values'][0]!="")?data.filter(item=>assetgl['values'].includes(item['General Ledger - Asset'])):data;
+        data = (depreciationgl['values'].length>0 && depreciationgl['values'][0]!="")?data.filter(item=>depreciationgl['values'].includes(item['General Ledger - Depreciation'])):data;
+
+        return (
+            <div>
+                <h2>Asset Register</h2>
+                <DisplayAsTable collection={data}/>
+            </div>
+        )
+    }
+    function AssetLedger({query}){
+        const {asset, period} = query;
+        const data = new Asset(asset['value']).ledger(period['range']);
+
+        return(
+            <DisplayAsTable collection={data}/>
+        )
+    }
+
     function CostCenterItems({query}){
         const {centers,date} = query
 
@@ -2189,6 +2271,8 @@ function ReportDisplay(){
     return (
         <div className='reportDisplay'>
             {report=="accountbalances" && <AccountBalances query={query}/>}
+            {report=="assetledger" && <AssetLedger query={query}/>}
+            {report=="assetregister" && <AssetRegister query={query}/>}
             {report=="costcenteritems" && <CostCenterItems query={query}/>}
             {report=="costtoprepaid" && <CostToPrepaid query={query}/>}
             {report=="costobjectbalance" && <CostObjectBalance query={query}/>}
@@ -2370,6 +2454,9 @@ class Transaction{
             case 'Vendor':
                 notreq = ["HSN", "Cost Center", "Cost Object", "Consumption Time From", "Consumption Time To", "GST","Location", "Quantity", "Value Date", "Purchase Order", "Sale Order", "Item", "GST Supplier"]
                 restOfFields = restOfFields.map(item=>(item['name']=="Presentation")?{...item,...{'input':"option","options":["","Accounts Payable","Advance to Supliers"]}}:item)
+                break
+            case 'Asset':
+                restOfFields = restOfFields.map(item=>(item['name']=="Transaction")?{...item,...{'input':"option","options":["","Acquisition","Depreciation","Revaluation","Write-Off","Disposal"]}}:item)
         }
         restOfFields = restOfFields.map(item=>(notreq.includes(item['name']))?{...item,["input"]:"notrequired"}:item)
         return restOfFields 
@@ -2447,6 +2534,7 @@ class Transaction{
     ]
     static lineItems = [
         {"name":"Account", "placeholder":"Account","type":"text", "input":"option", "options":["",...Asset.activeList(),...GeneralLedger.list(), ...Material.list(),...Vendor.list()]},
+        {"name":"Transaction", "input":"option","options":[""]},
         {"name":"Account Type", "input":"calculated"},
         {"name":"Presentation", "input":"notrequired"},
         {"name":"General Ledger", "input":"calculated"},
@@ -2755,7 +2843,7 @@ function Scratch(){
 
     return(
         <>
-        {JSON.stringify(new CostObject('IAT Plant').allocationEntry())}
+        {JSON.stringify(Asset.register())}
         </>
     )
 }
