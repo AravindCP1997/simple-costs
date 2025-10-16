@@ -229,7 +229,7 @@ class Asset{
     }
     cost(date){
         const data = new Intelligence().transactionstable();
-        const filtered = data.filter(item=>item['Account']==this.name && item['Account Type']=="Asset" && item['Posting Date']<=date && item['Transaction']=="Acquisition");
+        const filtered = data.filter(item=>item['Account']==this.name && item['Account Type']=="Asset" && item['Posting Date']<=date && ["Acquisition","Revaluation"].includes(item['Transaction']));
         const cost = SumField(filtered,'Amount')
         return cost;
     }
@@ -260,10 +260,102 @@ class Asset{
     ledger(period){
         const [from,to] = period;
         const list = [];
-        list.push({"Posting Date":from,"Description":"Opening Balance","Amount":this.opening(from), "Debit/ Credit":""});
-        this.transactions(period).map(item=>list.push({"Posting Date":item["Posting Date"], "Description":item["Description"], "Amount":item["Amount"], "Debit/ Credit":item["Debit/ Credit"]}))
+        list.push({"Posting Date":from,"Transaction":"","Description":"Opening Balance","Amount":this.opening(from), "Debit/ Credit":""});
+        this.transactions(period).map(item=>list.push({"Posting Date":item["Posting Date"], "Transaction":item['Transaction'],"Description":item["Description"], "Amount":item["Amount"], "Debit/ Credit":item["Debit/ Credit"]}))
         list.push({"Posting Date":to,"Description":"Closing Balance","Amount":this.closing(to), "Debit/ Credit":""});
         return list;
+    }
+    schedule(period){
+        const [from,to] = period;
+        const data = {};
+        data['Asset Class'] = this.assetclass.name;
+        data['General Ledger'] = this.assetclass.data['General Ledger - Asset'];
+        data['Cost Center'] = this.costcenter.name;
+        data['Profit Center'] = this.profitcenter.name;
+        data['Segment'] = this.segment.name;
+        data['Gross Amount at Beginning'] = this.grossOpening(from);
+        data['Acquisition'] = this.transaction('Acquisition',period);
+        data['Revaluation'] = this.transaction('Revaluation',period);
+        data['Gross Disposal'] = this.grossDisposed(period);
+        data['Gross Amount at End'] = this.grossClosing(to);
+        data['Accumulated Depreciation Beginning'] = this.accDepreciationOpening(from);
+        data['Depreciation for the Period'] = -this.transaction('Depreciation',period);
+        data['Depreciation Disposal'] = this.accDepreciationDisposed(period);
+        data['Accumulated Depreciation Closing'] = this.accDepreciationClosing(to);
+        data['Net Value Beginning'] = this.grossOpening(from) - this.accDepreciationOpening(from);
+        data['Net Value End'] = this.grossClosing(to) - this.accDepreciationClosing(to);
+        return data
+    }
+    grossOpening(date){
+        const data = new Intelligence().transactionstable().filter(item=>item['Account']==this.name && new Date(item['Posting Date']) < new Date(date));
+        const costs = data.filter(item=>["Acquisition","Revaluation"].includes(item['Transaction']));
+        const cost = (!this.disposedBefore(date))?SumFieldIfs(costs,'Amount',['Debit/ Credit'],['Debit'])-SumFieldIfs(costs,'Amount',['Debit/ Credit'],['Credit']):0;
+        return cost
+    }
+    grossClosing(date){
+        const data = new Intelligence().transactionstable().filter(item=>item['Account']==this.name && new Date(item['Posting Date']) <= new Date(date));
+        const costs = data.filter(item=>["Acquisition","Revaluation"].includes(item['Transaction']));
+        const cost = (!this.disposedOn(date))?SumFieldIfs(costs,'Amount',['Debit/ Credit'],['Debit'])-SumFieldIfs(costs,'Amount',['Debit/ Credit'],['Credit']):0;
+        return cost
+    }
+    accDepreciationOpening(date){
+        const data = new Intelligence().transactionstable().filter(item=>item['Account']==this.name && new Date(item['Posting Date']) < new Date(date));
+        const deps = data.filter(item=>["Depreciation"].includes(item['Transaction']));
+        const dep = (!this.disposedBefore(date))?SumFieldIfs(deps,'Amount',['Debit/ Credit'],['Credit'])-SumFieldIfs(deps,'Amount',['Debit/ Credit'],['Debit']):0;
+        return dep
+    }
+    accDepreciationClosing(date){
+        const data = new Intelligence().transactionstable().filter(item=>item['Account']==this.name && new Date(item['Posting Date']) <= new Date(date));
+        const deps = data.filter(item=>["Depreciation"].includes(item['Transaction']));
+        const dep = (!this.disposedOn(date))?SumFieldIfs(deps,'Amount',['Debit/ Credit'],['Credit'])-SumFieldIfs(deps,'Amount',['Debit/ Credit'],['Debit']):0;
+        return dep
+    }
+    disposedOn(date){
+        const data = new Intelligence().transactionstable().filter(item=>item['Account']==this.name && new Date(item['Posting Date']) <= new Date(date));
+        const disposal = data.filter(item=>item['Transaction'] == "Disposal");
+        const result = (disposal.length>0)
+        return result
+    }
+    disposedBefore(date){
+        const data = new Intelligence().transactionstable().filter(item=>item['Account']==this.name && new Date(item['Posting Date']) < new Date(date));
+        const disposal = data.filter(item=>item['Transaction'] == "Disposal");
+        const result = (disposal.length>0)
+        return result
+    }
+    disposedDuring(period){
+        const [from,to] = period;
+        const data = new Intelligence().transactionstable().filter(item=>item['Account']==this.name && new Date(item['Posting Date']) >= new Date(from) && new Date(item['Posting Date']) <= new Date(to));
+        const disposal = data.filter(item=>item['Transaction'] == "Disposal");
+        const result = (disposal.length>0);
+        return result; 
+    }
+    transaction(type,period){
+        const [from,to] = period;
+        const data = new Intelligence().transactionstable().filter(item=>item['Account']==this.name && item['Transaction']==type && new Date(item['Posting Date']) >= new Date(from) && new Date(item['Posting Date']) <= new Date(to));
+        let sum = 0;
+            sum += SumFieldIfs(data,'Amount',['Debit/ Credit'],['Debit'])-SumFieldIfs(data,'Amount',['Debit/ Credit'],['Credit'])
+        return sum
+    }
+    grossDisposed(period){
+        const [from,to] = period
+        let value = 0;
+        if (this.disposedDuring(period)){  
+            value = -this.transaction('Disposal',period)
+            value += this.accDepreciationOpening(from);
+            value -= this.transaction('Depreciation',period);
+        }
+        return value
+    }
+    accDepreciationDisposed(period){
+        const [from,to] = period
+        let value = 0;
+        if (this.disposedDuring(period)){
+            value = this.transaction('Disposal',period)
+            value += this.grossOpening(from);
+            value += this.transaction('Acquisition',period);
+            value += this.transaction('Revaluation',period);
+        }
+        return value
     }
     static depreciationEntry(date,data,method){
         const entry = {};
@@ -298,6 +390,12 @@ class Asset{
         const data = this.data;
         const list = [];
         data.map(item=>list.push(new Asset(item['Name']).register(date)));
+        return list;
+    }
+    static schedule(period){
+        const data = this.data;
+        const list = [];
+        data.map(item=>list.push(new Asset(item['Name']).schedule(period)));
         return list;
     }
     static list(){
@@ -1621,11 +1719,11 @@ function Record(){
             <h3 className='menuContainerTitle' onClick={()=>navigate('/control')}>Record</h3>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Generic</h4></div>
-                <div className='menuItem' onClick={()=>{navigate(`/transaction/general`)}}><h4>Transaction</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/transaction/General`)}}><h4>Transaction</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Asset</h4></div>
-                <div className='menuItem' onClick={()=>{navigate(`/report/depreciationpros`)}}><h4>Depreciation Prospective</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/depreciationpros`)}}><h4>Depreciation</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/depreciationretro`)}}><h4>Depreciation Retrospective</h4></div>
             </div>
             <div className='menuList'>
@@ -1690,8 +1788,9 @@ function Reports(){
             <h3 className='menuContainerTitle' onClick={()=>navigate('/record')}>Report</h3>
             <div className='menuList'>
                 <div className='menuTitle blue'><h4>Assets</h4></div>
-                <div className='menuItem' onClick={()=>{navigate(`/report/assetregister`)}}><h4>Asset Register</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/assetledger`)}}><h4>Asset Ledger</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/assetregister`)}}><h4>Asset Register</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/assetschedule`)}}><h4>Asset Schedule</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle blue'><h4>Costing</h4></div>
@@ -2002,6 +2101,9 @@ class Report{
             {"name":"asset", "type":"text", "fields":["value"]},
             {"name":"period","type":"date","fields":["range"]}
         ],
+        "assetschedule":[
+            {"name":"period","label":"Period","type":"date","fields":["range"]}
+        ],
         "costcenteritems":[
             {"name":"centers","label":"Cost Centers","fields":['values']},
             {"name":"date","label":"Date","fields":['values']}
@@ -2192,6 +2294,19 @@ function ReportDisplay(){
         )
     }
 
+    function AssetSchedule({query}){
+        const {period} = query;
+        const data = Asset.schedule(period['range']);
+
+        return(
+            <div>
+                <h2>Asset Schedule</h2>
+                <p>{`from ${period['range'][0]} to ${period['range'][1]}`}</p>
+                <DisplayAsTable collection={data}/>
+            </div>
+        )
+    }
+
     function Depreciation({query,method}){
         const date = query['date']['value'];
         let data = Asset.depreciationData(date);
@@ -2361,6 +2476,7 @@ function ReportDisplay(){
             {report=="accountbalances" && <AccountBalances query={query}/>}
             {report=="assetledger" && <AssetLedger query={query}/>}
             {report=="assetregister" && <AssetRegister query={query}/>}
+            {report=="assetschedule" && <AssetSchedule query={query}/>}
             {report=="costcenteritems" && <CostCenterItems query={query}/>}
             {report=="costtoprepaid" && <CostToPrepaid query={query}/>}
             {report=="costobjectbalance" && <CostObjectBalance query={query}/>}
@@ -2936,7 +3052,7 @@ function Scratch(){
 
     return(
         <>
-        {JSON.stringify(new Asset('Office Table').depPostedUpTo())}
+        <DisplayAsTable collection={Asset.schedule(['2025-10-01','2025-10-31'])}/>
         </>
     )
 }
