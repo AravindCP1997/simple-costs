@@ -178,7 +178,30 @@ class Asset{
         this.costcenter = new CostCenter(this.data['Cost Center']);
         this.profitcenter = new ProfitCenter(this.costcenter.data['Profit Center']);
         this.segment = new Segment(this.profitcenter.data['Segment']);
-        this.register = {...this.data,...{"Profit Center":this.profitcenter.name, "General Ledger - Asset":this.assetclass.data['General Ledger - Asset'], "General Ledger - Depreciation":this.assetclass.data['General Ledger - Depreciation'], "Segment":this.segment.name}}
+        this.capdate = this.data['Date of Capitalisation'];
+        this.UL = this.data['Useful Life'];
+        this.ULDays = dayNumber(this.depCeaseDate()) - dayNumber(this.capdate) + 1;
+        this.SV = this.data['Salvage Value'];
+    }
+    register(date) {
+        
+        const data = {...this.data,...{
+            "Cost":this.cost(date),
+            "Planned Depreciation":this.depreciation(date),
+            "Depreciated Amount":this.depreciatedAmount(date),
+            "Depreciable Amount":this.depreciableAmount(date),
+            "Depreciated Till":this.depPostedUpTo(),
+            "Profit Center":this.profitcenter.name, 
+            "General Ledger - Asset":this.assetclass.data['General Ledger - Asset'], 
+            "General Ledger - Depreciation":this.assetclass.data['General Ledger - Depreciation'], 
+            "Segment":this.segment.name}
+        }
+        return data
+    }
+    depCeaseDate(){
+        const capdate = new Date(this.capdate);
+        const newdate = new Date(capdate.getFullYear()+this.UL,capdate.getMonth(),capdate.getDate()-1);
+        return numberDay(dayNumber(newdate));
     }
     isDepreciable(date){
         const depreciable = (new Date(this.data['Date of Capitalisation'])<= new Date(date) && (this.data['Date of Removal']=="" || new Date(this.data['Date of Removal']) >new Date(date) ));
@@ -189,6 +212,26 @@ class Asset{
         const [from,to] = period;
         const filtered = data.filter(item=>item['Account']==this.name && item['Account Type']=="Asset" && item['Posting Date']>=from && item['Posting Date']<=to);
         return filtered
+    }
+    depPostedUpTo(){
+       const data = new Intelligence().transactionstable();
+       const filtered = data.filter(item=>item['Account']==this.name && item['Transaction']=="Depreciation")
+       const dates = ListItems(filtered,"Depreciation Upto");
+       const dateNumbers = dates.map(item=>dayNumber(item))
+       const latest = Math.max(...dateNumbers);
+       return numberDay(latest);
+    }
+    depreciatedAmount(date){
+        const data = new Intelligence().transactionstable();
+        const filtered = data.filter(item=>item['Account']==this.name && item['Transaction']=="Depreciation" && new Date(item['Posting Date'])<= new Date(date));
+        const amount = SumFieldIfs(filtered,'Amount',['Debit/ Credit'],['Credit'])-SumFieldIfs(filtered,'Amount',['Debit/ Credit'],['Debit'])
+        return amount
+    }
+    cost(date){
+        const data = new Intelligence().transactionstable();
+        const filtered = data.filter(item=>item['Account']==this.name && item['Account Type']=="Asset" && item['Posting Date']<=date && item['Transaction']=="Acquisition");
+        const cost = SumField(filtered,'Amount')
+        return cost;
     }
     opening(date){
         const data = new Intelligence().transactionstable();
@@ -202,18 +245,17 @@ class Asset{
         const opening = SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,"Amount",["Debit/ Credit"],["Credit"])
         return opening
     }
-    depreciation(period){
-        const [from,to] = period
-        const days = dayNumber(to) - dayNumber(from) + 1
-        const opening = this.opening(from)
-        const transactions = SumFieldIfs(this.transactions(period),"Amount",["Debit/ Credit"],["Debit"]) - SumFieldIfs(this.transactions(period),"Amount",["Debit/ Credit"],["Credit"])
-        const SV = this.data["Salvage Value"];
-        const UL = this.data["Useful Life"];
-        const capDate = this.data['Date of Capitalisation']
-        const spendUL = (dayNumber(from)-dayNumber(capDate))/365
-        const remainingUL = UL - spendUL
-        const depreciation = ((opening+transactions-SV)/remainingUL * days/365).toFixed(2)
-        return depreciation
+    depreciation(date){
+        const spentDays = Math.max(dayNumber(date) - dayNumber(this.capdate) + 1,0)
+        const cost = this.cost(date);
+        const SV = this.SV;
+        const UL = this.ULDays;
+        const depreciation = (Math.max(cost - SV,0))/UL * spentDays;
+        return depreciation.toFixed(2)
+    }
+    depreciableAmount(date){
+        const amount = this.depreciation(date) - this.depreciatedAmount(date);
+        return amount;
     }
     ledger(period){
         const [from,to] = period;
@@ -223,11 +265,39 @@ class Asset{
         list.push({"Posting Date":to,"Description":"Closing Balance","Amount":this.closing(to), "Debit/ Credit":""});
         return list;
     }
+    static depreciationEntry(date,data,method){
+        const entry = {};
+        entry['Posting Date'] = date;
+        entry['text'] = `${method} depreciation up to ${date}`;
+        entry['Line Items'] = [];
+        data.map(item=>entry['Line Items'].push({
+            'Account':item['Name'],
+            'Account Type':"Asset",
+            'General Ledger':item['General Ledger - Asset'],
+            'Transaction':"Depreciation",
+            'Amount':Math.abs(item['Depreciable Amount']),
+            'Debit/ Credit':(item['Depreciable Amount']<0)?"Debit":"Credit",
+            'Depreciation Upto':date,
+        }));
+        data.map(item=>entry['Line Items'].push({
+            'Account':item['General Ledger - Depreciation'],
+            'Account Type':"General Ledger",
+            'General Ledger':item['General Ledger - Depreciation'],
+            'Amount':Math.abs(item['Depreciable Amount']),
+            'Debit/ Credit':(item['Depreciable Amount']<0)?"Credit":"Debit",
+            'Consumption Time From':(method=="Prospective")?item['Depreciated Till']:item['Date of Capitalisation'],
+            'Consumption Time To':date,
+            'Cost Center':item['Cost Center']
+
+        }))
+        return entry;
+    }
+
     static data = Database.load("Asset")
-    static register(){
+    static register(date){
         const data = this.data;
         const list = [];
-        data.map(item=>list.push(new Asset(item['Name']).register));
+        data.map(item=>list.push(new Asset(item['Name']).register(date)));
         return list;
     }
     static list(){
@@ -238,10 +308,8 @@ class Asset{
     static activeList(){
         return ListItems(this.activedata,"Name")
     }
-    static depreciationData(period){
-        const list = [];
-        this.activeList().map(item=>list.push({"Asset":item, "Asset General Ledger": new AssetClass(new Asset(item).data['Asset Class']).data['General Ledger - Asset'], "Depreciation General Ledger": new AssetClass(new Asset(item).data['Asset Class']).data['General Ledger - Depreciation'], "Depreciation":new Asset(item).depreciation(period),"Cost Center":new Asset(item).data['Cost Center'],"Profit Center": new CostCenter(new Asset(item).data['Cost Center']).data['Profit Center']}));
-        return list
+    static depreciationData(date){
+        return Asset.register(date)
     }
 }
 
@@ -981,6 +1049,7 @@ const objects = {
         "name":"Asset Class",
         "schema": [
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+            {"name": "Depreciable", "datatype":"single", "input":"option", "options":["","Yes","No"], "use-state":""},
             {"name": "General Ledger - Asset", "datatype":"single", "input":"option", "options":ListofItems(loadData('generalledgers'),0), "use-state":""},
             {"name": "General Ledger - Depreciation", "datatype":"single", "input":"option", "options":ListofItems(loadData('generalledgers'),0), "use-state":""}
         ],
@@ -1555,6 +1624,11 @@ function Record(){
                 <div className='menuItem' onClick={()=>{navigate(`/transaction/general`)}}><h4>Transaction</h4></div>
             </div>
             <div className='menuList'>
+                <div className='menuTitle red'><h4>Asset</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/depreciationpros`)}}><h4>Depreciation Prospective</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/depreciationretro`)}}><h4>Depreciation Retrospective</h4></div>
+            </div>
+            <div className='menuList'>
                 <div className='menuTitle red'><h4>Costing</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/costobjectsettlement`)}}><h4>Cost Object Settlement</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/costtoprepaid`)}}><h4>Cost to Prepaid</h4></div>
@@ -1618,7 +1692,6 @@ function Reports(){
                 <div className='menuTitle blue'><h4>Assets</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/assetregister`)}}><h4>Asset Register</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/assetledger`)}}><h4>Asset Ledger</h4></div>
-                <div className='menuItem' onClick={()=>{navigate(`/report/depreciation`)}}><h4>Depreciation</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle blue'><h4>Costing</h4></div>
@@ -1945,8 +2018,11 @@ class Report{
         "costtoprepaid":[
             {"name":"date","type":"date","label":"Date","fields":["value"]}
         ],
-        "depreciation":[
-            {"name":"period", "type":"date","fields":["range"]}
+        "depreciationpros":[
+            {"name":"date", "label":"Date","type":"date","fields":["value"]}
+        ],
+        "depreciationretro":[
+            {"name":"date", "label":"Date", "type":"date","fields":["value"]}
         ],
         "generalledger":[
             {"name":"ledger", "type":"text","label":"General Ledger","fields":["value"]},
@@ -2091,7 +2167,7 @@ function ReportDisplay(){
 
         const {segment,profitcenter,costcenter,assetclass,assetgl,depreciationgl} = query;
         
-        let data = Asset.register();
+        let data = Asset.register(numberDay(dayNumber(new Date())));
         data = (segment['values'].length>0 && segment['values'][0]!="")?data.filter(item=>segment['values'].includes(item['Segment'])):data;
         data = (profitcenter['values'].length>0 && profitcenter['values'][0]!="")?data.filter(item=>profitcenter['values'].includes(item['Profit Center'])):data;
         data = (costcenter['values'].length>0 && costcenter['values'][0]!="")?data.filter(item=>costcenter['values'].includes(item['Cost Center'])):data;
@@ -2106,12 +2182,32 @@ function ReportDisplay(){
             </div>
         )
     }
+
     function AssetLedger({query}){
         const {asset, period} = query;
         const data = new Asset(asset['value']).ledger(period['range']);
 
         return(
             <DisplayAsTable collection={data}/>
+        )
+    }
+
+    function Depreciation({query,method}){
+        const date = query['date']['value'];
+        let data = Asset.depreciationData(date);
+        data = data.map(item=>(new Date(item['Depreciated Till'])>= new Date(date))?{...item,['Depreciable']:"Retrospective"}:{...item,['Depreciable']:"Yes"})
+        const postingdata = (method=="Prospective")?data.filter(item=>item['Depreciable']!="Retrospective"):data.filter(item=>item['Depreciable']=="Retrospective")
+        const entry = Asset.depreciationEntry(date,postingdata,method);
+        const post = ()=>{
+            Transaction.post(entry);
+            alert('Depreciation Posted Succesfully');
+        }
+        return(
+            <div>
+                <DisplayAsTable collection={data}/>
+                <button onClick={()=>post()}>Post</button>
+                <button onClick={()=>navigate('/reportdisplay/depreciationretro',{state:query})}>Retro</button>
+            </div>
         )
     }
 
@@ -2193,14 +2289,6 @@ function ReportDisplay(){
         )
     }
 
-    function Depreciation({query}){
-        const {period} = query;
-        const data = Asset.depreciationData(period['range'])
-        return(
-            <DisplayAsTable collection={data}/>
-        )
-    }
-
     function GenLedger({query}){
         const {ledger,period}  = query;
         const data = new GeneralLedger(ledger['value']).ledger(period['range']);
@@ -2278,7 +2366,8 @@ function ReportDisplay(){
             {report=="costobjectbalance" && <CostObjectBalance query={query}/>}
             {report=="costobjecttransactions" && <CostObjectTransactions query={query}/>}
             {report=="costobjectsettlement" && <CostObjectSettlement query={query}/>}
-            {report=="depreciation" && <Depreciation query={query}/>}
+            {report=="depreciationpros" && <Depreciation query={query} method={"Prospective"}/>}
+            {report=="depreciationretro" && <Depreciation query={query} method={"Retrospective"}/>}
             {report=="generalledger" && <GenLedger query={query}/>}
             {report=="materialledger" && <MaterialLedger query={query}/>}
             {report=="paycalc" && <PayCalc query={query}/>}
@@ -2526,6 +2615,7 @@ class Transaction{
         (data["Balance"]!=0)?list.push('Balance not zero.'):()=>{};
         return list
     }
+    static database = ('transactions' in localStorage)?JSON.parse(localStorage.getItem('transactions')):[]
     static headerFields = [
         {"name":"Posting Date","type":"date"},
         {"name":"Document Date","type":"date"},
@@ -2537,6 +2627,7 @@ class Transaction{
         {"name":"Transaction", "input":"option","options":[""]},
         {"name":"Account Type", "input":"calculated"},
         {"name":"Presentation", "input":"notrequired"},
+        {"name":"Depreciation Upto", "input":"input", "type":"date"},
         {"name":"General Ledger", "input":"calculated"},
         {"name":"Amount", "type":"number", "input":"input"},
         {"name":"Debit/ Credit", "type":"number", "input":"option","options":["","Debit","Credit"]},
@@ -2571,10 +2662,12 @@ class Transaction{
             {"calculated":false,"Account":"","Amount":0, "Debit/ Credit":"Debit"}
         ]
     }
-    static save(data){
-        const database  = ('transactions' in localStorage)?JSON.parse(localStorage.getItem('transactions')):[];
-        const newdatabase = database.push(data);
-        saveData(newdatabase,'transactions');
+    static post(data){
+        const updateddatabase = [...this.database,data]
+        this.savedatabase(updateddatabase);
+    }
+    static savedatabase(database){
+        localStorage.setItem('transactions',JSON.stringify(database));
     }
 }
 
@@ -2843,7 +2936,7 @@ function Scratch(){
 
     return(
         <>
-        {JSON.stringify(Asset.register())}
+        {JSON.stringify(new Asset('Office Table').depPostedUpTo())}
         </>
     )
 }
