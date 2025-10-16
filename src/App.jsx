@@ -357,6 +357,11 @@ class Asset{
         }
         return value
     }
+    disposableValue(){
+        const date = numberDay(dayNumber(new Date()));
+        const value = this.grossClosing(date) - this.accDepreciationClosing(date);
+        return value
+    }
     static depreciationEntry(date,data,method){
         const entry = {};
         entry['Posting Date'] = date;
@@ -2098,8 +2103,8 @@ class Report{
             {"name":"assetclass", "label":"Asset Class", "type":"text", "fields":["values"]},
         ],
         "assetledger":[
-            {"name":"asset", "type":"text", "fields":["value"]},
-            {"name":"period","type":"date","fields":["range"]}
+            {"name":"asset", "label":"Asset", "type":"text", "fields":["value"]},
+            {"name":"period","label":"Period","type":"date","fields":["range"]}
         ],
         "assetschedule":[
             {"name":"period","label":"Period","type":"date","fields":["range"]}
@@ -2287,11 +2292,26 @@ function ReportDisplay(){
 
     function AssetLedger({query}){
         const {asset, period} = query;
-        const data = new Asset(asset['value']).ledger(period['range']);
+        const navigate = useNavigate();
 
-        return(
-            <DisplayAsTable collection={data}/>
-        )
+        if (Asset.list().includes(asset['value'])){
+            const data = new Asset(asset['value']).ledger(period['range']);
+
+            return(
+                <div>
+                    <h2>Asset Ledger</h2>
+                    <p>{`Of ${asset['value']} for the period from ${period['range'][0]} to ${period['range'][1]}`}</p>
+                    <DisplayAsTable collection={data}/>
+                </div>
+            )
+        } else {
+            return (
+                <div className='negativeReport'>
+                    <p>Sorry, May be the asset is misspelled. Don't worry. You can choose one from the list below</p>
+                    <div>{Asset.list().map(item=><button onClick={()=>navigate('/reportdisplay/assetledger', {state:{"asset":{"value":item},"period":period}})}>{item}</button>)}</div>
+                </div>
+            )
+        }
     }
 
     function AssetSchedule({query}){
@@ -2627,7 +2647,8 @@ class Transaction{
         let notreq = [];
         switch (this.type){
             case 'Purchase':
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Vendor.list()]}:item)
+                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Vendor.list()]}:item);
+                notreq = ["Account Type","Debit/ Credit","General Ledger","GST", "Profit Center", "Cost Center", "HSN", "Quantity", "Value Date", "Location"];
                 break
             case 'Sale':
                 items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Customer.list()]}:item);
@@ -2645,26 +2666,33 @@ class Transaction{
         switch (this.type){
             case 'Sale':
                 notreq = ["Cost Center", "Cost Object","Consumption Time From", "Consumption Time To", "Presentation","Purchase Order", "Sale Order", "Item", "Clearing Document", "Clearing Date"]
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Material.list(),...Service.list()]}:item);
+                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Material.list(),...Service.list(),...Asset.activeList()]}:item);
                 break
         }
         items = items.filter(item=>!notreq.includes(item['name']));
         return items
     }
-    restOfFields(account){
-        const type = new Intelligence().ledgerType(account)
-        let [first,...restOfFields] = this.lineItems()
+    lineItemByContent(content){
+        let lineItems = this.lineItems();
+        const type = new Intelligence().ledgerType(content['Account']);
         let notreq = [];
         switch (type){
             case 'Vendor':
-                notreq = ["HSN", "Cost Center", "Cost Object", "Consumption Time From", "Consumption Time To", "GST","Location", "Quantity", "Value Date", "Purchase Order", "Sale Order", "Item", "GST Supplier"]
-                restOfFields = restOfFields.map(item=>(item['name']=="Presentation")?{...item,...{'input':"option","options":["","Accounts Payable","Advance to Supliers"]}}:item)
+                notreq = ["Transaction","HSN", "Cost Center", "Cost Object", "Consumption Time From", "Consumption Time To", "GST","Location", "Quantity", "Value Date", "Purchase Order", "Sale Order", "Item", "GST Supplier","Depreciation Upto"]
+                lineItems = lineItems.map(item=>(item['name']=="Presentation")?{...item,...{'input':"option","options":["","Accounts Payable","Advance to Supliers"]}}:item)
                 break
             case 'Asset':
-                restOfFields = restOfFields.map(item=>(item['name']=="Transaction")?{...item,...{'input':"option","options":["","Acquisition","Depreciation","Revaluation","Write-Off","Disposal"]}}:item)
+                const transaction = content['Transaction'];
+                notreq.push(...["Location","Quantity","TDS","TDS Base","Profit Center","Value Date","TDS Deductee"]);
+                lineItems = lineItems.map(item=>(item['name']=="Transaction")?{...item,...{'input':"option","options":["","Acquisition","Depreciation","Revaluation","Disposal"]}}:item);
+                lineItems = lineItems.map(item=>(item['name']=="Transaction" && this.type=="Sale")?{...item,...{'input':"option","options":["","Disposal"]}}:item);
+                lineItems = lineItems.map(item=>(item['name']=="Amount" && transaction=="Disposal")?{...item,...{'input':"calculated"}}:item);
+                (transaction!="Depreciation")?notreq.push("Depreciation Upto"):()=>{};
+                
+                break
         }
-        restOfFields = restOfFields.map(item=>(notreq.includes(item['name']))?{...item,["input"]:"notrequired"}:item)
-        return restOfFields 
+        lineItems = lineItems.map(item=>(notreq.includes(item['name']))?{...item,["input"]:"notrequired"}:item)
+        return lineItems 
     }
     process(data){
         const result = {...data};
@@ -2692,6 +2720,7 @@ class Transaction{
                 break
             case 'Asset':
                 result['General Ledger'] = new AssetClass(new Asset(result['Account']).data['Asset Class']).data['General Ledger - Asset']
+                result['Amount'] = (result['Transaction']=="Disposal")?new Asset(result['Account']).disposableValue():result['Amount']
                 break
         }
         return result
@@ -2729,7 +2758,19 @@ class Transaction{
         (!valueInRange(new Date(data['Posting Date']),[new Date(firstPeriod[0]),new Date(firstPeriod[1])]) && !valueInRange(new Date(data['Posting Date']),[new Date(secondPeriod[0]),new Date(secondPeriod[1])]))?list.push('Posting Date not in Open Period(s)'):()=>{}
         (new Date(data['Document Date'])>new Date())?list.push('Document Date cannot be future.'):()=>{};
         (data["Balance"]!=0)?list.push('Balance not zero.'):()=>{};
+        data['Line Items'].map((item,i)=>list.push(...this.validateline(item,i)));
         return list
+    }
+    validateline(item,i){
+        let req = [];
+        const list = [];
+        switch (item['Account Type']){
+            case 'Asset':
+                req = ["Transaction","Debit/ Credit"]
+                break
+        }
+        req.map(reqfield=>(item[reqfield]=="")?list.push(`Line ${i}: ${reqfield} required`):()=>{})
+        return list;
     }
     static database = ('transactions' in localStorage)?JSON.parse(localStorage.getItem('transactions')):[]
     static headerFields = [
@@ -2771,11 +2812,12 @@ class Transaction{
     
     static defaults = {
         "Posting Date":"",
-        "Document Date":"2025-03-31",
-        "Reference":"Random Ref",
-        "Text":"Random",
+        "Document Date":"",
+        "Reference":"",
+        "Text":"",
         "Line Items":[
-            {"calculated":false,"Account":"","Amount":0, "Debit/ Credit":"Debit"}
+            {"calculated":false,"Account":"","Transaction":"","Amount":0, "Debit/ Credit":"Debit"},
+            {"calculated":false,"Account":"","Transaction":"","Amount":0, "Debit/ Credit":"Debit"}
         ]
     }
     static post(data){
@@ -2868,12 +2910,9 @@ function TransactionUI(){
                     <tbody>
                         {restOfLines.map((item,i)=>
                             <tr><td className='lineItemCell'><button onClick={()=>removeLine(i+1)}>-</button></td>
-                            <td className='lineItemCell'>
-                                {restOfAccount['input']=="input" && <input onChange={(e)=>lineItemChange(i+1,'Account',e)} type={restOfAccount['type']} value={item['Account']}/>}
-                                    {restOfAccount['input']=="option" && <select onChange={(e)=>lineItemChange(i+1,'Account',e)} value={item['Account']}>{restOfAccount['options'].map(option=><option value={option}>{option}</option>)}</select>}
-                            </td>
+                           
                             
-                            {transaction.restOfFields(item['Account']).map(field=>
+                            {transaction.lineItemByContent(item).map(field=>
                                 <td className='lineItemCell'>
                                     {field['input']=="input" && <input onChange={(e)=>lineItemChange(i+1,field['name'],e)} type={field['type']} value={item[field['name']]}/>}
                                     {field['input']=="option" && <select onChange={(e)=>lineItemChange(i+1,field['name'],e)} value={item[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
@@ -3052,7 +3091,7 @@ function Scratch(){
 
     return(
         <>
-        <DisplayAsTable collection={Asset.schedule(['2025-10-01','2025-10-31'])}/>
+        {JSON.stringify(new Asset('Office Table').disposableValue())}
         </>
     )
 }
