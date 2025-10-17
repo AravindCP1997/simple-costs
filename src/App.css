@@ -9,15 +9,13 @@
   flex-direction: column;
   width:fit-content;
   height:fit-content;
-  color:white;
-  background: var(--bluet);
-  backdrop-filter: blur(3px);
-  box-shadow: 0px 0.5px 1px 0px black;
+  color:var(--blue);
+  box-shadow: 0px 3px 10px 0px lightgray;
 }
 
 .companyInfoTitle{
   text-align: center;
-  background: var(--bluet);
+  background: white;
   border-radius: 20px;
   padding: 20px;
 }
@@ -33,7 +31,8 @@
   grid-template-columns: 50% 50%;
   padding: 5px;
   border-radius: 15px;
-  background: var(--bluet);
+  background: white;
+  backdrop-filter: blur(3px);
   input,select{
     border-radius: 10px;
   }
@@ -62,18 +61,19 @@
   flex-direction: column;
   gap:20px;
   color:var(--blue);
-  padding: 10px;
   background:var(--lightbluet);
+  padding: 10px;
   width: fit-content;
   border-radius: 25px;
   text-align: center;
   margin-top: 10%;
   padding: 20px;
-  box-shadow: 0px 0.5px 1px 0px black;
+  transition: 0.5s;
+  backdrop-filter: blur(1px);
+  box-shadow: 0px 0.5px 2px 0px gray;
 }
 
 .titleCard{
-  color:var(--blue);
   border-bottom: 2px solid var(--lightgray);
   display: flex;
   flex-direction: column;
@@ -141,10 +141,9 @@
   padding: 10px;
   border-radius: 25px;
   transition:0.5s;
-  background: var(--whitet);
   overflow: auto;
   resize: both;
-  box-shadow: 0px 0.5px 1px 0px black;
+  box-shadow: 0px 3px 10px 0px lightgray;
   button{
     border-radius: 15px;
   }
@@ -167,10 +166,9 @@
   gap:50px;
   height:fit-content;
   justify-content: center;
-  background: var(--whitet);
   height: fit-content;
   transition: 0.5s;
-  box-shadow: 0px 0.5px 1px 0px black;
+  box-shadow: 0px 3px 10px 0px lightgray;
 }
 
 
@@ -230,12 +228,12 @@
   display:flex;
   flex-direction: column;
   gap:10px;
-  background: var(--lightbluet);
   padding:5%;
   width:100%;
   height: fit-content;
   border-radius: 25px;
-  box-shadow: 0px 0.5px 1px 0px black;
+  box-shadow: 0px 3px 10px 0px lightgray;
+  border: 2px solid var(--lightgray);
 }
 
 .menuContainerTitle{

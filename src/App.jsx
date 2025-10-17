@@ -179,9 +179,9 @@ class Asset{
         this.profitcenter = new ProfitCenter(this.costcenter.data['Profit Center']);
         this.segment = new Segment(this.profitcenter.data['Segment']);
         this.capdate = this.data['Date of Capitalisation'];
-        this.UL = this.data['Useful Life'];
+        this.UL = parseFloat(this.data['Useful Life']);
         this.ULDays = dayNumber(this.depCeaseDate()) - dayNumber(this.capdate) + 1;
-        this.SV = this.data['Salvage Value'];
+        this.SV = parseFloat(this.data['Salvage Value']);
     }
     register(date) {
         
@@ -978,7 +978,13 @@ class Intelligence{
         const req = ["Name","IFSC","Account Number","General Ledger","Profit Center"];
         req.map(item=>(data[item]=="")?list.push(`${item} is required`):()=>{});
         data['Virtual Accounts'].map((item,index)=>(item["Virtual Account Number"]!="" && item['Ledger']=="")?list.push(`VAN ${item['Virtual Account Number']} requires a ledger`):()=>{})
+        data['Virtual Accounts'].map((item,index)=>(item["Virtual Account Number"]!="" && item['Profit Center']=="")?list.push(`VAN ${item['Virtual Account Number']} requires a profit center`):()=>{})
         return list
+    }
+    bankError(line,i){
+        const list = [];
+        (line['Account Number']!==line['Confirm Account Number'])?list.push(`Bank account ${i} does not match.`):()=>{};
+        return list;
     }
     costobject(data){
         const result = {...data};
@@ -1039,7 +1045,7 @@ class Intelligence{
         return list
     }
     vendorError(data){
-        const list = []
+        const list = [];
         const req = ["Name"];
         req.map(item=>(data[item]=="")?list.push(`${item} is required`):()=>{});
         return list
@@ -1164,6 +1170,7 @@ const objects = {
         "name":"Bank Account",
         "collection":"bankaccounts",
         "schema":[
+            {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
             {"name":"Name","datatype":"single","input":"input","type":"text","use-state":""},
             {"name":"Bank Name","datatype":"single","input":"input","type":"text","use-state":""},
             {"name":"IFSC","datatype":"single","input":"input","type":"text","use-state":""},
@@ -1173,7 +1180,8 @@ const objects = {
             {"name":"Virtual Accounts","datatype":"collection","structure":[
                 {"name":"Virtual Account Number","datatype":"single","input":"input","type":"text","use-state":""},
                 {"name":"Ledger","datatype":"single","input":"option","options":["",...Customer.list()],"use-state":""},
-            ],"use-state":[{"Virtual Account Number":"","Ledger":""}]},
+                {"name":"Profit Center","datatype":"single","input":"option","options":["",...ProfitCenter.list()]}
+            ],"use-state":[{"Virtual Account Number":"","Ledger":"","Profit Center":""}]},
         ]
     },
     "Cost Center":{
@@ -1216,14 +1224,17 @@ const objects = {
         "name":"Customer",
         "collection":"customers",
         "schema": [
+            {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
             {"name":"Name","datatype":"single","input":"input","type":"text","use-state":""},
             {"name":"Address","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"City","datatype":"single","input":"input","type":"text","use-state":""},
             {"name":"PIN","datatype":"single","input":"input","type":"number","use-state":""},
+            {"name":"State","datatype":"single","input":"option","options":["",...Intelligence.States,...Intelligence.UTs,"Outside India"],"use-state":""},
             {"name":"Phone","datatype":"single","input":"input","type":"number","use-state":""},
             {"name":"E-mail","datatype":"single","input":"input","type":"number","use-state":""},
             {"name":"PAN","datatype":"single","input":"input","type":"text","use-state":""},
             {"name":"GSTIN","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Validated", "value":"calculated", "datatype":"single"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
+            {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
             {"name":"Payment Terms","datatype":"single","input":"option","options":[],"use-state":""},
         ]
     },
@@ -1291,6 +1302,7 @@ const objects = {
     "Payment Term":{
         "name":"Payment Term",
         "schema":[
+            {"name": "Code", "datatype":"single", "input":"input", "type":"text", "use-state":""},
             {"name":"Description","datatype":"single", "input":"input", "type":"text","use-state":"45 Days Net"},
             {"name":"Discounting Criteria", "datatype":"collection","structure":[{"name":"Days from Supply","datatype":"single","input":"input","type":"number"},{"name":"Discount %","datatype":"single","input":"input","type":"number"}] , "use-state":[{"Days from Supply":45,"Discount %":0}]}
         ],
@@ -1365,15 +1377,17 @@ const objects = {
         "name":"Vendor",
         "collection":"vendors",
         "schema": [
+            {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
             {"name":"Name","datatype":"single","input":"input","type":"text","use-state":""},
             {"name":"Address","datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"City","datatype":"single","input":"input","type":"text","use-state":""},
             {"name":"State","datatype":"single","input":"option","options":["",...Intelligence.States,...Intelligence.UTs,"Outside India"],"use-state":""},
             {"name":"PIN","datatype":"single","input":"input","type":"number","use-state":""},
             {"name":"Phone","datatype":"single","input":"input","type":"number","use-state":""},
             {"name":"E-mail","datatype":"single","input":"input","type":"number","use-state":""},
             {"name":"PAN","datatype":"single","input":"input","type":"text","use-state":""},
             {"name":"GSTIN","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Validated", "value":"calculated", "datatype":"single"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
+            {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
             {"name":"Payment Terms","datatype":"single","input":"option","options":[],"use-state":""},
         ]
     },
@@ -1770,7 +1784,7 @@ function Control(){
         {"Group":"Costing","items":["Cost Center","Cost Object"]},
         {"Group":"Financial Accounting","items":["General Ledger","Profit Center","Segment","Currency"]},
         {"Group":"Material","items":["Material","Service","Purchase Order","Sale Order","Location","Unit"]},
-        {"Group":"Payables & Receivables","items":["Bank Account", "Customer","Vendor","Payment Terms"]},
+        {"Group":"Payables & Receivables","items":["Bank Account", "Customer","Vendor","Payment Term"]},
         {"Group":"Payroll","items":["Employee", "Organisational Unit"]}
     ]
   
@@ -1865,7 +1879,7 @@ class Code{
     }
     checkCode(code){
         const errors = [];
-        (code<this.codes[0] || code>this.codes[1])?errors.push('Code outside range!'):()=>{};
+        (code<this.codes[0] || code>this.codes[1])?errors.push(`Please use code within range (${this.codes[0]},${this.codes[1]})`):()=>{};
         (this.alreadyExists(code))?errors.push(this.name + ' with same code already exists'):()=>{}
         return errors
     }
@@ -1879,10 +1893,13 @@ class Code{
         "Segment" :[1,99],
         "Profit Center":[1000,1999],
         "Cost Center":[2000,3999],
-        "Asset Class":[100,500],
+        "Asset Class":[100,499],
+        "Bank Account":[90000,99999],
         "Asset":[100000,199999],
         "General Ledger":[200000,299999],
-        "Vendor":[300000,399999]
+        "Vendor":[300000,399999],
+        "Customer":[400000,499999],
+        "Payment Term":[500,559]
     }
 }
 
@@ -1919,12 +1936,17 @@ function CRUD({method}){
             case 'Asset Class':
                 req = ["Name","General Ledger - Asset", "General Ledger - Depreciation", "Depreciable"];
                 break
+            case 'Customer':
+                req = ["Name","State"];
+                output['Bank Accounts'].map((item,i)=>list.push(...new Intelligence().bankError(item,i+1)))
+                break
             case 'Employee' :
                 output['Bank Accounts'].map((item,i)=>(item['Validated']=="No")?list.push(`Bank Account ${i+1} is not validated`):()=>{});
                 ((new Date(output['Date of Birth']))>(new Date()))?list.push("Date of Birth cannot be a future date."):()=>{}
                 break
             case 'Vendor':
-                list.push(...new Intelligence().vendorError(output))
+                req = ["Name","State"];
+                output['Bank Accounts'].map((item,i)=>list.push(...new Intelligence().bankError(item,i+1)))
                 break
             case 'Profit Center':
                 list.push(...new Intelligence().profitCenterError(output))
@@ -1934,7 +1956,7 @@ function CRUD({method}){
                 break
         }
         req.map(item=>(output[item]=="")?list.push(`${item} required`):()=>{});
-        (["Segment","Asset Class","Asset","Profit Center","Cost Center","General Ledger"].includes(object))?list.push(...new Code(object).checkCode(output['Code'])):()=>{};
+        (["Payment Term","Bank Account","Segment","Asset Class","Customer","Asset","Profit Center","Cost Center","General Ledger", "Vendor"].includes(object))?list.push(...new Code(object).checkCode(output['Code'])):()=>{};
         return list
     }
     
@@ -2726,11 +2748,11 @@ class Transaction{
                 break
             case 'Asset Acquisition':
                 items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Vendor.list()]}:item);
-                notreq = ["Transaction","Debit/ Credit","General Ledger","GST", "Profit Center", "Cost Center", "HSN", "Quantity", "Value Date", "Location"]
+                notreq = ["Transaction","General Ledger","GST", "Profit Center", "Cost Center", "HSN", "Quantity", "Value Date", "Location"]
                 break
             case 'Asset Disposal':
                 items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Customer.list()]}:item);
-                notreq = ["Transaction","Debit/ Credit","General Ledger","GST", "Profit Center", "Cost Center", "HSN", "Quantity", "Value Date", "Location"]
+                notreq = ["Transaction","General Ledger","GST", "Profit Center", "Cost Center", "HSN", "Quantity", "Value Date", "Location"]
                 break
             case 'Asset Revaluation':
                 items=[];
@@ -2833,7 +2855,8 @@ class Transaction{
                 result['General Ledger'] = new Asset(result['Account']).assetclass.data['General Ledger - Asset'];
                 result['Profit Center'] = new Asset(result['Account']).profitcenter.name;
                 result['Amount'] = (result['Transaction']=="Disposal")?new Asset(result['Account']).disposableValue():result['Amount']
-                result['Amount'] = (result['Transaction']=="Depreciation")?new Asset(result['Account']).depreciation(result['Depreciation Upto']):result['Amount']
+                result['Amount'] = (result['Transaction']=="Depreciation")?new Asset(result['Account']).depreciableAmount(result['Depreciation Upto']):result['Amount']
+                result['Debit/ Credit'] = (this.type=="Manual Depreciation" && result['Transaction']=="Depreciation")?"Credit":result['Debit/ Credit']
                 break
         }
         return result
@@ -3005,7 +3028,8 @@ function TransactionUI(){
             newdata = [...collections,{...output,["Entry Date"]:new Date().toLocaleDateString()}]
             saveData(newdata,'transactions')
             alert(`Saved!`)
-            cancel()
+            window.location.reload();
+
         } else {
             alert("There are still errors unresolved")
         }
