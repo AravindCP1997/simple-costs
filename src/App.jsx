@@ -80,6 +80,25 @@ function valueInRange(value,range){
     return result
 }
 
+function moveDate(date,years,months,days){
+    const olddate = new Date(date);
+    const newdate = new Date(olddate.getFullYear()+years,olddate.getMonth()+months,olddate.getDate()+days)
+    return numberDay(dayNumber(newdate));
+}
+
+function ageInYears(d,t){
+    const dob = new Date(d)
+    const today = new Date(t)
+    const delta = today.getFullYear() - dob.getFullYear()
+    const result = (today>= new Date(today.getFullYear(),dob.getMonth(),dob.getDate()))?delta:delta-1;
+    return result
+}
+
+function ageInDays(d,t){
+    const result = dayNumber(t) - dayNumber(d) + 1;
+    return result;
+}
+
 class Company{
     constructor(data){
         this.status = ('company' in localStorage);
@@ -804,6 +823,7 @@ class Service{
 class Vendor{
     constructor(name){
         this.name = name;
+        this.data = Vendor.data.filter(item=>item['Name']==this.name)[0];
     }
     openitems(date){
         const transactions = new Intelligence().transactionstable()
@@ -1265,7 +1285,7 @@ const objects = {
     "General Ledger":{
         "name":"General Ledger",
         "schema":[
-            {"name":"Code", "value":"calculated"},
+            {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
             {"name":"Ledger Type","datatype":"single","input":"option","options":["","Asset", "Bank Account", "Cost Element", "Customer", "Depreciation" ,"General",  "Material", "Vendor"]},
             {"name": "Presentation", "datatype":"single", "input":"option", "options":["Income", "Expense", "Asset", "Liability", "Equity"], "use-state":"Income"},
@@ -1383,6 +1403,7 @@ const objects = {
             {"name":"City","datatype":"single","input":"input","type":"text","use-state":""},
             {"name":"State","datatype":"single","input":"option","options":["",...Intelligence.States,...Intelligence.UTs,"Outside India"],"use-state":""},
             {"name":"PIN","datatype":"single","input":"input","type":"number","use-state":""},
+            {"name":"MSME Status","datatype":"single","input":"option","options":["","Micro","Small","Medium","Non-MSME"],"use-state":""},
             {"name":"Phone","datatype":"single","input":"input","type":"number","use-state":""},
             {"name":"E-mail","datatype":"single","input":"input","type":"number","use-state":""},
             {"name":"PAN","datatype":"single","input":"input","type":"text","use-state":""},
@@ -1716,6 +1737,7 @@ function SearchBar(){
             <button className='red' onClick={()=>navigate(`/`)}>Home</button>
             <input type="text" value={url} ref={inputRef} onChange={changeUrl} placeholder="Go to . . ."/>
             <button className="green" onClick={search}>&rarr;</button>
+            <button onClick={()=>window.open(window.location.href,'_blank')}>+</button>
         </div>
         </div>
     )
@@ -2606,24 +2628,6 @@ function ReportDisplay(){
     )
 }
 
-function Ledger(){
-    const location = useLocation()
-    const data = location.state || {"list":[],"period":[]}
-    const list = data['ledger']['values']
-    const period = data['period']['range']
-    return(
-        <div className='ledgers'>
-            <h3>Ledger Display</h3>
-            {list.map(item=>
-            <div className='ledger'>
-                <h4>{item}</h4>
-                <DisplayAsTable collection={new Asset(item).transactions(period)}/>
-            </div>
-            )}
-        </div>
-    )
-}
-
 class HolidayCalendar{
     constructor(year){
         this.year = year;
@@ -2801,7 +2805,11 @@ class Transaction{
         switch (type){
             case 'Vendor':
                 notreq = ["Transaction","HSN", "Cost Center", "Cost Object", "Consumption Time From", "Consumption Time To", "GST","Location", "Quantity", "Value Date", "Purchase Order", "Sale Order", "Item", "GST Supplier","Depreciation Upto"]
-                lineItems = lineItems.map(item=>(item['name']=="Presentation")?{...item,...{'input':"option","options":["","Accounts Payable","Advance to Supliers"]}}:item)
+                lineItems = lineItems.map(item=>(item['name']=="Presentation")?{...item,...{'input':"option","options":["",...GeneralLedger.listtype('Vendor')]}}:item)
+                break
+            case 'Customer':
+                notreq = ["Transaction","HSN", "Cost Center", "Cost Object", "Consumption Time From", "Consumption Time To", "GST","Location", "Quantity", "Value Date", "Purchase Order", "Sale Order", "Item", "GST Supplier","Depreciation Upto"]
+                lineItems = lineItems.map(item=>(item['name']=="Presentation")?{...item,...{'input':"option","options":["",...GeneralLedger.listtype('Customer')]}}:item)
                 break
             case 'Asset':
                 const transaction = content['Transaction'];
@@ -2930,7 +2938,7 @@ class Transaction{
         {"name":"Text","type":"text"},
     ]
     static lineItems = [
-        {"name":"Account", "placeholder":"Account","type":"text", "input":"option", "options":["",...Asset.activeList(),...GeneralLedger.list(), ...Material.list(),...Vendor.list()]},
+        {"name":"Account", "placeholder":"Account","type":"text", "input":"option", "options":["",...Asset.activeList(),...GeneralLedger.list(), ...Material.list(),...Vendor.list(), ...Customer.list()]},
         {"name":"Transaction", "input":"option","options":[""]},
         {"name":"Account Type", "input":"calculated"},
         {"name":"Presentation", "input":"notrequired"},
@@ -3234,14 +3242,85 @@ function MaterialIssueUI(){
     )
 }
 
+class Ledger{
+    constructor(name){
+        this.name = name;
+    }
+    transactions(period){
+        const [from,to] = period;
+        const data = new Intelligence().transactionstable();
+        const filtered = data.filter(item=>(new Date(item['Posting Date'])>= new Date(from) && new Date(item['Posting Date'])<= new Date(to) && item['Account']==this.name ))
+        return filtered
+    }
+    transactionsBefore(date){
+        const data = new Intelligence().transactionstable();
+        const filtered = data.filter(item=>(new Date(item['Posting Date'])< new Date(date) && item['Account']==this.name ))
+        return filtered
+    }
+    transactionsTill(date){
+        const data = new Intelligence().transactionstable();
+        const filtered = data.filter(item=>(new Date(item['Posting Date'])<= new Date(date) && item['Account']==this.name ))
+        return filtered
+    }
+    opening(date){
+        return SumFieldIfs(this.transactionsBefore(date),'Amount',["Debit/ Credit"],["Debit"])-SumFieldIfs(this.transactionsBefore(date),'Amount',["Debit/ Credit"],["Credit"])
+    }
+    closing(date){
+        return SumFieldIfs(this.transactionsTill(date),'Amount',["Debit/ Credit"],["Debit"])-SumFieldIfs(this.transactionsTill(date),'Amount',["Debit/ Credit"],["Credit"])
+    }
+    openItems(date){
+        const data = this.transactionsTill(date);
+        const filtered = data.filter(item=>((!item['Clearing Document']!="" || new Date(item['Clearing Date'])>new Date(date))))
+        return filtered
+    }
+    ledger(period){
+        const [from,to] = period;
+        const list = [{"Date":from,"Description":"Opening", "Debit/ Credit":"", "Amount":this.opening(from)}];
+        this.transactions(period).map(item=>list.push({"Date":item['Posting Date'],"Description":item['Description'],"Debit/ Credit":item['Debit/ Credit'], "Amount":item['Amount']}))
+        list.push({"Date":to,"Description":"Closing","Debit/ Credit":"", "Amount":this.closing(to)})
+        return list
+    }
+    GLOpening(presentation,date){
+        const data = this.transactionsBefore(date);
+        const opening = SumFieldIfs(data,'Amount',["General Ledger","Debit/ Credit"],[presentation,"Debit"]) - SumFieldIfs(data,'Amount',["General Ledger","Debit/ Credit"],[presentation,"Credit"])
+        return opening
+    }
+    GLClosing(presentation,date){
+        const data = this.transactionsTill(date);
+        const opening = SumFieldIfs(data,'Amount',["General Ledger","Debit/ Credit"],[presentation,"Debit"]) - SumFieldIfs(data,'Amount',["General Ledger","Debit/ Credit"],[presentation,"Credit"])
+        return opening
+    }
+    GLOpenItems(presentation,date){
+        const data = this.openItems(date);
+        const filtered = data.filter(item=>item['General Ledger']==presentation);
+        const result = filtered.map(item=>
+            ({...item,
+                ...{
+                    "Age in Years":ageInYears(item['Posting Date'],date),
+                    "Age in Days":ageInDays(item['Posting Date'],date),
+                    "MSME Status":(item['Account Type']=="Vendor")?new Vendor('T K Salim').data['MSME Status']:"Not Applicable"
+                }}))
+        return result
+    }
+    
+    static accountBalances(date){
+        const presentations = [...GeneralLedger.listtype('Vendor'),...GeneralLedger.listtype('Customer')];
+        const accounts = [...Vendor.list(),...Customer.list()];
+        const list = [];
+        presentations.map(presentation=>
+            accounts.map(account=>
+                list.push({'Presentation':presentation,'Account':account,'Balance':new Ledger(account).GLClosing(presentation,date)})
+            )
+        )
+        return list;
+    }
+}
+
 function Scratch(){
-    const material = 'Phosphoric Acid'
-    const location = 'Back Gate'
-    const bin = new MaterialInLocation(material,location)
 
     return(
         <>
-        {JSON.stringify(new Code('Segment').checkCode('100'))}
+        <DisplayAsTable collection={new Ledger('T K Salim').GLOpenItems('Accounts Payable',"2025-10-31")}/>
         </>
     )
 }
