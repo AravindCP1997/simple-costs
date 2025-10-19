@@ -154,6 +154,7 @@ class Database{
             "Customer":"customers",
             "Employee":"employees",
             "General Ledger":"generalledgers",
+            "GST Code":'gstcodes',
             "Location":"locations",
             "Material":"materials",
             "Payment Term":"paymentterms",
@@ -164,6 +165,7 @@ class Database{
             "Sale Order":"saleorders",
             "Unit":"units",
             "Vendor":"vendors",
+            "TDS Code":"tdscodes",
             "Transaction":'transactions'
         };
         const database=loadData(collectionname[collection])
@@ -187,6 +189,25 @@ class Database{
         const newdatabase = database.filter((item,index)=>(index!==id))
         saveData(newdatabase,objects[collection]['collection'])
     }
+}
+
+class GSTCodes{
+    constructor(code){
+        this.code = code;
+        this.data = GSTCodes.data.filter(item=>item['Code']==this.code)[0];
+    }
+    static data = Database.load('GST Code')
+    static list = ListItems(this.data,'Code')
+}
+
+class TDSCodes{
+    constructor(code){
+        this.code = code;
+        this.data = TDSCodes.data.filter(item=>item['Code']==this.code)[0];
+    }
+    
+    static data = Database.load('TDS Code')
+    static list = ListItems(this.data,'Code')
 }
 
 class Asset{
@@ -452,6 +473,9 @@ class AssetClass{
 class BankAccount{
     constructor(name){
         this.name = name;
+        this.data = BankAccount.data.filter(item=>item['Name']==this.name)[0]
+        this.listOfVAN = ListItems(this.data['Virtual Accounts'],"Virtual Account Number");
+        this.VANData = this.data['Virtual Accounts'].map(item=>({...item,['Bank Account']:this.name}))
     }
     static data = Database.load("Bank Account")
     static active = this.data.filter(item=>!item['Deactivated'])
@@ -459,6 +483,17 @@ class BankAccount{
         const list = ListItems(this.active,"Name")
         return list
     }
+    static VANData(){
+        const list = this.list()
+        const data = [];
+        list.map(item=>data.push(...new BankAccount(item).VANData))
+        return data;
+    }
+    static getVANData(VAN){
+        const filtered = this.VANData().filter(item=>item['Virtual Account Number']==VAN)[0];
+        return filtered
+    }
+
 }
 
 class Currency{
@@ -885,12 +920,14 @@ class Intelligence{
         this.collectioninfo = {
             "Asset":"assets",
             "Asset Class":"assetclasses", 
+            "Bank Account":'bankaccounts',
             "Cost Center":"costcenters", 
             "Cost Object":"costobjects",
             "Currency":"currencies",
             "Customer":"customers",
             "Employee":"employees",
             "General Ledger":"generalledgers",
+            "GST Code":"gstcodes",
             "Location":"locations",
             "Material":"materials",
             "Payment Term":"paymentterms",
@@ -899,7 +936,9 @@ class Intelligence{
             "Segment":"segments",
             "Service":"services",
             "Sale Order":"saleorders",
-            "Vendor":"vendors"
+            "Vendor":"vendors",
+            "TDS Code":"tdscodes",
+            "Transaction":"transactions"
         }
     }
     static States = ["Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bengal", "Bihar", "Chattisgarh", "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu & Kashmir", "Jharkhand", "Karnataka", "Kerala","Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telengana", "Tripura", "Uttarakhand", "Uttar Pradesh","West Bengal"]
@@ -935,7 +974,7 @@ class Intelligence{
     }
     createLedgers(){
         const list = [{"Name":"","Type":""}]
-        const types = ['General Ledger','Asset','Employee','Vendor','Customer','Material', 'Service']
+        const types = ['General Ledger','Asset','Employee','Vendor','Customer','Material', 'Service', 'Bank Account']
         for (let i=0;i<types.length;i++){
             (this.itemsInCollection(types[i])>0)?this.loadCollection(types[i]).map(item=>list.push({"Name":`${item["Name"]}`,"Type":types[i]})):()=>{}
         }
@@ -1287,11 +1326,25 @@ const objects = {
         "schema":[
             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name":"Ledger Type","datatype":"single","input":"option","options":["","Asset", "Bank Account", "Cost Element", "Customer", "Depreciation" ,"General",  "Material", "Vendor"]},
+            {"name":"Ledger Type","datatype":"single","input":"option","options":["","Asset", "Bank Account", "Cost Element",  "Customer", "Depreciation" ,"General", "GST",  "Material", "Vendor"]},
             {"name": "Presentation", "datatype":"single", "input":"option", "options":["Income", "Expense", "Asset", "Liability", "Equity"], "use-state":"Income"},
             {"name": "Enable Clearing", "datatype":"single", "input":"option","options":["True","False"], "use-state":"True"},
         ],
         "collection":"generalledgers"
+    },
+    "GST Code":{
+        "name":"GST Code",
+        "collection":"gstcodes",
+        "schema":[
+            {"name":"Code","datatype":"single", "input":"input", "type":"text", "use-state":""},
+            {"name":"Rate","datatype":"single","input":"input","type":"number","use-state":0},
+            {"name":"Cess Rate","datatype":"single","input":"input","type":"number","use-state":0},
+            {"name":"CGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
+            {"name":"IGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
+            {"name":"SGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
+            {"name":"UTGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
+            {"name":"Cess Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0}
+        ]
     },
     "Location":{
         "name":"Location",
@@ -1384,6 +1437,15 @@ const objects = {
         ],
         
         "collection":"saleeorders"
+    },
+    "TDS Code":{
+        "name":"TDS Code",
+        "collection":"tdscodes",
+        "schema":[
+            {"name":"Code","datatype":"single", "input":"input", "type":"text", "use-state":""},
+            {"name":"Description","datatype":"single", "input":"input", "type":"text", "use-state":""},
+            {"name":"General Ledger","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('TDS')], "use-state":""},
+        ]
     },
     "Unit":{
         "name":"Unit",
@@ -1860,8 +1922,9 @@ function Reports(){
             </div>
             <div className='menuList'>
                 <div className='menuTitle blue'><h4>Payables & Receivables</h4></div>
-                <div className='menuItem' onClick={()=>{navigate(`/report/vendoropenitem`)}}><h4>Vendor Open Item</h4></div>
-                <div className='menuItem' onClick={()=>{navigate(`/report/vendorledger`)}}><h4>Vendor Ledger</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/vendoropenitem`)}}><h4>Open Item</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/vendorledger`)}}><h4>Ledger</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/personalaccountbalance`)}}><h4>Account Balance</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle blue'><h4>Payroll</h4></div>
@@ -2195,6 +2258,10 @@ class Report{
         "assetschedule":[
             {"name":"period","label":"Period","type":"date","fields":["range"]}
         ],
+        "clearing":[
+            {"name":"ledger","label":"Ledger","type":"text","fields":["value"]},
+            {"name":"date","label":"Date","type":"date","fields":["value"]},
+        ],
         "costcenteritems":[
             {"name":"centers","label":"Cost Centers","fields":['values']},
             {"name":"date","label":"Date","fields":['values']}
@@ -2235,9 +2302,18 @@ class Report{
             {"name":"year", "label":"Year","fields":["value"]},
             {"name":"month", "label":"Month","fields":["value"]},
         ],
+        "personalaccountbalance":[
+            {"name":"date","label":"As at","type":"date","fields":["value"]}
+        ],
         "salaryrun":[
             {"name":"year", "label":"Year","fields":["value"]},
             {"name":"month", "label":"Month","fields":["value"]},
+        ],
+        "vanaccounting":[
+            {"name":"VAN","label":"VAN","type":"text","fields":["value"]}
+        ],
+        "viewdocument":[
+            {"name":"docno","label":"Document No","type":"text","fields":["value"]}
         ],
         "vendorledger":[
             {'name':"vendor","label":"Vendor","type":"text" ,"fields":["value"]},
@@ -2438,6 +2514,173 @@ function ReportDisplay(){
         )
     }
 
+    function Clearing({query}){
+        const {ledger,date} = query;
+        const data = new Ledger(ledger['value']).openItems(date['value']);
+        const display = ["Posting Date","General Ledger","Document Date","Text","Amount","Debit/ Credit"]
+        const [selected,setselected] = useState([])
+        
+        const selectedData = data.filter((item,i)=>selected.includes(i));
+        
+        const entry = {}
+        entry['Line Items'] = [];
+        selectedData.map(item=>entry['Line Items'].push({'calculated':true,'Account':item['Account'],'General Ledger':item['General Ledger'],'Amount':item['Amount'],'Debit/ Credit':(item['Debit/ Credit']=='Debit')?'Credit':'Debit'}))
+        entry['Balance'] = SumFieldIfs(entry['Line Items'],'Amount',['Debit/ Credit'],['Debit'])-SumFieldIfs(entry['Line Items'],'Amount',['Debit/ Credit'],['Credit'])
+        const [type,settype] = useState("");
+        const transaction = new Transaction('General');
+        const lineItems = transaction.firstLineItem();
+        const [input,setinput] = useState(Transaction.defaults)
+        const output = {}
+        output['Posting Date'] = date['value'];
+        output['Document Date'] = date['value'];
+        output['Line Items'] = [...transaction.process(input)['Line Items'],...entry['Line Items']];
+        output['Balance'] = SumFieldIfs(output['Line Items'],'Amount',['Debit/ Credit'],['Debit'])-SumFieldIfs(output['Line Items'],'Amount',['Debit/ Credit'],['Credit'])
+        
+        const [bank,setbank] = useState("");
+        const payEntry = {...output,['Line Items']:entry['Line Items']};
+        (bank!="")?payEntry['Line Items'].push({'Account':bank,'Amount':entry['Balance'],"Payee":ledger['value'], "Debit/ Credit":"Credit","General Ledger":new BankAccount(bank).data['General Ledger'], "Profit Center":new BankAccount(bank).data['Profit Center']}):()=>{}
+        payEntry["Balance"] = SumFieldIfs(payEntry['Line Items'],'Amount',['Debit/ Credit'],['Debit'])-SumFieldIfs(payEntry['Line Items'],'Amount',['Debit/ Credit'],['Credit'])
+        const clearingEntries = output['Line Items'].filter(item=>!item['calculated'])
+        const calculatedEntries = output['Line Items'].filter(item=>item['calculated'])
+        const errors = transaction.validate(output);
+        const removeitem = (i,array)=>{
+            return array.filter(item=>item!==i)
+        }
+
+        const addItem = (i,array)=>{
+            const newarray = [...array,i]
+            return newarray;
+        }
+
+        const selection = (e,i)=>{
+            const value = e.target.checked;
+            (value)?setselected(prevdata=>addItem(i,prevdata)):setselected(prevdata=>removeitem(i,prevdata))
+        }
+
+        const selectAll = ()=>{
+            const length = data.length;
+            for (let i=0; i<length; i++){
+            setselected(prevdata=>addItem(i,prevdata))
+            }
+        }
+
+        const lineItemChange = (index,field,e)=>{
+        const {value} = e.target;
+        setinput(prevdata=>({
+            ...prevdata,['Line Items']:prevdata['Line Items'].map((item,i)=>(i==index)?{...item,[field]:value}:item)
+        }))
+    }
+
+    const addLine = ()=>{
+        setinput(prevdata=>({
+            ...prevdata,['Line Items']:[...prevdata['Line Items'],Transaction.defaults['Line Items'][0]]
+        }))
+    }
+
+    const removeLine = (index)=>{
+        setinput(prevdata=>({
+            ...prevdata,['Line Items']:prevdata['Line Items'].filter((item,i)=>i!==index)
+        }))
+    }
+
+    const save = (type)=>{
+        let newdata = [];
+        const collections = loadData('transactions');
+        if (errors.length==0){
+            switch (type){
+                case 'Clear':
+                    newdata = [...collections,{...output,["Entry Date"]:new Date().toLocaleDateString()}]
+                    break
+                case 'Pay':
+                    newdata = [...collections,{...payEntry,["Entry Date"]:new Date().toLocaleDateString()}]
+                    break
+            }
+            saveData(newdata,'transactions')
+            alert(`Saved!`)
+            window.location.reload();
+
+        } else {
+            alert("There are still errors unresolved")
+        }
+    }
+        
+
+        return(
+            <div>
+                <div>
+                    <table>
+                        <thead>
+                            <tr>
+                                {display.map(field=><th>{field}</th>)}<th>Select</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.map((item,i)=>
+                                <tr>
+                                    {display.map(field=>
+                                    <td><p>{item[field]}</p></td>
+                                    )}
+                                    <td><input onChange={(e)=>selection(e,i)} checked={selected.includes(i)} type={"checkbox"}/></td>
+                                </tr>
+                    )}
+                        </tbody>
+                    </table>
+                    <button onClick={()=>selectAll()}>Select All</button>
+                    <button onClick={()=>setselected([])}>Deselect All</button>
+                    <button onClick={()=>settype("Clear")}>Clear</button>
+                    <button onClick={()=>settype("Pay")}>Clear & Pay</button>
+                    <button></button>
+                </div>
+                {type==="Clear" && <div className='clear'>
+                    <table>
+                        <thead>
+                            <tr><th className='lineItemCell'></th>{transaction.lineItems().map(item=><th className='lineItemCell'>{item['name']}</th>)}</tr>  
+                        </thead>
+                        <tbody>
+                            {clearingEntries.map((item,i)=>
+                                <tr><td className='lineItemCell'><button onClick={()=>removeLine(i)}>-</button></td>
+                            
+                                
+                                {transaction.lineItemByContent(item).map(field=>
+                                    <td className='lineItemCell'>
+                                        {field['input']=="input" && <input onChange={(e)=>lineItemChange(i,field['name'],e)} type={field['type']} value={item[field['name']]}/>}
+                                        {field['input']=="option" && <select onChange={(e)=>lineItemChange(i,field['name'],e)} value={item[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                                        {field['input']=="calculated" && <label>{item[field['name']]}</label>}
+                                    </td>
+                                )}</tr>
+                            )}
+                            {calculatedEntries.map(item=>
+                            <tr>
+                                <td className='lineItemCell'></td>
+                                {transaction.lineItems().map(field=>
+                                    <td className='lineItemCell'>{item[field['name']]}</td>
+                                )}
+                            
+                            </tr>
+                            )}
+                        </tbody>
+                    </table>
+                    {output['Balance']}
+                    <button className='blue' onClick={()=>addLine()}>+</button>
+                    <div className='errors'>
+                <h4>Please consider:</h4>
+                <ul>
+                    {errors.map((item,i)=><li key={i}>{item}</li>)}
+                </ul>
+            </div>
+            <button onClick={()=>save()}>Save</button>
+                </div>}
+            {type==="Pay" && 
+                <div>
+                    <label>Bank Account</label>
+                    <select value={bank} onChange={(e)=>setbank(e.target.value)}>{["",...BankAccount.list()].map(option=><option value={option}>{option}</option>)}</select>
+                </div>
+            }
+            {JSON.stringify(payEntry)}
+            </div>
+        )
+    }
+
     function Depreciation({query,method}){
         const date = query['date']['value'];
         let data = Asset.depreciationData(date);
@@ -2577,6 +2820,17 @@ function ReportDisplay(){
         )
 }
 
+    function PersonalAccountBalance({query}){
+        const {date}= query;
+        const data = Ledger.accountBalances(date['value']);
+        
+        return(
+            <div>
+                <DisplayAsTable collection={data}/>
+            </div>
+        )
+    }
+
     function VendorOpenItem({query}){
         const {vendor,date} = query
         return(
@@ -2584,7 +2838,7 @@ function ReportDisplay(){
                 {vendor['values'].map(item=>
                     <div>
                         <h4>{item}</h4>
-                        <DisplayAsTable collection={new Vendor(item).openitems(date['value'])}/>
+                        <DisplayAsTable collection={new Ledger(item).openItems(date['value'])}/>
                     </div>
                 )}
             </div>
@@ -2593,11 +2847,77 @@ function ReportDisplay(){
 
     function VendorLedger({query}){
         const {vendor,period} = query
-        const data = new Vendor(vendor['value']).ledger(period['range']);
+        const data = new Ledger(vendor['value']).ledger(period['range']);
 
         return(
             <div>
                 <DisplayAsTable collection={data}/>
+            </div>
+        )
+    }
+
+    function ViewDocument({query}){
+        const {docno} = query
+        const data = new Doc(docno['value']).data;
+        const fields = Object.keys(data).filter(field=>field!="Line Items")
+
+        return(
+            <div>
+                {fields.map(field=>
+                    <div><label>{field}</label><label>{data[field]}</label></div>
+                )}
+                <DisplayAsTable collection={data['Line Items']}/>
+            </div>
+        )
+    }
+
+    function VANAccounting({query}){
+        const {VAN} = query;
+        const defaults = {"Date":"","Amount":"","Text":""}
+        const [data,setdata] = useState([defaults]);
+        const entries = Transaction.VANSimulate(VAN['value'],data)
+        
+
+        const handleChange = (e,i,field)=>{
+            const {value} = e.target;
+            setdata(prevdata=>(prevdata.map((item,index)=>(i==index)?{...item,[field]:value}:item)))
+        }
+
+        const removeLine = (i) =>{
+            setdata(prevdata=>(prevdata.filter((item,index)=>index!==i)))
+        }
+
+        const addLine = ()=>{
+            setdata(prevdata=>([...prevdata,defaults]))
+        }
+
+        const post =()=> {
+            const result = Transaction.VANPosting(VAN['value'],data);
+            alert(result)
+        }
+        return(
+            <div>
+                <h4>VAN Accounting</h4>
+                <div>
+                    <table>
+                        <thead>
+                            <tr><th></th><th>Date</th><th>Amount</th><th>Text</th></tr>
+                        </thead>
+                        <tbody>
+                            {data.map((item,i)=>
+                                <tr>
+                                    <td><button onClick={()=>removeLine(i)}>-</button></td>
+                                    <td><input value={item['Date']} onChange={(e)=>handleChange(e,i,"Date")} type="date"/></td>
+                                    <td><input value={item['Amount']} onChange={(e)=>handleChange(e,i,"Amount")} type="number"/></td>
+                                    <td><input value={item['Text']} onChange={(e)=>handleChange(e,i,"Text")} type="text"/></td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                    <button onClick={()=>addLine()}>+</button>
+                </div>
+                {JSON.stringify(entries)}
+                <button onClick={()=>post()}>Post</button>
             </div>
         )
     }
@@ -2608,6 +2928,7 @@ function ReportDisplay(){
             {report=="assetledger" && <AssetLedger query={query}/>}
             {report=="assetregister" && <AssetRegister query={query}/>}
             {report=="assetschedule" && <AssetSchedule query={query}/>}
+            {report=="clearing" && <Clearing query={query}/>}
             {report=="costcenteritems" && <CostCenterItems query={query}/>}
             {report=="costtoprepaid" && <CostToPrepaid query={query}/>}
             {report=="costobjectbalance" && <CostObjectBalance query={query}/>}
@@ -2617,10 +2938,13 @@ function ReportDisplay(){
             {report=="depreciationretro" && <Depreciation query={query} method={"Retrospective"}/>}
             {report=="generalledger" && <GenLedger query={query}/>}
             {report=="materialledger" && <MaterialLedger query={query}/>}
+            {report=="personalaccountbalance" && <PersonalAccountBalance query={query}/>}
             {report=="paycalc" && <PayCalc query={query}/>}
             {report=="salaryrun" && <SalaryRun query={query}/>}
             {report=="vendoropenitem" && <VendorOpenItem query={query}/>}
             {report=="vendorledger" && <VendorLedger query={query}/>}
+            {report=="viewdocument" && <ViewDocument query={query}/>}
+            {report=="vanaccounting" && <VANAccounting query={query}/>}
             <div className='reportDisplayButtons'>
                 <button className="blue" onClick={()=>navigate('/report/'+report)}>Back</button>
             </div>
@@ -2735,13 +3059,12 @@ class Transaction{
     constructor(type){
         this.type = type
     }
-    firstLineItem(){
-        let items = this.lineItems();
+    firstLineItem(content){
+        let items = this.lineItemByContent(content);
         let notreq = [];
         switch (this.type){
             case 'Purchase':
                 items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Vendor.list()]}:item);
-                notreq = ["Account Type","Debit/ Credit","General Ledger","GST", "Profit Center", "Cost Center", "HSN", "Quantity", "Value Date", "Location"];
                 break
             case 'Sale':
                 items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Customer.list()]}:item);
@@ -2760,21 +3083,37 @@ class Transaction{
                 break
             case 'Asset Revaluation':
                 items=[];
+                break
+            case 'Payment':
+                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...BankAccount.list()]}:item);
+                
+                break
+            case 'Receipt':
+                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...BankAccount.list()]}:item);
+                break
             case 'General':
                 items = [];
                 break
         }
-        items = items.filter(item=>!notreq.includes(item['name']));
+        items = items.map(item=>(!notreq.includes(item['name'])?item:{...item,['input']:'calculated'}));
         return items
     }
-    lineItems(){
+    lineItemHeads(){
         let items = Transaction.lineItems
         let notreq = [];
+        const req ={
+            "Purchase":["Account","Transaction","Account Type","Presentation","General Ledger","Amount","Debit/ Credit","Text","GST","GST Supplier","HSN","Profit Center","Payee","TDS","TDS Base","TDS Deductee","Location","Quantity","Value Date"],
+            "Sale":["Account","Transaction","Account Type","Presentation","General Ledger","Amount","Debit/ Credit","Text","GST","GST Supplier","HSN","Profit Center","Payee","TDS","TDS Base","TDS Deductee","Location","Quantity","Value Date"],
+            "General":ListItems(Transaction.lineItems,'name')
+        }
         let calc = [];
         switch (this.type){
             case 'Sale':
                 notreq = ["Cost Object","Consumption Time From", "Consumption Time To", "Presentation","Purchase Order", "Sale Order", "Item", "Clearing Document", "Clearing Date"]
                 items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Material.list(),...Service.list(),...Asset.activeList()]}:item);
+                break
+            case 'Purchase':
+                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Material.list(),...Service.list(),...Asset.activeList(),...GeneralLedger.listtype('General'),...GeneralLedger.listtype('Cost Element')]}:item);
                 break
             case 'Manual Depreciation':
                 notreq = ["HSN","GST","GST Supplier","Location","Quantity","Value Date","TDS","TDS Base","TDS Deductee","Cost Object", "Presentation","Purchase Order", "Sale Order", "Item", "Clearing Document", "Clearing Date"]
@@ -2792,47 +3131,64 @@ class Transaction{
                 notreq = ["Depreciation Upto","TDS","TDS Base","TDS Deductee","Presentation","GST","GST Supplier","HSN","Location","Quantity","Value Date","Cost Object", "Purchase Order", "Sale Order", "Item", "Clearing Document", "Clearing Date","Consumption Time From","Consumption Time To"]
                 items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Asset.activeList(),...GeneralLedger.list()]}:item);
                 break
+            case 'Payment':
+                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Vendor.list(),...Customer.list(),...BankAccount.list()]}:item);
+                notreq = ["Transaction","Depreciation Upto","GST","GST Supplier","HSN","Cost Center","Cost Object","Consumption Tinme From","Consumption Time To","Locaiton","Quantity","Value Date","Purchase Order", "Sale Order", "Item"]
+                break
+            case 'Receipt':
+                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Vendor.list(),...Customer.list(),...BankAccount.list()]}:item);
+                notreq = ["Transaction","Depreciation Upto","GST","GST Supplier","HSN","Cost Center","Cost Object","Consumption Time From","Consumption Time To","Location","Quantity","Value Date","Purchase Order", "Sale Order", "Item"]
+                break
         }
-        items = items.filter(item=>!notreq.includes(item['name']));
+        items = items.filter(item=>req[this.type].includes(item['name']));
+
         items = items.map(item=>(calc.includes(item['name']))?{...item,["input"]:"calculated"}:item);
         return items
     }
     lineItemByContent(content){
-        let lineItems = this.lineItems();
+        let lineItems = this.lineItemHeads();
         const type = new Intelligence().ledgerType(content['Account']);
-        let notreq = [];
-        let calc = [];
+        const req = {
+            "":["Account"],
+            "Asset":["Account","Transaction","Amount","Debit/ Credit","Text","GST","GST Supplier","HSN","Depreciation Upto"],
+            "Material":["Account","Amount","Debit/ Credit","Text","GST","GST Supplier","HSN","Location","Quantity","Value Date"],
+            "Service":["Account","Amount","Debit/ Credit","Text","GST","GST Supplier","HSN","Profit Center"],
+            "Vendor":["Account","Presentation","Amount","Debit/ Credit","Text","Profit Center","Payee","TDS","TDS Base","TDS Deductee"],
+            "Customer":["Account","Amount","Debit/ Credit","Text","Profit Center","Payee","TDS","TDS Base","TDS Deductee"],
+            "Bank Account":["Account","Amount","Debit/ Credit","Text","VAN"],
+            "General Ledger":["Account","Amount","Debit/ Credit","Text","Profit Center","Consumption Time From","Consumption Time To","Cost Center","Cost Object","GST","GST Supplier","HSN"]
+        }
+
+        const transactions = {
+            "Material":["Receipt","Transfer","Consumption"],
+            "Asset":["Acquisition","Disposal","Depreciation","Revaluation"],
+        }
+        lineItems= lineItems.map(item=>(req[type].includes(item['name']))?item:{...item,['input']:'calculated'})
+        Object.keys(transactions).includes(type)?lineItems= lineItems.map(item=>(item['name']=="Transaction")?{...item,...{'input':"option","options":["",...transactions[type]]}}:item):()=>{}
         switch (type){
             case 'Vendor':
-                notreq = ["Transaction","HSN", "Cost Center", "Cost Object", "Consumption Time From", "Consumption Time To", "GST","Location", "Quantity", "Value Date", "Purchase Order", "Sale Order", "Item", "GST Supplier","Depreciation Upto"]
                 lineItems = lineItems.map(item=>(item['name']=="Presentation")?{...item,...{'input':"option","options":["",...GeneralLedger.listtype('Vendor')]}}:item)
                 break
             case 'Customer':
-                notreq = ["Transaction","HSN", "Cost Center", "Cost Object", "Consumption Time From", "Consumption Time To", "GST","Location", "Quantity", "Value Date", "Purchase Order", "Sale Order", "Item", "GST Supplier","Depreciation Upto"]
                 lineItems = lineItems.map(item=>(item['name']=="Presentation")?{...item,...{'input':"option","options":["",...GeneralLedger.listtype('Customer')]}}:item)
-                break
             case 'Asset':
                 const transaction = content['Transaction'];
-                calc.push("Profit Center");
-                (["Manual Depreciation","Asset Acquisition","Asset Disposal", "Asset Revaluation"].includes(this.type))?calc.push('Transaction'):()=>{};
-                notreq.push(...["Location","Cost Center","Cost Object","Purchase Order","Sale Order", "Item","Quantity","TDS","TDS Base","Value Date","TDS Deductee","Consumption Time From", "Consumption Time To"]);
-                lineItems = lineItems.map(item=>(item['name']=="Transaction")?{...item,...{'input':"option","options":["","Acquisition","Depreciation","Revaluation","Disposal"]}}:item);
                 lineItems = lineItems.map(item=>(item['name']=="Transaction" && this.type=="Sale")?{...item,...{'input':"option","options":["","Disposal"]}}:item);
                 lineItems = lineItems.map(item=>(item['name']=="Transaction" && this.type=="Manual Depreciation")?{...item,...{'input':"option","options":["","Depreciation"]}}:item)
                 lineItems = lineItems.map(item=>(item['name']=="Amount" && ["Disposal","Depreciation"].includes(transaction))?{...item,...{'input':"calculated"}}:item);
-                (transaction!="Depreciation")?notreq.push("Depreciation Upto"):()=>{};
-                
                 break
+            case 'Bank Account':
+                lineItems = lineItems.map(item=>(item['name']=="VAN")?{...item,...{'input':"option","options":["",new BankAccount(content['Account']).listOfVAN]}}:item)
+                break
+
         }
-        lineItems = lineItems.map(item=>(calc.includes(item['name']))?{...item,["input"]:"calculated"}:item)
-        lineItems = lineItems.map(item=>(notreq.includes(item['name']))?{...item,["input"]:"notrequired"}:item)
         return lineItems 
     }
     process(data){
         const result = {...data};
 
         result['Line Items'] = result['Line Items'].map(item=>this.lineItemProcess(item));
-        result['Line Items'].map(item=>(!item['GST']=="")?result['Line Items'].push(this.calcGST(item)):()=>{})
+        result['Line Items'].map(item=>(!item['GST']=="")?result['Line Items'].push(...this.calcGST(item)):()=>{})
         result['Line Items'].map(item=>(!item['TDS']=="")?result['Line Items'].push(this.calcTDS(item)):()=>{})
         result['Line Items'].map(item=>(item['Account Type']=="Asset" && item['Transaction']=="Depreciation")?result['Line Items'].push(this.depreciation(item)):()=>{});
         
@@ -2852,6 +3208,10 @@ class Transaction{
             case 'Customer':
                 result['General Ledger'] = result['Presentation'];
                 break
+            case 'Bank Account':
+                result['General Ledger'] = new BankAccount(result['Account']).data['General Ledger'];
+                result['Profit Center'] = new BankAccount(result['Account']).data['Profit Center'];
+                break
             case 'Material':
                 result['General Ledger'] = new Material(result['Account']).data['General Ledger']
                 break
@@ -2870,14 +3230,10 @@ class Transaction{
         return result
     }
     calcGST(data){
-        const constants = {
-            "Input 5%":{
-                "Rate":0.05,
-                "Debit/ Credit":"Debit"
-        }
-    }
-        let result = {'calculated':true};
-        result = (Object.keys(constants).includes(data['GST']))?{...result,...{'Amount':data['Amount']*constants[data['GST']]['Rate'],'Debit/ Credit':constants[data['GST']]['Debit/ Credit']}}:result;
+        let result = []
+        const Code = new GSTCodes(data['GST']);
+        result.push({'calculated':true,'Account':Code.data['CGST Account'],'General Ledger':Code.data['CGST Account'],'Amount':Code.data['Rate']/2*data['Amount']/100,"Debit/ Credit":data['Debit/ Credit'],"Profit Center":data['Profit Center'],"GST Supplier":data['GST Supplier']});       
+        result.push({'calculated':true,'Account':Code.data['SGST Account'],'Account Type':"General Ledger",'General Ledger':Code.data['SGST Account'],'Amount':Code.data['Rate']/2*data['Amount']/100,"Debit/ Credit":data['Debit/ Credit'],"Profit Center":data['Profit Center'],"GST Supplier":data['GST Supplier']});       
         return result
         
     }
@@ -2920,14 +3276,17 @@ class Transaction{
         return list
     }
     validateline(item,i){
-        let req = [];
+        let req = {
+            "Asset": ["Transaction","Debit/ Credit"],
+            "Material":["Location","Quantity","Value Date"],
+            "Service":["Profit Center"],
+            "Customer":["Debit/ Credit","Profit Center"],
+            "Vendor":["Debit/ Credit","Profit Center"],
+            "":["Account"],
+            "General Ledger":[]
+        };
         const list = [];
-        switch (item['Account Type']){
-            case 'Asset':
-                req = ["Transaction","Debit/ Credit"]
-                break
-        }
-        req.map(reqfield=>(item[reqfield]=="")?list.push(`Line ${i}: ${reqfield} required`):()=>{})
+        req[item['Account Type']].map(reqfield=>(item[reqfield]=="") ?list.push(`Line ${i}: ${reqfield} required`):()=>{})
         return list;
     }
     static database = ('transactions' in localStorage)?JSON.parse(localStorage.getItem('transactions')):[]
@@ -2938,18 +3297,20 @@ class Transaction{
         {"name":"Text","type":"text"},
     ]
     static lineItems = [
-        {"name":"Account", "placeholder":"Account","type":"text", "input":"option", "options":["",...Asset.activeList(),...GeneralLedger.list(), ...Material.list(),...Vendor.list(), ...Customer.list()]},
+        {"name":"Account", "placeholder":"Account","type":"text", "input":"option", "options":["",...Asset.activeList(),...BankAccount.list(),...GeneralLedger.list(), ...Material.list(),...Service.list(),...Vendor.list(), ...Customer.list()]},
         {"name":"Transaction", "input":"option","options":[""]},
         {"name":"Account Type", "input":"calculated"},
         {"name":"Presentation", "input":"notrequired"},
+        {"name":"VAN","input":"calculated"},
         {"name":"Depreciation Upto", "input":"input", "type":"date"},
         {"name":"General Ledger", "input":"calculated"},
         {"name":"Amount", "type":"number", "input":"input"},
         {"name":"Debit/ Credit", "type":"number", "input":"option","options":["","Debit","Credit"]},
         {"name":"Text","input":"input","type":"text"},
-        {"name":"GST","input":"option","options":["","Input 5%", "Input 12%", "Input 18%", "Input 28%", "Input 40%", "Output 5%", "Output 12%", "Output 18%", "Output 28%", "Output 40%"]},
-        {"name":"GST Supplier", "type":"number", "input":"option","options":["",Vendor.list(),Customer.list()]},
+        {"name":"GST","input":"option","options":["",GSTCodes.list]},
+        {"name":"GST Supplier", "type":"number", "input":"option","options":["",...Vendor.list(),...Customer.list()]},
         {"name":"HSN", "type":"number", "input":"input"},
+        {"name":"Payee", "type":"number", "input":"option","options":["",...Vendor.list(),...Customer.list()]},
         {"name":"TDS Base","input":"input","type":"number"},
         {"name":"TDS","input":"option","options":["","194C-Individual"]},
         {"name":"TDS Deductee", "type":"number", "input":"option","options":["",Vendor.list(),Customer.list()]},
@@ -2973,33 +3334,65 @@ class Transaction{
         "Document Date":"",
         "Reference":"",
         "Text":"",
-        "Line Items":[
-            {"calculated":false,"Account":"","Transaction":"","Amount":0, "Debit/ Credit":"Debit"},
-            {"calculated":false,"Account":"","Transaction":"","Amount":0, "Debit/ Credit":"Debit"}
-        ]
+        "Line Items":[this.defaultLine()]
+    }
+
+    static defaultLine(){
+        const data = {}
+        this.lineItems.map(item=>(data[item['name']]=""));
+        return data
+    }
+    static VANSimulate(VAN,data){
+        const list = [];
+        data.map(item=>list.push({...this.defaults,...{'Posting Date':item['Date'],'Line Items':this.VANLineItems(VAN,item)}}))
+        return list
+    }
+    static VANLineItems(VAN,line){
+        const list = [];
+        const VANData = BankAccount.getVANData(VAN);
+        list.push({'Account':VANData['Bank Account'],"Amount":line['Amount'],"Debit/ Credit":"Debit","Text":line["Text"],"Profit Center":new BankAccount(VANData['Bank Account']).data['Profit Center']})
+        list.push({'Account':VANData['Ledger'],"Amount":line['Amount'],"Debit/ Credit":"Credit","Text":line["Text"],"Profit Center":VANData['Profit Center']})
+        return list
+    }
+    static VANPosting(VAN,data){
+        const result = this.VANSimulate(VAN,data);
+        result.map(item=>this.post(item));
+        return('Success')
     }
     static post(data){
-        const updateddatabase = [...this.database,data]
+        const updateddatabase = [...this.database,{...data,['Document No']:this.newDocNo()}]
         this.savedatabase(updateddatabase);
+    }
+    static newDocNo(){
+        let start = 100000;
+        do {
+            start++;
+        } while (this.isDocExists(start));
+        return start
+    }
+    static isDocExists(docNo){
+        return (this.database.filter(item=>item['Document No']==docNo).length>0)
     }
     static savedatabase(database){
         localStorage.setItem('transactions',JSON.stringify(database));
     }
+    static docs = ListItems(this.database,"Document No")
 }
 
 function TransactionUI(){
     const {trans} = useParams();
-    const URLcheck = ["Sale","General","Purchase", "Manual Depreciation", "Asset Disposal", "Asset Acquisition", "Asset Revaluation"].includes(trans);
+    const URLcheck = ["Sale","General","Purchase", "Payment","Receipt", "Manual Depreciation", "Asset Disposal", "Asset Acquisition", "Asset Revaluation"].includes(trans);
     const navigate = useNavigate();
     const transaction = new Transaction(trans);
-    const firstLineItem = transaction.firstLineItem();
-    const lineItems = transaction.lineItems();
-    const [Account,...restOfField] = firstLineItem;
+    
+    const lineItems = transaction.lineItemHeads();
     const {headerFields} = Transaction;
     const [restOfAccount,...restOfFields] = lineItems;
     const [input,setinput] = useState(Transaction.defaults)
     const output = transaction.process(input);
     const [firstLine,...restOfLines] = output['Line Items'].filter(item=>!item['calculated']);
+    const firstLineItem = transaction.firstLineItem(firstLine);
+    const [Account,...restOfField] = firstLineItem;
     const calculatedLines = output['Line Items'].filter(item=>item['calculated']);
     const errors = transaction.validate(output);
     
@@ -3030,11 +3423,8 @@ function TransactionUI(){
     }
 
     const save = ()=>{
-        let newdata = [];
-        const collections = loadData('transactions');
         if (errors.length==0){
-            newdata = [...collections,{...output,["Entry Date"]:new Date().toLocaleDateString()}]
-            saveData(newdata,'transactions')
+            Transaction.post(output);
             alert(`Saved!`)
             window.location.reload();
 
@@ -3054,10 +3444,10 @@ function TransactionUI(){
                     <div className='headerField' key={index}><label>{item['name']}</label><input onChange={(e)=>headerChange(item['name'],e)} type={item['type']} value={output[item['name']]}/></div>
                 )}
                 {firstLineItem.map((item,index)=>
-                    <div className='headerField' key={index}><label>{item['name']}</label>
+                    <>{item['input']!='calculated' && <div className='headerField' key={index}><label>{item['name']}</label>
                         {item['input']=='input' && <input onChange={(e)=>lineItemChange(0,item['name'],e)} type={item['type']} value={firstLine[item['name']]}/>}
                         {item['input']=='option' && <select onChange={(e)=>lineItemChange(0,item['name'],e)} value={firstLine[item['name']]}>{item['options'].map(option=><option value={option}>{option}</option>)}</select>}
-                    </div>
+                    </div>}</>
                 )}
                 <div className='headerField'><label>Balance</label><label>{output['Balance']}</label></div>
             </div>
@@ -3101,7 +3491,6 @@ function TransactionUI(){
             <div className="transactionButtons">
                 <button onClick={()=>save()} className='green'>Save</button>
                 </div>
-        
         </div>}
         {!URLcheck && 
         <div className='transaction'>
@@ -3271,12 +3660,19 @@ class Ledger{
     openItems(date){
         const data = this.transactionsTill(date);
         const filtered = data.filter(item=>((!item['Clearing Document']!="" || new Date(item['Clearing Date'])>new Date(date))))
-        return filtered
+        const result = filtered.map(item=>
+            ({...item,
+                ...{
+                    "Age in Years":ageInYears(item['Posting Date'],date),
+                    "Age in Days":ageInDays(item['Posting Date'],date),
+                    "MSME Status":(item['Account Type']=="Vendor")?new Vendor('T K Salim').data['MSME Status']:"Not Applicable"
+                }}))
+        return result
     }
     ledger(period){
         const [from,to] = period;
         const list = [{"Date":from,"Description":"Opening", "Debit/ Credit":"", "Amount":this.opening(from)}];
-        this.transactions(period).map(item=>list.push({"Date":item['Posting Date'],"Description":item['Description'],"Debit/ Credit":item['Debit/ Credit'], "Amount":item['Amount']}))
+        this.transactions(period).map(item=>list.push({"Date":item['Posting Date'],"Description":item['Text'],"Debit/ Credit":item['Debit/ Credit'], "Amount":item['Amount']}))
         list.push({"Date":to,"Description":"Closing","Debit/ Credit":"", "Amount":this.closing(to)})
         return list
     }
@@ -3293,16 +3689,8 @@ class Ledger{
     GLOpenItems(presentation,date){
         const data = this.openItems(date);
         const filtered = data.filter(item=>item['General Ledger']==presentation);
-        const result = filtered.map(item=>
-            ({...item,
-                ...{
-                    "Age in Years":ageInYears(item['Posting Date'],date),
-                    "Age in Days":ageInDays(item['Posting Date'],date),
-                    "MSME Status":(item['Account Type']=="Vendor")?new Vendor('T K Salim').data['MSME Status']:"Not Applicable"
-                }}))
-        return result
+        return filtered
     }
-    
     static accountBalances(date){
         const presentations = [...GeneralLedger.listtype('Vendor'),...GeneralLedger.listtype('Customer')];
         const accounts = [...Vendor.list(),...Customer.list()];
@@ -3312,15 +3700,24 @@ class Ledger{
                 list.push({'Presentation':presentation,'Account':account,'Balance':new Ledger(account).GLClosing(presentation,date)})
             )
         )
-        return list;
+        const result = list.filter(item=>item['Balance']!=0);
+        return result;
     }
+}
+
+class Doc{
+    constructor(docno){
+        this.docno = docno;
+        this.data = Doc.data.filter(item=>item['Document No']==this.docno)[0]
+    }
+    static data = Transaction.database
 }
 
 function Scratch(){
 
     return(
         <>
-        <DisplayAsTable collection={new Ledger('T K Salim').GLOpenItems('Accounts Payable',"2025-10-31")}/>
+        {JSON.stringify(new Intelligence().transactionstable())}
         </>
     )
 }
