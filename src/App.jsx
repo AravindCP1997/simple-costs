@@ -40,7 +40,7 @@ function SumFieldIfs(collection,field,ranges,criteria){
             logic = false
         }
        } 
-       if (logic){subtotal+=parseFloat(collection[i][field])}
+       if (logic){subtotal+=parseFloat(collection[i][field] || 0)}
     }
     return subtotal
 }
@@ -118,6 +118,12 @@ class Company{
     }
     static timeMaintained = ('timecontrol' in localStorage);
     static timeControls = JSON.parse(localStorage.getItem('timecontrol'));
+    static isPostingDateOpen(date){
+        const firstPeriod = [this.timeControls['First']['From'],this.timeControls['First']['To']];
+        const secondPeriod = [this.timeControls['Second']['From'],this.timeControls['Second']['To']]
+        const result = (valueInRange(new Date(date),[new Date(firstPeriod[0]),new Date(firstPeriod[1])]) || valueInRange(new Date(date),[new Date(secondPeriod[0]),new Date(secondPeriod[1])]))
+        return result;
+    }
     static setTimeControl(periods){
         localStorage.setItem('timecontrol',JSON.stringify(periods))
     }
@@ -496,6 +502,57 @@ class BankAccount{
 
 }
 
+class VANEntry{
+    constructor(name,data){
+        this.name = name;
+        this.data = data;
+        this.vandata = BankAccount.getVANData(this.name);
+        this.ledgertype = new Intelligence().ledgerType(this.vandata['Ledger']); 
+        this.bank = new BankAccount(this.vandata['Bank Account'])
+    }
+    createEntry(line){
+        const entry = {};
+        entry['Posting Date']=line['Posting Date'];
+        entry['Document Date']=line['Document Date'];
+        entry['Line Items'] = [];
+        entry['Line Items'].push({
+            'Account':this.vandata['Bank Account'],
+            'Amount':line['Amount'],
+            'Account Type':"Bank Account",
+            'General Ledger':this.bank.data['General Ledger'],
+            'Debit/ Credit':'Debit',
+            'Text':line['Text'],
+            'Profit Center':this.bank.data['Profit Center'],
+        })
+        entry['Line Items'].push({
+            'Account':this.vandata['Ledger'],
+            'Amount':line['Amount'],
+            'Account Type':this.ledgertype,
+            'General Ledger':(this.ledgertype=="Customer")?this.vandata['Presentation']:this.vandata['Ledger'],
+            'Debit/ Credit':'Credit',
+            'Text':line['Text'],
+            'Profit Center':this.vandata['Profit Center'],
+        })
+        return entry
+    }
+    simulate(){
+        const list = [];
+        this.data.map(item=>list.push(this.createEntry(item)));
+        return list;
+    }
+    errors(){
+        const list = [];
+        this.simulate().map(item=>list.push(...new Transaction('General').validate(item)));
+        return list
+    }
+    post(){
+        const result = [];
+        const list = this.simulate();
+        list.map(item=>result.push(Transaction.post(item)));
+        return result
+    }
+}
+
 class Currency{
     constructor(name){
         this.name = name;
@@ -721,9 +778,9 @@ class CostObject{
 }
 
 class Employee{
-    constructor(id){
-        this.id = id;
-        this.data = Employee.data.filter(item=>item['ID']==this.id)[0];
+    constructor(code){
+        this.code = code;
+        this.data = Employee.data.filter(item=>item['Code']==this.code)[0];
     }
     daysalary(date){
         let scale = 0;
@@ -735,17 +792,17 @@ class Employee{
     salary(year,month){
         const dates = datesInMonth(year,month);
         const list = [];
-        dates.map(date=>list.push({"Date":date,"Salary":(this.daysalary(date)/daysInMonth(year,month))}))
+        dates.map(date=>list.push({"Date":date,"Salary":(this.daysalary(date)/daysInMonth(year,month)).toFixed(3)}))
         return list
     }
     static data = Database.load("Employee")
     static list(){
-        const list = ListItems(this.data,"ID")
+        const list = ListItems(this.data,"Code")
         return list
     }
     static salaryrun(year,month){
         const data = [];
-        this.list().map(item=>data.push({"ID":item,"Salary":SumField(new Employee(item).salary(year,month),"Salary")}))
+        this.list().map(item=>data.push({"Code":item,"Name":new Employee(item).data['Name'], "Salary":SumField(new Employee(item).salary(year,month),"Salary").toFixed(0)}))
         return data
     }
 }
@@ -753,6 +810,9 @@ class Employee{
 class Location{
     constructor(name){
         this.name = name;
+        this.data = Location.data.filter(item=>item['Name']==this.name)[0];
+        this.costcenter = new CostCenter(this.data['Cost Center']);
+        this.profitcenter = new ProfitCenter(this.costcenter.data['Profit Center']);
     }
     static data = Database.load("Location");
     static list(){
@@ -766,6 +826,51 @@ class Material{
         this.name = name;
         this.data = Material.data.filter(item=>item['Name']==this.name)[0]
     }
+    transactionsBefore(date){
+        const data = Transaction.transactionstable()
+        const filtered = data.filter(item=>item['Account']==this.name && new Date(item['Posting Date']) < new Date(date) )
+        return filtered
+    }
+    transactionsTill(date){
+        const data = Transaction.transactionstable()
+        const filtered = data.filter(item=>item['Account']==this.name && new Date(item['Posting Date']) <= new Date(date) )
+        return filtered
+    }
+    transactions(period){
+        const [from,to] = period;
+        const data = Transaction.transactionstable()
+        const filtered = data.filter(item=>item['Account']==this.name && new Date(item['Posting Date']) >= new Date(from) && new Date(item['Posting Date']) <= new Date(to) )
+        return filtered
+    }
+    opening(date){
+        const data = this.transactionsBefore(date);
+        const quantity = (data.length>0)? SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Credit"]):0;
+        const amount = (data.length>0)? SumFieldIfs(data,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Amount',["Debit/ Credit"],["Credit"]):0
+        const result = {"Quantity":quantity,"Amount":amount}
+        return result
+    }
+    closing(date){
+        const data = this.transactionsTill(date);
+        const quantity = (data.length>0)? SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Credit"]):0;
+        const amount = (data.length>0)? SumFieldIfs(data,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Amount',["Debit/ Credit"],["Credit"]):0
+        const result = {"Quantity":quantity,"Amount":amount}
+        return result
+    }
+    ledger(period){
+        const [from,to] = period;
+        const list = [];
+        list.push({"Document No":"","Posting Date":from,"Text":"Opening","Quantity":this.opening(from)['Quantity'],"Amount":this.opening(from)['Amount'],"Debit/ Credit":""})
+        this.transactions(period).map(item=>list.push({
+            "Document No":item['Document No'],
+            "Posting Date":item['Posting Date'],
+            "Text":item['Text'],
+            "Quantity":item['Quantity'],
+            "Amount":item['Amount'],
+            "Debit/ Credit":item['Debit/ Credit'],
+        }))
+        list.push({"Document No":"","Posting Date":to,"Text":"Closing","Quantity":this.closing(to)['Quantity'],"Amount":this.closing(to)['Amount'],"Debit/ Credit":""})
+        return list;  
+    }
     static data = Database.load("Material");
     static list(){
         const list = ListItems(this.data,"Name")
@@ -778,47 +883,190 @@ class MaterialInLocation{
         this.material = material;
         this.location = location;
     }
+    transactionsBefore(date){
+        const data = Transaction.transactionstable()
+        const filtered = data.filter(item=>item['Account']==this.material && item['Location']==this.location && new Date(item['Posting Date']) < new Date(date) )
+        return filtered
+    }
+    transactionsTill(date){
+        const data = Transaction.transactionstable()
+        const filtered = data.filter(item=>item['Account']==this.material && item['Location']==this.location && new Date(item['Posting Date']) <= new Date(date) )
+        return filtered
+    }
     transactions(period){
         const [from,to] = period;
-        const data = new Intelligence().transactionstable()
+        const data = Transaction.transactionstable()
         const filtered = data.filter(item=>item['Account']==this.material && item['Location']==this.location && new Date(item['Posting Date']) >= new Date(from) && new Date(item['Posting Date']) <= new Date(to) )
         return filtered
     }
     opening(date){
-        const data = new Intelligence().transactionstable()
-        const filtered = data.filter(item=>item['Account']==this.material && item['Location']==this.location && new Date(item['Posting Date']) < new Date(date))
-        const opening = (filtered.length>0)? SumFieldIfs(filtered,'Quantity',["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,'Quantity',["Debit/ Credit"],["Credit"]):0
-        return opening
-    }
-    openingValue(date){
-        const data = new Intelligence().transactionstable()
-        const filtered = data.filter(item=>item['Account']==this.material && item['Location']==this.location && new Date(item['Posting Date']) < new Date(date))
-        const opening = (filtered.length>0)? SumFieldIfs(filtered,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,'Amount',["Debit/ Credit"],["Credit"]):0
-        return opening
+        const data = this.transactionsBefore(date);
+        const quantity = (data.length>0)? SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Credit"]):0;
+        const amount = (data.length>0)? SumFieldIfs(data,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Amount',["Debit/ Credit"],["Credit"]):0
+        const result = {"Quantity":quantity,"Amount":amount}
+        return result
     }
     closing(date){
-        const data = new Intelligence().transactionstable()
-        const filtered = data.filter(item=>item['Account']==this.material && item['Location']==this.location && new Date(item['Posting Date']) <= new Date(date))
-        const opening = (filtered.length>0)?SumFieldIfs(filtered,'Quantity',["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,'Quantity',["Debit/ Credit"],["Credit"]):0
-        return opening
+        const data = this.transactionsTill(date);
+        const quantity = (data.length>0)? SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Credit"]):0;
+        const amount = (data.length>0)? SumFieldIfs(data,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Amount',["Debit/ Credit"],["Credit"]):0
+        const result = {"Quantity":quantity,"Amount":amount}
+        return result
     }
-    closingValue(date){
-        const data = new Intelligence().transactionstable()
-        const filtered = data.filter(item=>item['Account']==this.material && item['Location']==this.location && new Date(item['Posting Date']) <= new Date(date))
-        const opening = (filtered.length>0)?SumFieldIfs(filtered,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,'Amount',["Debit/ Credit"],["Credit"]):0
-        return opening
-    }
-    movementData(period){
+    receipts(period){
         const [from,to] = period;
-        const list = [{"Date":from,"Description":"Opening","Quantity":this.opening(from), "Amount":this.openingValue(from)}];
-        this.transactions(period).map(item=>list.push({"Date":item['Posting Date'],"Description":item['Description'],"Quantity":item['Quantity'], "Amount":item['Amount']}))
-        list.push({"Date":to,"Description":"Closing","Quantity":this.closing(to), "Amount":this.closingValue(to)})
+        const data = this.transactions(period).filter(item=>item['Transaction']=="Receipt");
+        const quantity = (data.length>0)? SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Credit"]):0;
+        const amount = (data.length>0)? SumFieldIfs(data,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Amount',["Debit/ Credit"],["Credit"]):0
+        const result = {"Quantity":quantity,"Amount":amount}
+        return result
+    }
+    costs(period){
+        const [from,to] = period;
+        const data = this.transactions(period).filter(item=>item['Transaction']=="Cost");
+        const amount = (data.length>0)? SumFieldIfs(data,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Amount',["Debit/ Credit"],["Credit"]):0
+        return amount
+    }
+    issues(period){
+        const [from,to] = period;
+        const data = this.transactions(period).filter(item=>item['Transaction']=="Issue");
+        const quantity = (data.length>0)? SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Credit"]):0;
+        const amount = (data.length>0)? SumFieldIfs(data,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Amount',["Debit/ Credit"],["Credit"]):0
+        const result = {"Quantity":quantity,"Amount":amount}
+        return result
+    }
+    ledger(period){
+        const [from,to] = period;
+        const list = [];
+        list.push({"Document No":"","Posting Date":from,"Text":"Opening","Quantity":this.opening(from)['Quantity'],"Amount":this.opening(from)['Amount'],"Debit/ Credit":""})
+        this.transactions(period).map(item=>list.push({
+            "Document No":item['Document No'],
+            "Posting Date":item['Posting Date'],
+            "Text":item['Text'],
+            "Quantity":item['Quantity'],
+            "Amount":item['Amount'],
+            "Debit/ Credit":item['Debit/ Credit'],
+        }))
+        list.push({"Document No":"","Posting Date":to,"Text":"Closing","Quantity":this.closing(to)['Quantity'],"Amount":this.closing(to)['Amount'],"Debit/ Credit":""})
+        return list;  
+    }
+    balances(period){
+        const [from,to] = period;
+        const data= {
+            'Material':this.material,
+            'General Ledger':new Material(this.material).data['General Ledger'],
+            "Location":this.location,
+            'Profit Center':new Location(this.location).profitcenter.name,
+            "Opening Quantity":this.opening(from)['Quantity'],
+            "Opening":this.opening(from)['Amount'],
+            "Receipt Quantity":this.receipts(period)['Quantity'],
+            "Receipt":this.receipts(period)['Amount'],
+            "Issue Quantity":this.issues(period)['Quantity'],
+            "Issue":this.issues(period)['Amount'],
+            "Cost":this.costs(period),
+            "Closing Quantity":this.closing(to)['Quantity'],
+            "Closing":this.closing(to)['Amount']
+        };
+        return data
+    }
+    valuetransactionsBefore(date){
+        const data = Transaction.transactionstable()
+        const filtered = data.filter(item=>item['Account']==this.material && item['Location']==this.location && new Date(item['Value Date']) < new Date(date) )
+        return filtered
+    }
+    valuetransactionsTill(date){
+        const data = Transaction.transactionstable()
+        const filtered = data.filter(item=>item['Account']==this.material && item['Location']==this.location && new Date(item['Value Date']) <= new Date(date) )
+        return filtered
+    }
+    valuetransactions(period){
+        const [from,to] = period;
+        const data = Transaction.transactionstable()
+        const filtered = data.filter(item=>item['Account']==this.material && item['Location']==this.location && new Date(item['Value Date']) >= new Date(from) && new Date(item['Value Date']) <= new Date(to) )
+        return filtered
+    }
+    valueopening(date){
+        const data = this.valuetransactionsBefore(date);
+        const quantity = (data.length>0)? SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Credit"]):0;
+        const amount = (data.length>0)? SumFieldIfs(data,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Amount',["Debit/ Credit"],["Credit"]):0
+        const result = {"Quantity":quantity,"Amount":amount}
+        return result
+    }
+    valueclosing(date){
+        const data = this.valuetransactionsTill(date);
+        const quantity = (data.length>0)? SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Credit"]):0;
+        const amount = (data.length>0)? SumFieldIfs(data,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Amount',["Debit/ Credit"],["Credit"]):0
+        const result = {"Quantity":quantity,"Amount":amount}
+        return result
+    }
+    valuereceipts(period){
+        const [from,to] = period;
+        const data = this.valuetransactions(period).filter(item=>item['Transaction']=="Receipt");
+        const quantity = (data.length>0)? SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Credit"]):0;
+        const amount = (data.length>0)? SumFieldIfs(data,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Amount',["Debit/ Credit"],["Credit"]):0
+        const result = {"Quantity":quantity,"Amount":amount}
+        return result
+    }
+    valuecosts(period){
+        const [from,to] = period;
+        const data = this.valuetransactions(period).filter(item=>item['Transaction']=="Cost");
+        const amount = (data.length>0)? SumFieldIfs(data,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Amount',["Debit/ Credit"],["Credit"]):0
+        return amount
+    }
+    valueissues(period){
+        const [from,to] = period;
+        const data = this.valuetransactions(period).filter(item=>item['Transaction']=="Issue");
+        const quantity = (data.length>0)? SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Quantity',["Debit/ Credit"],["Credit"]):0;
+        const amount = (data.length>0)? SumFieldIfs(data,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(data,'Amount',["Debit/ Credit"],["Credit"]):0
+        const result = {"Quantity":quantity,"Amount":amount}
+        return result
+    }
+    movement(period){
+        const [from,to] = period;
+        const data = {
+            'Material' : this.material,
+            'General Ledger':new Material(this.material).data['General Ledger'],
+            "Location":this.location,
+            'Profit Center':new Location(this.location).profitcenter.name,
+            "Opening Quantity":this.valueopening(from)['Quantity'],
+            "Opening":this.valueopening(from)['Amount'],
+            "Receipt Quantity":this.valuereceipts(period)['Quantity'],
+            "Receipt":this.valuereceipts(period)['Amount'],
+            "Issue Quantity":this.valueissues(period)['Quantity'],
+            "Issue":this.valueissues(period)['Amount'],
+            "Cost":this.valuecosts(period),
+            "Closing Quantity":this.valueclosing(to)['Quantity'],
+            "Closing":this.valueclosing(to)['Amount']
+        }
+        return data
+    }
+    movingCost(date){
+        const {Quantity,Amount} = this.valueclosing(date);
+        if (Quantity>0){
+            return (Amount/Quantity)
+        } else {
+            return 0
+        }
+    }
+    static MaterialBalances(period){
+        const materials = Material.list();
+        const locations = Location.list();
+        const list = [];
+        materials.map(material=>locations.map(location=>
+            list.push(new MaterialInLocation(material,location).balances(period))
+        ))
         return list
     }
-    unitCost(date){
-        const unitCost = this.closingValue(date)/this.closing(date);
-        return unitCost
+    static MaterialMovement(period){
+        const materials = Material.list();
+        const locations = Location.list();
+        const list = [];
+        materials.map(material=>locations.map(location=>
+            list.push(new MaterialInLocation(material,location).movement(period))
+        ))
+        return list
     }
+
 }
 
 class ProfitCenter{
@@ -992,7 +1240,7 @@ class Intelligence{
     }
     transactionstable(){
         const data = Database.load('Transaction')
-        const fields = ListofItems(objects['Transaction']['schema'],0).filter(item=>item!="Line Items")
+        const fields = ["Posting Date","Document No"]
         const table = []
         for (let i=0;i<data.length;i++) {
         const newdata = {}
@@ -1038,6 +1286,7 @@ class Intelligence{
         req.map(item=>(data[item]=="")?list.push(`${item} is required`):()=>{});
         data['Virtual Accounts'].map((item,index)=>(item["Virtual Account Number"]!="" && item['Ledger']=="")?list.push(`VAN ${item['Virtual Account Number']} requires a ledger`):()=>{})
         data['Virtual Accounts'].map((item,index)=>(item["Virtual Account Number"]!="" && item['Profit Center']=="")?list.push(`VAN ${item['Virtual Account Number']} requires a profit center`):()=>{})
+        data['Virtual Accounts'].map((item,index)=>(new Intelligence().ledgerType(item['Ledger'])=="Customer" && item['Presentation']=="")?list.push(`${item['Virtual Account Number']} requires presentation`):()=>{})
         return list
     }
     bankError(line,i){
@@ -1238,7 +1487,8 @@ const objects = {
             {"name":"Profit Center","datatype":"single","input":"option","options":["",...ProfitCenter.list()],"use-state":""},
             {"name":"Virtual Accounts","datatype":"collection","structure":[
                 {"name":"Virtual Account Number","datatype":"single","input":"input","type":"text","use-state":""},
-                {"name":"Ledger","datatype":"single","input":"option","options":["",...Customer.list()],"use-state":""},
+                {"name":"Ledger","datatype":"single","input":"option","options":["",...Customer.list(),...GeneralLedger.listtype('General')],"use-state":""},
+                {"name":"Presentation","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('Customer')]},
                 {"name":"Profit Center","datatype":"single","input":"option","options":["",...ProfitCenter.list()]}
             ],"use-state":[{"Virtual Account Number":"","Ledger":"","Profit Center":""}]},
         ]
@@ -1300,7 +1550,7 @@ const objects = {
     "Employee":{
         "name":"Employee",
         "schema": [
-            {"name":"ID", "value":"calculated"},
+            {"name":"Code", "datatype":"single", "input":"input","type":"text","use-state":""},
             {"name": "Name", "datatype":"single", "input":"input","type":"text","use-state":""},
             {"name": "Address", "datatype":"single", "input":"input","type":"text","use-state":""},
             {"name": "PIN", "datatype":"single", "input":"input","type":"number","use-state":""},
@@ -1808,13 +2058,15 @@ function SearchBar(){
 function Home(){
     const navigate = useNavigate();
   return(
-    <div className='home'>
-      <h1 className='title'>Simple Costs<sup className='reg'>&reg;</sup></h1>
-    <div className='actions'>{}
-      <div className='menu green' onClick={()=>navigate(`/record`)}><h2>Record</h2></div>
-      <div className='menu red' onClick={()=>navigate(`/control`)}><h2>Control</h2></div>
-      <div className='menu blue'  onClick={()=>navigate(`/reports`)}><h2>Report</h2></div>
-    </div>
+    <div className='homeOuter'>
+        <div className='home'>
+            <h1 className='title'>Simple Costs<sup className='reg'>&reg;</sup></h1>
+            <div className='actions'>{}
+                <div className='menu green' onClick={()=>navigate(`/record`)}><h2>Record</h2></div>
+                <div className='menu red' onClick={()=>navigate(`/control`)}><h2>Control</h2></div>
+                <div className='menu blue'  onClick={()=>navigate(`/reports`)}><h2>Report</h2></div>
+            </div>
+        </div>
     </div>
   )
 }
@@ -1846,11 +2098,12 @@ function Record(){
             </div>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Material</h4></div>
-                <div className='menuItem' onClick={()=>{navigate(`/materialissue`)}}><h4>Material Issue</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/materialissue`)}}><h4>Material Issue</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Payables & Receivables</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/transaction/Sale`)}}><h4>Sale</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/vanaccounting`)}}><h4>VAN Accounting</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle red'><h4>Payroll</h4></div>
@@ -1915,10 +2168,15 @@ function Reports(){
                 <div className='menuTitle blue'><h4>Financial Accounting</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/accountbalances`)}}><h4>Account Balances</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/generalledger`)}}><h4>Ledger</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/transactions`)}}><h4>Transactions</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/viewdocument`)}}><h4>View Document</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle blue'><h4>Materials</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/materialledger`)}}><h4>Material Ledger</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/materialinlocation`)}}><h4>Material In Location Ledger</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/materialbalances`)}}><h4>Material Balances</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/report/materialmovement`)}}><h4>Material Movement</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle blue'><h4>Payables & Receivables</h4></div>
@@ -1984,7 +2242,8 @@ class Code{
         "General Ledger":[200000,299999],
         "Vendor":[300000,399999],
         "Customer":[400000,499999],
-        "Payment Term":[500,559]
+        "Payment Term":[500,559],
+        "Employee":[10000,99999]
     }
 }
 
@@ -2041,7 +2300,7 @@ function CRUD({method}){
                 break
         }
         req.map(item=>(output[item]=="")?list.push(`${item} required`):()=>{});
-        (["Payment Term","Bank Account","Segment","Asset Class","Customer","Asset","Profit Center","Cost Center","General Ledger", "Vendor"].includes(object))?list.push(...new Code(object).checkCode(output['Code'])):()=>{};
+        (["Payment Term","Employee","Bank Account","Segment","Asset Class","Customer","Asset","Profit Center","Cost Center","General Ledger", "Vendor"].includes(object))?list.push(...new Code(object).checkCode(output['Code'])):()=>{};
         return list
     }
     
@@ -2292,13 +2551,29 @@ class Report{
             {"name":"ledger","label":"Ledger","fields":["values"]},
             {"name":"period","label":"Period","fields":["range"]},
         ],
-        "materialledger":[
+        "materialissue":[
+            {"name":"postingdate","label":"Posting Date","type":"date","fields":["value"]},
+            {"name":"valuedate","label":"Value Date","type":"date","fields":["value"]},
+            {"name":"material","label":"Material","type":"text","fields":["value"]},
+            {"name":"location","label":"Location","type":"text","fields":["value"]},
+        ],
+        "materialinlocation":[
             {"name":"material","label":"Material","type":"text","fields":["value"]},
             {"name":"location","label":"Location","type":"text","fields":["value"]},
             {"name":"period","label":"Period","type":"date","fields":["range"]},
         ],
+        "materialledger":[
+            {"name":"material","label":"Material","type":"text","fields":["value"]},
+            {"name":"period","label":"Period","type":"date","fields":["range"]},
+        ],
+        "materialbalances":[
+            {"name":"period","label":"Period","type":"date","fields":["range"]},
+        ],
+        "materialmovement":[
+            {"name":"period","label":"Period","type":"date","fields":["range"]},
+        ],
         "paycalc":[
-            {"name":"id", "label":"Employee ID","fields":["value"]},
+            {"name":"code", "label":"Employee Code","fields":["value"]},
             {"name":"year", "label":"Year","fields":["value"]},
             {"name":"month", "label":"Month","fields":["value"]},
         ],
@@ -2308,6 +2583,9 @@ class Report{
         "salaryrun":[
             {"name":"year", "label":"Year","fields":["value"]},
             {"name":"month", "label":"Month","fields":["value"]},
+        ],
+        "transactions":[
+            {"name":"period","label":"Period","type":"date","fields":["range"]}
         ],
         "vanaccounting":[
             {"name":"VAN","label":"VAN","type":"text","fields":["value"]}
@@ -2789,10 +3067,109 @@ function ReportDisplay(){
         )
     }
 
+    function MaterialIssueUI({query}){
+
+    const{postingdate,valuedate,material,location} = query;
+
+    const PDate = postingdate['value'];
+    const Material = material['value'];
+    const Location = location['value'];
+    const VDate = valuedate['value'];
+
+    const defaults = [
+        {"Transaction":"Transfer","Location":"","Quantity":0,"Product":"","General Ledger":"","Cost Center":"","Cost Object":"","Profit Center":"","Consumption Time From":"","Consumption Time To":""}
+    ]
+    const [input,setinput] = useState(defaults);
+    const mi = new MaterialIssue(Material,Location,VDate,PDate,input);
+    const schema = mi.schema;
+    const errors = mi.validate();
+    const entry = mi.createEntry();
+
+    const lineItemChange = (index,field,e)=>{
+        const {value} = e.target;
+        setinput(prevdata=>(
+            prevdata.map((item,i)=>(i==index)?{...item,[field]:value}:item)
+        ))
+    }
+
+    const addLine = ()=>{
+        setinput(prevdata=>([...prevdata,defaults[0]]))
+    }
+
+    const removeLine = (index)=>{
+        setinput(prevdata=>(
+            prevdata.filter((item,i)=>i!==index)
+        ))
+    }
+
+    const post =()=>{
+        const result = mi.post();
+        alert(result);
+    }
+
+    return (
+        <div className='transaction'>
+            <div className='lineItems'>
+                <table>
+                    <thead>
+                        <tr><th></th>{schema[0].map(item=><th>{item['name']}</th>)}</tr>
+                    </thead>
+                    <tbody>
+                        {input.map((item,i)=>
+                            <tr><td><button onClick={()=>removeLine(i)}>-</button></td>{schema[i].map(field=>
+                            <td>
+                                {field['input']=="input" && <input onChange={(e)=>lineItemChange(i,field['name'],e)} type={field['type']} value={input[i][field['name']]}/>}
+                                {field['input']=="option" && <select onChange={(e)=>lineItemChange(i,field['name'],e)} value={input[i][field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                                {field['input']=="calculated" && <label></label>}
+                            </td>)}
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+                <button onClick={()=>addLine()}>+</button>
+            </div>
+            <button onClick={()=>post()}>POST</button>
+            {JSON.stringify(entry)}
+        </div>
+    )
+    }
+
     function MaterialLedger({query}){
-        const {material,location,period} = query
-        const data = new MaterialInLocation(material['value'],location['value']).movementData(period['range'])
+        const {material, period} = query
+        const data = new Material(material['value']).ledger(period['range'])
         return(
+            <div>
+                <DisplayAsTable collection={data}/>
+            </div>
+        )
+    }
+
+    function MaterialInLocationLedger({query}){
+        const {material,location, period} = query
+        const data = new MaterialInLocation(material['value'],location['value']).ledger(period['range'])
+        return(
+            <div>
+                <DisplayAsTable collection={data}/>
+            </div>
+        )
+    }
+
+    function MaterialBalances({query}){
+        const {period} = query;
+        const data = MaterialInLocation.MaterialBalances(period['range']);
+
+        return (
+            <div>
+                <DisplayAsTable collection={data}/>
+            </div>
+        )
+    }
+
+    function MaterialMovement({query}){
+        const {period} = query;
+        const data = MaterialInLocation.MaterialMovement(period['range']);
+
+        return (
             <div>
                 <DisplayAsTable collection={data}/>
             </div>
@@ -2801,8 +3178,8 @@ function ReportDisplay(){
 
     function PayCalc({query}){
         const location = useLocation();
-        const {id,year,month} = query;
-        const data = new Employee(id['value']).salary(year['value'],month['value'])
+        const {code,year,month} = query;
+        const data = new Employee(code['value']).salary(year['value'],month['value'])
         return(
             <>
             <DisplayAsTable collection={data}/>
@@ -2827,6 +3204,31 @@ function ReportDisplay(){
         return(
             <div>
                 <DisplayAsTable collection={data}/>
+            </div>
+        )
+    }
+
+    function Transactions({query}){
+        const {period}= query;
+        const data = Transaction.transactions(period['range']);
+        const fields = ["Document No","Posting Date","Document Date","Reference","Account","General Ledger","Amount","Debit/ Credit","Account Type", "Presentation","Transaction","Profit Center"]
+        const navigate = useNavigate();
+        const view = (docNo) =>{
+            navigate('/reportdisplay/viewdocument',{state:{"docno":{"value":docNo}}})
+        } 
+
+        return(
+            <div>
+                <table>
+                    <thead>
+                        <tr>{fields.map(item=><th>{item}</th>)}</tr>
+                    </thead>
+                    <tbody>
+                        {data.map(item=>
+                            <tr onDoubleClick={()=>view(item['Document No'])}>{fields.map(field=><td>{item[field]}</td>)}</tr>
+                        )}
+                    </tbody>
+                </table>
             </div>
         )
     }
@@ -2873,10 +3275,8 @@ function ReportDisplay(){
 
     function VANAccounting({query}){
         const {VAN} = query;
-        const defaults = {"Date":"","Amount":"","Text":""}
+        const defaults = {"Positng Date":"","Document Date":"","Amount":"","Text":""}
         const [data,setdata] = useState([defaults]);
-        const entries = Transaction.VANSimulate(VAN['value'],data)
-        
 
         const handleChange = (e,i,field)=>{
             const {value} = e.target;
@@ -2891,8 +3291,10 @@ function ReportDisplay(){
             setdata(prevdata=>([...prevdata,defaults]))
         }
 
+        const vanentry = new VANEntry(VAN['value'],data)
+        const simulation = vanentry.simulate();
         const post =()=> {
-            const result = Transaction.VANPosting(VAN['value'],data);
+            const result = vanentry.post()
             alert(result)
         }
         return(
@@ -2901,13 +3303,14 @@ function ReportDisplay(){
                 <div>
                     <table>
                         <thead>
-                            <tr><th></th><th>Date</th><th>Amount</th><th>Text</th></tr>
+                            <tr><th></th><th>Posting Date</th><th>Document Date</th><th>Amount</th><th>Text</th></tr>
                         </thead>
                         <tbody>
                             {data.map((item,i)=>
                                 <tr>
                                     <td><button onClick={()=>removeLine(i)}>-</button></td>
-                                    <td><input value={item['Date']} onChange={(e)=>handleChange(e,i,"Date")} type="date"/></td>
+                                    <td><input value={item['Posting Date']} onChange={(e)=>handleChange(e,i,"Posting Date")} type="date"/></td>
+                                    <td><input value={item['Document Date']} onChange={(e)=>handleChange(e,i,"Document Date")} type="date"/></td>
                                     <td><input value={item['Amount']} onChange={(e)=>handleChange(e,i,"Amount")} type="number"/></td>
                                     <td><input value={item['Text']} onChange={(e)=>handleChange(e,i,"Text")} type="text"/></td>
                                 </tr>
@@ -2916,7 +3319,6 @@ function ReportDisplay(){
                     </table>
                     <button onClick={()=>addLine()}>+</button>
                 </div>
-                {JSON.stringify(entries)}
                 <button onClick={()=>post()}>Post</button>
             </div>
         )
@@ -2937,10 +3339,15 @@ function ReportDisplay(){
             {report=="depreciationpros" && <Depreciation query={query} method={"Prospective"}/>}
             {report=="depreciationretro" && <Depreciation query={query} method={"Retrospective"}/>}
             {report=="generalledger" && <GenLedger query={query}/>}
+            {report=="materialissue" && <MaterialIssueUI query={query}/>}
+            {report=="materialinlocation" && <MaterialInLocationLedger query={query}/>}
             {report=="materialledger" && <MaterialLedger query={query}/>}
+            {report=="materialbalances" && <MaterialBalances query={query}/>}
+            {report=="materialmovement" && <MaterialMovement query={query}/>}
             {report=="personalaccountbalance" && <PersonalAccountBalance query={query}/>}
             {report=="paycalc" && <PayCalc query={query}/>}
             {report=="salaryrun" && <SalaryRun query={query}/>}
+            {report=="transactions" && <Transactions query={query}/>}
             {report=="vendoropenitem" && <VendorOpenItem query={query}/>}
             {report=="vendorledger" && <VendorLedger query={query}/>}
             {report=="viewdocument" && <ViewDocument query={query}/>}
@@ -3100,10 +3507,10 @@ class Transaction{
     }
     lineItemHeads(){
         let items = Transaction.lineItems
-        let notreq = [];
         const req ={
             "Purchase":["Account","Transaction","Account Type","Presentation","General Ledger","Amount","Debit/ Credit","Text","GST","GST Supplier","HSN","Profit Center","Payee","TDS","TDS Base","TDS Deductee","Location","Quantity","Value Date"],
             "Sale":["Account","Transaction","Account Type","Presentation","General Ledger","Amount","Debit/ Credit","Text","GST","GST Supplier","HSN","Profit Center","Payee","TDS","TDS Base","TDS Deductee","Location","Quantity","Value Date"],
+            "Asset Acquisition":["Account","Transaction","Amount","Debit/ Credit","Text","Profit Center","GST","GST Supplier","HSN","Presentation","Payee","TDS","TDS Base","Deductee"],
             "General":ListItems(Transaction.lineItems,'name')
         }
         let calc = [];
@@ -3120,7 +3527,6 @@ class Transaction{
                 items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Asset.activeList()]}:item);
                 break
             case 'Asset Acquisition':
-                notreq = ["Cost Center","Depreciation Upto","Location","Quantity","Value Date","Cost Object", "Purchase Order", "Sale Order", "Item", "Clearing Document", "Clearing Date","Consumption Time From","Consumption Time To"]
                 items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Asset.activeList()]}:item);
                 break
             case 'Asset Disposal':
@@ -3278,6 +3684,7 @@ class Transaction{
     validateline(item,i){
         let req = {
             "Asset": ["Transaction","Debit/ Credit"],
+            "Bank Account":[],
             "Material":["Location","Quantity","Value Date"],
             "Service":["Profit Center"],
             "Customer":["Debit/ Credit","Profit Center"],
@@ -3290,6 +3697,23 @@ class Transaction{
         return list;
     }
     static database = ('transactions' in localStorage)?JSON.parse(localStorage.getItem('transactions')):[]
+    static transactionstable(){
+        const data = this.database
+        const fields = ["Posting Date","Document No"]
+        const table = []
+        for (let i=0;i<data.length;i++) {
+        const newdata = {}
+        fields.map(field=>newdata[field] = data[i][field])
+        data[i]['Line Items'].map(item=>table.push({...newdata,...item}))
+        }
+        return table
+    }
+    static transactions(period){
+        const [from,to] = period;
+        const data = this.transactionstable().filter(item=>new Date(item['Posting Date'])>= new Date(from) && new Date(item['Posting Date'])<= new Date(to))
+        return data
+    }
+
     static headerFields = [
         {"name":"Posting Date","type":"date"},
         {"name":"Document Date","type":"date"},
@@ -3362,6 +3786,7 @@ class Transaction{
     static post(data){
         const updateddatabase = [...this.database,{...data,['Document No']:this.newDocNo()}]
         this.savedatabase(updateddatabase);
+        return 'Success'
     }
     static newDocNo(){
         let start = 100000;
@@ -3503,132 +3928,142 @@ function TransactionUI(){
 }
 
 class MaterialIssue{
-    constructor(){
-
+    constructor(material,location,valuedate,postingdate,data){
+        this.material = material;
+        this.location = location;
+        this.valuedate = valuedate;
+        this.postingdate = postingdate;
+        this.data = data;
+        this.schema = this.data.map(item=>this.modifySchema(item['Transaction']))
     }
-    static lineItems(data){
-        let lineItems = MaterialIssue.template;
-        let notreq = []
-        switch (data['Issue Type']){
-            case 'Stock Transfer':
-                notreq = ["Value Date","To Product","To Cost Element", "Cost Center","Cost Object","Consumption Time From", "Consumption Time To", "To Asset"]
-                break
-            case 'Consumption - Product':
-                notreq = ["To Cost Element", "Cost Center","Cost Object","Consumption Time From", "Consumption Time To", "To Asset"]
-                break
-            case 'Consumption - Cost Element':
-                notreq = ["To Product", "To Asset", "To Location", "Value Date"]
-                break
-            case 'Consumption - Asset':
-                notreq = ["To Product", "To Cost Element", "Cost Center","Cost Object","Consumption Time From", "Consumption Time To", "To Location", "Value Date"]
-                break
+    modifySchema(transaction){
+        const schema = MaterialIssue.schema;
+        const calc = {
+            "":["Cost Center","Profit Center"],
+            "Transfer":["General Ledger","Cost Center","Cost Object","Product","Profit Center","Consumption Time From","Consumption Time To"],
+            "Consumption - Product":["General Ledger","Cost Center","Cost Object","Profit Center","Consumption Time From","Consumption Time To"],
+            "Consumption - Cost":["Location","Profit Center","Product"],
+            "Consumption - General":["Location","Cost Center","Cost Object","Product","Consumption Time From","Consumption Time To"]
         }
-        lineItems = lineItems.map(item=>(notreq.includes(item['name']))?{...item,['input']:"notrequired"}:item);
-        return lineItems
+        const modifiedSchema = schema.map(item=>(calc[transaction].includes(item['name']))?{...item,['input']:'calculated'}:item);
+        return modifiedSchema;
     }
-    static headerFields = [
-        {"name":"Value Date","type":"date"},
-        {"name":"Text","type":"text"},
-    ]
-    static template = [
-        {"name":"Material Issued","input":"option","options":["",...Material.list()]},
-        {"name":"From Location","input":"option","options":["",...Location.list()]},
-        {"name":"Issue Type","input":"option","options":["","Stock Transfer","Consumption - Product", "Consumption - Cost Element", "Consumption - Asset"]},
+    debitLines(line){
+        let lineItem = {};
+        const transaction = line['Transaction'];
+        if (transaction=="Transfer"){
+            lineItem={
+                'Account':this.material,
+                'Location':line['Location'],
+                'Debit/ Credit':'Debit',
+                'Quantity':line['Quantity'],
+                'Transaction':'Receipt',
+                'Profit Center': new Location(line['Location']).profitcenter.name,
+                'Amount':0,
+                'General Ledger':new Material(this.material).data['General Ledger'],
+                'Value Date':this.valuedate,
+                'Text':`${this.material} Transfer from ${this.location} to ${line['Location']}`
+            }
+        } else if (transaction=="Consumption - Product"){
+            lineItem={
+                'Account':line['Product'],
+                'Location':line['Location'],
+                'Debit/ Credit':'Debit',
+                'Quantity':"",
+                'Transaction':"Cost",
+                'Profit Center': new Location(line['Location']).profitcenter.name,
+                'Amount':0,
+                'General Ledger':new Material(line['Product']).data['General Ledger'],
+                'Value Date':this.valuedate,
+                'Text':`${this.material} from ${this.location} consumed by ${line['Product']} at ${line['Location']}`
+            }
+        } else if (transaction=="Consumption - Cost"){
+            lineItem={
+                'Account':line['General Ledger'],
+                'Debit/ Credit':'Debit',
+                'Cost Center':line['Cost Center'],
+                'Cost Object':line['Cost Object'],
+                'Profit Center': line['Profit Center'],
+                'Amount':0,
+                'General Ledger':line['General Ledger'],
+                'Consumption Time From':line['Consumption Time From'],
+                'Consumption Time To':line['Consumption Time To'],
+                'Text':`${this.material} from ${this.location} consumed as ${line['General Ledger']}`
+            }
+        } else if (transaction=="Consumption - General"){
+            lineItem={
+                'Account':line['General Ledger'],
+                'Debit/ Credit':'Debit',
+                'Profit Center': line['Profit Center'],
+                'Amount':0,
+                'General Ledger':line['General Ledger'],
+                'Text':`${this.material} from ${this.location} consumed as ${line['General Ledger']}`
+            }
+        }
+
+        return lineItem
+    }
+    creditLine(){
+        const lineItem={
+            'Account':this.material,
+            'Amount':0,
+            'Debit/ Credit':"Debit",
+            'Location':this.location,
+            'Quantity':SumField(this.data,"Quantity"),
+            'Value Date':this.valuedate,
+            'Profit Center':new Location(this.location).profitcenter.name,
+            'General Ledger':new Material(this.material).data['General Ledger'],
+            'Text':`Issue of ${this.material} from ${this.location} on ${this.valuedate}`,
+            'Transaction':'Issue'
+        }
+        return lineItem
+    }
+    createEntry(){
+        const entry = {};
+        const errors = this.validate();
+        if (errors.length == 0){
+            entry['Posting Date']=this.postingdate;
+            entry['Document Date'] =this.valuedate;
+            entry['Line Items'] = [this.creditLine(),...this.data.map(item=>this.debitLines(item))];
+            return entry;
+        } else {
+            return 'Error';
+        }
+    }
+    validate(){
+        const errors = [];
+        (!Company.isPostingDateOpen(this.postingdate))?errors.push('Posting date not in open period'):()=>{};
+        const mand = {
+            "":["Location"],
+            "Transfer":["Location","Quantity"],
+            "Consumption - Product":["Location","Quantity","Product"],
+            "Consumption - Cost":["Quantity","General Ledger","Cost Center","Cost Object","Profit Center","Consumption Time From","Consumption Time To"],
+            "Consumption - General":["Quantity","General Ledger","Profit Center"]
+        }
+        this.data.map((item,i)=>mand[item['Transaction']].map(field=>(item[field]=="")?errors.push(`At ${i}, ${field} is required`):()=>{}))
+        return errors
+    }
+    post(){
+        const entry = this.createEntry();
+        if (entry!="Error"){
+            Transaction.post(entry);
+            return 'Success';
+        } else {
+            return this.validate();
+        }
+    }
+    static schema = [
+        {"name":"Transaction","input":"option","options":["","Transfer","Consumption - Product","Consumption - Cost","Consumption - General"]},
+        {"name":"Location","input":"option","options":["",...Location.list()]},
         {"name":"Quantity","input":"input","type":"number"},
-        {"name":"To Location","input":"option","options":["",...Location.list()]},
-        {"name":"To Product","input":"option","options":["",...Material.list()]},
-        {"name":"Value Date","input":"input","type":"date"},
-        {"name":"To Cost Element","input":"option","options":["",...GeneralLedger.listtype('Cost Element')]},
+        {"name":"Product","input":"option","options":["",...Material.list()]},
+        {"name":"General Ledger","input":"option","options":["",...GeneralLedger.listtype('General'),...GeneralLedger.listtype('Cost Element')]},
         {"name":"Cost Center","input":"option","options":["",...CostCenter.list()]},
         {"name":"Cost Object","input":"option","options":["",...CostObject.list()]},
         {"name":"Consumption Time From","input":"input","type":"date"},
         {"name":"Consumption Time To","input":"input","type":"date"},
-        {"name":"To Asset","input":"option","options":["",...Asset.activeList()]},
+        {"name":"Profit Center","input":"option","options":["",...ProfitCenter.list()]},
     ]
-    static defaults = {
-        "Posting Date":"",
-        "Document Date":"2025-03-31",
-        "Reference":"Random Ref",
-        "Text":"Random",
-        "Line Items":[
-            {"calculated":false,"Material":"", "Location":"", "Quantity":""}
-        ]
-    }
-}
-
-function MaterialIssueUI(){
-    const materialIssue = new MaterialIssue();
-    const {headerFields,defaults, lineItems} = MaterialIssue;
-    const [input,setinput] = useState(defaults);
-    const output = input;
-
-    const headerChange = (field,e) =>{
-        const {value} = e.target;
-        setinput(prevdata=>({
-            ...prevdata,[field]:value
-        }))
-    }
-
-    const lineItemChange = (index,field,e)=>{
-        const {value} = e.target;
-        setinput(prevdata=>({
-            ...prevdata,['Line Items']:prevdata['Line Items'].map((item,i)=>(i==index)?{...item,[field]:value}:item)
-        }))
-    }
-
-    const addLine = ()=>{
-        setinput(prevdata=>({
-            ...prevdata,['Line Items']:[...prevdata['Line Items'],defaults['Line Items'][0]]
-        }))
-    }
-
-    const removeLine = (index)=>{
-        setinput(prevdata=>({
-            ...prevdata,['Line Items']:prevdata['Line Items'].filter((item,i)=>i!==index)
-        }))
-    }
-
-    const save = ()=>{
-        let newdata = [];
-        const collections = loadData('transactions');
-        if (errors.length==0){
-            newdata = [...collections,{...output,["Entry Date"]:new Date().toLocaleDateString()}]
-            saveData(newdata,'transactions')
-            alert(`Saved!`)
-            cancel()
-        } else {
-            alert("There are still errors unresolved")
-        }
-    }
-
-    return (
-        <div className='transaction'>
-            <div className="header">
-                {headerFields.map((item,index)=>
-                    <div className='headerField' key={index}><label>{item['name']}</label><input onChange={(e)=>headerChange(item['name'],e)} type={item['type']} value={output[item['name']]}/></div>
-                )}
-            </div>
-            <div className='lineItems'>
-                <table>
-                    <thead>
-                        <tr><th></th>{MaterialIssue.template.map(item=><th>{item['name']}</th>)}</tr>
-                    </thead>
-                    <tbody>
-                        {output['Line Items'].map((item,i)=>
-                            <tr><td><button onClick={()=>removeLine(i)}>-</button></td>{MaterialIssue.lineItems(item).map(field=>
-                            <td>
-                                {field['input']=="input" && <input onChange={(e)=>lineItemChange(i,field['name'],e)} type={field['type']} value={output['Line Items'][i][field['name']]}/>}
-                                {field['input']=="option" && <select onChange={(e)=>lineItemChange(i,field['name'],e)} value={output['Line Items'][i][field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
-                                {field['input']=="calculated" && <label>{output['Line Items'][i][field['name']]}</label>}
-                            </td>)}
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-                <button onClick={()=>addLine()}>+</button>
-            </div>
-        </div>
-    )
 }
 
 class Ledger{
@@ -3716,9 +4151,10 @@ class Doc{
 function Scratch(){
 
     return(
-        <>
-        {JSON.stringify(new Intelligence().transactionstable())}
-        </>
+        <div>
+        {JSON.stringify(new MaterialInLocation("Phosphoric Acid","Front Gate").valueclosing(["2025-01-01","2025-10-31"][1]))}
+        <DisplayAsTable collection={MaterialInLocation.MaterialMovement(["2025-01-01","2025-10-31"])}/>
+        </div>
     )
 }
 
@@ -3747,7 +4183,6 @@ if (new Company().status){
       <Route path="/timecontrol" element={<TimeControlling/>}/>
       <Route path="/trialbalance" element={<TrialBalance/>}/>
       <Route path="/transaction/:trans" element={<TransactionUI/>}/>
-      <Route path="/materialissue" element={<MaterialIssueUI/>}/>
       <Route path="/holidays" element={<Holidays/>}/>
       <Route path="*" element={<Home/>}/>
     </Routes>

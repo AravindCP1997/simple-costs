@@ -61,7 +61,6 @@
   flex-direction: column;
   gap:20px;
   color:var(--blue);
-  background:var(--lightbluet);
   padding: 10px;
   width: fit-content;
   border-radius: 25px;
@@ -69,8 +68,7 @@
   margin-top: 10%;
   padding: 20px;
   transition: 0.5s;
-  backdrop-filter: blur(1px);
-  box-shadow: 0px 0.5px 2px 0px gray;
+  box-shadow: 0px 3px 10px 0px lightgray;
 }
 
 .titleCard{
@@ -154,11 +152,19 @@
   justify-content: center;
   padding: 10px;
   overflow: auto;
+  height:100%;
+}
+
+.homeOuter{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: 25px;
+  box-shadow: 0px 3px 10px 0px lightgray;
 }
 
 .home{
-  padding:50px;
-  border-radius: 25px;
+  padding: 50px;
   width:fit-content;
   display:flex;
   flex-direction: column;
@@ -237,7 +243,7 @@
 
 .menuContainerTitle{
   border-radius: 15px;
-  background: var(--lightbluet);
+  background: var(--lightredt);
   padding:10px;
   text-align: center;
   border:2px solid var(--lightgrayt);
@@ -246,7 +252,7 @@
 }
 
 .menuContainerTitle:hover{
-  background: var(--lightgreent);
+  background: var(--lightbluet);
 }
 
 .menuList{
@@ -259,7 +265,11 @@
   border-radius: 15px;
   height:fit-content;
   overflow: auto;
-  border:2px solid var(--lightgray);
+  background: var(--lightredt);
+  transition: 0.5s;
+}
+
+.menuList:hover{
   background: var(--lightbluet);
 }
 
@@ -279,14 +289,14 @@
 }
 
 .menuItem{
-  color:var(--blue);
+  color:var(--bluet);
   transition: 0.5s;
   background: white;
-  backdrop-filter: blur(5px);
+  border:1px solid white;
 }
 
 .menuItem:hover{
-  background: var(--lightredt);
+  color:var(--blue)
 }
 
 .menuTitle{
@@ -509,7 +519,6 @@
 }
 
 .transaction{
-  background: var(--lightbluet);
   border-radius: 20px;
   padding:5%;
   width:100%;
@@ -517,7 +526,7 @@
   flex-direction: column;
   gap:20px;
   height:fit-content;
-  box-shadow: 0px 0.5px 1px 0px black;
+  box-shadow: 0px 3px 10px 0px lightgray;
 }
 
 .transactionTitle{
@@ -641,18 +650,17 @@
 
 .reportQuery{
   border-radius: 25px;
-  background: var(--lightredt);
   padding:5%;
   width:100%;
   display: grid;
   grid-template-columns: 50% 50%;
   gap:20px;
   height: fit-content;
-  box-shadow: 0px 1px 1px 0px black;
+  box-shadow: 0px 3px 10px 0px lightgray;
 }
 
 .reportQueryTitle{
-  background: var(--lightredt);
+  background: var(--lightbluet);
   border-radius: 15px;
   padding: 10px;
   grid-column: 1/ span 2;
@@ -662,7 +670,7 @@
 }
 
 .reportQueryField{
-  background: var(--lightredt);
+  background: var(--lightbluet);
   border-radius: 15px;
   border:2px solid var(--lightgray);
   padding: 10px;
@@ -700,7 +708,7 @@
 }
 
 .reportDisplay{
-  background: var(--lightbluet);
+  box-shadow: 0px 3px 10px 0px lightgray;
   height: fit-content;
   border-radius: 25px;
   padding: 5%;
