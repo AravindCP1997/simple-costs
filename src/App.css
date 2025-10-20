@@ -747,3 +747,9 @@
   grid-template-columns: 50% 50%;
  } 
 }
+
+@media print {
+  html{
+      background-image: none;
+  }
+}

@@ -1499,7 +1499,14 @@ const objects = {
             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":"Chennai"},
             {"name": "Profit Center", "datatype":"single", "input":"option", "options":["",...ProfitCenter.list()], "use-state":"No"},
-            {"name":"Apportionment Ratio","datatype":"nest","structure":[{"name":"From", "datatype":"single", "input":"input", "type":"text"},{"name":"To", "datatype":"single", "input":"input", "type":"text"},{"name":"Ratio", "datatype":"collection", "structure":[{"name":"To", "datatype":"single", "input":"input", "type":"text"},{"name":"Ratio", "datatype":"single", "input":"input", "type":"text"}]}],"use-state":[{"From":"2025-04-01","To":"2026-03-31","Ratio":[{"To":"Head Office","Ratio":0.50}]}]}
+            {"name":"Apportionment Ratio","datatype":"nest","structure":[
+                {"name":"From", "datatype":"single", "input":"input", "type":"text"},
+                {"name":"To", "datatype":"single", "input":"input", "type":"text"},
+                {"name":"Ratio", "datatype":"collection", "structure":[
+                    {"name":"To", "datatype":"single", "input":"input", "type":"text"},
+                    {"name":"Ratio", "datatype":"single", "input":"input", "type":"text"}
+                ],'use-state':[{"To":"","Ratio":""}]}
+            ],"use-state":[{"From":"2025-04-01","To":"2026-03-31","Ratio":[{"To":"Head Office","Ratio":0.50}]}]}
         ],
         "collection":"costcenters"
     },
@@ -2358,11 +2365,20 @@ function CRUD({method}){
         }))
     }
 
+    function handlechange4(field,index,subfield,subindex,subsubfield,e){
+        const {value} = e.target;
+        setdata(prevdata=>({
+            ...prevdata,[field]:prevdata[field].map((item,i)=>
+            (i==index)?{...item,[subfield]:item[subfield].map((subitem,ii)=>
+            (ii==subindex)?{...subitem,[subsubfield]:value}:subitem)}:item)
+        }))
+    }
+
     function addItem(field,defaults,e){
         e.preventDefault;
         setdata(prevdata=>({
             ...prevdata,
-            [field]:[...prevdata[field],{...defaults,['id']:prevdata[field].length}]
+            [field]:[...prevdata[field],defaults]
         }))
     }
 
@@ -2373,6 +2389,23 @@ function CRUD({method}){
             [field]:prevdata[field].filter((item,i)=>i!==index)
         }))
         
+    }
+
+    function addItem2(field,index,subfield,defaults){
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].map((item,i)=>
+            (i==index)?{...item,[subfield]:[...item[subfield],defaults]}:item
+            )
+        }))
+    }
+
+    function removeItem2(field,index,subfield,subindex){
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].map((item,i)=>
+            (i==index)?{...item,[subfield]:item[subfield].filter((subitem,ii)=>ii!=subindex)}:item)
+        }))
     }
 
     function cancel(){
@@ -2417,7 +2450,7 @@ function CRUD({method}){
         {field['datatype']=="single" && <div className='crudField'><div className='crudRow'><label>{field['name']}</label>{ field['input'] == "input" && <input disabled={(field['disabled']||!editable)} type={field['type']} onChange={(e)=>handleChange1(field['name'],e)} value={output[field['name']]}/>}{field['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange1(field['name'],e)} value={output[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}</div></div>}
         {field['datatype']=="object" && <div className='crudField'><div className='crudObject'><label>{field['name']}</label>{field['structure'].map(subfield=><>{subfield['datatype']=="single"&&<div className='crudRow'><label>{subfield['name']}</label>{subfield['input']=="input" && <input type={subfield['type']} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]} disabled={(field['disabled']||!editable)}/>}{subfield['input'] == "option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}</>)}</div></div>}
         {field['datatype']=="collection" && <div className='crudField'><div className='crudObject'><label>{field['name']}</label><div className='crudTable'><table><thead><tr><th className='crudTableCell'></th>{field['structure'].map(subfield=><th className='crudTableCell'>{subfield['name']}</th>)}</tr></thead>{output[field['name']].map((item,index)=><tbody><tr><td className='crudTableCell'><button disabled={(field['disabled']||!editable)} onClick={(e)=>removeItem(field['name'],index,e)}>-</button></td>{field['structure'].map(subfield=><>{subfield['datatype']=="single" && <td className='crudTableCell'>{subfield['value']=="calculated" && <input value={output[field['name']][index][subfield['name']]} disabled={true}/>} {subfield['input']=="input"&& <input disabled={(field['disabled']||!editable)} onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} type={subfield['type']} value={output[field['name']][index][subfield['name']]}/>}{subfield['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</td>}</>)}</tr></tbody>)}</table></div><div className='crudObjectButtons'><button className="blue" disabled={(field['disabled']||!editable)} onClick={(e)=>addItem(field['name'],field['use-state'][0],e)}>Add</button></div></div></div>}
-        {field['datatype']=="nest" && <div className="crudField"><div className="crudObject"><label>{field['name']}</label><button>Add</button><div className='crudGrid'>{output[field['name']].map((item,index)=><div className="crudFields">{field['structure'].map(subfield=><div className='crudField'>{subfield['datatype']=="single" && <div className='crudRow'><label>{subfield['name']}</label><input value={output[field['name']][index][subfield['name']]} type={subfield['type']}/></div>}{subfield['datatype']=="collection" && <div className='crudObject'><label>{subfield['name']}</label><div className='crudTable'><table><thead><tr><th className='crudTableCell'></th>{subfield['structure'].map(thirdfield=><th className='crudTableCell'>{thirdfield['name']}</th>)}</tr></thead><tbody>{output[field['name']].map((subitem,subindex)=><tr><td><div className='crudTableCell'><button></button></div></td>{subfield['structure'].map(thirdfield=><td><div className='crudTableCell'><input value={output[field['name']][index][subfield['name']][subindex][thirdfield]}/></div></td>)}</tr>)}</tbody></table></div></div> }</div>)}</div>)}</div></div></div>}
+        {field['datatype']=="nest" && <div className="crudField"><div className="crudObject"><label>{field['name']}</label><button onClick={(e)=>addItem(field['name'],field['use-state'][0],e)}>Add</button><div className='crudGrid'>{output[field['name']].map((item,index)=><div className="crudFields">{field['structure'].map(subfield=><div className='crudField'>{subfield['datatype']=="single" && <div className='crudRow'><label>{subfield['name']}</label><input onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]} type={subfield['type']}/></div>}{subfield['datatype']=="collection" && <div className='crudObject'><label>{subfield['name']}</label><div className='crudTable'><table><thead><tr><th className='crudTableCell'></th>{subfield['structure'].map(subsubfield=><th className='crudTableCell'>{subsubfield['name']}</th>)}</tr></thead><tbody>{output[field['name']][index][subfield['name']].map((subitem,subindex)=><tr><td><div className='crudTableCell'><button onClick={()=>removeItem2(field['name'],index,subfield['name'],subindex)}>-</button></div></td>{subfield['structure'].map(subsubfield=><td><div className='crudTableCell'><input value={output[field['name']][index][subfield['name']][subindex][subsubfield['name']]} onChange={(e)=>handlechange4(field['name'],index,subfield['name'],subindex,subsubfield['name'],e)}/></div></td>)}</tr>)}</tbody></table><button onClick={()=>addItem2(field['name'],index,subfield['name'],subfield['use-state'][0])}>+</button></div></div> }</div>)}<button onClick={(e)=>removeItem(field['name'],index,e)}>-</button></div>)}</div></div></div>}
         </>)}</div>
         <div className='crudError'>
             <label>{`${errorlist.length} Error(s)`}</label>
@@ -2430,7 +2463,7 @@ function CRUD({method}){
             {(!deactivated && method==="Update") && <><button  className='blue' onClick={()=>cancel()}>Cancel</button><button className='green' onClick={()=>save()}>Update</button></>}
             {(method==="Display" || deactivated) && <><button className='blue' onClick={()=>cancel()}>Back</button></>}
         </div>
-        {JSON.stringify(output)}
+        {JSON.stringify(data)}
         </div>
         }
         {method == "Deactivate" && 
@@ -4152,8 +4185,7 @@ function Scratch(){
 
     return(
         <div>
-        {JSON.stringify(new MaterialInLocation("Phosphoric Acid","Front Gate").valueclosing(["2025-01-01","2025-10-31"][1]))}
-        <DisplayAsTable collection={MaterialInLocation.MaterialMovement(["2025-01-01","2025-10-31"])}/>
+        {JSON.stringify(datesInPeriod(["2025-02-11","2025-02-28"]).includes("2025-02-10"))}
         </div>
     )
 }
