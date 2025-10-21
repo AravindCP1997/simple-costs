@@ -15,7 +15,7 @@
 
 .companyInfoTitle{
   text-align: center;
-  background: white;
+  background: var(--lightbluet);
   border-radius: 20px;
   padding: 20px;
 }
@@ -31,7 +31,7 @@
   grid-template-columns: 50% 50%;
   padding: 5px;
   border-radius: 15px;
-  background: white;
+  background: var(--lightbluet);
   backdrop-filter: blur(3px);
   input,select{
     border-radius: 10px;
@@ -57,27 +57,30 @@
 }
 
 .createCompany{
-  display: flex;
-  flex-direction: column;
-  gap:20px;
+  display: grid;
+  grid-template-columns: 50% 50%;
+  row-gap:20px;
   color:var(--blue);
   padding: 10px;
-  width: fit-content;
+  width: min(100%,500px);
   border-radius: 25px;
   text-align: center;
   margin-top: 10%;
   padding: 20px;
   transition: 0.5s;
-  box-shadow: 0px 3px 10px 0px lightgray;
+  height:min(100%,400px);
 }
 
 .titleCard{
+  grid-row: 1/ span 2;
   border-bottom: 2px solid var(--lightgray);
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap:10px;
   padding:10px;
-
+  box-shadow: 0px 3px 10px 0px lightgray;
+  border-radius: 15px;
   h1,p{
     margin:0;
   }
@@ -95,7 +98,9 @@
 .createOptions{
   display:flex;
   flex-direction: column;
+  justify-content: center;
   gap:20px;
+  height:100%;
 }
 .createOption{
   display: flex;
@@ -103,8 +108,6 @@
   justify-content: top;
   padding: 20px;
   border-radius: 15px;
-  background: var(--lightbluet);
-  border: 2px solid var(--lightgray);
 
   button{
     border-radius: 15px;
@@ -160,7 +163,6 @@
   flex-direction: column;
   justify-content: center;
   border-radius: 25px;
-  box-shadow: 0px 3px 10px 0px lightgray;
 }
 
 .home{
@@ -174,6 +176,8 @@
   height: fit-content;
   transition: 0.5s;
   box-shadow: none;
+  box-shadow: 0px 3px 10px 0px lightgray;
+  border-radius: 25px;
 }
 
 
@@ -243,16 +247,15 @@
 
 .menuContainerTitle{
   border-radius: 15px;
-  background: var(--lightredt);
+  background: var(--lightbluet);
   padding:10px;
   text-align: center;
-  border:2px solid var(--lightgrayt);
   transition: 0.5s;
   cursor: pointer;
 }
 
 .menuContainerTitle:hover{
-  background: var(--lightbluet);
+  background: var(--lightgreent);
 }
 
 .menuList{
@@ -265,8 +268,8 @@
   border-radius: 15px;
   height:fit-content;
   overflow: auto;
-  background: var(--lightredt);
   transition: 0.5s;
+  cursor: pointer;
 }
 
 .menuList:hover{
@@ -432,8 +435,8 @@
 }
 
 .crudUI{
-  background: var(--lightbluet);
-  backdrop-filter: blur(3px);
+  background: none;
+  box-shadow: 0px 3px 10px 0px lightgray;
   border-radius: 20px;
   padding:5%;
   width:100%;

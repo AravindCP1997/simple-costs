@@ -153,6 +153,7 @@ class Database{
         const collectionname = {
             "Asset":"assets",
             "Asset Class":"assetclasses", 
+            "Attendance":"attendance",
             "Bank Account":"bankaccounts",
             "Cost Center":"costcenters",
             "Cost Object":"costobjects", 
@@ -161,6 +162,7 @@ class Database{
             "Employee":"employees",
             "General Ledger":"generalledgers",
             "GST Code":'gstcodes',
+            "Income Tax Code":'incometaxcodes',
             "Location":"locations",
             "Material":"materials",
             "Payment Term":"paymentterms",
@@ -1500,8 +1502,8 @@ const objects = {
             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":"Chennai"},
             {"name": "Profit Center", "datatype":"single", "input":"option", "options":["",...ProfitCenter.list()], "use-state":"No"},
             {"name":"Apportionment Ratio","datatype":"nest","structure":[
-                {"name":"From", "datatype":"single", "input":"input", "type":"text"},
-                {"name":"To", "datatype":"single", "input":"input", "type":"text"},
+                {"name":"From", "datatype":"single", "input":"input", "type":"date"},
+                {"name":"To", "datatype":"single", "input":"input", "type":"date"},
                 {"name":"Ratio", "datatype":"collection", "structure":[
                     {"name":"To", "datatype":"single", "input":"input", "type":"text"},
                     {"name":"Ratio", "datatype":"single", "input":"input", "type":"text"}
@@ -1601,6 +1603,25 @@ const objects = {
             {"name":"SGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
             {"name":"UTGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
             {"name":"Cess Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0}
+        ]
+    },
+    "Income Tax Code":{
+        "name":"Income Tax Code",
+        "collection":"incometaxcodes",
+        "schema":[
+            {"name":"Code", "datatype":"single","input":"input","type":"text","use-state":""},
+            {"name":"Taxation","datatype":"nest","structure":[
+                {"name":"From Year", "datatype":"single","input":"input","type":"number","use-state":""},
+                {"name":"To Year", "datatype":"single","input":"input","type":"number","use-state":""},
+                {"name":"Marginal Relief","datatype":"single","input":"option","options":["","Yes","No"],"use-state":"No"},
+                {"name":"Exemption Limit", "datatype":"single","input":"input","type":"number","use-state":""},
+                {"name":"Cess", "datatype":"single","input":"input","type":"number","use-state":""},
+                {"name":"Slab", "datatype":"collection", "structure":[
+                    {"name":"From","datatype":"single","input":"input","type":"number"},
+                    {"name":"To","datatype":"single","input":"input","type":"number"},
+                    {"name":"Rate","datatype":"single","input":"input","type":"number"},
+                ], 'use-state':[{"From":"","To":"","Rate":""}]},
+            ], "use-state":[{"From Year":"","To Year":"","Exemption Limit":"","Marginal Relief":"No","Slab":[{"From":"","To":"","Rate":""}]}]}
         ]
     },
     "Location":{
@@ -1862,8 +1883,8 @@ function CompanyInfo(){
                     <p>Enterprise Information System</p>
                 </div>
                 <div className="createOptions">
-                    <div className="createOption"><button className='blue' onClick={()=>initialise()}>Quick Initialise</button><p>Instantly creates a sample company</p></div>
-                    <div className="createOption"><button className='green' onClick={()=>newCompany()}>New Company</button><p>Manual set-up of company</p></div>
+                    <div className="createOption"><button className='blue' onClick={()=>initialise()}>Quick Initialise</button></div>
+                    <div className="createOption"><button className='green' onClick={()=>newCompany()}>New Company</button></div>
                 </div>
             </div>
         )
@@ -2129,7 +2150,7 @@ function Control(){
         {"Group":"Financial Accounting","items":["General Ledger","Profit Center","Segment","Currency"]},
         {"Group":"Material","items":["Material","Service","Purchase Order","Sale Order","Location","Unit"]},
         {"Group":"Payables & Receivables","items":["Bank Account", "Customer","Vendor","Payment Term"]},
-        {"Group":"Payroll","items":["Employee", "Organisational Unit"]}
+        {"Group":"Payroll","items":["Employee", "Organisational Unit","Income Tax Code"]}
     ]
   
     return(
@@ -2450,7 +2471,7 @@ function CRUD({method}){
         {field['datatype']=="single" && <div className='crudField'><div className='crudRow'><label>{field['name']}</label>{ field['input'] == "input" && <input disabled={(field['disabled']||!editable)} type={field['type']} onChange={(e)=>handleChange1(field['name'],e)} value={output[field['name']]}/>}{field['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange1(field['name'],e)} value={output[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}</div></div>}
         {field['datatype']=="object" && <div className='crudField'><div className='crudObject'><label>{field['name']}</label>{field['structure'].map(subfield=><>{subfield['datatype']=="single"&&<div className='crudRow'><label>{subfield['name']}</label>{subfield['input']=="input" && <input type={subfield['type']} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]} disabled={(field['disabled']||!editable)}/>}{subfield['input'] == "option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}</>)}</div></div>}
         {field['datatype']=="collection" && <div className='crudField'><div className='crudObject'><label>{field['name']}</label><div className='crudTable'><table><thead><tr><th className='crudTableCell'></th>{field['structure'].map(subfield=><th className='crudTableCell'>{subfield['name']}</th>)}</tr></thead>{output[field['name']].map((item,index)=><tbody><tr><td className='crudTableCell'><button disabled={(field['disabled']||!editable)} onClick={(e)=>removeItem(field['name'],index,e)}>-</button></td>{field['structure'].map(subfield=><>{subfield['datatype']=="single" && <td className='crudTableCell'>{subfield['value']=="calculated" && <input value={output[field['name']][index][subfield['name']]} disabled={true}/>} {subfield['input']=="input"&& <input disabled={(field['disabled']||!editable)} onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} type={subfield['type']} value={output[field['name']][index][subfield['name']]}/>}{subfield['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</td>}</>)}</tr></tbody>)}</table></div><div className='crudObjectButtons'><button className="blue" disabled={(field['disabled']||!editable)} onClick={(e)=>addItem(field['name'],field['use-state'][0],e)}>Add</button></div></div></div>}
-        {field['datatype']=="nest" && <div className="crudField"><div className="crudObject"><label>{field['name']}</label><button onClick={(e)=>addItem(field['name'],field['use-state'][0],e)}>Add</button><div className='crudGrid'>{output[field['name']].map((item,index)=><div className="crudFields">{field['structure'].map(subfield=><div className='crudField'>{subfield['datatype']=="single" && <div className='crudRow'><label>{subfield['name']}</label><input onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]} type={subfield['type']}/></div>}{subfield['datatype']=="collection" && <div className='crudObject'><label>{subfield['name']}</label><div className='crudTable'><table><thead><tr><th className='crudTableCell'></th>{subfield['structure'].map(subsubfield=><th className='crudTableCell'>{subsubfield['name']}</th>)}</tr></thead><tbody>{output[field['name']][index][subfield['name']].map((subitem,subindex)=><tr><td><div className='crudTableCell'><button onClick={()=>removeItem2(field['name'],index,subfield['name'],subindex)}>-</button></div></td>{subfield['structure'].map(subsubfield=><td><div className='crudTableCell'><input value={output[field['name']][index][subfield['name']][subindex][subsubfield['name']]} onChange={(e)=>handlechange4(field['name'],index,subfield['name'],subindex,subsubfield['name'],e)}/></div></td>)}</tr>)}</tbody></table><button onClick={()=>addItem2(field['name'],index,subfield['name'],subfield['use-state'][0])}>+</button></div></div> }</div>)}<button onClick={(e)=>removeItem(field['name'],index,e)}>-</button></div>)}</div></div></div>}
+        {field['datatype']=="nest" && <div className="crudField"><div className="crudObject"><label>{field['name']}</label><button onClick={(e)=>addItem(field['name'],field['use-state'][0],e)}>Add</button><div className='crudGrid'>{output[field['name']].map((item,index)=><div className="crudFields">{field['structure'].map(subfield=><div className='crudField'>{subfield['datatype']=="single" && <div className='crudRow'><label>{subfield['name']}</label>{subfield['input']=="input" && <input onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]} type={subfield['type']}/>}{subfield['input']=="option" && <select onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}{subfield['datatype']=="collection" && <div className='crudObject'><label>{subfield['name']}</label><div className='crudTable'><table><thead><tr><th className='crudTableCell'></th>{subfield['structure'].map(subsubfield=><th className='crudTableCell'>{subsubfield['name']}</th>)}</tr></thead><tbody>{output[field['name']][index][subfield['name']].map((subitem,subindex)=><tr><td><div className='crudTableCell'><button onClick={()=>removeItem2(field['name'],index,subfield['name'],subindex)}>-</button></div></td>{subfield['structure'].map(subsubfield=><td><div className='crudTableCell'><input value={output[field['name']][index][subfield['name']][subindex][subsubfield['name']]} onChange={(e)=>handlechange4(field['name'],index,subfield['name'],subindex,subsubfield['name'],e)}/></div></td>)}</tr>)}</tbody></table><button onClick={()=>addItem2(field['name'],index,subfield['name'],subfield['use-state'][0])}>+</button></div></div> }</div>)}<button onClick={(e)=>removeItem(field['name'],index,e)}>-</button></div>)}</div></div></div>}
         </>)}</div>
         <div className='crudError'>
             <label>{`${errorlist.length} Error(s)`}</label>
@@ -2463,7 +2484,6 @@ function CRUD({method}){
             {(!deactivated && method==="Update") && <><button  className='blue' onClick={()=>cancel()}>Cancel</button><button className='green' onClick={()=>save()}>Update</button></>}
             {(method==="Display" || deactivated) && <><button className='blue' onClick={()=>cancel()}>Back</button></>}
         </div>
-        {JSON.stringify(data)}
         </div>
         }
         {method == "Deactivate" && 
@@ -2549,6 +2569,11 @@ class Report{
         ],
         "assetschedule":[
             {"name":"period","label":"Period","type":"date","fields":["range"]}
+        ],
+        "attendance":[
+            {"name":"employee","label":"Employee","type":"text","fields":["value"]},
+            {"name":"year","label":"Year","type":"number","fields":["value"]},
+            {"name":"month","label":"Month","type":"number","fields":["value"]},
         ],
         "clearing":[
             {"name":"ledger","label":"Ledger","type":"text","fields":["value"]},
@@ -3363,6 +3388,7 @@ function ReportDisplay(){
             {report=="assetledger" && <AssetLedger query={query}/>}
             {report=="assetregister" && <AssetRegister query={query}/>}
             {report=="assetschedule" && <AssetSchedule query={query}/>}
+            {report=="attendance" && <AttendanceUI query={query}/>}
             {report=="clearing" && <Clearing query={query}/>}
             {report=="costcenteritems" && <CostCenterItems query={query}/>}
             {report=="costtoprepaid" && <CostToPrepaid query={query}/>}
@@ -4181,11 +4207,347 @@ class Doc{
     static data = Transaction.database
 }
 
-function Scratch(){
+class IncomeTax{
+    constructor(code){
+        this.code = code;
+        this.data = IncomeTax.data.filter(item=>item['Code']==this.code)[0];
+    }
+    taxOnSlab(slab,income){
+        const {From,To,Rate} = slab;
+        const applicableIncome = Math.max(0,income-From);
+        const slabLimit = To - From;
+        const tax = Math.min(slabLimit,applicableIncome)* Rate/100;
+        return tax
+    }
+    taxation(year){
+        const taxation = this.data['Taxation'];
+        const taxationyear = taxation.filter(item=>(year>=item['From Year'] && year<=item['To Year']))[0];
+        return taxationyear
+    }
+    tax(year,income){
+        const taxation = this.taxation(year)
+        const slabs = taxation['Slab'];
+        const exemptionLimit = taxation['Exemption Limit'];
+        let tax = 0;
+        for (let i=0; i<slabs.length; i++){
+            tax+=this.taxOnSlab(slabs[i],income);
+        }
+        const cesspercent = taxation['Cess'];
+        const cess = tax * cesspercent/100;
+        const taxWithCess = tax + cess
+        const result = (income<=exemptionLimit)?0:taxWithCess;
+        return result
+    }
+    marginalRelief(year,income){
+        const taxation = this.taxation(year);
+        const reliefApplicable = (taxation['Marginal Relief'] =="Yes");
+        const exemptionLimit = taxation['Exemption Limit'];
+        
+        const taxOnExemptionLimit = this.tax(year,exemptionLimit);
+        const taxOnIncome = this.tax(year,income);
+        
+        const excessOfIncome = Math.max(income-exemptionLimit,0);
+        const excessOfTax = Math.max(taxOnIncome-taxOnExemptionLimit,0);
+        
+        const relief = Math.max(excessOfTax - excessOfIncome,0);
+        
+        const result  = (reliefApplicable)?relief:0;
+        return result
+    }
+    netTax(year,income){
+        const tax = this.tax(year,income);
+        const marginalRelief = this.marginalRelief(year,income);
+        const netTax = tax-marginalRelief;
+        return netTax;
+    }
+    
+    static data = Database.load('Income Tax Code');
+    static codes = ListItems(this.data,'Code');
+}
+class FASettings{
+    static data = ('fasettings' in localStorage)?JSON.parse(localStorage.getItem('fasettings')):this.defaults;
+    static defaults = {
+        "GL for Basic Salary":"",
+        "GL for Discount":"",
+        "GL for Emoluments and Deductions":[{"Item":"","Type":"","GL":""}],
+        "GL for Salary TDS":"",
+        "TDS Codes":[{"Code":"","Description":"","Rate":"","GL":""}],
+        "GST Codes":[{"State":0,"Code":0,"Description":"","IGST Rate":0,"CGST Rate":0,"SGST Rate":0,"UTGST Rate":0,"Cess rate":0,"IGST GL":"","CGST GL":"","SGST GL":"","UTGST GL":"","Cess GL":""}]
+    }
+    static changeTo(data){
+        saveData(data,'fasettings')
+    }
+}
+function FinancialAccountSettings(){
+    const settings = FASettings
+    const [data,setdata] = useState(settings.data || settings.defaults);
+    
+    const handleChange1 = (e,field) =>{
+        const {value} = e.target;
+        setdata(prevdata=>({
+            ...prevdata,[field]:value
+        }))
+    }
+
+    const handleChange2 = (e,field,index,subfield) =>{
+        const {value} = e.target;
+        setdata(prevdata=>({
+            ...prevdata,[field]:prevdata[field].map((item,i)=>
+            (index==i)?{...item,[subfield]:value}:item)
+        }))
+    }
+
+    const addItem = (field)=>{
+        const defaultitem = settings.defaults[field][0];
+        setdata(prevdata=>({
+            ...prevdata,[field]:[...prevdata[field],defaultitem]
+        }))
+    }
+
+    const removeItem = (field,index)=>{
+        setdata(prevdata=>({
+            ...prevdata,[field]:prevdata[field].filter((item,i)=>(i!==index))
+        }))
+    }
+
+    const save = () =>{
+        settings.changeTo(data);
+        alert('Financial Account Settings Changed');
+        window.location.reload()
+    }
 
     return(
+        <div className='reportDisplay'>
+            <h2>Financial Account Settings</h2>
+            <div>
+                <label>General Ledger for Basic Salary</label>
+                <select value={data['GL for Basic Salary']} onChange={(e)=>handleChange1(e,'GL for Basic Salary')}>
+                    {GeneralLedger.list().map(option=>
+                        <option value={option}>{option}</option>
+                    )}
+                </select>
+            </div>
+            <div>
+                <label>General Ledger for Discount</label>
+                <select value={data['GL for Discount']} onChange={(e)=>handleChange1(e,'GL for Discount')}>
+                    {GeneralLedger.list().map(option=>
+                        <option value={option}>{option}</option>
+                    )}
+                </select>
+            </div>
+            <div>
+                <label>General Ledger for Salary TDS</label>
+                <select value={data['GL for Salary TDS']} onChange={(e)=>handleChange1(e,'GL for Salary TDS')}>
+                    {GeneralLedger.list().map(option=>
+                        <option value={option}>{option}</option>
+                    )}
+                </select>
+            </div>
+            <div className='crudTable'>
+                <label>Salary Emoluments and Deductions</label>
+                <table>
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Item</th>
+                            <th>Emolument/ Deduction</th>
+                            <th>General Ledger</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data['GL for Emoluments and Deductions'].map((item,i)=>
+                            <tr>
+                                <td><button onClick={()=>removeItem('GL for Emoluments and Deductions',i)}>-</button></td>
+                                <td><input type={"text"} value={item['Item']} onChange={(e)=>handleChange2(e,'GL for Emoluments and Deductions',i,'Item')}/></td>
+                                <td><select value={item['Type']} onChange={(e)=>handleChange2(e,'GL for Emoluments and Deductions',i,'Type')}><option value={"Deduction"}>Deduction</option><option value={"Emolument"}>Emolument</option></select></td>
+                                <td><select value={item['GL']} onChange={(e)=>handleChange2(e,'GL for Emoluments and Deductions',i,'GL')}>{GeneralLedger.list().map(option=><option value={option}>{option}</option>)}</select></td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+                <button onClick={()=>addItem('GL for Emoluments and Deductions')}>+</button>
+            </div>
+            <div  className='crudTable'>
+                <label>TDS and TCS Codes</label>
+                <table>
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Code</th>
+                            <th>Description</th>
+                            <th>Rate</th>
+                            <th>General Ledger</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data['TDS Codes'].map((item,i)=>
+                            <tr>
+                                <td><button onClick={()=>removeItem('TDS Codes',i)}>-</button></td>
+                                <td><input type={"text"} value={item['Code']} onChange={(e)=>handleChange2(e,'TDS Codes',i,'Code')}/></td>
+                                <td><input type={"text"} value={item['Description']} onChange={(e)=>handleChange2(e,'TDS Codes',i,'Description')}/></td>
+                                <td><input type={"number"} value={item['Rate']} onChange={(e)=>handleChange2(e,'TDS Codes',i,'Rate')}/></td>
+                                <td><select value={item['GL']} onChange={(e)=>handleChange2(e,'TDS Codes',i,'GL')}>{GeneralLedger.list().map(option=><option value={option}>{option}</option>)}</select></td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+                <button onClick={()=>addItem('TDS Codes')}>+</button>
+            </div>
+            <div className='crudTable'>
+                <label>GST Codes</label>
+                <table>
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>State</th>
+                            <th>Code</th>
+                            <th>Description</th>
+                            <th>IGST %</th>
+                            <th>CGST %</th>
+                            <th>SGST %</th>
+                            <th>UTGST %</th>
+                            <th>Cess %</th>
+                            <th>IGST General Ledger</th>
+                            <th>CGST General Ledger</th>
+                            <th>SGST General Ledger</th>
+                            <th>UTGST General Ledger</th>
+                            <th>Cess General Ledger</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data['GST Codes'].map((item,i)=>
+                            <tr>
+                                <td><button onClick={()=>removeItem('GST Codes',i)}>-</button></td>
+                                <td><select value={item['State']} onChange={(e)=>handleChange2(e,'GST Codes',i,'State')}>{Intelligence.States.map(option=><option value={option}>{option}</option>)}{Intelligence.UTs.map(option=><option value={option}>{option}</option>)}</select></td>
+                                <td><input type={"text"} value={item['Code']} onChange={(e)=>handleChange2(e,'GST Codes',i,'Code')}/></td>
+                                <td><input type={"text"} value={item['Description']} onChange={(e)=>handleChange2(e,'GST Codes',i,'Description')}/></td>
+                                <td><input type={"number"} value={item['IGST Rate']} onChange={(e)=>handleChange2(e,'GST Codes',i,'IGST Rate')}/></td>
+                                <td><input type={"number"} value={item['CGST Rate']} onChange={(e)=>handleChange2(e,'GST Codes',i,'CGST Rate')}/></td>
+                                <td><input type={"number"} value={item['SGST Rate']} onChange={(e)=>handleChange2(e,'GST Codes',i,'SGST Rate')}/></td>
+                                <td><input type={"number"} value={item['UTGST Rate']} onChange={(e)=>handleChange2(e,'GST Codes',i,'UTGST Rate')}/></td>
+                                <td><input type={"number"} value={item['Cess Rate']} onChange={(e)=>handleChange2(e,'GST Codes',i,'Cess Rate')}/></td>
+                                <td><select value={item['IGST GL']} onChange={(e)=>handleChange2(e,'GST Codes',i,'IGST GL')}>{GeneralLedger.list().map(option=><option value={option}>{option}</option>)}</select></td>
+                                <td><select value={item['CGST GL']} onChange={(e)=>handleChange2(e,'GST Codes',i,'CGST GL')}>{GeneralLedger.list().map(option=><option value={option}>{option}</option>)}</select></td>
+                                <td><select value={item['SGST GL']} onChange={(e)=>handleChange2(e,'GST Codes',i,'SGST GL')}>{GeneralLedger.list().map(option=><option value={option}>{option}</option>)}</select></td>
+                                <td><select value={item['UTGST GL']} onChange={(e)=>handleChange2(e,'GST Codes',i,'UTGST GL')}>{GeneralLedger.list().map(option=><option value={option}>{option}</option>)}</select></td>
+                                <td><select value={item['Cess GL']} onChange={(e)=>handleChange2(e,'GST Codes',i,'Cess GL')}>{GeneralLedger.list().map(option=><option value={option}>{option}</option>)}</select></td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+                <button onClick={()=>addItem('GST Codes')}>+</button>
+            </div>
+            <button onClick={()=>save()}>Save</button>
+        </div>
+    )
+}
+
+class Attendance{
+    constructor(employee,year,month){
+        this.year = year;
+        this.month = month;
+        this.employee = employee;
+        this.data = Attendance.data.filter(item=>item['Year']==this.year && item['Month']==this.month)[0];
+    }
+    changeData(data){
+        const oldData = Attendance.data;
+        const newData = oldData.map(item=>(item['Year']==this.year && item['Month']==this.month && item['Employee'] == this.employee)?{...item,['Attendance']:data}:item) 
+        saveData(newData,'attendance');
+    }
+    createData(data){
+        const oldData = Attendance.data;
+        const newData = [...oldData,{"Year":this.year,"Month":this.month,"Employee":this.employee,"Attendance":data}];
+        saveData(newData,'attendance');
+    }
+    static isPresent(employee,date){
+        const year= new Date(Intelligence.yearStart(date)).getFullYear();
+        const month = new Date(date).getMonth();
+        const data = new Attendance(employee,year,month).data;
+        const present = (data.length==0 && (data['Attendance']['Present'].includes(date) || data['Attendance']['Leave'].includes(date)))?true:false;
+        return present
+    }
+    static defaults = {"Present":[],"Leave":[]}
+    static data = Database.load('Attendance')
+}
+
+function AttendanceUI({query}){
+    const {year,month,employee} = query;
+    const dates = datesInMonth(year['value'],month['value']);
+    const attendance = new Attendance(employee['value'],year['value'],month['value']);
+    const [data,setdata] = useState(attendance.data['Attendance'] || Attendance.defaults);
+    const changeTick=(e,field,i)=>{
+        const value = e.target.checked;
+        (value)?setdata(prevdata=>({
+            ...prevdata,[field]:addItem(prevdata[field],dates[i])
+        })):setdata(prevdata=>({
+            ...prevdata,[field]:removeItem(prevdata[field],dates[i])
+        }))
+    }
+
+    const removeItem = (array,i)=>{
+        return array.filter(item=>item!=i);
+    }
+
+    const addItem = (array,i)=>{
+        const newArray = [...array,i];
+        return newArray;
+    }
+
+    const selectAll = () =>{
+        const length = dates.length;
+        for (let i=0;i<length;i++){
+            setdata(prevdata=>({
+                ...prevdata,['Present']:addItem(prevdata['Present'],dates[i])
+            }))
+        }
+    }
+
+    const save = () =>{
+        attendance.createData(data);
+        alert('Saved');
+        window.location.reload();
+    }
+
+    return (
         <div>
-        {JSON.stringify(datesInPeriod(["2025-02-11","2025-02-28"]).includes("2025-02-10"))}
+            <div>
+                <h2>Attendance</h2>
+                <h4>Employee: {employee['value']}</h4>
+                <h4>Year: {year['value']}</h4>
+                <h4>Month: {month['value']}</h4>
+            </div>
+            <div className='crudTable'>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Present</th>
+                            <th>Agreed Leave</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {dates.map((date,i)=>
+                            <tr>
+                                <td>{date}</td>
+                                <td><input onChange={(e)=>changeTick(e,'Present',i)} checked={data['Present'].includes(date)} type="checkbox"/></td>
+                                <td><input onChange={(e)=>changeTick(e,'Leave',i)} checked={data['Leave'].includes(date)} type="checkbox"/></td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+                <button onClick={()=>selectAll()}>Select All</button>
+            </div>
+            <button className='blue' onClick={()=>save()}>Save</button>
+            {JSON.stringify(attendance.data)}
+        </div>
+    )
+}
+
+function Scratch(){
+    const income = 700010;
+    return(
+        <div>
+        {JSON.stringify(Attendance.isPresent("12","2025-01-01"))}
         </div>
     )
 }
@@ -4216,6 +4578,7 @@ if (new Company().status){
       <Route path="/trialbalance" element={<TrialBalance/>}/>
       <Route path="/transaction/:trans" element={<TransactionUI/>}/>
       <Route path="/holidays" element={<Holidays/>}/>
+      <Route path="/fasettings" element={<FinancialAccountSettings/>}/>
       <Route path="*" element={<Home/>}/>
     </Routes>
     </div>
