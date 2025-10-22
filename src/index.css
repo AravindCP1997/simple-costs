@@ -44,10 +44,6 @@ a{
   justify-content: center;
 }
 
-html,button, input, select, option, label{
-  font-family: Lex, Helvet,'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
 button, input, select, option, label{
   padding: 8px;
   cursor: pointer;

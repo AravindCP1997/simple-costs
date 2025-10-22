@@ -2054,9 +2054,14 @@ function SearchBar(){
 
     const inputRef = useRef();
 
-    const keyDownHandler = (e) =>{
-        if (e.ctrlKey && key==="/"){
-            inputRef.current.focus()
+    const keyDownHandler = e =>{
+        if (e.ctrlKey && e.key==="g"){
+            e.preventDefault();
+            inputRef.current.focus();
+        } else if (e.ctrlKey && e.key==="h"){
+            e.preventDefault();
+            navigate('/');
+            window.location.reload();
         }
     }
     
@@ -4553,47 +4558,48 @@ function Scratch(){
 }
 
 function App(){
-if (new Company().status){
-  return(
-    <div className='container'>
-    <BrowserRouter>
-    <SearchBar/>
-    <div className="innerContainer">
-    <Routes>
-    <Route path="/company" element={<CompanyInfo/>}/>
-      <Route path='/' element={<Home/>}/>
-      <Route path='/record' element={<Record/>}/>
-      <Route path='/control' element={<Control/>}/>
-      <Route path='/reports' element={<Reports/>}/>
-      <Route path="/report/:report" element={<ReportQuery/>}/>
-      <Route path="/reportdisplay/:report" element={<ReportDisplay/>}/>
-      <Route path="/ledger" element={<Ledger/>}/> 
-      <Route path='/query/:object/' element={<Query type={"Object"}/>}/>
-      <Route path='/create/:object/' element={<CRUD method={"Create"}/>}/>
-      <Route path='/update/:object/:id' element={<CRUD method={"Update"}/>}/>
-      <Route path='/display/:object/:id' element={<CRUD  method={"Display"}/>}/>
-      <Route path='/deactivate/:object/:id' element={<CRUD method={"Deactivate"}/>}/>
-      <Route path="/scratch/" element={<Scratch/>}/>
-      <Route path="/timecontrol" element={<TimeControlling/>}/>
-      <Route path="/trialbalance" element={<TrialBalance/>}/>
-      <Route path="/transaction/:trans" element={<TransactionUI/>}/>
-      <Route path="/holidays" element={<Holidays/>}/>
-      <Route path="/fasettings" element={<FinancialAccountSettings/>}/>
-      <Route path="*" element={<Home/>}/>
-    </Routes>
-    </div>
-    </BrowserRouter>
-    </div>
-  )
-} else {
+
+    if (new Company().status){
     return(
         <div className='container'>
-            <div className='innerContainer'>
-                <CompanyInfo/>
-            </div>
+        <BrowserRouter>
+        <SearchBar/>
+        <div className="innerContainer">
+        <Routes>
+            <Route path="/company" element={<CompanyInfo/>}/>
+            <Route path='/' element={<Home/>}/>
+            <Route path='/record' element={<Record/>}/>
+            <Route path='/control' element={<Control/>}/>
+            <Route path='/reports' element={<Reports/>}/>
+            <Route path="/report/:report" element={<ReportQuery/>}/>
+            <Route path="/reportdisplay/:report" element={<ReportDisplay/>}/>
+            <Route path="/ledger" element={<Ledger/>}/> 
+            <Route path='/query/:object/' element={<Query type={"Object"}/>}/>
+            <Route path='/create/:object/' element={<CRUD method={"Create"}/>}/>
+            <Route path='/update/:object/:id' element={<CRUD method={"Update"}/>}/>
+            <Route path='/display/:object/:id' element={<CRUD  method={"Display"}/>}/>
+            <Route path='/deactivate/:object/:id' element={<CRUD method={"Deactivate"}/>}/>
+            <Route path="/scratch/" element={<Scratch/>}/>
+            <Route path="/timecontrol" element={<TimeControlling/>}/>
+            <Route path="/trialbalance" element={<TrialBalance/>}/>
+            <Route path="/transaction/:trans" element={<TransactionUI/>}/>
+            <Route path="/holidays" element={<Holidays/>}/>
+            <Route path="/fasettings" element={<FinancialAccountSettings/>}/>
+            <Route path="*" element={<Home/>}/>
+        </Routes>
+        </div>
+        </BrowserRouter>
         </div>
     )
-}
+    } else {
+        return(
+            <div className='container'>
+                <div className='innerContainer'>
+                    <CompanyInfo/>
+                </div>
+            </div>
+        )
+    }
 }
 
 export default App; 
