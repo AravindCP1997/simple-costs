@@ -2,7 +2,7 @@ import './App.css'
 import { TiTimes } from "react-icons/ti";
 import { useEffect, useState, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate, useNavigate, useLocation } from 'react-router-dom';
-
+import { FaHome, FaArrowRight, FaArrowLeft, FaCopy } from 'react-icons/fa';
 
 function loadData(collection){
     const data = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
@@ -2078,11 +2078,13 @@ function SearchBar(){
     return(
         <div className='searchBarOuter'>
         <div className='searchBar'>
-            <button className="green" onClick={()=>navigate('/company')}>Company</button>
-            <button className='red' onClick={()=>navigate(`/`)}>Home</button>
-            <input type="text" value={url} ref={inputRef} onChange={changeUrl} placeholder="Go to . . ."/>
-            <button className="green" onClick={search}>&rarr;</button>
-            <button onClick={()=>window.open(window.location.href,'_blank')}>+</button>
+            <button className="searchBarButton" onClick={()=>navigate(`/`)}><FaHome/></button>
+            <button className="searchBarButton" onClick={()=>navigate(-1)}><FaArrowLeft/></button>
+            <div className='search'>
+                <input type="text" value={url} ref={inputRef} onChange={changeUrl} placeholder="Go to . . ."/>
+            </div>
+            <button className="searchBarButton" onClick={search}><FaArrowRight/></button>
+            <button className="searchBarButton" onClick={()=>window.open(window.location.href,'_blank')}><FaCopy/></button>
         </div>
         </div>
     )

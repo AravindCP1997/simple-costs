@@ -149,8 +149,24 @@
   transition:0.5s;
   overflow: auto;
   box-shadow: 0px 3px 10px 0px lightgray;
-  button{
-    border-radius: 15px;
+}
+
+.searchBarButton{
+  border-radius: 50%;
+  aspect-ratio: 1/1;
+  width: 30px;
+  padding: 5px;
+}
+
+.searchBarButton:hover{
+  background: var(--greent);
+}
+
+.search{
+  background: white;
+  border-radius: 15px;
+  input{
+    background: none;
   }
 }
 
