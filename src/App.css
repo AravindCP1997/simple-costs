@@ -124,10 +124,6 @@
   padding:min(2%,20px);
   color:grey;
   font-family: Lex, Helvet,'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-
-  button, input, select, option, label{
-    font-family: Lex, Helvet,'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  }
 }
 
 .searchBarOuter{
@@ -191,7 +187,7 @@
   width:fit-content;
   display:flex;
   flex-direction: column;
-  gap:50px;
+  gap:30px;
   height:fit-content;
   justify-content: center;
   height: fit-content;
@@ -230,7 +226,9 @@
   flex-direction: row;
   justify-content: center;
   gap:20px;
-  padding:10px;
+  padding:20px;
+  background: var(--whitet);
+  border-radius: 15px;
 }
 
 .menu{
@@ -454,6 +452,37 @@
   color:var(--blue)
 }
 
+.collectionRoute{
+  display: flex;
+  flex-direction: column;
+  gap:10px;
+  min-width:60%;
+  padding: 5%;
+  box-shadow: 0px 3px 10px 0px lightgray;
+  border-radius: 25px;
+  
+}
+
+.collectionRouteTitle{
+  background: var(--lightbluet);
+  text-align: center;
+  border-radius: 15px;
+}
+
+.collectionRouteButtons{
+  display: grid;
+  grid-template-columns: calc(50% - 5px) calc(50% - 5px);
+  gap:10px;
+  justify-content: center;
+  background: var(--lightbluet);
+  border-radius: 15px;
+  padding: 10px;
+}
+
+.collectionCreateButton{
+  background: var(--greent);
+}
+
 .crudUI{
   background: none;
   box-shadow: 0px 3px 10px 0px lightgray;
@@ -464,10 +493,11 @@
   flex-direction: column;
   gap:20px;
   height:fit-content;
+  color:var(--bluet);
 }
 
 .crudTitle{
-  color:var(--blue);
+  color:var(--bluet);
   text-align: center;
   padding:2%;
   border-radius: 15px;

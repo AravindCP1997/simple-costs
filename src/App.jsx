@@ -20,7 +20,7 @@ const ListofItems  = (collection,n) => {
 }
 
 const ListItems = (collection,key)=>{
-    const list = []
+    const list = [];
     collection.map(item=>list.push(item[key]))
     return list
 }
@@ -41,6 +41,20 @@ function SumFieldIfs(collection,field,ranges,criteria){
         }
        } 
        if (logic){subtotal+=parseFloat(collection[i][field] || 0)}
+    }
+    return subtotal
+}
+
+function CountFieldIfs(collection,ranges,criteria){
+    let subtotal = 0;
+    for (let i = 0;i<collection.length;i++){
+    let logic = true;
+       for (let j = 0; j< ranges.length;j++){
+        if (collection[i][ranges[j]] != criteria[j]){
+            logic = false
+        }
+       } 
+       if (logic){subtotal++}
     }
     return subtotal
 }
@@ -2151,23 +2165,22 @@ function Record(){
 function Control(){
 
     const navigate = useNavigate();
-    const list = [
-        {"Group":"Asset Accounting","items":["Asset","Asset Class"]},
-        {"Group":"Costing","items":["Cost Center","Cost Object"]},
-        {"Group":"Financial Accounting","items":["General Ledger","Profit Center","Segment","Currency"]},
-        {"Group":"Material","items":["Material","Service","Purchase Order","Sale Order","Location","Unit"]},
-        {"Group":"Payables & Receivables","items":["Bank Account", "Customer","Vendor","Payment Term"]},
-        {"Group":"Payroll","items":["Employee", "Organisational Unit","Income Tax Code"]}
+    const controls = [
+        {"Group":"Global Level", "Controls":[
+            {"Name":"Chart of Accounts", "URL":"/collection/ChartOfAccounts"},
+            {"Name":"Group Chart of Accounts", "URL":"/collection/GroupChartOfAccounts"},
+            {"Name":"Financial Statement Version", "URL":"/collection/FinancialStatementVersion"}
+        ]}
     ]
   
     return(
         <div className='menuContainer'>
             <h3 className='menuContainerTitle' onClick={()=>navigate('/reports')}>Control</h3>
-            {list.map(item=>
+            {controls.map(group=>
                 <div className='menuList'>
-                    <div className='menuTitle red'><h4>{item["Group"]}</h4></div>
-                    {item['items'].map(object=>
-                        <div className='menuItem' onClick={()=>{navigate(`/query/${object}`)}}><h4>{object}</h4></div>
+                    <div className='menuTitle red'><h4>{group["Group"]}</h4></div>
+                    {group['Controls'].map(control=>
+                        <div className='menuItem' onClick={()=>{navigate(control['URL'])}}><h4>{control['Name']}</h4></div>
                     )}
                     
                 </div>
@@ -2475,10 +2488,10 @@ function CRUD({method}){
         {schema.map(field=>
         <>
         {field['value']=="calculated" && <div className='crudField'><div className='crudRow'><label>{field['name']}</label><input value={output[field['name']]} disabled={true}/></div></div>}
-        {field['datatype']=="single" && <div className='crudField'><div className='crudRow'><label>{field['name']}</label>{ field['input'] == "input" && <input disabled={(field['disabled']||!editable)} type={field['type']} onChange={(e)=>handleChange1(field['name'],e)} value={output[field['name']]}/>}{field['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange1(field['name'],e)} value={output[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}</div></div>}
-        {field['datatype']=="object" && <div className='crudField'><div className='crudObject'><label>{field['name']}</label>{field['structure'].map(subfield=><>{subfield['datatype']=="single"&&<div className='crudRow'><label>{subfield['name']}</label>{subfield['input']=="input" && <input type={subfield['type']} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]} disabled={(field['disabled']||!editable)}/>}{subfield['input'] == "option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange2(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}</>)}</div></div>}
-        {field['datatype']=="collection" && <div className='crudField'><div className='crudObject'><label>{field['name']}</label><div className='crudTable'><table><thead><tr><th className='crudTableCell'></th>{field['structure'].map(subfield=><th className='crudTableCell'>{subfield['name']}</th>)}</tr></thead>{output[field['name']].map((item,index)=><tbody><tr><td className='crudTableCell'><button disabled={(field['disabled']||!editable)} onClick={(e)=>removeItem(field['name'],index,e)}>-</button></td>{field['structure'].map(subfield=><>{subfield['datatype']=="single" && <td className='crudTableCell'>{subfield['value']=="calculated" && <input value={output[field['name']][index][subfield['name']]} disabled={true}/>} {subfield['input']=="input"&& <input disabled={(field['disabled']||!editable)} onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} type={subfield['type']} value={output[field['name']][index][subfield['name']]}/>}{subfield['input']=="option" && <select disabled={(field['disabled']||!editable)} onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</td>}</>)}</tr></tbody>)}</table></div><div className='crudObjectButtons'><button className="blue" disabled={(field['disabled']||!editable)} onClick={(e)=>addItem(field['name'],field['use-state'][0],e)}>Add</button></div></div></div>}
-        {field['datatype']=="nest" && <div className="crudField"><div className="crudObject"><label>{field['name']}</label><button onClick={(e)=>addItem(field['name'],field['use-state'][0],e)}>Add</button><div className='crudGrid'>{output[field['name']].map((item,index)=><div className="crudFields">{field['structure'].map(subfield=><div className='crudField'>{subfield['datatype']=="single" && <div className='crudRow'><label>{subfield['name']}</label>{subfield['input']=="input" && <input onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]} type={subfield['type']}/>}{subfield['input']=="option" && <select onChange={(e)=>handlechange3(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}{subfield['datatype']=="collection" && <div className='crudObject'><label>{subfield['name']}</label><div className='crudTable'><table><thead><tr><th className='crudTableCell'></th>{subfield['structure'].map(subsubfield=><th className='crudTableCell'>{subsubfield['name']}</th>)}</tr></thead><tbody>{output[field['name']][index][subfield['name']].map((subitem,subindex)=><tr><td><div className='crudTableCell'><button onClick={()=>removeItem2(field['name'],index,subfield['name'],subindex)}>-</button></div></td>{subfield['structure'].map(subsubfield=><td><div className='crudTableCell'><input value={output[field['name']][index][subfield['name']][subindex][subsubfield['name']]} onChange={(e)=>handlechange4(field['name'],index,subfield['name'],subindex,subsubfield['name'],e)}/></div></td>)}</tr>)}</tbody></table><button onClick={()=>addItem2(field['name'],index,subfield['name'],subfield['use-state'][0])}>+</button></div></div> }</div>)}<button onClick={(e)=>removeItem(field['name'],index,e)}>-</button></div>)}</div></div></div>}
+        {field['datatype']=="single" && <SingleInput field={field} handleChange={handleChange1} editable={editable} output={output}/>}
+        {field['datatype']=="object" && <ObjectInput field={field} output={output} handleChange={handleChange2} editable={editable}/>}
+        {field['datatype']=="collection" && <CollectionInput field={field} output={output} editable={editable} handleChange={handlechange3} addItem={addItem} removeItem={removeItem}/>}
+        {field['datatype']=="nest" && <NestInput field={field} output={output} editable={editable} handleChange1={handlechange3} handleChange2={handlechange4} addItem1={addItem} addItem2={addItem2} removeItem1={removeItem} removeItem2={removeItem2}/>}
         </>)}</div>
         <div className='crudError'>
             <label>{`${errorlist.length} Error(s)`}</label>
@@ -2491,6 +2504,7 @@ function CRUD({method}){
             {(!deactivated && method==="Update") && <><button  className='blue' onClick={()=>cancel()}>Cancel</button><button className='green' onClick={()=>save()}>Update</button></>}
             {(method==="Display" || deactivated) && <><button className='blue' onClick={()=>cancel()}>Back</button></>}
         </div>
+        {JSON.stringify(data)}
         </div>
         }
         {method == "Deactivate" && 
@@ -4550,11 +4564,634 @@ function AttendanceUI({query}){
     )
 }
 
+function SingleInput({field,handleChange,output}){
+    return(
+        <div className='crudField'>
+            <div className='crudRow'>
+                <label>{field['name']}</label>
+                {field['noteditable'] && <label>{output[field['name']]}</label>}
+                {(field['input'] == "input" && !field['noteditable'] )&& 
+                    <input type={field['type']} placeholder={field['placeholder']} onChange={(e)=>handleChange(field['name'],e)} value={output[field['name']]}/>}
+                {(field['input']=="option" && !field['noteditable']) && 
+                    <select onChange={(e)=>handleChange(field['name'],e)} value={output[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
+            </div>
+        </div>
+    )
+}
+
+function ObjectInput({field,handleChange,output,editable}){
+    return(
+        <div className='crudField'>
+            <div className='crudObject'>
+                <label>{field['name']}</label>
+                {field['structure'].map(subfield=>
+                    <>{subfield['datatype']=="single"&&
+                        <div className='crudRow'><label>{subfield['name']}</label>
+                            {subfield['input']=="input" && 
+                                <input type={subfield['type']} onChange={(e)=>handleChange(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]} disabled={(field['disabled']||!editable)}/>}
+                            {subfield['input'] == "option" && 
+                                <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                        </div>}
+                    </>)}
+            </div>
+        </div>
+    )
+}
+
+function CollectionInput({field,handleChange,output,addItem,removeItem}){
+    return (
+        <div className='crudField'>
+            <div className='crudObject'>
+                <label>{field['name']}</label>
+                <div className='crudTable'>
+                    <table>
+                        <thead>
+                            <tr><th className='crudTableCell'></th>{field['schema'][0].map(subfield=><th className='crudTableCell'>{subfield['name']}</th>)}</tr>
+                        </thead>
+                        {output[field['name']].map((item,index)=>
+                            <tbody>
+                                <tr>
+                                    <td className='crudTableCell'>{!field['noteditable'] && <button onClick={(e)=>removeItem(field['name'],index,e)}>-</button>}</td>
+                                    {field['schema'][index].map(subfield=>
+                                        <>{subfield['datatype']=="single" && 
+                                            <td className='crudTableCell'>
+                                                {subfield['noteditable'] && <input value={output[field['name']][index][subfield['name']]} disabled={true}/>}
+                                                {(subfield['input']=="input" && !subfield['noteditable'])&& <input onChange={(e)=>handleChange(field['name'],subfield['name'],index,e)} type={subfield['type']} placeholder={subfield['placeholder']} value={output[field['name']][index][subfield['name']]}/>}
+                                                {(subfield['input']=="option"&& !subfield['noteditable']) && <select onChange={(e)=>handleChange(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                                            </td>}
+                                        </>)}
+                                </tr>
+                            </tbody>)}
+                    </table>
+                </div>
+                <div className='crudObjectButtons'>
+                    {!field['noteditable'] && <button className="blue" onClick={(e)=>addItem(field['name'],e)}>Add</button>}
+                </div>
+            </div>
+        </div>
+    )
+}
+
+function NestInput({field,output,editable,handleChange1,handleChange2,addItem1,addItem2,removeItem1,removeItem2}){
+    return(
+        <div className="crudField">
+            <div className="crudObject">
+                <label>{field['name']}</label>
+                <button onClick={(e)=>addItem1(field['name'],field['use-state'][0],e)}>Add</button>
+                <div className='crudGrid'>{output[field['name']].map((item,index)=>
+                    <div className="crudFields">{field['structure'].map(subfield=>
+                        <div className='crudField'>
+                            {subfield['datatype']=="single" && <div className='crudRow'>
+                                <label>{subfield['name']}</label>
+                                {subfield['input']=="input" && <input onChange={(e)=>handleChange1(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]} type={subfield['type']}/>}
+                                {subfield['input']=="option" && <select onChange={(e)=>handleChange1(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>
+                                    {subfield['options'].map(option=><option value={option}>{option}</option>)}
+                                    </select>}
+                            </div>}
+                            {subfield['datatype']=="collection" && <div className='crudObject'>
+                                <label>{subfield['name']}</label>
+                                <div className='crudTable'>
+                                    <table>
+                                        <thead>
+                                            <tr><th className='crudTableCell'></th>{subfield['structure'].map(subsubfield=><th className='crudTableCell'>{subsubfield['name']}</th>)}</tr>
+                                        </thead>
+                                        <tbody>{output[field['name']][index][subfield['name']].map((subitem,subindex)=>
+                                            <tr>
+                                                <td><div className='crudTableCell'><button onClick={()=>removeItem2(field['name'],index,subfield['name'],subindex)}>-</button></div></td>
+                                                {subfield['structure'].map(subsubfield=>
+                                                <td>
+                                                    <div className='crudTableCell'><input value={output[field['name']][index][subfield['name']][subindex][subsubfield['name']]} onChange={(e)=>handleChange2(field['name'],index,subfield['name'],subindex,subsubfield['name'],e)}/></div>
+                                                </td>)}
+                                            </tr>)}
+                                        </tbody>
+                                    </table>
+                                    <button onClick={()=>addItem2(field['name'],index,subfield['name'],subfield['use-state'][0])}>+</button>
+                                </div>
+                            </div> }
+                        </div>)}
+                        <button onClick={(e)=>removeItem1(field['name'],index,e)}>-</button>
+                    </div>)}
+                </div>
+            </div>
+        </div>
+    )
+}
+
+class KB{
+    constructor(){
+    }
+    static States = ["Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bengal", "Bihar", "Chattisgarh", "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu & Kashmir", "Jharkhand", "Karnataka", "Kerala","Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telengana", "Tripura", "Uttarakhand", "Uttar Pradesh","West Bengal"]
+    static UTs = ["Andaman Nicobar", "Chandigarh", "Dadra Nagar Haveli and Daman Diu", "Lakshadweep", "Ladakh"]
+    static Currency = [
+        {"Name":"US Dollar", "Code":"USD"},
+        {"Name":"Euro", "Code":"EUR"},
+        {"Name":"Canadian Dollar", "Code":"CAD"},
+        {"Name":"Yuan", "Code":"CNY"},
+        {"Name":"Indian Rupee", "Code":"INR"},
+        {"Name":"Pound Sterling", "Code":"GBP"},
+        {"Name":"Yen", "Code":"JPY"},
+        {"Name":"Swiss Franc", "Code":"CHF"},
+        {"Name":"Australian Dollar", "Code":"AUD"},
+        {"Name":"Qatari Rial", "Code":"QAR"},
+    ]
+    static AccountTypes = ["Asset","General Ledger","Bank Account","Customer","Vendor","Material","Service"]
+}
+
+class Collection{
+    constructor(name,method){
+        this.name = name;
+        this.collectionname = Collection.collectionname[this.name];
+        this.method = method;
+        this.editable = (method=="Create" || method=="Update")
+        this.identifiers = Collection.identifiers[this.name];
+        this.title = Collection.titles[this.name];
+    }
+    load(){
+        const data = loadData(this.collectionname);
+        return data;
+    }
+    exists(data){
+        const collection = this.load();
+        const identifiers = this.identifiers;
+        const values = identifiers.map(item=>data[item])
+        const filteredCount = CountFieldIfs(collection,identifiers,values)
+        return (filteredCount>0)?true:false;
+    }
+    getData(data){
+        const collection = this.load();
+        const identifiers = this.identifiers;
+        const values = identifiers.map(item=>data[item]);
+        let result = {};
+        if (this.exists(data)){
+            let filtered = collection;
+            for (let i = 0; i<identifiers.length;i++){
+                filtered = filtered.filter(item=>item[identifiers[i]]==values[i]);
+            }
+            result = filtered[0];
+        }
+        return result;
+    }
+    defaults(data){
+        let defaults = {};
+        if (this.method=="Create"){
+            defaults = Collection.defaults[this.name];
+        } else if (this.method=="Update" || this.method =="Display") {
+            defaults = this.getData(data);
+        }
+        return defaults
+    }
+    schema(data){
+        let schema = [];
+        switch (this.name){
+            case 'ChartOfAccounts':
+                schema = [
+                    {"name":"Code","datatype":"single","input":"input","maxLength":4,"type":"number","noteditable":!(this.method=="Create")},
+                    {"name":"Presentations","datatype":"collection","noteditable":!this.editable,"schema":data['Presentations'].map(item=>[
+                        {"name":"Presentation","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Group","input":"option","datatype":"single","options":["Asset","Liability","Equity","Income","Expense"],"noteditable":!this.editable},    
+                    ])},
+                    {"name":"Account Range","datatype":"collection","noteditable":true,"schema":data['Account Range'].map(item=>[
+                        {"name":"Account Type","datatype":"single","input":"input","type":"text","noteditable":true},
+                        {"name":"From","input":"input","datatype":"single","type":"number","noteditable":!this.editable},
+                        {"name":"To","input":"input","datatype":"single","type":"number","noteditable":!this.editable},        
+                    ])},
+                ]
+                break
+            case 'Company':
+                schema = [
+                    {"name":"Code","datatype":"single","input":"input","type":"number","noteditable":!(this.method=="Create")},
+                    {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Address","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"PIN","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    {"name":"PAN","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Places of Business","datatype":"collection","noteditable":!this.editable,"schema":data['Places of Business'].map(item=>[
+                        {"name":"Place","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"State","input":"input","datatype":"single","type":"text","noteditable":!this.editable},    
+                    ])},
+                    {"name":"Functional Currency","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                    {"name":"Year Zero","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Financial Year Beginning","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Chart of Accounts","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                    {"name":"Group Chart of Accounts","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                ];
+                break
+            case 'GroupChartOfAccounts':
+                schema = [
+                    {"name":"Code","datatype":"single","input":"input","maxLength":4,"type":"number","noteditable":!(this.method=="Create")},
+                    {"name":"Presentations","datatype":"collection","noteditable":!this.editable,"schema":data['Presentations'].map(item=>[
+                        {"name":"Presentation","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Group","input":"option","datatype":"single","options":["Asset","Liability","Equity","Income","Expense"],"noteditable":!this.editable},
+                        {"name":"Hierarchy","input":"input", "placeholder":"eg: Current Assets > Inventory","datatype":"single","type":"text","noteditable":!this.editable},        
+                    ])},
+                    {"name":"General Ledgers","datatype":"collection","noteditable":!this.editable,"schema":data['General Ledgers'].map(item=>[
+                        {"name":"General Ledger","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                        {"name":"Name","input":"input","datatype":"single","type":"text","noteditable":!this.editable},
+                        {"name":"Presentation","input":"option", "placeholder":"","datatype":"single","options":["",...ListItems(data['Presentations'],"Presentation")],"noteditable":!this.editable},        
+                    ])},
+
+                ]
+                break
+            case 'Asset':
+                schema = [
+                    {"name":"Code","datatype":"single","input":"input","type":"text"}
+                ]
+                break
+            case 'FinancialStatementVersion':
+                schema = [
+                    {"name":"Code","datatype":"single","input":"input","maxLength":4,"type":"number","noteditable":!(this.method=="Create")},
+                    {"name":"Chart of Accounts","datatype":"single","input":"option","options":[""],"noteditable":!(this.editable)},
+                    {"name":"Type","datatype":"single","input":"option","options":["Individual","Group"],"noteditable":!(this.editable)},
+                    {"name":"Hierarchy","datatype":"collection","noteditable":!(this.editable),"schema":data['Hierarchy'].map(item=>[
+                        {"name":"Presentation","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                        {"name":"Hierarchy","input":"input", "placeholder":"eg: Current Assets > Inventory","datatype":"single","type":"text","noteditable":!this.editable},        
+                    ])},
+                ]
+        }
+        return schema;
+    }
+    errors(data){
+        const list = [];
+        const mandatory = Collection.mandatory[this.name];
+        const missed = [];
+        mandatory.map(field=>data[field]==""?missed.push(field):()=>{});
+        (missed.length>0)?list.push(`${missed.join(", ")} is/ are necessary`):()=>{};
+        switch (this.name){
+            case 'ChartOfAccounts':
+                data['Presentations'].map((item,i)=>item['Group']==""?list.push(`Presentation ${i} requires a group`):()=>{})
+                data['Account Range'].map((item,i)=>(item['From']=="" || item['To']=="")?list.push(`Account type ${item['Account Type']} requires range`):()=>{})
+                data['Account Range'].map((item,i)=>(item['From']>=item['To'])?list.push(`${item['Account Type']}: 'To' range needs to be greater than 'from' range`):()=>{})
+                for (let i=1;i<data['Account Range'].length;i++){
+                    (data['Account Range'][i]['From'] <= data['Account Range'][i-1]['To'])?list.push(`'From' range of ${data['Account Range'][i]['Account Type']} to be greater than 'To' range of ${data['Account Range'][i-1]['Account Type']}`):()=>{};
+                }
+                break
+            case 'GroupChartOfAccounts':
+                data['Presentations'].map((item,i)=>item['Group']==""?list.push(`Presentation ${i} requires a group`):()=>{})
+                data['General Ledgers'].map((item,i)=>(item['Name']=="" || item['Presentation']=="")?list.push(`General Ledger ${i+1}: Information incomplete.`):()=>{})
+                break
+        }
+        return list
+    }
+    create(data){
+        const existing = this.load();
+        const updated = [...existing,data];
+        return updated;
+    }
+    delete(data){
+        const collection = this.load();
+        const identifiers = this.identifiers;
+        const values = identifiers.map(item=>data[item]);
+        let result = collection;
+        for (let i = 0;i<collection.length;i++){
+            let logic = true;
+            for (let j = 0; j< identifiers.length;j++){
+                if (collection[i][identifiers[j]] != values[j]){
+                    logic = false
+                }
+            } 
+            if (logic){result = result.filter((item,index)=>index!==i)}
+            }
+        return result;
+    }
+    update(data){
+        const existing = this.delete(data);
+        const updated = [...existing,data];
+        return updated
+    }
+    updatedCollection(data){
+        let result = [];
+        switch (this.method){
+            case 'Create':
+                result = this.create(data);
+                break
+            case 'Update':
+                result = this.update(data);
+                break
+            case 'Delete':
+                result = this.delete(data);
+                break
+        }
+        return result
+    } 
+    save(data){
+        const errors = this.errors(data);
+        if (errors.length>0) {
+            return ("Validation Unsuccessful!")
+        } else {
+            saveData(this.updatedCollection(data),this.collectionname);
+            return ('Succesfully Saved')
+        }
+    }
+    static collectionname = {
+        "Company":"companies",
+        "Asset":'assets',
+        "ChartOfAccounts":"chartofaccounts",
+        "GroupChartOfAccounts":"groupchartofaccounts",
+        "FinancialStatementVersion":"financialstatementversions"
+    }
+    static defaults = {
+        "Company":{
+            "Code":"",
+            "Name":"",
+            "Address":"",
+            "PIN":"",
+            "PAN":"",
+            "Places of Business":[
+                {"Place":"","State":""}
+            ],
+            "Functional Currency":"",
+            "Year Zero":"",
+            "Financial Year Beginning":"",
+            "Chart of Accounts":"",
+            "Group Chart of Accounts":""
+        },
+        "ChartOfAccounts":{
+            "Code":"",
+            "Presentations":[
+                {"Presentation":"","Group":"Asset"},
+                {"Presentation":"","Group":"Asset"}
+            ],
+            "Account Range":[
+                {"Account Type":"Asset","From":"","To":""},
+                {"Account Type":"General Ledger","From":"","To":""},
+                {"Account Type":"Bank Account","From":"","To":""},
+                {"Account Type":"Customer","From":"","To":""},
+                {"Account Type":"Vendor","From":"","To":""},
+                {"Account Type":"Material","From":"","To":""},
+                {"Account Type":"Service","From":"","To":""},
+            ]
+        },
+        "GroupChartOfAccounts":{
+            "Code":"",
+            "Presentations":[
+                {"Presentation":"","Group":"Asset","Hierarchy":""},
+            ],
+            "General Ledgers":[
+                {"General Ledger":"","Name":"","Presentation":""}
+            ]
+        },
+        "FinancialStatementVersion":{
+            "Code":"",
+            "Type":"Individual",
+            "Chart of Accounts":"",
+            "Hierarchy":[
+                {"Presentation":"","Hierarchy":""}
+            ]
+        },
+        "Asset":{
+            "Code":""
+        }
+    }
+    static mandatory = {
+        "Company":["Code","Name","Year Zero","Financial Year Beginning"],
+        "Asset":["Code"],
+        "ChartOfAccounts":["Code"],
+        "GroupChartOfAccounts":["Code"],
+        "FinancialStatementVersion":["Code"]
+    }
+    static identifiers = {
+        "Company":["Code"],
+        "Asset":["Code"],
+        "ChartOfAccounts":["Code"],
+        "GroupChartOfAccounts":["Code"],
+        "FinancialStatementVersion":["Code"]
+    }
+    static titles = {
+        'Company':'Company',
+        'ChartOfAccounts':'Chart of Accounts',
+        'GroupChartOfAccounts':'Group Chart of Accounts',
+        "FinancialStatementVersion":"Financial Statement Version"
+    }
+}
+
+function CRUDCollection(){
+    const location = useLocation();
+    const query = location.state || {};
+    const {collection,method,parameters} = query;
+    const CRUD = new Collection(collection,method);
+    const defaults = CRUD.defaults(parameters);
+    const [data,setdata] = useState(defaults);
+    const schema = CRUD.schema(data);
+    const errors = CRUD.errors(data);
+    const navigate = useNavigate();
+
+    const singleChange = (field,e)=>{
+        e.preventDefault;
+        const {value} = e.target
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:value
+        }))
+    }
+
+    function objectChange(field,subfield,e){
+        e.preventDefault;
+        const {value} = e.target
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:{...prevdata[field],[subfield]:value}
+        }))
+    }
+
+    function collectionChange(field,subfield,index,e){
+        e.preventDefault;
+        const {value} = e.target
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].map((item,i)=>(i===index)?{...item,[subfield]:value}:item)
+        }))
+    }
+
+    function nestchange(field,index,subfield,subindex,subsubfield,e){
+        const {value} = e.target;
+        setdata(prevdata=>({
+            ...prevdata,[field]:prevdata[field].map((item,i)=>
+            (i==index)?{...item,[subfield]:item[subfield].map((subitem,ii)=>
+            (ii==subindex)?{...subitem,[subsubfield]:value}:subitem)}:item)
+        }))
+    }
+
+    function addCollection(field,e){
+        e.preventDefault;
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:[...prevdata[field],defaults[field][0]]
+        }))
+    }
+
+    function removeCollection(field,index,e){
+        e.preventDefault;
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].filter((item,i)=>i!==index)
+        }))
+        
+    }
+
+    function addNest(field,index,subfield,defaults){
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].map((item,i)=>
+            (i==index)?{...item,[subfield]:[...item[subfield],defaults]}:item
+            )
+        }))
+    }
+
+    function removeNest(field,index,subfield,subindex){
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].map((item,i)=>
+            (i==index)?{...item,[subfield]:item[subfield].filter((subitem,ii)=>ii!=subindex)}:item)
+        }))
+    }
+
+    function cancel(){
+        navigate(`/collection/${collection}`);
+        window.location.reload();
+    }
+
+    function save(){
+        const result = CRUD.save(data);
+        alert(result);
+        cancel();
+    }
+
+    return(
+        <div className='crudUI'>
+            <div className='crudTitle'>
+                <h2>{method} {CRUD.title}</h2>
+            </div>
+            <div className='crudFields'>
+                {schema.map(field=>
+                    <>
+                        {field['datatype']=="single" && <SingleInput field={field} output={data} handleChange={singleChange}/>}
+                        {field['datatype']=="collection" && <CollectionInput field={field} output={data} handleChange={collectionChange} addItem={addCollection} removeItem={removeCollection}/>}
+                    </>
+                )}
+            </div>
+            <div className='crudButtons'>
+                <button onClick={()=>cancel()}><FaArrowLeft/></button>
+                <button onClick={()=>save()}>Save</button>
+            </div>
+            {errors.length>0 && <div className='crudError'>
+                <h4>Things to Consider:</h4>
+                <ul>
+                    {errors.map(error=>
+                        <li>{error}</li>
+                    )}
+                </ul>
+            </div>}
+        </div>
+    )
+}
+
+class CRUDRoute{
+    constructor(collection){
+        this.collection = collection;
+        this.mandatory = new Collection(this.collection).identifiers;
+        this.createRequirements = CRUDRoute.createRequirements[this.collection];
+        this.schema = CRUDRoute.schema[this.collection];
+        this.defaults = CRUDRoute.defaults[this.collection];
+    }
+    createError(data){
+        const missing = [];
+        const errors = [];
+        this.createRequirements.map(field=>(data[field]=="")?missing.push(field):()=>{});
+        (missing.length>0)?errors.push(`${missing.join(", ")} required.`):()=>{};
+        return errors;
+    }
+    checkAvailability(data){
+        const availability = new Collection(this.collection).exists(data);
+        return availability;
+    }
+    static createRequirements = {
+        "Company":[],
+        "Asset":["Company Code"],
+        "ChartOfAccounts":[],
+        "GroupChartOfAccounts":[],
+        "FinancialStatementVersion":[]
+    }
+    static schema = {
+        "Company":[
+            {"name":"Code","input":"input","type":"number"}
+        ],
+        "Asset":[
+            {"name":"Code","input":"input","type":"number"}
+        ],
+        "ChartOfAccounts":[
+            {"name":"Code","input":"input","type":"number"}
+        ],
+        "GroupChartOfAccounts":[
+            {"name":"Code","input":"input","type":"number"}
+        ],
+        "FinancialStatementVersion":[
+           {"name":"Code","input":"input","type":"number"} 
+        ]
+    }
+    static defaults = {
+        "Company":{"Code":""},
+        "Asset":{"Code":""},
+        "ChartOfAccounts":{"Code":""},
+        "GroupChartOfAccounts":{"Code":""},
+        "FinancialStatementVersion":{"Code":""}
+    }
+}
+
+function CRUDRouter(){
+    const {collection} = useParams();
+    const title = Collection.titles[collection]
+    const Route = new CRUDRoute(collection);
+    const [data,setdata] = useState(Route.defaults);
+    const schema = Route.schema;
+    const createError = Route.createError(data);
+    const availability = Route.checkAvailability(data);
+    const handleChange = (field,e) =>{
+        const {value} = e.target;
+        setdata(prevdata=>({
+            ...prevdata,[field]:value
+        }))
+    }
+    const navigate = useNavigate();
+
+    function create(){
+        if (createError.length>0){
+            alert(JSON.stringify(createError))
+        }
+        else {
+            navigate('/crud',{state:{'method':'Create','collection':collection,'parameters':data}})
+        }
+    }
+
+    function display(method){
+        if (!availability){
+            alert(`Requested ${collection} not available.`)
+        } else {
+            navigate('/crud',{state:{'method':method,'collection':collection,'parameters':data}})
+        }
+    }
+
+    return(
+        <div className='collectionRoute'>
+            <div className='collectionRouteTitle'>
+                <h3>{title}</h3>
+            </div>
+            {schema.map(field=>
+                <SingleInput output={data} field={field} handleChange={handleChange}/>
+            )}
+            <div className='collectionRouteButtons'>
+                <button className='collectionCreateButton' onClick={()=>create()}>Create</button>
+                <button onClick={()=>display("Display")}>Display</button>
+                <button onClick={()=>display("Update")}>Update</button>
+                <button onClick={()=>display("Delete")}>Deactivate</button>
+            </div>
+        </div>
+    )
+}
+
 function Scratch(){
     const income = 700010;
     return(
         <div>
-        {JSON.stringify(Attendance.isPresent("12","2025-01-01"))}
+        <CRUDRouter/>
         </div>
     )
 }
@@ -4582,6 +5219,8 @@ function App(){
             <Route path='/display/:object/:id' element={<CRUD  method={"Display"}/>}/>
             <Route path='/deactivate/:object/:id' element={<CRUD method={"Deactivate"}/>}/>
             <Route path="/scratch/" element={<Scratch/>}/>
+            <Route path="/collection/:collection" element={<CRUDRouter/>}/>
+            <Route path="/crud" element={<CRUDCollection/>}/>
             <Route path="/timecontrol" element={<TimeControlling/>}/>
             <Route path="/trialbalance" element={<TrialBalance/>}/>
             <Route path="/transaction/:trans" element={<TransactionUI/>}/>
