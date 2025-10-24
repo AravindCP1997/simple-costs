@@ -2185,7 +2185,8 @@ function Control(){
         {"Group":"Global Level", "Controls":[
             {"Name":"Chart of Accounts", "URL":"/collection/ChartOfAccounts"},
             {"Name":"Group Chart of Accounts", "URL":"/collection/GroupChartOfAccounts"},
-            {"Name":"Financial Statement Version", "URL":"/collection/FinancialStatementVersion"}
+            {"Name":"Financial Statement Version", "URL":"/collection/FinancialStatementVersion"},
+            {"Name":"Segment", "URL":"/collection/Segment"},
         ]},
         {"Group":"Company Level", "Controls":[
             {"Name":"Financial Accounts Settings", "URL":"/collection/FinancialAccountsSettings"},
@@ -4760,8 +4761,8 @@ class Collection{
                 case 'ChartOfAccounts':
                     defaults = {
                         "Code":"",
-                        "Presentations":data['Presentations'].map(item=>({"Presentation":"","Group":""})),
-                        "Account Range":data['Account Range'].map(item=>({"Account Type":item['Account Type'],"From":"","To":""})),
+                        "Presentations":[{"Presentation":"","Group":""}],
+                        "Account Range":KB.AccountTypes.map(item=>({"Account Type":item,"From":"","To":""})),
                     }
                     break
                 case 'Company':
@@ -4844,6 +4845,13 @@ class Collection{
                         ],
                         "General Ledger for Salary TDS":""
                     }
+                    break
+                case 'Segment':
+                    defaults = {
+                        "Code":"",
+                        "Name":""
+                    }
+                    break
             }
         } else if (this.method=="Update" || this.method =="Display") {
             defaults = this.getData(data);
@@ -4984,6 +4992,12 @@ class Collection{
                     {"name":"General Ledger for Salary TDS","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
                 ]
                 break
+            case 'Segment': 
+                schema = [
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                ]
+                break
         }
         return schema;
     }
@@ -5067,7 +5081,8 @@ class Collection{
         "GroupChartOfAccounts":"groupchartofaccounts",
         "FinancialStatementVersion":"financialstatementversions",
         "Employee":"employees",
-        "FinancialAccountsSettings":"financialaccountssettings"
+        "FinancialAccountsSettings":"financialaccountssettings",
+        "Segment":"segments"
     }
     static mandatory = {
         "Company":["Code","Name","Year Zero","Financial Year Beginning"],
@@ -5076,7 +5091,8 @@ class Collection{
         "GroupChartOfAccounts":["Code"],
         "FinancialStatementVersion":["Code"],
         "Employee":["Code","Company Code","Name","State","Income Tax Code"],
-        "FinancialAccountsSettings":["Company Code","General Ledger for Profit and Loss Account","General Ledger for Cash Discount","General Ledger for Salary TDS"]
+        "FinancialAccountsSettings":["Company Code","General Ledger for Profit and Loss Account","General Ledger for Cash Discount","General Ledger for Salary TDS"],
+        "Segment":["Code","Name"]
     }
     static identifiers = {
         "Company":["Code"],
@@ -5085,7 +5101,8 @@ class Collection{
         "GroupChartOfAccounts":["Code"],
         "FinancialStatementVersion":["Code"],
         "Employee":["Code","Company Code"],
-        "FinancialAccountsSettings":["Company Code"]
+        "FinancialAccountsSettings":["Company Code"],
+        "Segment":["Code"]
     }
     static titles = {
         'Company':'Company',
@@ -5094,7 +5111,8 @@ class Collection{
         "FinancialStatementVersion":"Financial Statement Version",
         "Asset":"Asset",
         "Employee":"Employee",
-        "FinancialAccountsSettings":"Financial Accounts Settings"
+        "FinancialAccountsSettings":"Financial Accounts Settings",
+        "Segment":"Segment"
     }
 }
 
@@ -5245,7 +5263,8 @@ class CRUDRoute{
         "GroupChartOfAccounts":[],
         "FinancialStatementVersion":[],
         "Employee":["Company Code"],
-        "FinancialAccountsSettings":["Company Code"]
+        "FinancialAccountsSettings":["Company Code"],
+        "Segment":[]
     }
     static schema = {
         "Company":[
@@ -5269,6 +5288,9 @@ class CRUDRoute{
         ],
         "FinancialAccountsSettings":[
             {"name":"Company Code","input":"input","type":"number"}
+        ],
+        "Segment":[
+            {"name":"Code","input":"input","type":"text"}
         ]
     }
     static defaults = {
@@ -5278,7 +5300,8 @@ class CRUDRoute{
         "GroupChartOfAccounts":{"Code":""},
         "FinancialStatementVersion":{"Code":""},
         "Employee":{"Code":"","Company Code":""},
-        "FinancialAccountsSettings":{"Company Code":""}
+        "FinancialAccountsSettings":{"Company Code":""},
+        "Segment":{"Code":""}
     }
 }
 

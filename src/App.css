@@ -180,6 +180,7 @@
   flex-direction: column;
   justify-content: center;
   border-radius: 25px;
+  padding: 10px;
 }
 
 .home{
@@ -780,6 +781,10 @@
 
   .container{
     gap:10px;
+  }
+
+  .homeOuter{ 
+    width: 100%;
   }
 
  .home{
