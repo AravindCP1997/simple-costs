@@ -2,7 +2,7 @@ import './App.css'
 import { TiTimes } from "react-icons/ti";
 import { useEffect, useState, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaArrowRight, FaArrowLeft, FaCopy } from 'react-icons/fa';
+import { FaPlus, FaHome, FaArrowRight, FaArrowLeft, FaCopy } from 'react-icons/fa';
 
 function loadData(collection){
     const data = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
@@ -794,16 +794,15 @@ class CostObject{
 }
 
 class Employee{
-    constructor(code){
+    constructor(code,company){
         this.code = code;
-        this.data = Employee.data.filter(item=>item['Code']==this.code)[0];
+        this.company = company;
+        this.data = new Collection("Employee","Display").getData({"Code":this.code,"Company Code":this.company});
     }
-    daysalary(date){
-        let scale = 0;
-        const data = this.data['Employment Details'];
-        const filtered = data.filter(item=>new Date((item['From']))<=new Date(date) && new Date(item['To'])>=new Date(date))
-        scale = (filtered.length>0)? filtered[0]['Scale'] : 0;
-        return scale
+    variableWage(wageType,date){
+        const data = this.data['Variable Wages'];
+        const filtered = data.filter(item=>(new Date(item['From']) <= new Date(date) && new Date(item['To']) >= new Date(date) && item['Wage Type']==wageType));
+        return filtered;
     }
     salary(year,month){
         const dates = datesInMonth(year,month);
@@ -2076,7 +2075,24 @@ function SearchBar(){
             e.preventDefault();
             navigate('/');
             window.location.reload();
+        } else if (e.ctrlKey && e.key==="+"){
+            e.preventDefault();
+            window.open(window.location.href,'_blank');
+        } else if (e.ctrlKey && e.key==="Backspace"){
+            e.preventDefault();
+            navigate(-1);
+        } else if (e.altKey && e.key==="r"){
+            e.preventDefault();
+            navigate('/record');
+        } else if (e.altKey && e.key==="R"){
+            e.preventDefault();
+            navigate('/reports');
+        } else if (e.altKey && e.key==="c"){
+            e.preventDefault();
+            navigate('/control');
         }
+
+        
     }
     
     useEffect(()=>{
@@ -2098,7 +2114,7 @@ function SearchBar(){
                 <input type="text" value={url} ref={inputRef} onChange={changeUrl} placeholder="Go to . . ."/>
             </div>
             <button className="searchBarButton" onClick={search}><FaArrowRight/></button>
-            <button className="searchBarButton" onClick={()=>window.open(window.location.href,'_blank')}><FaCopy/></button>
+            <button className="searchBarButton" onClick={()=>window.open(window.location.href,'_blank')}><FaPlus/></button>
         </div>
         </div>
     )
@@ -2170,6 +2186,12 @@ function Control(){
             {"Name":"Chart of Accounts", "URL":"/collection/ChartOfAccounts"},
             {"Name":"Group Chart of Accounts", "URL":"/collection/GroupChartOfAccounts"},
             {"Name":"Financial Statement Version", "URL":"/collection/FinancialStatementVersion"}
+        ]},
+        {"Group":"Company Level", "Controls":[
+            {"Name":"Financial Accounts Settings", "URL":"/collection/FinancialAccountsSettings"},
+        ]},
+        {"Group":"Payroll", "Controls":[
+            {"Name":"Employee", "URL":"/collection/Employee"},
         ]}
     ]
   
@@ -4734,7 +4756,95 @@ class Collection{
     defaults(data){
         let defaults = {};
         if (this.method=="Create"){
-            defaults = Collection.defaults[this.name];
+            switch (this.name){
+                case 'ChartOfAccounts':
+                    defaults = {
+                        "Code":"",
+                        "Presentations":data['Presentations'].map(item=>({"Presentation":"","Group":""})),
+                        "Account Range":data['Account Range'].map(item=>({"Account Type":item['Account Type'],"From":"","To":""})),
+                    }
+                    break
+                case 'Company':
+                    defaults = {
+                        "Code":"",
+                        "Name":"",
+                        "Address":"",
+                        "PIN":"",
+                        "PAN":"",
+                        "Places of Business":data['Places of Business'].map(item=>({"Place":"","State":""})),
+                        "Functional Currency":"",
+                        "Year Zero":"",
+                        "Financial Year Beginning":"",
+                        "Chart of Accounts":"",
+                        "Group Chart of Accounts":"",                        
+                    }
+                    break
+                case 'GroupChartOfAccounts':
+                    defaults = {
+                        "Code":"",
+                        "Presentations":data['Presentations'].map(item=>({"Presentation":"","Group":"","Hierarchy":""})),
+                        "General Ledgers":data['General Ledgers'].map(item=>({"General Ledger":"","Name":"","Presentation":""})),
+                    }
+                    break
+                case 'Asset':
+                    defaults = {
+                        "Code":"",
+                    }
+                    break
+                case 'FinancialStatementVersion':
+                    defaults = {
+                        "Code":"",
+                        "Chart of Accounts":"",
+                        "Type":"",
+                        "Hierarchy":data['Hierarchy'].map(item=>({"Presentation":"","Level":""})),
+                    }
+                    break
+                case 'Employee':
+                    defaults = {
+                        "Code":"",
+                        "Company Code":data['Company Code'],
+                        "Name":"",
+                        "Address":"",
+                        "PIN":"",
+                        "State":"",
+                        "Phone":"",
+                        "Email":"",
+                        "Tax Identification Number":"",
+                        "Date of Birth":"",
+                        "Date of Joining":"",
+                        "Date of Seperation":"",
+                        "Bank Accounts":[
+                            {"Account Number":"","Confirm Account Number":"","Bank Name":"","IFSC Code":""}
+                        ],
+                        "Employment Details":[
+                            {"Organisational Unit":"","From":"","To":"","Position":""}
+                        ],
+                        "Variable Wages":[
+                            {"Wage Type":"","Amount":"","From":"","To":""}
+                        ],
+                        "Fixed Wages":[
+                            {"Wage Type":"","Amount":"","From Year":"","From Month":"","To Year":"","To Month":""}
+                        ],
+                        "One Time Wages":[
+                            {"Wage Type":"","Amount":"","Date":""}
+                        ],
+                        "Income Tax Code":"",
+                        "Additional Income and Deductions":[
+                            {"Tax Year":"","Description":"","Type":"","Amount":""}
+                        ]
+                    }
+                    break
+                case 'FinancialAccountsSettings':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "General Ledger for Profit and Loss":"",
+                        "General Ledger for Cash Discount":"",
+                        "Wage Types":[
+                            {"Type":"","Description":"","GL":""}
+                        ],
+                        "General Ledger for Salary TDS":""
+                    }
+            }
         } else if (this.method=="Update" || this.method =="Display") {
             defaults = this.getData(data);
         }
@@ -4806,6 +4916,74 @@ class Collection{
                         {"name":"Hierarchy","input":"input", "placeholder":"eg: Current Assets > Inventory","datatype":"single","type":"text","noteditable":!this.editable},        
                     ])},
                 ]
+                break
+            case 'Employee':
+                schema = [
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Address","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"PIN","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    {"name":"State","datatype":"single","input":"option","options":["",...KB.States,...KB.UTs],"noteditable":!this.editable},
+                    {"name":"Phone","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    {"name":"Email","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Tax Identification Number","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Date of Birth","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                    {"name":"Date of Joining","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                    {"name":"Date of Seperation","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                    {"name":"Bank Accounts","datatype":"collection","noteditable":!this.editable,"schema":data['Bank Accounts'].map(item=>[
+                        {"name":"Account Number","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Confirm Account Number","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Bank Name","input":"input","datatype":"single","type":"text","noteditable":!this.editable},
+                        {"name":"IFSC Code","input":"input", "datatype":"single","type":"text","noteditable":!this.editable},        
+                    ])},
+                    {"name":"Employment Details","datatype":"collection","noteditable":!this.editable,"schema":data['Employment Details'].map(item=>[
+                        {"name":"Organisational Unit","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"From","input":"input","datatype":"single","type":"date","noteditable":!this.editable},
+                        {"name":"To","input":"input", "datatype":"single","type":"date","noteditable":!this.editable}, 
+                        {"name":"Position","input":"input", "datatype":"single","type":"text","noteditable":!this.editable},        
+                    ])},
+                    {"name":"Variable Wages","datatype":"collection","noteditable":!this.editable,"schema":data['Variable Wages'].map(item=>[
+                        {"name":"Wage Type","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Amount","input":"input","datatype":"single","type":"number","noteditable":!this.editable},
+                        {"name":"From","input":"input","datatype":"single","type":"date","noteditable":!this.editable},
+                        {"name":"To","input":"input","datatype":"single","type":"date","noteditable":!this.editable},      
+                    ])},
+                    {"name":"Fixed Wages","datatype":"collection","noteditable":!this.editable,"schema":data['Fixed Wages'].map(item=>[
+                        {"name":"Wage Type","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Amount","input":"input","datatype":"single","type":"number","noteditable":!this.editable},
+                        {"name":"From Year","input":"input","datatype":"single","type":"number","noteditable":!this.editable},
+                        {"name":"From Month","input":"input","datatype":"single","type":"number","noteditable":!this.editable},
+                        {"name":"To Year","input":"input","datatype":"single","type":"number","noteditable":!this.editable},
+                        {"name":"To Month","input":"input","datatype":"single","type":"number","noteditable":!this.editable},   
+                    ])},
+                    {"name":"One Time Wages","datatype":"collection","noteditable":!this.editable,"schema":data['One Time Wages'].map(item=>[
+                        {"name":"Wage Type","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Amount","input":"input","datatype":"single","type":"number","noteditable":!this.editable},
+                        {"name":"Date","input":"input","datatype":"single","type":"date","noteditable":!this.editable},      
+                    ])},
+                    {"name":"Income Tax Code","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Additional Income and Deductions","datatype":"collection","noteditable":!this.editable,"schema":data['Additional Income and Deductions'].map(item=>[
+                        {"name":"Tax Year","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                        {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Type","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Amount","input":"input","datatype":"single","type":"number","noteditable":!this.editable},     
+                    ])},
+                ]
+                break
+            case 'FinancialAccountsSettings':
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"General Ledger for Profit and Loss Account","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                    {"name":"General Ledger for Cash Discount","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                    {"name":"Wage Types","datatype":"collection","noteditable":!this.editable,"schema":data['Wage Types'].map(item=>[
+                        {"name":"Wage Type","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Type","input":"option","datatype":"single","options":["Earning","Deduction"],"noteditable":!this.editable},
+                        {"name":"General Ledger","input":"option","datatype":"single","options":[""],"noteditable":!this.editable},    
+                    ])},
+                    {"name":"General Ledger for Salary TDS","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                ]
+                break
         }
         return schema;
     }
@@ -4828,6 +5006,7 @@ class Collection{
                 data['Presentations'].map((item,i)=>item['Group']==""?list.push(`Presentation ${i} requires a group`):()=>{})
                 data['General Ledgers'].map((item,i)=>(item['Name']=="" || item['Presentation']=="")?list.push(`General Ledger ${i+1}: Information incomplete.`):()=>{})
                 break
+            
         }
         return list
     }
@@ -4886,80 +5065,36 @@ class Collection{
         "Asset":'assets',
         "ChartOfAccounts":"chartofaccounts",
         "GroupChartOfAccounts":"groupchartofaccounts",
-        "FinancialStatementVersion":"financialstatementversions"
-    }
-    static defaults = {
-        "Company":{
-            "Code":"",
-            "Name":"",
-            "Address":"",
-            "PIN":"",
-            "PAN":"",
-            "Places of Business":[
-                {"Place":"","State":""}
-            ],
-            "Functional Currency":"",
-            "Year Zero":"",
-            "Financial Year Beginning":"",
-            "Chart of Accounts":"",
-            "Group Chart of Accounts":""
-        },
-        "ChartOfAccounts":{
-            "Code":"",
-            "Presentations":[
-                {"Presentation":"","Group":"Asset"},
-                {"Presentation":"","Group":"Asset"}
-            ],
-            "Account Range":[
-                {"Account Type":"Asset","From":"","To":""},
-                {"Account Type":"General Ledger","From":"","To":""},
-                {"Account Type":"Bank Account","From":"","To":""},
-                {"Account Type":"Customer","From":"","To":""},
-                {"Account Type":"Vendor","From":"","To":""},
-                {"Account Type":"Material","From":"","To":""},
-                {"Account Type":"Service","From":"","To":""},
-            ]
-        },
-        "GroupChartOfAccounts":{
-            "Code":"",
-            "Presentations":[
-                {"Presentation":"","Group":"Asset","Hierarchy":""},
-            ],
-            "General Ledgers":[
-                {"General Ledger":"","Name":"","Presentation":""}
-            ]
-        },
-        "FinancialStatementVersion":{
-            "Code":"",
-            "Type":"Individual",
-            "Chart of Accounts":"",
-            "Hierarchy":[
-                {"Presentation":"","Hierarchy":""}
-            ]
-        },
-        "Asset":{
-            "Code":""
-        }
+        "FinancialStatementVersion":"financialstatementversions",
+        "Employee":"employees",
+        "FinancialAccountsSettings":"financialaccountssettings"
     }
     static mandatory = {
         "Company":["Code","Name","Year Zero","Financial Year Beginning"],
         "Asset":["Code"],
         "ChartOfAccounts":["Code"],
         "GroupChartOfAccounts":["Code"],
-        "FinancialStatementVersion":["Code"]
+        "FinancialStatementVersion":["Code"],
+        "Employee":["Code","Company Code","Name","State","Income Tax Code"],
+        "FinancialAccountsSettings":["Company Code","General Ledger for Profit and Loss Account","General Ledger for Cash Discount","General Ledger for Salary TDS"]
     }
     static identifiers = {
         "Company":["Code"],
         "Asset":["Code"],
         "ChartOfAccounts":["Code"],
         "GroupChartOfAccounts":["Code"],
-        "FinancialStatementVersion":["Code"]
+        "FinancialStatementVersion":["Code"],
+        "Employee":["Code","Company Code"],
+        "FinancialAccountsSettings":["Company Code"]
     }
     static titles = {
         'Company':'Company',
         'ChartOfAccounts':'Chart of Accounts',
         'GroupChartOfAccounts':'Group Chart of Accounts',
-        "FinancialStatementVersion":"Financial Statement Version"
+        "FinancialStatementVersion":"Financial Statement Version",
+        "Asset":"Asset",
+        "Employee":"Employee",
+        "FinancialAccountsSettings":"Financial Accounts Settings"
     }
 }
 
@@ -5108,7 +5243,9 @@ class CRUDRoute{
         "Asset":["Company Code"],
         "ChartOfAccounts":[],
         "GroupChartOfAccounts":[],
-        "FinancialStatementVersion":[]
+        "FinancialStatementVersion":[],
+        "Employee":["Company Code"],
+        "FinancialAccountsSettings":["Company Code"]
     }
     static schema = {
         "Company":[
@@ -5125,6 +5262,13 @@ class CRUDRoute{
         ],
         "FinancialStatementVersion":[
            {"name":"Code","input":"input","type":"number"} 
+        ],
+        "Employee":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"number"}
+        ],
+        "FinancialAccountsSettings":[
+            {"name":"Company Code","input":"input","type":"number"}
         ]
     }
     static defaults = {
@@ -5132,7 +5276,9 @@ class CRUDRoute{
         "Asset":{"Code":""},
         "ChartOfAccounts":{"Code":""},
         "GroupChartOfAccounts":{"Code":""},
-        "FinancialStatementVersion":{"Code":""}
+        "FinancialStatementVersion":{"Code":""},
+        "Employee":{"Code":"","Company Code":""},
+        "FinancialAccountsSettings":{"Company Code":""}
     }
 }
 
@@ -5190,8 +5336,8 @@ function CRUDRouter(){
 function Scratch(){
     const income = 700010;
     return(
-        <div>
-        <CRUDRouter/>
+        <div className='reportDisplay'>
+        {JSON.stringify(new Employee(201052,1000).variableWage("BASIC SALARY","2025-10-31"))}
         </div>
     )
 }
