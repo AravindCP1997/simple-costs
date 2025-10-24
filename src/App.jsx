@@ -2183,6 +2183,7 @@ function Control(){
     const navigate = useNavigate();
     const controls = [
         {"Group":"Global Level", "Controls":[
+            {"Name":"Company", "URL":"/collection/Company"},
             {"Name":"Chart of Accounts", "URL":"/collection/ChartOfAccounts"},
             {"Name":"Group Chart of Accounts", "URL":"/collection/GroupChartOfAccounts"},
             {"Name":"Financial Statement Version", "URL":"/collection/FinancialStatementVersion"},
@@ -4772,7 +4773,7 @@ class Collection{
                         "Address":"",
                         "PIN":"",
                         "PAN":"",
-                        "Places of Business":data['Places of Business'].map(item=>({"Place":"","State":""})),
+                        "Places of Business":[{"Place":"","State":""}],
                         "Functional Currency":"",
                         "Year Zero":"",
                         "Financial Year Beginning":"",
@@ -4884,11 +4885,11 @@ class Collection{
                     {"name":"PAN","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Places of Business","datatype":"collection","noteditable":!this.editable,"schema":data['Places of Business'].map(item=>[
                         {"name":"Place","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                        {"name":"State","input":"input","datatype":"single","type":"text","noteditable":!this.editable},    
+                        {"name":"State","input":"option","datatype":"single","options":["",...KB.States,...KB.UTs],"noteditable":!this.editable},    
                     ])},
                     {"name":"Functional Currency","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
-                    {"name":"Year Zero","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Financial Year Beginning","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Year Zero","datatype":"single","input":"input","type":"number","maxLength":4,"noteditable":!this.editable},
+                    {"name":"Financial Year Beginning","datatype":"single","input":"option","options":["","01","02","03","04","05","06","07","08","09","10","11","12"],"noteditable":!this.editable},
                     {"name":"Chart of Accounts","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
                     {"name":"Group Chart of Accounts","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
                 ];
@@ -5016,6 +5017,10 @@ class Collection{
                     (data['Account Range'][i]['From'] <= data['Account Range'][i-1]['To'])?list.push(`'From' range of ${data['Account Range'][i]['Account Type']} to be greater than 'To' range of ${data['Account Range'][i-1]['Account Type']}`):()=>{};
                 }
                 break
+            case 'Company':
+                data['Places of Business'].map((item,i)=>(item['Place']=="" || item['State']=="")?list.push(`Place of Business ${i+1}: Information incomplete.`):()=>{});
+                data['Places of Business'].length==0?list.push("At least one Place of Business is required"):()=>{};
+                break
             case 'GroupChartOfAccounts':
                 data['Presentations'].map((item,i)=>item['Group']==""?list.push(`Presentation ${i} requires a group`):()=>{})
                 data['General Ledgers'].map((item,i)=>(item['Name']=="" || item['Presentation']=="")?list.push(`General Ledger ${i+1}: Information incomplete.`):()=>{})
@@ -5085,7 +5090,7 @@ class Collection{
         "Segment":"segments"
     }
     static mandatory = {
-        "Company":["Code","Name","Year Zero","Financial Year Beginning"],
+        "Company":["Code","Name","Year Zero","Financial Year Beginning","Functional Currency","Chart of Accounts"],
         "Asset":["Code"],
         "ChartOfAccounts":["Code"],
         "GroupChartOfAccounts":["Code"],
