@@ -60,11 +60,11 @@ button{
   transition: 0.5s;
   background: var(--bluet);
   color:white;
+  border-radius: 10px;
 }
 
 button:hover{
-  background: var(--gold);
-  color: var(--bluet);
+  transform: scale(.95)
 }
 
 .red{

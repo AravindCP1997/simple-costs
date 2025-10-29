@@ -124,21 +124,10 @@ function ageInDays(d,t){
 }
 
 class Company{
-    constructor(data){
-        this.status = ('company' in localStorage);
-        this.data = (this.status)?JSON.parse(localStorage.getItem('company')):{"Name":"","GSTIN":"","PAN":"","Year 0":2020,"Financial Year Beginning":"04","Functional Currency":{"Code":"INR","Currency":"Indian Rupee"}}
-        this.startdate = `${this.data['Year 0']}-${this.data['Financial Year Beginning']}-01`
-        this.sample = {
-            "Name":"Sample Company",
-            "GSTIN":"32ABDCS1234E1ZN",
-            "Address":"",
-            "State":"Kerala",
-            "PIN":682017,
-            "PAN":"ABDCS1234E",
-            "Year 0":2025,
-            "Financial Year Beginning":'04',
-            "Functional Currency":{"Code":"INR","Currency":"Indian Rupee"}
-        }
+    constructor(Code){
+        this.code = Code;
+        this.data = new Collection('Company').getData({"Code":this.code})
+        this.BusinessPlaces = ListItems(this.data['Places of Business'],"Place");
     }
     static timeMaintained = ('timecontrol' in localStorage);
     static timeControls = JSON.parse(localStorage.getItem('timecontrol'));
@@ -154,16 +143,7 @@ class Company{
     static removeTimeControl(){
         localStorage.removeItem('timecontrol');
     }
-    initialise(){
-        localStorage.setItem('company',JSON.stringify(this.sample))
-        localStorage.setItem('currencies',JSON.stringify(Intelligence.Currency));
-    }
-    static save(data){
-        localStorage.setItem('company',JSON.stringify(data))
-    }
-    static delete(){
-        localStorage.removeItem('company')
-    }
+    
 }
 
 class Database{
@@ -683,61 +663,27 @@ class Customer{
 }
 
 class CostCenter{
-    constructor(name){
-        this.name = name;
-        this.data = CostCenter.data.filter(item=>item['Name']==this.name)[0];
+    constructor(Company, Code){
+        this.code = Code;
+        this.company = Company;
+        this.data = new Collection('Cost Center').getData({'Company Code':this.company,'Code':this.code})
     }
-    transactions(){
-        const data = new Intelligence().transactionstable();
-        const filtered = data.filter(item=>item['Cost Center']==this.name);
-        return filtered
+    static data(Company){
+        const alldata = new Collection('Cost Center').load();
+        const filtered = alldata.filter(item=>item['Company Code']==Company);
+        return filtered;
     }
-    itemsOfDate(date){
-        const data = this.transactions().filter(item=>item['Consumption Time From']<=date && item['Consumption Time To']>=date)
-        const result = data.map(item=>({'Cost Element':item['Account'],'General Ledger':item['General Ledger'],'Cost per Day':CostCenter.costPerDay(item)}))
-        return result;
+    static listAll(Company){
+        const data = this.data(Company);
+        const list = ListItems(data,'Code');
+        return list;
     }
-    costOfDate(date){
-        const data = this.itemsOfDate(date)
-        const cost  = SumField(data,'Cost per Day')
-        return cost
+    static listActive(Company){
+        const data = this.data(Company);
+        const filtered = data.filter(item=>!item['Deactivated'])
+        const list = ListItems(filtered,'Code');
+        return list;
     }
-    prepaid(date){
-        const data = this.transactions().filter(item=>new Date(item['Consumption Time To'])>new Date(date) && new Date(item['Consumption Time From'])<=new Date(date))
-        const result = data.map(item=>({...item,...{'Prepaid Days':CostCenter.prepaiddays(item,date),'Prepaid Cost':CostCenter.prepaidCost(item,date)}}))
-        return result
-    }
-    static prepaiddays(lineitem,date){
-        const to = lineitem['Consumption Time To'];
-        const days = dayNumber(to) - dayNumber(date)+ 1
-        return days
-    }
-    static costPerDay(lineitem){
-        const from = lineitem['Consumption Time From'];
-        const to = lineitem['Consumption Time To'];
-        const days = dayNumber(to) - dayNumber(from)+ 1
-        const costperday = lineitem['Amount']/days
-        return costperday
-    }
-    static prepaidCost(lineitem,date){
-        const days = this.prepaiddays(lineitem,date);
-        const costperday = this.costPerDay(lineitem);
-        const prepaidcost = days * costperday
-        return prepaidcost
-    }
-    static prepaidCostData(date){
-        const centers = this.activeList
-        const list = []
-        centers.map(center=>list.push(...new CostCenter(center).prepaid(date)))
-        return list
-    }
-    static data = Database.load("Cost Center")
-    static activeData = this.data.filter(item=>!item['Deactivated'])
-    static list(){
-        const list = ListItems(this.data,"Name")
-        return list
-    }
-    static activeList = ListItems(this.activeData,"Name");
 }
 
 class CostObject{
@@ -1473,350 +1419,350 @@ class Unit{
         return list
     }
 }
-const objects = {
-    "Asset":{
-        "name":"Asset",
-        "schema": [
-            {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-            {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Asset Class", "datatype":"single", "input":"option", "options":["",...AssetClass.list()],"use-state":""},
-            {"name": "Cost Center", "datatype":"single", "input":"option", "options":["",...CostCenter.list()],"use-state":""},
-            {"name": "Useful Life", "datatype":"single", "input":"input", "type":"number","use-state":0},
-            {"name": "Salvage Value", "datatype":"single", "input":"input", "type":"number","use-state":0},
-            {"name": "Date of Capitalisation", "datatype":"single", "input":"input", "type":"date","use-state":0},
-            {"name": "Date of Removal", "datatype":"single", "input":"input", "type":"date","use-state":0}
-        ],
-        "collection":'assets'
-    },
-    "Asset Class":{
-        "name":"Asset Class",
-        "schema": [
-            {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-            {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Depreciable", "datatype":"single", "input":"option", "options":["","Yes","No"], "use-state":""},
-            {"name": "General Ledger - Asset", "datatype":"single", "input":"option", "options":["",...GeneralLedger.listtype("Asset")], "use-state":""},
-            {"name": "General Ledger - Depreciation", "datatype":"single", "input":"option", "options":["",...GeneralLedger.listtype("Depreciation")], "use-state":""}
-        ],
-        "collection":"assetclasses"
-    },
-    "Bank Account":{
-        "name":"Bank Account",
-        "collection":"bankaccounts",
-        "schema":[
-            {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-            {"name":"Name","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"Bank Name","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"IFSC","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"Account Number","datatype":"single","input":"input","type":"number","use-state":""},
-            {"name":"General Ledger","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('Bank Account')],"use-state":""},
-            {"name":"Profit Center","datatype":"single","input":"option","options":["",...ProfitCenter.list()],"use-state":""},
-            {"name":"Virtual Accounts","datatype":"collection","structure":[
-                {"name":"Virtual Account Number","datatype":"single","input":"input","type":"text","use-state":""},
-                {"name":"Ledger","datatype":"single","input":"option","options":["",...Customer.list(),...GeneralLedger.listtype('General')],"use-state":""},
-                {"name":"Presentation","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('Customer')]},
-                {"name":"Profit Center","datatype":"single","input":"option","options":["",...ProfitCenter.list()]}
-            ],"use-state":[{"Virtual Account Number":"","Ledger":"","Profit Center":""}]},
-        ]
-    },
-    "Cost Center":{
-        "name": "Cost Center",
-        "schema": [
-            {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-            {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":"Chennai"},
-            {"name": "Profit Center", "datatype":"single", "input":"option", "options":["",...ProfitCenter.list()], "use-state":"No"},
-            {"name":"Apportionment Ratio","datatype":"nest","structure":[
-                {"name":"From", "datatype":"single", "input":"input", "type":"date"},
-                {"name":"To", "datatype":"single", "input":"input", "type":"date"},
-                {"name":"Ratio", "datatype":"collection", "structure":[
-                    {"name":"To", "datatype":"single", "input":"input", "type":"text"},
-                    {"name":"Ratio", "datatype":"single", "input":"input", "type":"text"}
-                ],'use-state':[{"To":"","Ratio":""}]}
-            ],"use-state":[{"From":"2025-04-01","To":"2026-03-31","Ratio":[{"To":"Head Office","Ratio":0.50}]}]}
-        ],
-        "collection":"costcenters"
-    },
-    "Cost Object":{
-        "name":"Cost Object",
-        "collection":"costobjects",
-        "schema":[
-            {"name":"Description","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"Cost Accumulation Period","datatype":"object","structure":[{"name":"From", "datatype":"single", "input":"input", "type":"date"},{"name":"To", "datatype":"single", "input":"input", "type":"date"}],"use-state":{"From":"","To":""}},
-            {"name":"Settlement Ratio","datatype":"collection","structure":[
-                {"name":"To","datatype":"single","input":"option","options":CostObject.transferablesList()},
-                {"name":"Proportion","datatype":"single","input":"input","type":"number"},
-                {"name":"Type","datatype":"single","value":"calculated"},
-                {"name":"Consumption Time From", "datatype":"single","input":"input","type":"date"},
-                {"name":"Consumption Time To", "datatype":"single","input":"input","type":"date"}
-            ],
-            "use-state":[{"To":"","Proportion":"","Consumption Time From":"","Consumption Time To":""}]},
+// const objects = {
+//     "Asset":{
+//         "name":"Asset",
+//         "schema": [
+//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
+//             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+//             {"name": "Asset Class", "datatype":"single", "input":"option", "options":["",...AssetClass.list()],"use-state":""},
+//             {"name": "Cost Center", "datatype":"single", "input":"option", "options":["",...CostCenter.list()],"use-state":""},
+//             {"name": "Useful Life", "datatype":"single", "input":"input", "type":"number","use-state":0},
+//             {"name": "Salvage Value", "datatype":"single", "input":"input", "type":"number","use-state":0},
+//             {"name": "Date of Capitalisation", "datatype":"single", "input":"input", "type":"date","use-state":0},
+//             {"name": "Date of Removal", "datatype":"single", "input":"input", "type":"date","use-state":0}
+//         ],
+//         "collection":'assets'
+//     },
+//     "Asset Class":{
+//         "name":"Asset Class",
+//         "schema": [
+//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
+//             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+//             {"name": "Depreciable", "datatype":"single", "input":"option", "options":["","Yes","No"], "use-state":""},
+//             {"name": "General Ledger - Asset", "datatype":"single", "input":"option", "options":["",...GeneralLedger.listtype("Asset")], "use-state":""},
+//             {"name": "General Ledger - Depreciation", "datatype":"single", "input":"option", "options":["",...GeneralLedger.listtype("Depreciation")], "use-state":""}
+//         ],
+//         "collection":"assetclasses"
+//     },
+//     "Bank Account":{
+//         "name":"Bank Account",
+//         "collection":"bankaccounts",
+//         "schema":[
+//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
+//             {"name":"Name","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name":"Bank Name","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name":"IFSC","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name":"Account Number","datatype":"single","input":"input","type":"number","use-state":""},
+//             {"name":"General Ledger","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('Bank Account')],"use-state":""},
+//             {"name":"Profit Center","datatype":"single","input":"option","options":["",...ProfitCenter.list()],"use-state":""},
+//             {"name":"Virtual Accounts","datatype":"collection","structure":[
+//                 {"name":"Virtual Account Number","datatype":"single","input":"input","type":"text","use-state":""},
+//                 {"name":"Ledger","datatype":"single","input":"option","options":["",...Customer.list(),...GeneralLedger.listtype('General')],"use-state":""},
+//                 {"name":"Presentation","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('Customer')]},
+//                 {"name":"Profit Center","datatype":"single","input":"option","options":["",...ProfitCenter.list()]}
+//             ],"use-state":[{"Virtual Account Number":"","Ledger":"","Profit Center":""}]},
+//         ]
+//     },
+//     "Cost Center":{
+//         "name": "Cost Center",
+//         "schema": [
+//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
+//             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":"Chennai"},
+//             {"name": "Profit Center", "datatype":"single", "input":"option", "options":["",...ProfitCenter.list()], "use-state":"No"},
+//             {"name":"Apportionment Ratio","datatype":"nest","structure":[
+//                 {"name":"From", "datatype":"single", "input":"input", "type":"date"},
+//                 {"name":"To", "datatype":"single", "input":"input", "type":"date"},
+//                 {"name":"Ratio", "datatype":"collection", "structure":[
+//                     {"name":"To", "datatype":"single", "input":"input", "type":"text"},
+//                     {"name":"Ratio", "datatype":"single", "input":"input", "type":"text"}
+//                 ],'use-state':[{"To":"","Ratio":""}]}
+//             ],"use-state":[{"From":"2025-04-01","To":"2026-03-31","Ratio":[{"To":"Head Office","Ratio":0.50}]}]}
+//         ],
+//         "collection":"costcenters"
+//     },
+//     "Cost Object":{
+//         "name":"Cost Object",
+//         "collection":"costobjects",
+//         "schema":[
+//             {"name":"Description","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name":"Cost Accumulation Period","datatype":"object","structure":[{"name":"From", "datatype":"single", "input":"input", "type":"date"},{"name":"To", "datatype":"single", "input":"input", "type":"date"}],"use-state":{"From":"","To":""}},
+//             {"name":"Settlement Ratio","datatype":"collection","structure":[
+//                 {"name":"To","datatype":"single","input":"option","options":CostObject.transferablesList()},
+//                 {"name":"Proportion","datatype":"single","input":"input","type":"number"},
+//                 {"name":"Type","datatype":"single","value":"calculated"},
+//                 {"name":"Consumption Time From", "datatype":"single","input":"input","type":"date"},
+//                 {"name":"Consumption Time To", "datatype":"single","input":"input","type":"date"}
+//             ],
+//             "use-state":[{"To":"","Proportion":"","Consumption Time From":"","Consumption Time To":""}]},
 
-        ]
-    },
-    "Currency":{
-        "name":"Currency",
-        "schema":[
-            {"name":"Currency","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"Code","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"Exchange Rate","datatype":"single","input":"input","type":"number","use-state":""}
-        ],
-        "collection":"currencies"
-    },
-    "Customer":{
-        "name":"Customer",
-        "collection":"customers",
-        "schema": [
-            {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-            {"name":"Name","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"Address","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"City","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"PIN","datatype":"single","input":"input","type":"number","use-state":""},
-            {"name":"State","datatype":"single","input":"option","options":["",...Intelligence.States,...Intelligence.UTs,"Outside India"],"use-state":""},
-            {"name":"Phone","datatype":"single","input":"input","type":"number","use-state":""},
-            {"name":"E-mail","datatype":"single","input":"input","type":"number","use-state":""},
-            {"name":"PAN","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"GSTIN","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
-            {"name":"Payment Terms","datatype":"single","input":"option","options":[],"use-state":""},
-        ]
-    },
-    "Employee":{
-        "name":"Employee",
-        "schema": [
-            {"name":"Code", "datatype":"single", "input":"input","type":"text","use-state":""},
-            {"name": "Name", "datatype":"single", "input":"input","type":"text","use-state":""},
-            {"name": "Address", "datatype":"single", "input":"input","type":"text","use-state":""},
-            {"name": "PIN", "datatype":"single", "input":"input","type":"number","use-state":""},
-            {"name": "Phone", "datatype":"single", "input":"input","type":"number","use-state":""},
-            {"name": "E-mail", "datatype":"single", "input":"input","type":"text","use-state":""},
-            {"name": "PAN", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Date of Birth", "datatype":"single", "input":"input", "type":"date", "use-state":0},
-            {"name":"Age","value":"calculated"},
-            {"name": "Date of Hiring", "datatype":"single", "input":"input", "type":"date", "use-state":0},
-            {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Validated", "value":"calculated", "datatype":"single"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
-            {"name":"Employment Details", "datatype":"collection","structure":[{"name":"Organisational Unit", "datatype":"single", "input":"option", "options":[""]},{"name":"Position", "datatype":"single", "input":"input", "type":"text"},{"name":"Scale", "datatype":"single", "input":"input", "type":"number"},{"name":"From", "datatype":"single", "input":"input", "type":"date"},{"name":"To", "datatype":"single", "input":"input", "type":"date"}], "use-state":[{"id":0,"Organisational Unit":"Finance","Position":"Assistant Manager","Scale":100000,"From":0,"To":0}]},
-            {"name":"Deductions - Recurring","datatype":"collection","structure":[{"name":"Description","datatype":"single", "input":"input", "type":"text"},{"name":"From","datatype":"single", "input":"input", "type":"date"},{"name":"To","datatype":"single", "input":"input", "type":"date"},{"name":"Amount","datatype":"single", "input":"input", "type":"number"}], "use-state":[{"Description":"","From":"","To":"","Amount":""}]},
-            {"name":"Deductions - Onetime","datatype":"collection","structure":[{"name":"Description","datatype":"single", "input":"input", "type":"text"},{"name":"Date","datatype":"single", "input":"input", "type":"date"},{"name":"Amount","datatype":"single", "input":"input", "type":"number"}], "use-state":[{"Description":"","Date":"","Amount":""}]},
-            {"name":"Incometax Regime","datatype":"single","input":"option","options":["New","Old"],"use-state":""},
-            {"name":"Incometax - Additional Income","datatype":"collection","structure":[{"name": "Tax Year", "datatype":"single", "input":"input","type":"number"},{"name": "Description", "datatype":"single", "input":"input","type":"text"},{"name": "Amount", "datatype":"single", "input":"input","type":"number"}],"use-state":[{"Tax Year":"","Description":"","Amount":""}]},
-            {"name":"Incometax - Deductions","datatype":"collection","structure":[{"name": "Tax Year", "datatype":"single", "input":"input","type":"number"},{"name": "Description", "datatype":"single", "input":"input","type":"text"},{"name": "Amount", "datatype":"single", "input":"input","type":"number"}],"use-state":[{"Tax Year":"","Description":"","Amount":""}]},
-            {"name":"Leaves","datatype":"collection","structure":[{"name": "From", "datatype":"single", "input":"input","type":"date"},{"name": "To", "datatype":"single", "input":"input","type":"date"},{"name": "Type of Leave", "datatype":"single", "input":"input","type":"text"}],"use-state":[{"From":"","To":"","Type of Leave":""}]},
-        ],
-        "collection":'employees'
-    },
-    "General Ledger":{
-        "name":"General Ledger",
-        "schema":[
-            {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-            {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name":"Ledger Type","datatype":"single","input":"option","options":["","Asset", "Bank Account", "Cost Element",  "Customer", "Depreciation" ,"General", "GST",  "Material", "Vendor"]},
-            {"name": "Presentation", "datatype":"single", "input":"option", "options":["Income", "Expense", "Asset", "Liability", "Equity"], "use-state":"Income"},
-            {"name": "Enable Clearing", "datatype":"single", "input":"option","options":["True","False"], "use-state":"True"},
-        ],
-        "collection":"generalledgers"
-    },
-    "GST Code":{
-        "name":"GST Code",
-        "collection":"gstcodes",
-        "schema":[
-            {"name":"Code","datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name":"Rate","datatype":"single","input":"input","type":"number","use-state":0},
-            {"name":"Cess Rate","datatype":"single","input":"input","type":"number","use-state":0},
-            {"name":"CGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
-            {"name":"IGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
-            {"name":"SGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
-            {"name":"UTGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
-            {"name":"Cess Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0}
-        ]
-    },
-    "Income Tax Code":{
-        "name":"Income Tax Code",
-        "collection":"incometaxcodes",
-        "schema":[
-            {"name":"Code", "datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"Taxation","datatype":"nest","structure":[
-                {"name":"From Year", "datatype":"single","input":"input","type":"number","use-state":""},
-                {"name":"To Year", "datatype":"single","input":"input","type":"number","use-state":""},
-                {"name":"Marginal Relief","datatype":"single","input":"option","options":["","Yes","No"],"use-state":"No"},
-                {"name":"Exemption Limit", "datatype":"single","input":"input","type":"number","use-state":""},
-                {"name":"Cess", "datatype":"single","input":"input","type":"number","use-state":""},
-                {"name":"Slab", "datatype":"collection", "structure":[
-                    {"name":"From","datatype":"single","input":"input","type":"number"},
-                    {"name":"To","datatype":"single","input":"input","type":"number"},
-                    {"name":"Rate","datatype":"single","input":"input","type":"number"},
-                ], 'use-state':[{"From":"","To":"","Rate":""}]},
-            ], "use-state":[{"From Year":"","To Year":"","Exemption Limit":"","Marginal Relief":"No","Slab":[{"From":"","To":"","Rate":""}]}]}
-        ]
-    },
-    "Location":{
-        "name":"Location",
-        "schema": [
-            {"name":"Name", "datatype":"single", "input":"input", "type":"text","use-state":""},
-            {"name":"Cost Center", "datatype":"single", "input":"option", "options":["",...CostCenter.list()],"use-state":""},
-        ],
-        "collection":"locations"
-    },
-    "Material":{
-        "name":"Material",
-        "schema":[
-            {"name":"Name", "datatype":"single", "input":"input", "type":"text","use-state":""},
-            {"name":"General Ledger", "datatype":"single", "input":"option", "options":["",...GeneralLedger.listtype('Material')],"use-state":""},
-            {"name":"Unit", "datatype":"single", "input":"option", "options":["",...Unit.list()],"use-state":""},
-            {"name":"Price", "datatype":"collection", "structure":[{"name":"Location","datatype":"single","input":"input","type":"text"},{"name":"Date","datatype":"single","input":"input","type":"date"},{"name":"Price","datatype":"single","input":"input","type":"number"}],"use-state":[{"Location":"","Date":"","Price":""}]},
-        ],
-        "collection":"materials"
-    },
-    "Organisational Unit":{
-        "name":"Organisational Unit",
-        "collection":"organisationalunits",
-        "schema":[
-            {"name":"Name", "datatype":"single", "input":"input", "type":"text","use-state":""},
-            {"name":"Cost Center", "datatype":"single", "input":"option", "options":["",...CostCenter.list()],"use-state":""}
-        ]
-    },
-    "Payment Term":{
-        "name":"Payment Term",
-        "schema":[
-            {"name": "Code", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name":"Description","datatype":"single", "input":"input", "type":"text","use-state":"45 Days Net"},
-            {"name":"Discounting Criteria", "datatype":"collection","structure":[{"name":"Days from Supply","datatype":"single","input":"input","type":"number"},{"name":"Discount %","datatype":"single","input":"input","type":"number"}] , "use-state":[{"Days from Supply":45,"Discount %":0}]}
-        ],
-        "collection":"paymentterms"
-    },
-    "Profit Center":{
+//         ]
+//     },
+//     "Currency":{
+//         "name":"Currency",
+//         "schema":[
+//             {"name":"Currency","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name":"Code","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name":"Exchange Rate","datatype":"single","input":"input","type":"number","use-state":""}
+//         ],
+//         "collection":"currencies"
+//     },
+//     "Customer":{
+//         "name":"Customer",
+//         "collection":"customers",
+//         "schema": [
+//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
+//             {"name":"Name","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name":"Address","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name":"City","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name":"PIN","datatype":"single","input":"input","type":"number","use-state":""},
+//             {"name":"State","datatype":"single","input":"option","options":["",...Intelligence.States,...Intelligence.UTs,"Outside India"],"use-state":""},
+//             {"name":"Phone","datatype":"single","input":"input","type":"number","use-state":""},
+//             {"name":"E-mail","datatype":"single","input":"input","type":"number","use-state":""},
+//             {"name":"PAN","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name":"GSTIN","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
+//             {"name":"Payment Terms","datatype":"single","input":"option","options":[],"use-state":""},
+//         ]
+//     },
+//     "Employee":{
+//         "name":"Employee",
+//         "schema": [
+//             {"name":"Code", "datatype":"single", "input":"input","type":"text","use-state":""},
+//             {"name": "Name", "datatype":"single", "input":"input","type":"text","use-state":""},
+//             {"name": "Address", "datatype":"single", "input":"input","type":"text","use-state":""},
+//             {"name": "PIN", "datatype":"single", "input":"input","type":"number","use-state":""},
+//             {"name": "Phone", "datatype":"single", "input":"input","type":"number","use-state":""},
+//             {"name": "E-mail", "datatype":"single", "input":"input","type":"text","use-state":""},
+//             {"name": "PAN", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+//             {"name": "Date of Birth", "datatype":"single", "input":"input", "type":"date", "use-state":0},
+//             {"name":"Age","value":"calculated"},
+//             {"name": "Date of Hiring", "datatype":"single", "input":"input", "type":"date", "use-state":0},
+//             {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Validated", "value":"calculated", "datatype":"single"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
+//             {"name":"Employment Details", "datatype":"collection","structure":[{"name":"Organisational Unit", "datatype":"single", "input":"option", "options":[""]},{"name":"Position", "datatype":"single", "input":"input", "type":"text"},{"name":"Scale", "datatype":"single", "input":"input", "type":"number"},{"name":"From", "datatype":"single", "input":"input", "type":"date"},{"name":"To", "datatype":"single", "input":"input", "type":"date"}], "use-state":[{"id":0,"Organisational Unit":"Finance","Position":"Assistant Manager","Scale":100000,"From":0,"To":0}]},
+//             {"name":"Deductions - Recurring","datatype":"collection","structure":[{"name":"Description","datatype":"single", "input":"input", "type":"text"},{"name":"From","datatype":"single", "input":"input", "type":"date"},{"name":"To","datatype":"single", "input":"input", "type":"date"},{"name":"Amount","datatype":"single", "input":"input", "type":"number"}], "use-state":[{"Description":"","From":"","To":"","Amount":""}]},
+//             {"name":"Deductions - Onetime","datatype":"collection","structure":[{"name":"Description","datatype":"single", "input":"input", "type":"text"},{"name":"Date","datatype":"single", "input":"input", "type":"date"},{"name":"Amount","datatype":"single", "input":"input", "type":"number"}], "use-state":[{"Description":"","Date":"","Amount":""}]},
+//             {"name":"Incometax Regime","datatype":"single","input":"option","options":["New","Old"],"use-state":""},
+//             {"name":"Incometax - Additional Income","datatype":"collection","structure":[{"name": "Tax Year", "datatype":"single", "input":"input","type":"number"},{"name": "Description", "datatype":"single", "input":"input","type":"text"},{"name": "Amount", "datatype":"single", "input":"input","type":"number"}],"use-state":[{"Tax Year":"","Description":"","Amount":""}]},
+//             {"name":"Incometax - Deductions","datatype":"collection","structure":[{"name": "Tax Year", "datatype":"single", "input":"input","type":"number"},{"name": "Description", "datatype":"single", "input":"input","type":"text"},{"name": "Amount", "datatype":"single", "input":"input","type":"number"}],"use-state":[{"Tax Year":"","Description":"","Amount":""}]},
+//             {"name":"Leaves","datatype":"collection","structure":[{"name": "From", "datatype":"single", "input":"input","type":"date"},{"name": "To", "datatype":"single", "input":"input","type":"date"},{"name": "Type of Leave", "datatype":"single", "input":"input","type":"text"}],"use-state":[{"From":"","To":"","Type of Leave":""}]},
+//         ],
+//         "collection":'employees'
+//     },
+//     "General Ledger":{
+//         "name":"General Ledger",
+//         "schema":[
+//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
+//             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+//             {"name":"Ledger Type","datatype":"single","input":"option","options":["","Asset", "Bank Account", "Cost Element",  "Customer", "Depreciation" ,"General", "GST",  "Material", "Vendor"]},
+//             {"name": "Presentation", "datatype":"single", "input":"option", "options":["Income", "Expense", "Asset", "Liability", "Equity"], "use-state":"Income"},
+//             {"name": "Enable Clearing", "datatype":"single", "input":"option","options":["True","False"], "use-state":"True"},
+//         ],
+//         "collection":"generalledgers"
+//     },
+//     "GST Code":{
+//         "name":"GST Code",
+//         "collection":"gstcodes",
+//         "schema":[
+//             {"name":"Code","datatype":"single", "input":"input", "type":"text", "use-state":""},
+//             {"name":"Rate","datatype":"single","input":"input","type":"number","use-state":0},
+//             {"name":"Cess Rate","datatype":"single","input":"input","type":"number","use-state":0},
+//             {"name":"CGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
+//             {"name":"IGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
+//             {"name":"SGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
+//             {"name":"UTGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
+//             {"name":"Cess Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0}
+//         ]
+//     },
+//     "Income Tax Code":{
+//         "name":"Income Tax Code",
+//         "collection":"incometaxcodes",
+//         "schema":[
+//             {"name":"Code", "datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name":"Taxation","datatype":"nest","structure":[
+//                 {"name":"From Year", "datatype":"single","input":"input","type":"number","use-state":""},
+//                 {"name":"To Year", "datatype":"single","input":"input","type":"number","use-state":""},
+//                 {"name":"Marginal Relief","datatype":"single","input":"option","options":["","Yes","No"],"use-state":"No"},
+//                 {"name":"Exemption Limit", "datatype":"single","input":"input","type":"number","use-state":""},
+//                 {"name":"Cess", "datatype":"single","input":"input","type":"number","use-state":""},
+//                 {"name":"Slab", "datatype":"collection", "structure":[
+//                     {"name":"From","datatype":"single","input":"input","type":"number"},
+//                     {"name":"To","datatype":"single","input":"input","type":"number"},
+//                     {"name":"Rate","datatype":"single","input":"input","type":"number"},
+//                 ], 'use-state':[{"From":"","To":"","Rate":""}]},
+//             ], "use-state":[{"From Year":"","To Year":"","Exemption Limit":"","Marginal Relief":"No","Slab":[{"From":"","To":"","Rate":""}]}]}
+//         ]
+//     },
+//     "Location":{
+//         "name":"Location",
+//         "schema": [
+//             {"name":"Name", "datatype":"single", "input":"input", "type":"text","use-state":""},
+//             {"name":"Cost Center", "datatype":"single", "input":"option", "options":["",...CostCenter.list()],"use-state":""},
+//         ],
+//         "collection":"locations"
+//     },
+//     "Material":{
+//         "name":"Material",
+//         "schema":[
+//             {"name":"Name", "datatype":"single", "input":"input", "type":"text","use-state":""},
+//             {"name":"General Ledger", "datatype":"single", "input":"option", "options":["",...GeneralLedger.listtype('Material')],"use-state":""},
+//             {"name":"Unit", "datatype":"single", "input":"option", "options":["",...Unit.list()],"use-state":""},
+//             {"name":"Price", "datatype":"collection", "structure":[{"name":"Location","datatype":"single","input":"input","type":"text"},{"name":"Date","datatype":"single","input":"input","type":"date"},{"name":"Price","datatype":"single","input":"input","type":"number"}],"use-state":[{"Location":"","Date":"","Price":""}]},
+//         ],
+//         "collection":"materials"
+//     },
+//     "Organisational Unit":{
+//         "name":"Organisational Unit",
+//         "collection":"organisationalunits",
+//         "schema":[
+//             {"name":"Name", "datatype":"single", "input":"input", "type":"text","use-state":""},
+//             {"name":"Cost Center", "datatype":"single", "input":"option", "options":["",...CostCenter.list()],"use-state":""}
+//         ]
+//     },
+//     "Payment Term":{
+//         "name":"Payment Term",
+//         "schema":[
+//             {"name": "Code", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+//             {"name":"Description","datatype":"single", "input":"input", "type":"text","use-state":"45 Days Net"},
+//             {"name":"Discounting Criteria", "datatype":"collection","structure":[{"name":"Days from Supply","datatype":"single","input":"input","type":"number"},{"name":"Discount %","datatype":"single","input":"input","type":"number"}] , "use-state":[{"Days from Supply":45,"Discount %":0}]}
+//         ],
+//         "collection":"paymentterms"
+//     },
+//     "Profit Center":{
         
-        "name":"Profit Center",
-        "schema":[
-            {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-            {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Segment", "datatype":"single", "input":"option", "options":["",...Segment.list()], "use-state":""},
-        ],
-        "collection":"profitcenters"
-    },
-    "Purchase Order":{
-        "name": "Purchase Order",
-        "schema":[
-            {"name": "Vendor", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Description", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Item Details", "datatype":"collection", "structure":[
-                {"name":"Material/ Service","datatype":"single","input":"input","type":"text"},
-                {"name":"Quantity","datatype":"single","input":"input","type":"number"},
-                {"name":"Price","datatype":"single","input":"input","type":"number"},
-                {"name":"Value","datatype":"single","value":"calculated"},
-                {"name":"Cost Center","datatype":"single","input":"input","type":"text"},
-                {"name":"Cost Object","datatype":"single","input":"input","type":"text"},
-            ],"use-state":[{"id":0,"Material/ Service":"","Quantity":0,"Price":0, "Value":0,"Cost Center":"","Cost Object":""}]}
-        ],
-        "collection":"purchaseorders"
-    },
-    "Segment":{
-        "name": "Segment",
-        "schema": [
-            {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-            {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""}
-        ],
-        "collection":"segments"
-    },
-    "Service":{
-        "name":"Service",
-        "schema":[
-            {"name":"Name","datatype":"single","input":"input","type":"text","use-State":""},
-            {"name":"Unit","datatype":"single","input":"input","type":"text","use-State":""},
-            {"name":"General Ledger","datatype":"single","input":"option","options":ListofItems(Database.load('General Ledger'),0),"use-State":""},
-        ],
-        "collection":"services"
-    },
-    "Sale Order":{
-        "name": "Sale Order",
-        "schema":[
-            {"name": "Customer", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Description", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Item Details", "datatype":"collection", "structure":[
-                {"name":"Material/ Service","datatype":"single","input":"input","type":"text"},
-                {"name":"Quantity","datatype":"single","input":"input","type":"number"},
-                {"name":"Price","datatype":"single","input":"input","type":"number"}
-            ],"use-state":[{"id":0,"Material/ Service":"","Quantity":0,"Price":0}]}
-        ],
+//         "name":"Profit Center",
+//         "schema":[
+//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
+//             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+//             {"name": "Segment", "datatype":"single", "input":"option", "options":["",...Segment.list()], "use-state":""},
+//         ],
+//         "collection":"profitcenters"
+//     },
+//     "Purchase Order":{
+//         "name": "Purchase Order",
+//         "schema":[
+//             {"name": "Vendor", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+//             {"name": "Description", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+//             {"name": "Item Details", "datatype":"collection", "structure":[
+//                 {"name":"Material/ Service","datatype":"single","input":"input","type":"text"},
+//                 {"name":"Quantity","datatype":"single","input":"input","type":"number"},
+//                 {"name":"Price","datatype":"single","input":"input","type":"number"},
+//                 {"name":"Value","datatype":"single","value":"calculated"},
+//                 {"name":"Cost Center","datatype":"single","input":"input","type":"text"},
+//                 {"name":"Cost Object","datatype":"single","input":"input","type":"text"},
+//             ],"use-state":[{"id":0,"Material/ Service":"","Quantity":0,"Price":0, "Value":0,"Cost Center":"","Cost Object":""}]}
+//         ],
+//         "collection":"purchaseorders"
+//     },
+//     "Segment":{
+//         "name": "Segment",
+//         "schema": [
+//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
+//             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""}
+//         ],
+//         "collection":"segments"
+//     },
+//     "Service":{
+//         "name":"Service",
+//         "schema":[
+//             {"name":"Name","datatype":"single","input":"input","type":"text","use-State":""},
+//             {"name":"Unit","datatype":"single","input":"input","type":"text","use-State":""},
+//             {"name":"General Ledger","datatype":"single","input":"option","options":ListofItems(Database.load('General Ledger'),0),"use-State":""},
+//         ],
+//         "collection":"services"
+//     },
+//     "Sale Order":{
+//         "name": "Sale Order",
+//         "schema":[
+//             {"name": "Customer", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+//             {"name": "Description", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+//             {"name": "Item Details", "datatype":"collection", "structure":[
+//                 {"name":"Material/ Service","datatype":"single","input":"input","type":"text"},
+//                 {"name":"Quantity","datatype":"single","input":"input","type":"number"},
+//                 {"name":"Price","datatype":"single","input":"input","type":"number"}
+//             ],"use-state":[{"id":0,"Material/ Service":"","Quantity":0,"Price":0}]}
+//         ],
         
-        "collection":"saleeorders"
-    },
-    "TDS Code":{
-        "name":"TDS Code",
-        "collection":"tdscodes",
-        "schema":[
-            {"name":"Code","datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name":"Description","datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name":"General Ledger","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('TDS')], "use-state":""},
-        ]
-    },
-    "Unit":{
-        "name":"Unit",
-        "collection":"units",
-        "schema":[
-            {"name":"Code","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"Description","datatype":"single","input":"input","type":"text","use-state":""},
-        ]
-    },
-    "Vendor":{
-        "name":"Vendor",
-        "collection":"vendors",
-        "schema": [
-            {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-            {"name":"Name","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"Address","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"City","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"State","datatype":"single","input":"option","options":["",...Intelligence.States,...Intelligence.UTs,"Outside India"],"use-state":""},
-            {"name":"PIN","datatype":"single","input":"input","type":"number","use-state":""},
-            {"name":"MSME Status","datatype":"single","input":"option","options":["","Micro","Small","Medium","Non-MSME"],"use-state":""},
-            {"name":"Phone","datatype":"single","input":"input","type":"number","use-state":""},
-            {"name":"E-mail","datatype":"single","input":"input","type":"number","use-state":""},
-            {"name":"PAN","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name":"GSTIN","datatype":"single","input":"input","type":"text","use-state":""},
-            {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
-            {"name":"Payment Terms","datatype":"single","input":"option","options":[],"use-state":""},
-        ]
-    },
-    "Transaction" : {
-        "name":"Transaction",
-        "collection":"transactions",
-        "schema": [
-            {"name": "Entry Date", "value":"calculated"},
-            {"name": "Description", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Posting Date", "datatype":"single", "input":"input", "type":"date", "use-state":new Date()},
-            {"name": "Document Date", "datatype":"single", "input":"input", "type":"date", "use-state":""},
-            {"name": "Reference", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-            {"name": "Currency", "datatype":"single", "input":"option", "options":[], "use-state":""},
-            {"name": "Calculate Tax", "datatype":"single", "input":"option", "options":["Yes","No"], "use-state":"No"},
-            {"name":"Balance", "value":"calculated"},
-            {"name": "Line Items", "datatype":"collection", "structure":
-                [
-                    {"name":"Account", "datatype":"single","input":"option","options":[...Material.list(),...Asset.list(),...GeneralLedger.listtype('General'),...GeneralLedger.listtype('Cost Element'),...BankAccount.list(),...Vendor.list()],"use-State":""},
-                    {"name":"General Ledger","value":"calculated","datatype":"single"},
-                    {"name":"Account Type", "datatype":"single","value":"calculated"},
-                    {"name":"Amount", "datatype":"single","input":"input","type":"number"},
-                    {"name":"Debit/ Credit", "datatype":"single","input":"option","options":["Debit", "Credit"]},
-                    {"name":"GST", "datatype":"single","input":"option","options":["Input 5%", "Input 12%", "Input 18%", "Input 40%","Output 5%", "Output 12%", "Output 18%", "Output 40%"]},
-                    {"name":"Description", "datatype":"single","input":"input","type":"text"},
-                    {"name":"Cost Center", "datatype":"single","input":"input","type":"text"},
-                    {"name":"Quantity", "datatype":"single","input":"input","type":"number"},
-                    {"name":"Value Date", "datatype":"single","input":"input","type":"date"},
-                    {"name":"Location", "datatype":"single","input":"input","type":"text"},
-                    {"name":"Profit Center", "datatype":"single","input":"option","options":ListofItems(loadData('profitcenters'),0)},
-                    {"name":"Cost Object", "datatype":"single","input":"option","options":["",...CostObject.list()]},
-                    {"name":"Purchase Order", "datatype":"single","input":"option","options":ListofItems(loadData('purchaseorders'),0)},
-                    {"name":"Purchase Order Item", "datatype":"single","input":"option","options":[]},
-                    {"name":"Sale Order", "datatype":"single","input":"option","options":ListofItems(loadData('serviceorders'),0)},
-                    {"name":"Sale Order Item", "datatype":"single","input":"option","options":[]},
-                    {"name":"Employee", "datatype":"single","input":"option","options":ListofItems(loadData('employees'),0)},
-                    {"name":"Consumption Time From", "datatype":"single","input":"input","type":"date"},
-                    {"name":"Consumption Time To", "datatype":"single","input":"input","type":"date"},
-                    {"name":"Cost per Day","value":"calculated","datatype":"single"},
-                    {"name":"Cleared","value":"calculated","datatype":"single"}
+//         "collection":"saleeorders"
+//     },
+//     "TDS Code":{
+//         "name":"TDS Code",
+//         "collection":"tdscodes",
+//         "schema":[
+//             {"name":"Code","datatype":"single", "input":"input", "type":"text", "use-state":""},
+//             {"name":"Description","datatype":"single", "input":"input", "type":"text", "use-state":""},
+//             {"name":"General Ledger","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('TDS')], "use-state":""},
+//         ]
+//     },
+//     "Unit":{
+//         "name":"Unit",
+//         "collection":"units",
+//         "schema":[
+//             {"name":"Code","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name":"Description","datatype":"single","input":"input","type":"text","use-state":""},
+//         ]
+//     },
+//     "Vendor":{
+//         "name":"Vendor",
+//         "collection":"vendors",
+//         "schema": [
+//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
+//             {"name":"Name","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name":"Address","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name":"City","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name":"State","datatype":"single","input":"option","options":["",...Intelligence.States,...Intelligence.UTs,"Outside India"],"use-state":""},
+//             {"name":"PIN","datatype":"single","input":"input","type":"number","use-state":""},
+//             {"name":"MSME Status","datatype":"single","input":"option","options":["","Micro","Small","Medium","Non-MSME"],"use-state":""},
+//             {"name":"Phone","datatype":"single","input":"input","type":"number","use-state":""},
+//             {"name":"E-mail","datatype":"single","input":"input","type":"number","use-state":""},
+//             {"name":"PAN","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name":"GSTIN","datatype":"single","input":"input","type":"text","use-state":""},
+//             {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
+//             {"name":"Payment Terms","datatype":"single","input":"option","options":[],"use-state":""},
+//         ]
+//     },
+//     "Transaction" : {
+//         "name":"Transaction",
+//         "collection":"transactions",
+//         "schema": [
+//             {"name": "Entry Date", "value":"calculated"},
+//             {"name": "Description", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+//             {"name": "Posting Date", "datatype":"single", "input":"input", "type":"date", "use-state":new Date()},
+//             {"name": "Document Date", "datatype":"single", "input":"input", "type":"date", "use-state":""},
+//             {"name": "Reference", "datatype":"single", "input":"input", "type":"text", "use-state":""},
+//             {"name": "Currency", "datatype":"single", "input":"option", "options":[], "use-state":""},
+//             {"name": "Calculate Tax", "datatype":"single", "input":"option", "options":["Yes","No"], "use-state":"No"},
+//             {"name":"Balance", "value":"calculated"},
+//             {"name": "Line Items", "datatype":"collection", "structure":
+//                 [
+//                     {"name":"Account", "datatype":"single","input":"option","options":[...Material.list(),...Asset.list(),...GeneralLedger.listtype('General'),...GeneralLedger.listtype('Cost Element'),...BankAccount.list(),...Vendor.list()],"use-State":""},
+//                     {"name":"General Ledger","value":"calculated","datatype":"single"},
+//                     {"name":"Account Type", "datatype":"single","value":"calculated"},
+//                     {"name":"Amount", "datatype":"single","input":"input","type":"number"},
+//                     {"name":"Debit/ Credit", "datatype":"single","input":"option","options":["Debit", "Credit"]},
+//                     {"name":"GST", "datatype":"single","input":"option","options":["Input 5%", "Input 12%", "Input 18%", "Input 40%","Output 5%", "Output 12%", "Output 18%", "Output 40%"]},
+//                     {"name":"Description", "datatype":"single","input":"input","type":"text"},
+//                     {"name":"Cost Center", "datatype":"single","input":"input","type":"text"},
+//                     {"name":"Quantity", "datatype":"single","input":"input","type":"number"},
+//                     {"name":"Value Date", "datatype":"single","input":"input","type":"date"},
+//                     {"name":"Location", "datatype":"single","input":"input","type":"text"},
+//                     {"name":"Profit Center", "datatype":"single","input":"option","options":ListofItems(loadData('profitcenters'),0)},
+//                     {"name":"Cost Object", "datatype":"single","input":"option","options":["",...CostObject.list()]},
+//                     {"name":"Purchase Order", "datatype":"single","input":"option","options":ListofItems(loadData('purchaseorders'),0)},
+//                     {"name":"Purchase Order Item", "datatype":"single","input":"option","options":[]},
+//                     {"name":"Sale Order", "datatype":"single","input":"option","options":ListofItems(loadData('serviceorders'),0)},
+//                     {"name":"Sale Order Item", "datatype":"single","input":"option","options":[]},
+//                     {"name":"Employee", "datatype":"single","input":"option","options":ListofItems(loadData('employees'),0)},
+//                     {"name":"Consumption Time From", "datatype":"single","input":"input","type":"date"},
+//                     {"name":"Consumption Time To", "datatype":"single","input":"input","type":"date"},
+//                     {"name":"Cost per Day","value":"calculated","datatype":"single"},
+//                     {"name":"Cleared","value":"calculated","datatype":"single"}
 
-                ],  
-                "use-state":[{"id":0,"Account":"","Account Type":"","General Ledger":"","Amount":0,"Debit/ Credit":"Debit","GST":"","Cost Center":"","Cost Object":"","Asset":"","Material":"","Quantity":"","Location":"","Profit Center":"","Purchase Order":"","Purchase Order Item":"","Sale Order":"","Sale Order Item":"","Consumption Time From":"","Consumption Time To":"","Employee":"","Cost per Day":0,"Cleared":false}]}
-        ]
-    }
-}
+//                 ],  
+//                 "use-state":[{"id":0,"Account":"","Account Type":"","General Ledger":"","Amount":0,"Debit/ Credit":"Debit","GST":"","Cost Center":"","Cost Object":"","Asset":"","Material":"","Quantity":"","Location":"","Profit Center":"","Purchase Order":"","Purchase Order Item":"","Sale Order":"","Sale Order Item":"","Consumption Time From":"","Consumption Time To":"","Employee":"","Cost per Day":0,"Cleared":false}]}
+//         ]
+//     }
+// }
 
 class ReportObject{
     constructor(name){
@@ -2193,26 +2139,47 @@ function Control(){
     const navigate = useNavigate();
     const controls = [
         {"Group":"Global", "Controls":[
-            {"Name":"Company", "URL":"/collection/Company"},
             {"Name":"Chart of Accounts", "URL":"/collection/ChartOfAccounts"},
-            {"Name":"Group Chart of Accounts", "URL":"/collection/GroupChartOfAccounts"},
+            {"Name":"Company", "URL":"/collection/Company"},
             {"Name":"Financial Statement Version", "URL":"/collection/FinancialStatementVersion"},
+            {"Name":"Group Chart of Accounts", "URL":"/collection/GroupChartOfAccounts"},
+            {"Name":"Income Tax Code", "URL":"/collection/IncomeTaxCode"},
+            {"Name":"Payment Terms", "URL":"/collection/PaymentTerms"},
             {"Name":"Segment", "URL":"/collection/Segment"},
         ]},
         {"Group":"Company", "Controls":[
             {"Name":"Financial Accounts Settings", "URL":"/collection/FinancialAccountsSettings"},
+            {"Name":"Time Control", "URL":"/collection/TimeControl"},
         ]},
         {"Group":"Asset", "Controls":[
             {"Name":"Asset", "URL":"/collection/Asset"},
             {"Name":"Asset Class", "URL":"/collection/AssetClass"},
             {"Name":"Asset Development", "URL":"/collection/AssetDevelopment"},
         ]},
+        {"Group":"Performance", "Controls":[
+            {"Name":"Cost Center", "URL":"/collection/CostCenter"},
+            {"Name":"Cost Object", "URL":"/collection/CostObject"},
+            {"Name":"Profit Center", "URL":"/collection/ProfitCenter"},
+        ]},
+        {"Group":"Payables & Receivables", "Controls":[
+            {"Name":"Bank Account", "URL":"/collection/BankAccount"},
+            {"Name":"Customer", "URL":"/collection/Customer"},
+            {"Name":"Vendor", "URL":"/collection/Vendor"},
+            {"Name":"Purchase Order", "URL":"/collection/PurchaseOrder"},
+            {"Name":"Sale Order", "URL":"/collection/SaleOrder"},
+        ]},
         {"Group":"Payroll", "Controls":[
             {"Name":"Employee", "URL":"/collection/Employee"},
+            {"Name":"Organisational Unit", "URL":"/collection/OrganisationalUnit"},
+            {"Name":"Holidays", "URL":"/collection/Holidays"},
+            {"Name":"Attendance", "URL":"/collection/Attendance"},
         ]},
         {"Group":"Material", "Controls":[
             {"Name":"Material", "URL":"/collection/Material"},
-        ]}
+            {"Name":"Location", "URL":"/collection/Location"},
+            {"Name":"Unit", "URL":"/collection/Unit"},
+            {"Name":"Service", "URL":"/collection/Service"},
+        ]},
     ]
   
     return(
@@ -2227,11 +2194,6 @@ function Control(){
                     
                 </div>
             )}
-            <div className='menuList'>
-            <div className='menuTitle red'><h4>Config</h4></div>
-            <div className='menuItem' onClick={()=>navigate('/timecontrol')}><h4>Time Control</h4></div>
-            <div className='menuItem' onClick={()=>navigate('/holidays')}><h4>Holidays</h4></div>
-            </div>
         </div>
     )
 }
@@ -3861,7 +3823,7 @@ class Transaction{
         {"name":"TDS","input":"option","options":["","194C-Individual"]},
         {"name":"TDS Deductee", "type":"number", "input":"option","options":["",Vendor.list(),Customer.list()]},
         {"name":"Profit Center","input":"option","options":["",...ProfitCenter.list()]},
-        {"name":"Cost Center","input":"option","options":["",...CostCenter.list()]},
+        {"name":"Cost Center","input":"option","options":[""]},
         {"name":"Cost Object","input":"option","options":["",...CostObject.list()]},
         {"name":"Consumption Time From","input":"input","type":"date"},
         {"name":"Consumption Time To","input":"input","type":"date"},
@@ -4180,7 +4142,7 @@ class MaterialIssue{
         {"name":"Quantity","input":"input","type":"number"},
         {"name":"Product","input":"option","options":["",...Material.list()]},
         {"name":"General Ledger","input":"option","options":["",...GeneralLedger.listtype('General'),...GeneralLedger.listtype('Cost Element')]},
-        {"name":"Cost Center","input":"option","options":["",...CostCenter.list()]},
+        {"name":"Cost Center","input":"option","options":[""]},
         {"name":"Cost Object","input":"option","options":["",...CostObject.list()]},
         {"name":"Consumption Time From","input":"input","type":"date"},
         {"name":"Consumption Time To","input":"input","type":"date"},
@@ -4674,14 +4636,14 @@ function CollectionInput({field,handleChange,output,addItem,removeItem}){
     )
 }
 
-function NestInput({field,output,editable,handleChange1,handleChange2,addItem1,addItem2,removeItem1,removeItem2}){
+function NestInput({field,output,handleChange1,handleChange2,addItem1,addItem2,removeItem1,removeItem2}){
     return(
         <div className="crudField">
             <div className="crudObject">
                 <label>{field['name']}</label>
-                <button onClick={(e)=>addItem1(field['name'],field['use-state'][0],e)}>Add</button>
+                <button onClick={(e)=>addItem1(field['name'],e)}>Add</button>
                 <div className='crudGrid'>{output[field['name']].map((item,index)=>
-                    <div className="crudFields">{field['structure'].map(subfield=>
+                    <div className="crudFields">{field['schema'][index].map(subfield=>
                         <div className='crudField'>
                             {subfield['datatype']=="single" && <div className='crudRow'>
                                 <label>{subfield['name']}</label>
@@ -4695,19 +4657,19 @@ function NestInput({field,output,editable,handleChange1,handleChange2,addItem1,a
                                 <div className='crudTable'>
                                     <table>
                                         <thead>
-                                            <tr><th className='crudTableCell'></th>{subfield['structure'].map(subsubfield=><th className='crudTableCell'>{subsubfield['name']}</th>)}</tr>
+                                            <tr><th className='crudTableCell'></th>{subfield['schema'][0].map(subsubfield=><th className='crudTableCell'>{subsubfield['name']}</th>)}</tr>
                                         </thead>
                                         <tbody>{output[field['name']][index][subfield['name']].map((subitem,subindex)=>
                                             <tr>
                                                 <td><div className='crudTableCell'><button onClick={()=>removeItem2(field['name'],index,subfield['name'],subindex)}>-</button></div></td>
-                                                {subfield['structure'].map(subsubfield=>
+                                                {subfield['schema'][subindex].map(subsubfield=>
                                                 <td>
                                                     <div className='crudTableCell'><input value={output[field['name']][index][subfield['name']][subindex][subsubfield['name']]} onChange={(e)=>handleChange2(field['name'],index,subfield['name'],subindex,subsubfield['name'],e)}/></div>
                                                 </td>)}
                                             </tr>)}
                                         </tbody>
                                     </table>
-                                    <button onClick={()=>addItem2(field['name'],index,subfield['name'],subfield['use-state'][0])}>+</button>
+                                    <button onClick={()=>addItem2(field['name'],index,subfield['name'])}>+</button>
                                 </div>
                             </div> }
                         </div>)}
@@ -4740,7 +4702,7 @@ class KB{
 }
 
 class Collection{
-    constructor(name,method){
+    constructor(name,method="Display"){
         this.name = name;
         this.collectionname = Collection.collectionname[this.name];
         this.method = method;
@@ -4809,6 +4771,26 @@ class Collection{
                         "Profit Center":"",
                     }
                     break
+                case 'Attendance':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Year":new Date().getFullYear(),
+                        "Month":new Date().getMonth(),
+                        "Employee":data['Employee'],
+                        "Attendance":{"Present":[],"Leave":[]}
+                    }
+                    break
+                case 'BankAccount':
+                    defaults = {
+                        "Code":"",
+                        "Company Code":data['Company Code'],
+                        "Bank Name":"",
+                        "Account Number":"",
+                        "IFSC Code":"",
+                        "Profit Center":"",
+                        "Virtual Accounts":[{"Virtual Account Number":"","Ledger":"","Profit Center":""}],
+                    }
+                    break
                 case 'ChartOfAccounts':
                     defaults = {
                         "Code":"",
@@ -4831,19 +4813,43 @@ class Collection{
                         "Group Chart of Accounts":"",                        
                     }
                     break
-                case 'GroupChartOfAccounts':
+                case 'CostCenter':
                     defaults = {
+                        "Company Code":data['Company Code'],
                         "Code":"",
-                        "Presentations":[{"Presentation":"","Group":"Asset"}],
-                        "General Ledgers":[{"General Ledger":"","Name":"","Presentation":""}],
+                        "Name":"",
+                        "Profit Center":"",
+                        "Apportionment Ratio":[
+                            {"From":"","To":"","Ratio":[
+                                {"Type":"","To":"","Percentage":0}
+                            ]}
+                        ]
                     }
                     break
-                case 'FinancialStatementVersion':
+                case 'CostObject':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Code":"",
+                        "Name":"",
+                        "Profit Center":"",
+                    }
+                    break
+                case 'Customer':
                     defaults = {
                         "Code":"",
-                        "Chart of Accounts":"",
-                        "Type":"",
-                        "Hierarchy":[{"Presentation":"","Hierarchy":""}],
+                        "Company Code":data['Company Code'],
+                        "Name":"",
+                        "Address":"",
+                        "PIN":"",
+                        "State":"",
+                        "Phone":"",
+                        "Email":"",
+                        "GSTIN":"",
+                        "PAN":"",
+                        "Payment Terms":"",
+                        "Bank Accounts":[
+                            {"Account Number":"","Confirm Account Number":"","Bank Name":"","IFSC Code":""}
+                        ],
                     }
                     break
                 case 'Employee':
@@ -4892,10 +4898,12 @@ class Collection{
                         "General Ledger for Salary TDS":""
                     }
                     break
-                case 'Segment':
+                case 'FinancialStatementVersion':
                     defaults = {
                         "Code":"",
-                        "Name":""
+                        "Chart of Accounts":"",
+                        "Type":"",
+                        "Hierarchy":[{"Presentation":"","Hierarchy":""}],
                     }
                     break
                 case 'GeneralLedger':
@@ -4907,6 +4915,50 @@ class Collection{
                         "Ledger Type":"",
                         "Presentation":"",
                         "Group General Ledger":"",
+                    }
+                    break
+                case 'GroupChartOfAccounts':
+                    defaults = {
+                        "Code":"",
+                        "Presentations":[{"Presentation":"","Group":"Asset"}],
+                        "General Ledgers":[{"General Ledger":"","Name":"","Presentation":""}],
+                    }
+                    break
+                case 'Holidays':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Year":new Date().getFullYear(),
+                        "Holidays":[
+                            {"Date":"","Description":""}
+                        ],
+                    }
+                    break
+                case 'IncomeTaxCode':
+                    defaults = {
+                        "Code":"",
+                        "Taxation":[
+                            {
+                                "From Year":0,
+                                "To Year":0,
+                                "Exemption Limit":0,
+                                "Marginal Relief":"",
+                                "Standard Deduction - Salary":0,
+                                "Cess":0,
+                                "Slab":[
+                                    {"From":0,"To":0,"Rate":0}
+                                ]
+                            }
+                        ]
+                    }
+                    break
+                case 'Location':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Code":"",
+                        "Name":"",
+                        "Address":"",
+                        "Cost Center":"",
+                        "Business Place":""
                     }
                     break
                 case 'Material':
@@ -4921,6 +4973,105 @@ class Collection{
                         "General Ledger - Cost of Sales":"",
                         "General Ledger - Revenue":""
                     }
+                    break
+                case "OrganisationalUnit":
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Code":"",
+                        "Name":"",
+                        "Cost Center":"",
+                        "Business Place":""
+                    }
+                    break
+                case 'PaymentTerms':
+                    defaults = {
+                        "Code":"",
+                        "Description":"",
+                        "Due Within Days":0,
+                        "Discount Criteria":[
+                            {"Days":0,"Rate":0}
+                        ],
+                        "Interest Criteria":[
+                            {"Days":0,"Rate":0}
+                        ],
+                    }
+                    break
+                case 'ProfitCenter':
+                    defaults = {
+                        "Company Code":"",
+                        "Code":"",
+                        "Segment":"",
+                        "Name":"",
+                    }
+                    break
+                case 'PurchaseOrder':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Order Number":"",
+                        "Date":"",
+                        "Vendor":"",
+                        "Items":[
+                            {"Material":"","Description":"","Quantity":0,"Unit Price":0,"Total Price":0}
+                        ],
+                        "Total Amount":0,
+                    }
+                    break
+                case 'SaleOrder':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Order Number":"",
+                        "Date":"",
+                        "Customer":"",
+                        "Items":[
+                            {"Material":"","Description":"","Quantity":0,"Unit Price":0,"Total Price":0}
+                        ],
+                        "Total Amount":0,
+                    }
+                    break
+                case 'Segment':
+                    defaults = {
+                        "Code":"",
+                        "Name":""
+                    }
+                    break
+                case 'Service':
+                    defaults = {
+                        "Code":"",
+                        "Company Code": "",
+                        "Name":"",
+                        "Price":[
+                            {"Business Place":"","From":"","To":"","Price":""}
+                        ],
+                        "General Ledger - Expense":"",
+                        "General Ledger - Revenue":""
+                    }
+                    break
+                case 'TimeControl':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Open Periods":[
+                            {"From":"","To":""}
+                        ],
+                    }
+                    break
+                case 'Vendor':
+                    defaults = {
+                        "Code":"",
+                        "Company Code":data['Company Code'],
+                        "Name":"",
+                        "Address":"",
+                        "PIN":"",
+                        "State":"",
+                        "Phone":"",
+                        "Email":"",
+                        "GSTIN":"",
+                        "PAN":"",
+                        "Payment Terms":"",
+                        "Bank Accounts":[
+                            {"Account Number":"","Confirm Account Number":"","Bank Name":"","IFSC Code":""}
+                        ],
+                    }
+                    break
                 
             }
         } else if (this.method=="Update" || this.method =="Display") {
@@ -4933,8 +5084,8 @@ class Collection{
         switch (this.name){
             case 'Asset':
                 schema = [
-                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Asset Class","datatype":"single","input":"option","options":[""],"noteditable":!(this.method=="Create")},
                     {"name":"Cost Center","datatype":"single","input":"option","options":[""],"noteditable":!(this.method=="Create")},
@@ -4947,8 +5098,8 @@ class Collection{
                 break
             case 'AssetClass':
                 schema = [
-                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Depreciable","datatype":"single","input":"option","options":["","Yes","No"],"noteditable":!(this.method=="Create")},
                     {"name":"General Ledger - Depreciation","datatype":"single","input":"option","options":[],"noteditable":(data['Depreciable']=="No" || !this.editable)},
                     {"name":"General Ledger - Asset","datatype":"single","input":"option","options":[],"noteditable":(!this.editable)},
@@ -4961,6 +5112,34 @@ class Collection{
                     {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Asset Class","datatype":"single","input":"option","options":[""],"noteditable":!(this.method=="Create")},
                     {"name":"Profit Center","datatype":"single","input":"option","options":[""],"noteditable":!(this.method=="Create")},
+                ]
+                break
+            case 'Attendance':
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Employee","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Year","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Month","datatype":"single","input":"input","type":"text","noteditable":true},
+                ]
+                break
+            case 'BankAccount':
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!this.method=="Create"},
+                    {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Bank","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"IFSC","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Account","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"General Ledger","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                    {"name":"Profit Center","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                    {"name":"Business Place","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                    {"name":"Virtual Accounts","datatype":"collection","noteditable":!this.editable,"schema":data['Virtual Accounts'].map(item=>[
+                        {"name":"Virtual Account Number","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Ledger","datatype":"single","input":"option","options":[],"noteditable":!this.editable},
+                        {"name":"Presentation","datatype":"single","input":"option","options":[],"noteditable":!this.editable},
+                        {"name":"Profit Center","datatype":"single","input":"option","options":[],"noteditable":!this.editable},
+                    ])},
+                    {"name":"Group Key","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                 ]
                 break
             case 'ChartOfAccounts':
@@ -4995,30 +5174,49 @@ class Collection{
                     {"name":"Group Chart of Accounts","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
                 ];
                 break
-            case 'GroupChartOfAccounts':
+            case 'CostObject':
                 schema = [
-                    {"name":"Code","datatype":"single","input":"input","maxLength":4,"type":"number","noteditable":!(this.method=="Create")},
-                    {"name":"Presentations","datatype":"collection","noteditable":!this.editable,"schema":data['Presentations'].map(item=>[
-                        {"name":"Presentation","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                        {"name":"Group","input":"option","datatype":"single","options":["Asset","Liability","Equity","Income","Expense"],"noteditable":!this.editable},
-                    ])},
-                    {"name":"General Ledgers","datatype":"collection","noteditable":!this.editable,"schema":data['General Ledgers'].map(item=>[
-                        {"name":"General Ledger","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
-                        {"name":"Name","input":"input","datatype":"single","type":"text","noteditable":!this.editable},
-                        {"name":"Presentation","input":"option", "placeholder":"","datatype":"single","options":["",...ListItems(data['Presentations'],"Presentation")],"noteditable":!this.editable},        
-                    ])},
-
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Profit Center","datatype":"single","input":"option","options":[""],"noteditable":!(this.method=="Create")} ,
+                    {"name":"Settlement Ratio","datatype":"collection","noteditable":!this.editable,"schema":data['Settlement Ratio'].map(item=>[
+                        {"name":"To", "datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                        {"name":"Percentage","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    ])
+                    }
                 ]
                 break
-            case 'FinancialStatementVersion':
+            case 'CostCenter':
                 schema = [
-                    {"name":"Code","datatype":"single","input":"input","maxLength":4,"type":"number","noteditable":!(this.method=="Create")},
-                    {"name":"Chart of Accounts","datatype":"single","input":"option","options":[""],"noteditable":!(this.editable)},
-                    {"name":"Type","datatype":"single","input":"option","options":["Individual","Group"],"noteditable":!(this.editable)},
-                    {"name":"Hierarchy","datatype":"collection","noteditable":!(this.editable),"schema":data['Hierarchy'].map(item=>[
-                        {"name":"Presentation","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
-                        {"name":"Hierarchy","input":"input", "placeholder":"eg: Current Assets > Inventory","datatype":"single","type":"text","noteditable":!this.editable},        
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Profit Center","datatype":"single","input":"option","options":[""],"noteditable":!(this.method=="Create")} ,
+                    {"name":"Apportionment Ratio","datatype":"nest","noteditable":!this.editable,"schema":data['Apportionment Ratio'].map(item=>[
+                        {"name":"From","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                        {"name":"To","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                        {"name":"Ratio","datatype":"collection","noteditable":!this.editable,"schema":item['Ratio'].map(subitem=>[
+                            {"name":"Type","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                            {"name":"To","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                            {"name":"Percentage","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                        ])},
                     ])},
+                ]
+                break
+            case 'Customer':
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Address","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"PIN","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    {"name":"State","datatype":"single","input":"option","options":["",...KB.States,...KB.UTs],"noteditable":!this.editable},
+                    {"name":"Phone","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    {"name":"Email","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Tax Identification Number","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"GSTIN","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Payment Terms","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
                 ]
                 break
             case 'Employee':
@@ -5088,10 +5286,15 @@ class Collection{
                     {"name":"General Ledger for Salary TDS","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
                 ]
                 break
-            case 'Segment': 
+            case 'FinancialStatementVersion':
                 schema = [
-                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
-                    {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Code","datatype":"single","input":"input","maxLength":4,"type":"number","noteditable":!(this.method=="Create")},
+                    {"name":"Chart of Accounts","datatype":"single","input":"option","options":[""],"noteditable":!(this.editable)},
+                    {"name":"Type","datatype":"single","input":"option","options":["Individual","Group"],"noteditable":!(this.editable)},
+                    {"name":"Hierarchy","datatype":"collection","noteditable":!(this.editable),"schema":data['Hierarchy'].map(item=>[
+                        {"name":"Presentation","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                        {"name":"Hierarchy","input":"input", "placeholder":"eg: Current Assets > Inventory","datatype":"single","type":"text","noteditable":!this.editable},        
+                    ])},
                 ]
                 break
             case 'GeneralLedger':
@@ -5103,6 +5306,59 @@ class Collection{
                     {"name":"Ledger Type","datatype":"single","input":"option","options":["",...KB.AccountTypes],"noteditable":!this.editable},
                     {"name":"Presentation","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
                     {"name":"Group General Ledger", "datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                ]
+                break
+            case 'GroupChartOfAccounts':
+                schema = [
+                    {"name":"Code","datatype":"single","input":"input","maxLength":4,"type":"number","noteditable":!(this.method=="Create")},
+                    {"name":"Presentations","datatype":"collection","noteditable":!this.editable,"schema":data['Presentations'].map(item=>[
+                        {"name":"Presentation","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Group","input":"option","datatype":"single","options":["Asset","Liability","Equity","Income","Expense"],"noteditable":!this.editable},
+                    ])},
+                    {"name":"General Ledgers","datatype":"collection","noteditable":!this.editable,"schema":data['General Ledgers'].map(item=>[
+                        {"name":"General Ledger","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                        {"name":"Name","input":"input","datatype":"single","type":"text","noteditable":!this.editable},
+                        {"name":"Presentation","input":"option", "placeholder":"","datatype":"single","options":["",...ListItems(data['Presentations'],"Presentation")],"noteditable":!this.editable},        
+                    ])},
+
+                ]
+                break
+            case 'Holidays':
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Year","datatype":"single","input":"input","type":"number","noteditable":true},
+                    {"name":"Holidays","datatype":"collection","noteditable":!this.editable,"schema":data['Holidays'].map(item=>[
+                        {"name":"Date","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                        {"name":"Description","input":"input", "datatype":"single","type":"text","noteditable":!this.editable},
+                    ])},
+                ]
+                break
+            case 'IncomeTaxCode':
+                schema = [
+                    {"name":"Code","datatype":"single","input":"input","type":"text","maxLength":6,"noteditable":!(this.method=="Create")},
+                    {"name":"Taxation","datatype":"nest","noteditable":!this.editable,"schema":data['Taxation'].map(item=>[
+                        {"name":"From Year","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                        {"name":"To Year","input":"input", "datatype":"single","type":"number","noteditable":!this.editable},
+                        {"name":"Exemption Limit","input":"input", "datatype":"single","type":"number","noteditable":!this.editable},        
+                        {"name":"Marginal Relief","input":"option", "datatype":"single","options":["Yes","No"],"noteditable":!this.editable},
+                        {"name":"Standard Deduction - Salary","input":"input", "datatype":"single","type":"number","noteditable":!this.editable},
+                        {"name":"Cess","input":"input", "datatype":"single","type":"number","noteditable":!this.editable},
+                        {"name":"Slab","datatype":"collection","noteditable":!this.editable,"schema":item['Slab'].map(subitem=>[
+                            {"name":"From","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                            {"name":"To","input":"input", "datatype":"single","type":"number","noteditable":!this.editable},        
+                            {"name":"Rate","input":"input", "datatype":"single","type":"number","noteditable":!this.editable},      
+                        ])},
+                    ])},
+                ]
+                break
+            case 'Location':
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Cost Center", "datatype":"single","input":"option","options":[""],"noteditable":!(this.method=="Create")},
+                    {"name":"Business Place", "datatype":"single","input":"option","options":[""],"noteditable":!(this.method=="Create")},
+                    {"name":"Address","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                 ]
                 break
             case 'Material':
@@ -5121,6 +5377,120 @@ class Collection{
                     {"name":"General Ledger - Cost of Sales","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"General Ledger - Revenue","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                 ]
+                break
+            case 'OrganisationalUnit':
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Cost Center","datatype":"single","input":"option","options":[""],"noteditable":!(this.method=="Create")},
+                ]
+                break
+            case 'PaymentTerms':
+                schema = [
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Due Within Days","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    {"name":"Discount Criteria","datatype":"collection","noteditable":!this.editable,"schema":data['Terms'].map(item=>[
+                        {"name":"Days","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                        {"name":"Discount %","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    ])},
+                    {"name":"Interest Criteria","datatype":"collection","noteditable":!this.editable,"schema":data['Interest Criteria'].map(item=>[
+                        {"name":"Days","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                        {"name":"Interest %","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    ])
+                    }
+                ]
+                break
+            case 'ProfitCenter':
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Segment","datatype":"single","input":"option","options":[""],"noteditable":!(this.method=="Create")},
+                    {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                ]
+                break
+            case 'PurchaseOrder':
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Order Number","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Vendor","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Order Date","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                    {"name":"Delivery Date","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                    {"name":"Items","datatype":"collection","noteditable":!this.editable,"schema":data['Items'].map(item=>[
+                        {"name":"Material","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Quantity","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                        {"name":"Unit Price","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                        {"name":"Total Price","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    ])},
+                    {"name":"Total Amount","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                ]
+                break
+            case 'SaleOrder':
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Order Number","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Customer","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Order Date","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                    {"name":"Delivery Date","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                    {"name":"Items","datatype":"collection","noteditable":!this.editable,"schema":data['Items'].map(item=>[
+                        {"name":"Material","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Quantity","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                        {"name":"Unit Price","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                        {"name":"Total Price","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    ])},
+                    {"name":"Total Amount","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                ]
+                break
+            case 'Segment': 
+                schema = [
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                ]
+                break
+            case 'Service':
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Unit","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Price","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    {"name":"General Ledger - Expense","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"General Ledger - Revenue","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                ]
+                break
+            case 'TimeControl':
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Open Periods","datatype":"collection","noteditable":!this.editable,"schema":data['Open Periods'].map(item=>[
+                        {"name":"From","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                        {"name":"To","input":"input", "datatype":"single","type":"date","noteditable":!this.editable},        
+                    ])},
+                ]
+                break
+            case 'UserSettings':
+                schema = [
+                    {"name":"Username","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Full Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Email","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Role","datatype":"single","input":"option","options":["Admin","User"],"noteditable":!this.editable},
+                ]
+                break
+            case 'Vendor':
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Address","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"PIN","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    {"name":"State","datatype":"single","input":"option","options":["",...KB.States,...KB.UTs],"noteditable":!this.editable},
+                    {"name":"Phone","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    {"name":"Email","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Tax Identification Number","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"GSTIN","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Payment Terms","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                ]
+                break
         }
         return schema;
     }
@@ -5143,6 +5513,12 @@ class Collection{
             case 'AssetDevelopment':
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
                 break
+            case 'Attendance':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
+            case 'BankAccount':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
             case 'ChartOfAccounts':
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
                 new Collection("GroupChartOfAccounts","Display").exists(data)?list.push(`Group Chart of Accounts with same identifier(s) already exists`):()=>{};
@@ -5158,6 +5534,27 @@ class Collection{
                 data['Places of Business'].length==0?list.push("At least one Place of Business is required"):()=>{};
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
                 break
+            case 'CostCenter':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
+            case 'Customer':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
+            case 'Employee':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
+            case 'FinancialAccountsSettings':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
+            case 'FinancialStatementVersion':
+                data['Hierarchy'].map((item,i)=>(item['Presentation']=="" || item['Hierarchy']=="")?list.push(`Hierarchy ${i+1}: Information incomplete.`):()=>{});
+                data['Hierarchy'].length==0?list.push("At least one Hierarchy is required"):()=>{};
+                data['Hierarchy'].map(item=>Count(item['Hierarchy'],ListItems(data['Hierarchy'],"Hierarchy"))>1?list.push(`${item['Hierarchy']} repeats in Hierarchy`):()=>{})
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
+            case 'GeneralLedger':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
             case 'GroupChartOfAccounts':
                 data['Presentations'].map((item,i)=>item['Group']=="" || item['Presentation']==""?list.push(`Presentation ${i+1}: Information Incomplete`):()=>{});
                 data['Presentations'].length==0?list.push("At least one Presentation is required"):()=>{};
@@ -5167,10 +5564,61 @@ class Collection{
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
                 new Collection("ChartOfAccounts","Display").exists(data)?list.push(`Chart of Accounts with same identifier(s) already exists`):()=>{};
                 break
+            case 'Holidays':
+                data['Holidays'].map((item,i)=>(item['Date']=="" || item['Description']=="")?list.push(`At Holidays line ${i}, information incomplete`):()=>{})
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
+            case 'IncomeTaxCode':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                data['Taxation'].map((item,i)=>(item['From Year']=="" || item['To Year']=="")?list.push(`At Taxation line ${i}, From Year and To Year are required`):()=>{});
+                data['Taxation'].map((item,i)=>(item['From Year']>=item['To Year'])?list.push(`At Taxation line ${i}, To Year should be greater than From Year`):()=>{});
+                for (let i=1;i<data['Taxation'].length;i++){
+                    (data['Taxation'][i]['From Year'] <= data['Taxation'][i-1]['To Year'])?list.push(`At Taxation line ${i}, From Year should be greater than To Year of previous line`):()=>{};
+                }
+                break
+            case 'Location':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
             case 'Material':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
                 data['Price'].map((item,i)=>(item['Location']=="" || item['From']=="" || item['To']=="" && item['Price']=="")?list.push(`At Price line ${i}, information incomplete`):()=>{})
                 break
-            
+            case 'OrganisationalUnit':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
+            case 'PaymentTerms':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                data['Terms'].map((item,i)=>(item['Days']=="" || item['Discount %']=="")?list.push(`At Terms line ${i}, information incomplete`):()=>{})
+                data['Interest Criteria'].map((item,i)=>(item['Days']=="" || item['Interest %']=="")?list.push(`At Interest Criteria line ${i}, information incomplete`):()=>{})
+                break
+            case 'ProfitCenter':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
+            case 'PurchaseOrder':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                data['Items'].map((item,i)=>(item['Material']=="" || item['Quantity']=="" || item['Unit Price']=="" || item['Total Price']=="")?list.push(`At Items line ${i}, information incomplete`):()=>{})
+                break
+            case 'SaleOrder':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                data['Items'].map((item,i)=>(item['Material']=="" || item['Quantity']=="" || item['Unit Price']=="" || item['Total Price']=="")?list.push(`At Items line ${i}, information incomplete`):()=>{})
+                break
+            case 'Segment':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
+            case 'Service':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
+            case 'TimeControl':
+                data['Open Periods'].map((item,i)=>(item['From']=="" || item['To']=="")?list.push(`At Open Periods line ${i}, information incomplete`):()=>{})
+                data['Open Periods'].map((item,i)=>(new Date(item['From']) > new Date(item['To']))?list.push(`At Open Periods line ${i}, 'To' date should be after 'From' date`):()=>{})
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
+            case 'UserSettings':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
+            case 'Vendor':
+                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                break
         }
         return list
     }
@@ -5225,60 +5673,128 @@ class Collection{
         }
     }
     static collectionname = {
-        "Asset":'assets',
+        "Asset":"assets",
         "AssetClass":"assetclasses",
         "AssetDevelopment":"assetdevelopments",
-        "ChartOfAccounts":"chartofaccounts",
-        "Company":"companies",
-        "GroupChartOfAccounts":"groupchartofaccounts",
-        "FinancialStatementVersion":"financialstatementversions",
+        "Attendance":"attendances",
+        "BankAccount":"bankaccounts",
+        'ChartOfAccounts':'chartsofaccounts',
+        'Company':'companies',
+        'CostObject':'costobjects',
+        'CostCenter':'costcenters',
+        'Customer':'customers',
         "Employee":"employees",
-        "FinancialAccountsSettings":"financialaccountssettings",
-        "Segment":"segments",
+        "FinancialAccountsSettings":"financialaccountsettings",
+        "FinancialStatementVersion":"financialstatementversions",
         "GeneralLedger":"generalledgers",
-        "Material":'materials'
+        'GroupChartOfAccounts':'groupchartsofaccounts',
+        "Holidays":"holidays",
+        "IncomeTaxCode":"incometaxcodes",
+        "Location":"locations",
+        "Material":"materials",
+        "OrganizationUnit":"organisationalunits",
+        "PaymentTerms":"paymentterms",
+        "ProfitCenter":"profitcenters",
+        "PurchaseOrder":"purchaseorders",
+        "SaleOrder":"saleorders",
+        "Segment":"segments",
+        "Service":"services",
+        "TimeControl":"timecontrols",
+        "UserSettings":"usersettings",
+        "Vendor":"vendors",
     }
     static mandatory = {
         "Asset":["Company Code","Code","Name","Asset Class","Cost Center","Useful Life","Salvage Value","Date of Capitalisation","Depreciation Method"],
         "AssetClass":["Code","Company Code"],
         "AssetDevelopment":["Company Code","Code","Name","Asset Class","Profit Center"],
-        "Company":["Code","Name","Year Zero","Financial Year Beginning","Functional Currency","Chart of Accounts"],
+        "Attendance":["Company Code","Employee","Year","Month"],
+        "BankAccount":["Code","Company Code","Account Number","Bank Name","IFSC Code"],
         "ChartOfAccounts":["Code"],
-        "GroupChartOfAccounts":["Code"],
-        "FinancialStatementVersion":["Code"],
+        "Company":["Code","Name","Year Zero","Financial Year Beginning","Functional Currency","Chart of Accounts"],
+        "CostObject":["Company Code","Code","Name","Profit Center"],
+        "CostCenter":["Company Code","Code","Name","Profit Center"],
+        "Customer":["Code","Company Code","Name","State"],
         "Employee":["Code","Company Code","Name","State","Income Tax Code"],
         "FinancialAccountsSettings":["Company Code","General Ledger for Profit and Loss Account","General Ledger for Cash Discount","General Ledger for Salary TDS"],
-        "Segment":["Code","Name"],
+        "FinancialStatementVersion":["Code"],
         "GeneralLedger":["Code","Company Code","Chart of Accounts","Name","Ledger Type","Presentation"],
-        "Material":["Code","Company Code","Name","Unit","General Ledger","General Ledger - Cost of Sales", "General Ledger - Revenue"]
+        "GroupChartOfAccounts":["Code"],
+        "Holidays":["Company Code","Year"],
+        "IncomeTaxCode":["Code"],
+        "Location":["Code","Company Code","Name","Cost Center","Business Place"],
+        "Material":["Code","Company Code","Name","Unit","General Ledger","General Ledger - Cost of Sales", "General Ledger - Revenue"],
+        "OrganisationalUnit":["Code","Company Code","Name","Cost Center","Business Place"],
+        "PaymentTerms":["Code","Description"],
+        "ProfitCenter":["Company Code","Code","Segment","Name"],
+        "PurchaseOrder":["Code","Company Code","Vendor","Date","Business Place"],
+        "SaleOrder":["Code","Company Code","Customer","Date","Business Place"],
+        "Segment":["Code","Name"],
+        "Service":["Code","Company Code","Name","Unit","General Ledger - Expense","General Ledger - Revenue"],
+        "TimeControl":["Company Code"],
+        "UserSettings":["User"],
+        "Vendor":["Code","Company Code","Name","State"],
     }
     static identifiers = {
-        "Company":["Code"],
         "Asset":["Company Code","Code"],
         "AssetClass":["Code","Company Code"],
         "AssetDevelopment":["Company Code","Code"],
+        "Attendance":["Company Code","Employee","Year","Month"],
+        "BankAccount":["Code","Company Code"],
         "ChartOfAccounts":["Code"],
-        "GroupChartOfAccounts":["Code"],
-        "FinancialStatementVersion":["Code"],
+        "Company":["Code"],
+        "CostObject":["Company Code","Code"],
+        "CostCenter":["Company Code","Code"],
+        "Customer":["Code","Company Code"],
         "Employee":["Code","Company Code"],
         "FinancialAccountsSettings":["Company Code"],
-        "Segment":["Code"],
+        "FinancialStatementVersion":["Code"],
         "GeneralLedger":["Code","Company Code"],
-        "Material":["Code","Company Code"]
+        "GroupChartOfAccounts":["Code"],
+        "Holidays":["Company Code","Year"],
+        "IncomeTaxCode":["Code"],
+        "Location":["Code","Company Code"],
+        "Material":["Code","Company Code"],
+        "OrganisationalUnit":["Code","Company Code"],
+        "PaymentTerms":["Code","Company Code"],
+        "ProfitCenter":["Company Code","Code"],
+        "PurchaseOrder":["Code","Company Code"],
+        "SaleOrder":["Code","Company Code"],
+        "Segment":["Code"],
+        "Service":["Code","Company Code"],
+        "TimeControl":["Company Code"],
+        "UserSettings":["User"],
+        "Vendor":["Code","Company Code"],
     }
     static titles = {
-        'Company':'Company',
-        'ChartOfAccounts':'Chart of Accounts',
-        'GroupChartOfAccounts':'Group Chart of Accounts',
-        "FinancialStatementVersion":"Financial Statement Version",
         "Asset":"Asset",
         "AssetClass":"Asset Class",
         "AssetDevelopment":"Asset Development",
+        "Attendance":"Attendance",
+        "BankAccount":"Bank Account",
+        'ChartOfAccounts':'Chart of Accounts',
+        'Company':'Company',
+        'CostObject':'Cost Object',
+        'CostCenter':'Cost Center',
+        'Customer':'Customer',
         "Employee":"Employee",
         "FinancialAccountsSettings":"Financial Accounts Settings",
-        "Segment":"Segment",
+        "FinancialStatementVersion":"Financial Statement Version",
         "GeneralLedger":"General Ledger",
-        "Material":"Material"
+        'GroupChartOfAccounts':'Group Chart of Accounts',
+        "Holidays":"Holidays",
+        "IncomeTaxCode":"Income Tax Code",
+        "Location":"Location",
+        "Material":"Material",
+        "OrganisationalUnit":"Organizational Unit",
+        "PaymentTerms":"Payment Terms",
+        "ProfitCenter":"Profit Center",
+        "PurchaseOrder":"Purchase Order",
+        "SaleOrder":"Sale Order",
+        "Segment":"Segment",
+        "Service":"Service",
+        "TimeControl":"Time Control",
+        "UserSettings":"User Settings",
+        "Vendor":"Vendor",
     }
 }
 
@@ -5320,7 +5836,7 @@ function CRUDCollection(){
         }))
     }
 
-    function nestchange(field,index,subfield,subindex,subsubfield,e){
+    function nestChange(field,index,subfield,subindex,subsubfield,e){
         const {value} = e.target;
         setdata(prevdata=>({
             ...prevdata,[field]:prevdata[field].map((item,i)=>
@@ -5346,11 +5862,11 @@ function CRUDCollection(){
         
     }
 
-    function addNest(field,index,subfield,defaults){
+    function addNest(field,index,subfield){
         setdata(prevdata=>({
             ...prevdata,
             [field]:prevdata[field].map((item,i)=>
-            (i==index)?{...item,[subfield]:[...item[subfield],defaults]}:item
+            (i==index)?{...item,[subfield]:[...item[subfield],defaults[field][0][subfield][0]]}:item
             )
         }))
     }
@@ -5384,6 +5900,7 @@ function CRUDCollection(){
                     <>
                         {field['datatype']=="single" && <SingleInput field={field} output={data} handleChange={singleChange}/>}
                         {field['datatype']=="collection" && <CollectionInput field={field} output={data} handleChange={collectionChange} addItem={addCollection} removeItem={removeCollection}/>}
+                        {field['datatype']=="nest" && <NestInput field={field} output={data} handleChange1={collectionChange} handleChange2={nestChange} addItem1={addCollection} addItem2={addNest} removeItem1={removeCollection} removeItem2={removeNest}/>}
                     </>
                 )}
             </div>
@@ -5424,23 +5941,39 @@ class CRUDRoute{
         return availability;
     }
     static createRequirements = {
-        "Company":[],
         "Asset":["Company Code"],
         "AssetClass":["Company Code"],
         "AssetDevelopment":["Company Code"],
+        "Attendance":["Company Code","Year","Month","Employee"],
+        "BankAccount":["Company Code"],
         "ChartOfAccounts":[],
-        "GroupChartOfAccounts":[],
-        "FinancialStatementVersion":[],
+        "Company":[],
+        "CostCenter":["Company Code"],
+        "CostObject":["Company Code"],
+        "Currency":[],
+        "Customer":["Company Code"],
         "Employee":["Company Code"],
         "FinancialAccountsSettings":["Company Code"],
-        "Segment":[],
+        "FinancialStatementVersion":[],
         "GeneralLedger":["Company Code"],
-        "Material":["Company Code"]
+        "GroupChartOfAccounts":[],
+        "Holidays":["Company Code","Year"],
+        "IncomeTaxCode":[],
+        "Location":["Company Code"],
+        "Material":["Company Code"],
+        "OrganisationalUnit":["Company Code"],
+        "PaymentTerms":[],
+        "ProfitCenter":["Company Code"],
+        "PurchaseOrder":["Company Code"],
+        "SaleOrder":["Company Code"],
+        "Segment":[],
+        "Service":["Company Code"],
+        "TimeControl":["Company Code"],
+        "UserSettings":["User"],
+        "Vendor":["Company Code"],
+
     }
     static schema = {
-        "Company":[
-            {"name":"Code","input":"input","type":"number"}
-        ],
         "Asset":[
             {"name":"Code","input":"input","type":"number"},
             {"name":"Company Code","input":"input","type":"number"}
@@ -5453,14 +5986,36 @@ class CRUDRoute{
             {"name":"Code","input":"input","type":"number"},
             {"name":"Company Code","input":"input","type":"number"}
         ],
+        "Attendance":[
+            {"name":"Company Code","input":"input","type":"number"},
+            {"name":"Year","input":"input","type":"number"},
+            {"name":"Month","input":"input","type":"number"},
+            {"name":"Employee","input":"input","type":"text"}
+        ],
+        "BankAccount":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"number"}
+        ],
         "ChartOfAccounts":[
             {"name":"Code","input":"input","type":"number"}
         ],
-        "GroupChartOfAccounts":[
+        "Company":[
             {"name":"Code","input":"input","type":"number"}
         ],
-        "FinancialStatementVersion":[
-           {"name":"Code","input":"input","type":"number"} 
+        "CostCenter":[
+            {"name":"Code","input":"input","type":"number"},
+            {"name":"Company Code","input":"input","type":"number"}
+        ],
+        "CostObject":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"number"}
+        ],
+        "Currency":[
+            {"name":"Code","input":"input","type":"text"}
+        ],
+        "Customer":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"number"}
         ],
         "Employee":[
             {"name":"Code","input":"input","type":"text"},
@@ -5469,10 +6024,24 @@ class CRUDRoute{
         "FinancialAccountsSettings":[
             {"name":"Company Code","input":"input","type":"number"}
         ],
-        "Segment":[
-            {"name":"Code","input":"input","type":"text"}
+        "FinancialStatementVersion":[
+           {"name":"Code","input":"input","type":"number"} 
         ],
         "GeneralLedger":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"number"}
+        ],
+        "GroupChartOfAccounts":[
+            {"name":"Code","input":"input","type":"number"}
+        ],
+        "Holidays":[
+            {"name":"Company Code","input":"input","type":"number"},
+            {"name":"Year","input":"input","type":"number"},
+        ],
+        "IncomeTaxCode":[
+            {"name":"Code","input":"input","type":"text"}
+        ],
+        "Location":[
             {"name":"Code","input":"input","type":"text"},
             {"name":"Company Code","input":"input","type":"number"}
         ],
@@ -5480,20 +6049,74 @@ class CRUDRoute{
             {"name":"Code","input":"input","type":"text"},
             {"name":"Company Code","input":"input","type":"number"}
         ],
+        "OrganisationalUnit":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"number"}
+        ],
+        "PaymentTerms":[
+            {"name":"Code","input":"input","type":"text"}
+        ],
+        "ProfitCenter":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"number"}
+        ],
+        "PurchaseOrder":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"number"}
+        ],
+        "SaleOrder":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"number"}
+        ],
+        "Segment":[
+            {"name":"Code","input":"input","type":"text"}
+        ],
+        "Service":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"number"}
+        ],
+        "TimeControl":[
+            {"name":"Company Code","input":"input","type":"number"}
+        ],
+        "UserSettings":[
+            {"name":"User","input":"input","type":"text"}
+        ],
+        "Vendor":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"number"}
+        ],
     }
     static defaults = {
-        "Company":{"Code":""},
         "Asset":{"Code":"","Company Code":1000},
         "AssetClass":{"Code":"","Company Code":1000},
         "AssetDevelopment":{"Code":"","Company Code":1000},
+        "Attendance":{"Company Code":1000,"Year":"","Month":"","Employee":""},
+        "BankAccount":{"Code":"","Company Code":1000},
         "ChartOfAccounts":{"Code":""},
-        "GroupChartOfAccounts":{"Code":""},
-        "FinancialStatementVersion":{"Code":""},
+        "Company":{"Code":""},
+        "CostCenter":{"Code":"","Company Code":1000},
+        "CostObject":{"Code":"","Company Code":1000},
+        "Currency":{"Code":""},
+        "Customer":{"Code":"","Company Code":1000},
         "Employee":{"Code":"","Company Code":""},
         "FinancialAccountsSettings":{"Company Code":1000},
+        "FinancialStatementVersion":{"Code":""},
+        "GeneralLedger":{"Code":"","Company Code":1000},
+        "GroupChartOfAccounts":{"Code":""},
+        "Holidays":{"Company Code":1000,"Year":""},
+        "IncomeTaxCode":{"Code":""},
+        "Location":{"Code":"","Company Code":1000},
+        "Material":{"Code":"","Company Code":""},
+        "OrganisationalUnit":{"Code":"","Company Code":1000},
+        "PaymentTerms":{"Code":""},
+        "ProfitCenter":{"Code":"","Company Code":1000},
+        "PurchaseOrder":{"Code":"","Company Code":1000},
+        "SaleOrder":{"Code":"","Company Code":1000},
         "Segment":{"Code":""},
-        "GeneralLedger":{"Code":"","Company Code":""},
-        "Material":{"Code":"","Company Code":""}
+        "Service":{"Code":"","Company Code":1000},
+        "TimeControl":{"Company Code":1000},
+        "UserSettings":{"User":""},
+        "Vendor":{"Code":"","Company Code":1000},
     }
 }
 
@@ -5619,9 +6242,7 @@ function Scratch(){
 
     return(
         <div className='reportDisplay'>
-        {1-selfRatio('A',[])}<br></br>
-        {1-selfRatio('B',['A'])}
-        {JSON.stringify(AllocationRatios('A',1,1,[]))}
+        {JSON.stringify(new Company(11).BusinessPlaces)}
         </div>
     )
 }
