@@ -2146,6 +2146,8 @@ function Control(){
             {"Name":"Income Tax Code", "URL":"/collection/IncomeTaxCode"},
             {"Name":"Payment Terms", "URL":"/collection/PaymentTerms"},
             {"Name":"Segment", "URL":"/collection/Segment"},
+            {"Name":"Currencies", "URL":"/table/Currencies"},
+            {"Name":"Units of Measure", "URL":"/table/Units"},
         ]},
         {"Group":"Company", "Controls":[
             {"Name":"Financial Accounts Settings", "URL":"/collection/FinancialAccountsSettings"},
@@ -6171,6 +6173,108 @@ function CRUDRouter(){
     )
 }
 
+class Table{
+    constructor(name,method="Display"){
+        this.name = name;
+        this.method = method;
+        this.data = (this.name in localStorage)?JSON.parse(localStorage.getItem(this.name)):Table.defaults[this.name];
+        this.key = Table.keys[this.name];
+    }
+    error(data){
+        const list = [];
+        data.map((item,i)=>(item[this.key]=="")?list.push(`At line ${i+1}, ${this.key} required`):()=>{})
+        return list;
+    }
+    save(data){
+        localStorage.setItem(this.name,JSON.stringify(data));
+    }
+    static defaults = {
+        "Currencies":[{"Code":"","Description":""}],
+        "Units":[{"Unit":"","Description":""}]
+    }
+    static keys = {
+        "Currencies":"Code",
+        "Units":"Unit"
+    }
+}
+
+function TableUI(){
+    const {tablename} = useParams();
+    const [method,setmethod]= useState("Display");
+    const changeMethod = ()=>{
+        (method=="Display")?setmethod("Update"):setmethod("Display");
+    }
+    const table = new Table(tablename,method);
+    const defaults = table.data;
+    const [data,setdata] = useState(defaults);
+    const fields = Object.keys(data[0]);
+    const errors = table.error(data);
+    const navigate = useNavigate();
+
+    const handleChange = (index,field,e)=>{
+        const {value} = e.target;
+        setdata(prevdata=>(prevdata.map((item,i)=>(i==index)?{...item,[field]:value}:item)))
+    }
+
+    const addItem=()=>{
+        setdata(prevdata=>([...prevdata,defaults[0]]));
+    }
+
+    const removeItem =(index)=>{
+        setdata(prevdata=>(prevdata.filter((item,i)=>i!=index)))
+    }
+
+    const save = () =>{
+        if (errors.length==0){
+            table.save(data);
+            alert(`${tablename} updated !`);
+            changeMethod();
+            window.location.reload();
+        } else {
+            alert("Please consider the errors!")
+        }
+    }
+
+    return (
+        <div>
+            <div>
+                <h2>{`Table ${tablename}`}</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th></th>
+                            {fields.map(field=><th>{field}</th>)}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.map((item,i)=>
+                            <tr>
+                                <td><button onClick={()=>removeItem(i)}>-</button></td>
+                                {fields.map(field=><td>
+                                    {method=="Update" && <input value={item[field]} onChange={(e)=>handleChange(i,field,e)}/>}
+                                    {method=="Display" && <label>{item[field]}</label>}
+                                </td>)}
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+                <button onClick={()=>addItem()}>+</button>
+                {method=="Update" && <button onClick={()=>save()}>Save</button>}
+                {method=="Update" && <button onClick={()=>changeMethod()}>Cancel</button>}
+                {method=="Display" && <button onClick={()=>changeMethod()}>Update</button>}
+            </div>
+            {errors.length>0 && <div>
+                <h4>Things to Consider</h4>
+                <ul>
+                    {errors.map(error=>
+                        <li>{error}</li>
+                    )}
+                </ul>
+            </div>}
+        </div>
+    )
+}
+
 function Scratch(){
     
     const ratios = {
@@ -6265,6 +6369,7 @@ function App(){
             <Route path="/scratch/" element={<Scratch/>}/>
             <Route path="/collection/:collection" element={<CRUDRouter/>}/>
             <Route path="/crud" element={<CRUDCollection/>}/>
+            <Route path="/table/:tablename" element={<TableUI/>}/>
             <Route path="/transaction/:trans" element={<TransactionUI/>}/>
             <Route path="/holidays" element={<Holidays/>}/>
             <Route path="/fasettings" element={<FinancialAccountSettings/>}/>
