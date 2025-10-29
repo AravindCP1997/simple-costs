@@ -6177,13 +6177,16 @@ class Table{
     constructor(name,method="Display"){
         this.name = name;
         this.method = method;
-        this.data = (this.name in localStorage)?JSON.parse(localStorage.getItem(this.name)):Table.defaults[this.name];
+        this.defaults = Table.defaults[this.name];
+        this.data = (this.name in localStorage)?JSON.parse(localStorage.getItem(this.name)):this.defaults;
         this.key = Table.keys[this.name];
     }
     error(data){
         const list = [];
         data.map((item,i)=>(item[this.key]=="")?list.push(`At line ${i+1}, ${this.key} required`):()=>{})
-        return list;
+        data.map(item=>Count(item[this.key],ListItems(data,this.key))>1?list.push(`${this.key} ${item[this.key]} exists ${Count(item[this.key],ListItems(data,this.key))} times.`):()=>{})
+        const uniquelist = [...new Set(list)]
+        return uniquelist;
     }
     save(data){
         localStorage.setItem(this.name,JSON.stringify(data));
@@ -6205,8 +6208,8 @@ function TableUI(){
         (method=="Display")?setmethod("Update"):setmethod("Display");
     }
     const table = new Table(tablename,method);
-    const defaults = table.data;
-    const [data,setdata] = useState(defaults);
+    const defaults = table.defaults;
+    const [data,setdata] = useState(table.data);
     const fields = Object.keys(data[0]);
     const errors = table.error(data);
     const navigate = useNavigate();
@@ -6236,34 +6239,38 @@ function TableUI(){
     }
 
     return (
-        <div>
-            <div>
-                <h2>{`Table ${tablename}`}</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th></th>
-                            {fields.map(field=><th>{field}</th>)}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {data.map((item,i)=>
+        <div className='crudUI'>
+            <h2 className='crudTitle'>{`Table ${tablename}`}</h2>    
+            <div className='crudField'>
+                <div className='crudTable'>
+                    <table>
+                        <thead>
                             <tr>
-                                <td><button onClick={()=>removeItem(i)}>-</button></td>
-                                {fields.map(field=><td>
-                                    {method=="Update" && <input value={item[field]} onChange={(e)=>handleChange(i,field,e)}/>}
-                                    {method=="Display" && <label>{item[field]}</label>}
-                                </td>)}
+                                <th className='crudTableCell'></th>
+                                {fields.map(field=><th className='crudTableCell'>{field}</th>)}
                             </tr>
-                        )}
-                    </tbody>
-                </table>
-                <button onClick={()=>addItem()}>+</button>
-                {method=="Update" && <button onClick={()=>save()}>Save</button>}
-                {method=="Update" && <button onClick={()=>changeMethod()}>Cancel</button>}
-                {method=="Display" && <button onClick={()=>changeMethod()}>Update</button>}
+                        </thead>
+                        <tbody>
+                            {data.map((item,i)=>
+                                <tr>
+                                    <td className='crudTableCell'><button onClick={()=>removeItem(i)}>-</button></td>
+                                    {fields.map(field=><td className='crudTableCell'>
+                                        {method=="Update" && <input value={item[field]} onChange={(e)=>handleChange(i,field,e)}/>}
+                                        {method=="Display" && <label>{item[field]}</label>}
+                                    </td>)}
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                    {method=="Update" && <button onClick={()=>addItem()}>+</button>}
+                </div>
+                <div className='crudButtons'>
+                    {method=="Update" && <button onClick={()=>save()}>Save</button>}
+                    {method=="Update" && <button onClick={()=>changeMethod()}>Cancel</button>}
+                    {method=="Display" && <button onClick={()=>changeMethod()}>Update</button>}
+                </div>
             </div>
-            {errors.length>0 && <div>
+            {errors.length>0 && <div className='crudError'>
                 <h4>Things to Consider</h4>
                 <ul>
                     {errors.map(error=>
