@@ -1,5 +1,4 @@
 import './App.css'
-import { TiTimes } from "react-icons/ti";
 import { useEffect, useState, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { FaPlus, FaHome, FaArrowRight, FaArrowLeft, FaCopy } from 'react-icons/fa';
@@ -223,8 +222,9 @@ class TDSCodes{
 }
 
 class Asset{
-    constructor(name){
-        this.name = name;
+    constructor(code,company){
+        this.company = company;
+        this.code = code;
         this.data = Asset.data.filter(item=>item['Name']==this.name)[0];
         this.assetclass = new AssetClass(this.data['Asset Class']);
         this.costcenter = new CostCenter(this.data['Cost Center']);
@@ -236,7 +236,6 @@ class Asset{
         this.SV = parseFloat(this.data['Salvage Value']);
     }
     register(date) {
-        
         const data = {...this.data,...{
             "Cost":this.cost(date),
             "Planned Depreciation":this.depreciation(date),
@@ -442,8 +441,11 @@ class Asset{
         }))
         return entry;
     }
-
-    static data = Database.load("Asset")
+    static data(company){
+        const data = new Collection('Asset').load();
+        const filtered = data.filter(item=>(item['Company Code']==company));
+        return filtered;
+    }
     static register(date){
         const data = this.data;
         const list = [];
@@ -460,7 +462,6 @@ class Asset{
         const list = ListItems(this.data,"Name")
         return list
     }
-    static activedata= this.data.filter(item=>!item['Deactivated'])
     static activeList(){
         return ListItems(this.activedata,"Name")
     }
@@ -576,14 +577,19 @@ class GeneralLedger{
         this.type = this.data['Ledger Type'];
         this.presentation = this.data['Presentation']
     }
-    static data = Database.load("General Ledger")
-    static list(){
-        const list = ListItems(this.data,"Name")
+    static data(company){
+        const data = new Collection('GeneralLedger').load();
+        const filtered = data.filter(item=>item['Company Code']==company);
+        return filtered;
+    }
+    static listAll(company){
+        const list = ListItems(this.data(company),"Code")
         return list
     }
-    static listtype(type){
-        const data = this.data.filter(item=>item['Ledger Type']==type);
-        const list = ListItems(data,"Name");
+    static listBytype(company,type){
+        const data = this.data(company);
+        const filtered = data.filter(item=>item['Ledger Type']==type);
+        const list = ListItems(filtered,"Code")
         return list
     }
     transactions(period){
@@ -793,8 +799,9 @@ class Location{
 }
 
 class Material{
-    constructor(name){
+    constructor(company,name){
         this.name = name;
+        this.company = company;
         this.data = Material.data.filter(item=>item['Name']==this.name)[0]
     }
     transactionsBefore(date){
@@ -2100,11 +2107,11 @@ function Record(){
     <div className='menuContainer'>
             <h3 className='menuContainerTitle' onClick={()=>navigate('/control')}>Record</h3>
             <div className='menuList'>
-                <div className='menuTitle red'><h4>Generic</h4></div>
+                <div className='menuTitle blue'><h4>Generic</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/transaction/General`)}}><h4>Transaction</h4></div>
             </div>
             <div className='menuList'>
-                <div className='menuTitle red'><h4>Asset</h4></div>
+                <div className='menuTitle blue'><h4>Asset</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/transaction/Asset Acquisition`)}}><h4>Acquisition</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/depreciationpros`)}}><h4>Depreciation</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/depreciationretro`)}}><h4>Depreciation Retrospective</h4></div>
@@ -2148,10 +2155,12 @@ function Control(){
             {"Name":"Segment", "URL":"/collection/Segment"},
             {"Name":"Currencies", "URL":"/table/Currencies"},
             {"Name":"Units of Measure", "URL":"/table/Units"},
+            {"Name":"HSN", "URL":"/table/HSN"},
         ]},
-        {"Group":"Company", "Controls":[
+        {"Group":"Financial Accounting", "Controls":[
             {"Name":"Financial Accounts Settings", "URL":"/collection/FinancialAccountsSettings"},
             {"Name":"Time Control", "URL":"/collection/TimeControl"},
+            {"Name":"General Ledger", "URL":"/collection/GeneralLedger"},
         ]},
         {"Group":"Asset", "Controls":[
             {"Name":"Asset", "URL":"/collection/Asset"},
@@ -2189,7 +2198,7 @@ function Control(){
             <h3 className='menuContainerTitle' onClick={()=>navigate('/reports')}>Control</h3>
             {controls.map(group=>
                 <div className='menuList'>
-                    <div className='menuTitle red'><h4>{group["Group"]}</h4></div>
+                    <div className='menuTitle blue'><h4>{group["Group"]}</h4></div>
                     {group['Controls'].map(control=>
                         <div className='menuItem' onClick={()=>{navigate(control['URL'])}}><h4>{control['Name']}</h4></div>
                     )}
@@ -3550,468 +3559,142 @@ function Holidays(){
 
 class Transaction{
     constructor(type){
-        this.type = type
+        this.type = type;
     }
-    firstLineItem(content){
-        let items = this.lineItemByContent(content);
-        let notreq = [];
-        switch (this.type){
-            case 'Purchase':
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Vendor.list()]}:item);
-                break
-            case 'Sale':
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Customer.list()]}:item);
-                notreq = ["Account Type","Debit/ Credit","General Ledger","GST", "Profit Center", "Cost Center", "HSN", "Quantity", "Value Date", "Location"]
-                break
-            case 'Manual Depreciation':
-                items = [];
-                break
-            case 'Asset Acquisition':
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Vendor.list()]}:item);
-                notreq = ["Transaction","General Ledger","GST", "Profit Center", "Cost Center", "HSN", "Quantity", "Value Date", "Location"]
-                break
-            case 'Asset Disposal':
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Customer.list()]}:item);
-                notreq = ["Transaction","General Ledger","GST", "Profit Center", "Cost Center", "HSN", "Quantity", "Value Date", "Location"]
-                break
-            case 'Asset Revaluation':
-                items=[];
-                break
-            case 'Payment':
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...BankAccount.list()]}:item);
-                
-                break
-            case 'Receipt':
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...BankAccount.list()]}:item);
-                break
-            case 'General':
-                items = [];
-                break
-        }
-        items = items.map(item=>(!notreq.includes(item['name'])?item:{...item,['input']:'calculated'}));
-        return items
+    defaults(data){
+        let defaults = {};
+        return defaults
     }
-    lineItemHeads(){
-        let items = Transaction.lineItems
-        const req ={
-            "Purchase":["Account","Transaction","Account Type","Presentation","General Ledger","Amount","Debit/ Credit","Text","GST","GST Supplier","HSN","Profit Center","Payee","TDS","TDS Base","TDS Deductee","Location","Quantity","Value Date"],
-            "Sale":["Account","Transaction","Account Type","Presentation","General Ledger","Amount","Debit/ Credit","Text","GST","GST Supplier","HSN","Profit Center","Payee","TDS","TDS Base","TDS Deductee","Location","Quantity","Value Date"],
-            "Asset Acquisition":["Account","Transaction","Amount","Debit/ Credit","Text","Profit Center","GST","GST Supplier","HSN","Presentation","Payee","TDS","TDS Base","Deductee"],
-            "General":ListItems(Transaction.lineItems,'name')
-        }
-        let calc = [];
+    schema(data){
+        let schema = [
+            {"name":"Company Code", "datatype":"single","input":"input","type":"text", "noteditable":!(data['Company Code']=="")},
+            {"name":"Posting Date", "datatype":"single","input":"input","type":"date", "noteditable":(data['Company Code']=="")},
+            {"name":"Document Date", "datatype":"single","input":"input","type":"date","noteditable":(data['Company Code']=="")},
+            {"name":"Reference", "datatype":"single","input":"input","type":"text","noteditable":(data['Company Code']=="")},
+        ]
         switch (this.type){
             case 'Sale':
-                notreq = ["Cost Object","Consumption Time From", "Consumption Time To", "Presentation","Purchase Order", "Sale Order", "Item", "Clearing Document", "Clearing Date"]
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Material.list(),...Service.list(),...Asset.activeList()]}:item);
-                break
-            case 'Purchase':
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Material.list(),...Service.list(),...Asset.activeList(),...GeneralLedger.listtype('General'),...GeneralLedger.listtype('Cost Element')]}:item);
-                break
-            case 'Manual Depreciation':
-                notreq = ["HSN","GST","GST Supplier","Location","Quantity","Value Date","TDS","TDS Base","TDS Deductee","Cost Object", "Presentation","Purchase Order", "Sale Order", "Item", "Clearing Document", "Clearing Date"]
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Asset.activeList()]}:item);
-                break
-            case 'Asset Acquisition':
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Asset.activeList()]}:item);
-                break
-            case 'Asset Disposal':
-                notreq = ["Cost Center","Depreciation Upto","Location","Quantity","Value Date","Cost Object", "Purchase Order", "Sale Order", "Item", "Clearing Document", "Clearing Date","Consumption Time From","Consumption Time To"]
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Asset.activeList()]}:item);
-                break
-            case 'Asset Revaluation':
-                notreq = ["Depreciation Upto","TDS","TDS Base","TDS Deductee","Presentation","GST","GST Supplier","HSN","Location","Quantity","Value Date","Cost Object", "Purchase Order", "Sale Order", "Item", "Clearing Document", "Clearing Date","Consumption Time From","Consumption Time To"]
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Asset.activeList(),...GeneralLedger.list()]}:item);
-                break
-            case 'Payment':
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Vendor.list(),...Customer.list(),...BankAccount.list()]}:item);
-                notreq = ["Transaction","Depreciation Upto","GST","GST Supplier","HSN","Cost Center","Cost Object","Consumption Tinme From","Consumption Time To","Locaiton","Quantity","Value Date","Purchase Order", "Sale Order", "Item"]
-                break
-            case 'Receipt':
-                items = items.map(item=>(item['name']=="Account")?{...item,['options']:["",...Vendor.list(),...Customer.list(),...BankAccount.list()]}:item);
-                notreq = ["Transaction","Depreciation Upto","GST","GST Supplier","HSN","Cost Center","Cost Object","Consumption Time From","Consumption Time To","Location","Quantity","Value Date","Purchase Order", "Sale Order", "Item"]
-                break
+                schema.push({
+                    "name":"Customer",
+                    "datatype":"object",
+                    "schema":[
+                        {"name":"Customer","datatype":"single"}
+                    ]
+                })
         }
-        items = items.filter(item=>req[this.type].includes(item['name']));
-
-        items = items.map(item=>(calc.includes(item['name']))?{...item,["input"]:"calculated"}:item);
-        return items
+        return schema;
     }
-    lineItemByContent(content){
-        let lineItems = this.lineItemHeads();
-        const type = new Intelligence().ledgerType(content['Account']);
-        const req = {
-            "":["Account"],
-            "Asset":["Account","Transaction","Amount","Debit/ Credit","Text","GST","GST Supplier","HSN","Depreciation Upto"],
-            "Material":["Account","Amount","Debit/ Credit","Text","GST","GST Supplier","HSN","Location","Quantity","Value Date"],
-            "Service":["Account","Amount","Debit/ Credit","Text","GST","GST Supplier","HSN","Profit Center"],
-            "Vendor":["Account","Presentation","Amount","Debit/ Credit","Text","Profit Center","Payee","TDS","TDS Base","TDS Deductee"],
-            "Customer":["Account","Amount","Debit/ Credit","Text","Profit Center","Payee","TDS","TDS Base","TDS Deductee"],
-            "Bank Account":["Account","Amount","Debit/ Credit","Text","VAN"],
-            "General Ledger":["Account","Amount","Debit/ Credit","Text","Profit Center","Consumption Time From","Consumption Time To","Cost Center","Cost Object","GST","GST Supplier","HSN"]
-        }
-
-        const transactions = {
-            "Material":["Receipt","Transfer","Consumption"],
-            "Asset":["Acquisition","Disposal","Depreciation","Revaluation"],
-        }
-        lineItems= lineItems.map(item=>(req[type].includes(item['name']))?item:{...item,['input']:'calculated'})
-        Object.keys(transactions).includes(type)?lineItems= lineItems.map(item=>(item['name']=="Transaction")?{...item,...{'input':"option","options":["",...transactions[type]]}}:item):()=>{}
-        switch (type){
-            case 'Vendor':
-                lineItems = lineItems.map(item=>(item['name']=="Presentation")?{...item,...{'input':"option","options":["",...GeneralLedger.listtype('Vendor')]}}:item)
-                break
-            case 'Customer':
-                lineItems = lineItems.map(item=>(item['name']=="Presentation")?{...item,...{'input':"option","options":["",...GeneralLedger.listtype('Customer')]}}:item)
-            case 'Asset':
-                const transaction = content['Transaction'];
-                lineItems = lineItems.map(item=>(item['name']=="Transaction" && this.type=="Sale")?{...item,...{'input':"option","options":["","Disposal"]}}:item);
-                lineItems = lineItems.map(item=>(item['name']=="Transaction" && this.type=="Manual Depreciation")?{...item,...{'input':"option","options":["","Depreciation"]}}:item)
-                lineItems = lineItems.map(item=>(item['name']=="Amount" && ["Disposal","Depreciation"].includes(transaction))?{...item,...{'input':"calculated"}}:item);
-                break
-            case 'Bank Account':
-                lineItems = lineItems.map(item=>(item['name']=="VAN")?{...item,...{'input':"option","options":["",new BankAccount(content['Account']).listOfVAN]}}:item)
-                break
-
-        }
-        return lineItems 
-    }
-    process(data){
-        const result = {...data};
-
-        result['Line Items'] = result['Line Items'].map(item=>this.lineItemProcess(item));
-        result['Line Items'].map(item=>(!item['GST']=="")?result['Line Items'].push(...this.calcGST(item)):()=>{})
-        result['Line Items'].map(item=>(!item['TDS']=="")?result['Line Items'].push(this.calcTDS(item)):()=>{})
-        result['Line Items'].map(item=>(item['Account Type']=="Asset" && item['Transaction']=="Depreciation")?result['Line Items'].push(this.depreciation(item)):()=>{});
-        
-        result["Balance"] = SumFieldIfs(result['Line Items'],'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(result['Line Items'],'Amount',["Debit/ Credit"],["Credit"])
-        return result
-    }
-    lineItemProcess(lineItemData){
-        const result = {...lineItemData};
-        result['Account Type'] = new Intelligence().ledgerType(result['Account']);
-        switch (result['Account Type']){
-            case 'General Ledger':
-                result['General Ledger'] = result['Account'];
-                break;
-            case 'Vendor':
-                result['General Ledger'] = result['Presentation'];
-                break
-            case 'Customer':
-                result['General Ledger'] = result['Presentation'];
-                break
-            case 'Bank Account':
-                result['General Ledger'] = new BankAccount(result['Account']).data['General Ledger'];
-                result['Profit Center'] = new BankAccount(result['Account']).data['Profit Center'];
-                break
-            case 'Material':
-                result['General Ledger'] = new Material(result['Account']).data['General Ledger']
-                break
-            case 'Asset':
-                result['Transaction'] = (this.type=="Manual Depreciation")?"Depreciation":result['Transaction'];
-                result['Transaction'] = (this.type=="Asset Acquisition")?"Acquisition":result['Transaction'];
-                result['Transaction'] = (this.type=="Asset Disposal")?"Disposal":result['Transaction'];
-                result['Transaction'] = (this.type=="Asset Revaluation")?"Revaluation":result['Transaction'];
-                result['General Ledger'] = new Asset(result['Account']).assetclass.data['General Ledger - Asset'];
-                result['Profit Center'] = new Asset(result['Account']).profitcenter.name;
-                result['Amount'] = (result['Transaction']=="Disposal")?new Asset(result['Account']).disposableValue():result['Amount']
-                result['Amount'] = (result['Transaction']=="Depreciation")?new Asset(result['Account']).depreciableAmount(result['Depreciation Upto']):result['Amount']
-                result['Debit/ Credit'] = (this.type=="Manual Depreciation" && result['Transaction']=="Depreciation")?"Credit":result['Debit/ Credit']
-                break
-        }
-        return result
-    }
-    calcGST(data){
-        let result = []
-        const Code = new GSTCodes(data['GST']);
-        result.push({'calculated':true,'Account':Code.data['CGST Account'],'General Ledger':Code.data['CGST Account'],'Amount':Code.data['Rate']/2*data['Amount']/100,"Debit/ Credit":data['Debit/ Credit'],"Profit Center":data['Profit Center'],"GST Supplier":data['GST Supplier']});       
-        result.push({'calculated':true,'Account':Code.data['SGST Account'],'Account Type':"General Ledger",'General Ledger':Code.data['SGST Account'],'Amount':Code.data['Rate']/2*data['Amount']/100,"Debit/ Credit":data['Debit/ Credit'],"Profit Center":data['Profit Center'],"GST Supplier":data['GST Supplier']});       
-        return result
-        
-    }
-
-    calcTDS(data){
-        const constants = {
-            "194C-Individual":{
-                "Rate":0.01
-            }
-        }
-        let result = {'calculated':true};
-        result = (Object.keys(constants).includes(data['TDS']))?{...result,...{'Amount':data['TDS Base']*constants[data['TDS']]['Rate'],'Debit/ Credit':"Credit"}}:result;
-        return result
-    }
-    depreciation(data){
-        const asset = new Asset(data['Account'])
-        let result = {'calculated':true};
-        result['Account'] = asset.assetclass.data['General Ledger - Depreciation'];
-        result['Amount'] = data['Amount'];
-        result['Debit/ Credit'] = (data['Debit/ Credit']!="Debit")?"Debit":"Credit";
-        result['Cost Center'] = asset.costcenter.name;
-        result['Profit Center'] = asset.profitcenter.name;
-        result['Text'] = data['Text'];
-        result['Consumption Time From'] = asset.depPostedUpTo();
-        result['Consumption Time To'] = data['Depreciation Upto']
-        result = this.lineItemProcess(result)
-        return result;
-    }
-    validate(data){
-        const list = [];    
-        const firstPeriod = [Company.timeControls['First']['From'],Company.timeControls['First']['To']];
-        const secondPeriod = [Company.timeControls['Second']['From'],Company.timeControls['Second']['To']]
-        const req = ["Posting Date","Document Date"];
-        req.map(item=>(data[item]=="")?list.push(`${item} required.`):()=>{});
-        (new Date(data['Posting Date'])>new Date())?list.push('Posting Date cannot be future.'):()=>{};
-        (!valueInRange(new Date(data['Posting Date']),[new Date(firstPeriod[0]),new Date(firstPeriod[1])]) && !valueInRange(new Date(data['Posting Date']),[new Date(secondPeriod[0]),new Date(secondPeriod[1])]))?list.push('Posting Date not in Open Period(s)'):()=>{}
-        (new Date(data['Document Date'])>new Date())?list.push('Document Date cannot be future.'):()=>{};
-        (data["Balance"]!=0)?list.push('Balance not zero.'):()=>{};
-        data['Line Items'].map((item,i)=>list.push(...this.validateline(item,i)));
-        return list
-    }
-    validateline(item,i){
-        let req = {
-            "Asset": ["Transaction","Debit/ Credit"],
-            "Bank Account":[],
-            "Material":["Location","Quantity","Value Date"],
-            "Service":["Profit Center"],
-            "Customer":["Debit/ Credit","Profit Center"],
-            "Vendor":["Debit/ Credit","Profit Center"],
-            "":["Account"],
-            "General Ledger":[]
-        };
-        const list = [];
-        req[item['Account Type']].map(reqfield=>(item[reqfield]=="") ?list.push(`Line ${i}: ${reqfield} required`):()=>{})
-        return list;
-    }
-    static database = ('transactions' in localStorage)?JSON.parse(localStorage.getItem('transactions')):[]
-    static transactionstable(){
-        const data = this.database
-        const fields = ["Posting Date","Document No"]
-        const table = []
-        for (let i=0;i<data.length;i++) {
-        const newdata = {}
-        fields.map(field=>newdata[field] = data[i][field])
-        data[i]['Line Items'].map(item=>table.push({...newdata,...item}))
-        }
-        return table
-    }
-    static transactions(period){
-        const [from,to] = period;
-        const data = this.transactionstable().filter(item=>new Date(item['Posting Date'])>= new Date(from) && new Date(item['Posting Date'])<= new Date(to))
-        return data
-    }
-
-    static headerFields = [
-        {"name":"Posting Date","type":"date"},
-        {"name":"Document Date","type":"date"},
-        {"name":"Reference","type":"text"},
-        {"name":"Text","type":"text"},
-    ]
-    static lineItems = [
-        {"name":"Account", "placeholder":"Account","type":"text", "input":"option", "options":["",...Asset.activeList(),...BankAccount.list(),...GeneralLedger.list(), ...Material.list(),...Service.list(),...Vendor.list(), ...Customer.list()]},
-        {"name":"Transaction", "input":"option","options":[""]},
-        {"name":"Account Type", "input":"calculated"},
-        {"name":"Presentation", "input":"notrequired"},
-        {"name":"VAN","input":"calculated"},
-        {"name":"Depreciation Upto", "input":"input", "type":"date"},
-        {"name":"General Ledger", "input":"calculated"},
-        {"name":"Amount", "type":"number", "input":"input"},
-        {"name":"Debit/ Credit", "type":"number", "input":"option","options":["","Debit","Credit"]},
-        {"name":"Text","input":"input","type":"text"},
-        {"name":"GST","input":"option","options":["",GSTCodes.list]},
-        {"name":"GST Supplier", "type":"number", "input":"option","options":["",...Vendor.list(),...Customer.list()]},
-        {"name":"HSN", "type":"number", "input":"input"},
-        {"name":"Payee", "type":"number", "input":"option","options":["",...Vendor.list(),...Customer.list()]},
-        {"name":"TDS Base","input":"input","type":"number"},
-        {"name":"TDS","input":"option","options":["","194C-Individual"]},
-        {"name":"TDS Deductee", "type":"number", "input":"option","options":["",Vendor.list(),Customer.list()]},
-        {"name":"Profit Center","input":"option","options":["",...ProfitCenter.list()]},
-        {"name":"Cost Center","input":"option","options":[""]},
-        {"name":"Cost Object","input":"option","options":["",...CostObject.list()]},
-        {"name":"Consumption Time From","input":"input","type":"date"},
-        {"name":"Consumption Time To","input":"input","type":"date"},
-        {"name":"Location","input":"option","options":["",...Location.list()]},
-        {"name":"Quantity","input":"input","type":"number"},
-        {"name":"Value Date","input":"input","type":"date"},
-        {"name":"Purchase Order","input":"input","type":"number"},
-        {"name":"Sale Order","input":"input","type":"number"},
-        {"name":"Item","input":"input","type":"number"},
-        {"name":"Clearing Document","input":"calculated"},
-        {"name":"Clearing Date","input":"calculated"}
-    ]
-    
-    static defaults = {
-        "Posting Date":"",
-        "Document Date":"",
-        "Reference":"",
-        "Text":"",
-        "Line Items":[this.defaultLine()]
-    }
-
-    static defaultLine(){
-        const data = {}
-        this.lineItems.map(item=>(data[item['name']]=""));
-        return data
-    }
-    static VANSimulate(VAN,data){
-        const list = [];
-        data.map(item=>list.push({...this.defaults,...{'Posting Date':item['Date'],'Line Items':this.VANLineItems(VAN,item)}}))
-        return list
-    }
-    static VANLineItems(VAN,line){
-        const list = [];
-        const VANData = BankAccount.getVANData(VAN);
-        list.push({'Account':VANData['Bank Account'],"Amount":line['Amount'],"Debit/ Credit":"Debit","Text":line["Text"],"Profit Center":new BankAccount(VANData['Bank Account']).data['Profit Center']})
-        list.push({'Account':VANData['Ledger'],"Amount":line['Amount'],"Debit/ Credit":"Credit","Text":line["Text"],"Profit Center":VANData['Profit Center']})
-        return list
-    }
-    static VANPosting(VAN,data){
-        const result = this.VANSimulate(VAN,data);
-        result.map(item=>this.post(item));
-        return('Success')
-    }
-    static post(data){
-        const updateddatabase = [...this.database,{...data,['Document No']:this.newDocNo()}]
-        this.savedatabase(updateddatabase);
-        return 'Success'
-    }
-    static newDocNo(){
-        let start = 100000;
-        do {
-            start++;
-        } while (this.isDocExists(start));
-        return start
-    }
-    static isDocExists(docNo){
-        return (this.database.filter(item=>item['Document No']==docNo).length>0)
-    }
-    static savedatabase(database){
-        localStorage.setItem('transactions',JSON.stringify(database));
-    }
-    static docs = ListItems(this.database,"Document No")
 }
 
 function TransactionUI(){
-    const {trans} = useParams();
-    const URLcheck = ["Sale","General","Purchase", "Payment","Receipt", "Manual Depreciation", "Asset Disposal", "Asset Acquisition", "Asset Revaluation"].includes(trans);
+    const transaction = new Transaction("General");
     const navigate = useNavigate();
-    const transaction = new Transaction(trans);
-    
-    const lineItems = transaction.lineItemHeads();
-    const {headerFields} = Transaction;
-    const [restOfAccount,...restOfFields] = lineItems;
-    const [input,setinput] = useState(Transaction.defaults)
-    const output = transaction.process(input);
-    const [firstLine,...restOfLines] = output['Line Items'].filter(item=>!item['calculated']);
-    const firstLineItem = transaction.firstLineItem(firstLine);
-    const [Account,...restOfField] = firstLineItem;
-    const calculatedLines = output['Line Items'].filter(item=>item['calculated']);
-    const errors = transaction.validate(output);
-    
-    const headerChange = (field,e) =>{
+    const [data,setdata] = useState({"Company Code":"","Line Items":[{"Account":""}]});
+    const schema = transaction.schema(data);
+    const singleChange = (field,e)=>{
+        e.preventDefault;
+        const {value} = e.target
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:value
+        }))
+    }
+
+    function objectChange(field,subfield,e){
+        e.preventDefault;
+        const {value} = e.target
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:{...prevdata[field],[subfield]:value}
+        }))
+    }
+
+    function collectionChange(field,subfield,index,e){
+        e.preventDefault;
+        const {value} = e.target
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].map((item,i)=>(i===index)?{...item,[subfield]:value}:item)
+        }))
+    }
+
+    function nestChange(field,index,subfield,subindex,subsubfield,e){
         const {value} = e.target;
-        setinput(prevdata=>({
-            ...prevdata,[field]:value
+        setdata(prevdata=>({
+            ...prevdata,[field]:prevdata[field].map((item,i)=>
+            (i==index)?{...item,[subfield]:item[subfield].map((subitem,ii)=>
+            (ii==subindex)?{...subitem,[subsubfield]:value}:subitem)}:item)
         }))
     }
 
-    const lineItemChange = (index,field,e)=>{
-        const {value} = e.target;
-        setinput(prevdata=>({
-            ...prevdata,['Line Items']:prevdata['Line Items'].map((item,i)=>(i==index)?{...item,[field]:value}:item)
+    function addCollection(field,e){
+        e.preventDefault;
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:[...prevdata[field],defaults[field][0]]
         }))
     }
 
-    const addLine = ()=>{
-        setinput(prevdata=>({
-            ...prevdata,['Line Items']:[...prevdata['Line Items'],Transaction.defaults['Line Items'][0]]
+    function removeCollection(field,index,e){
+        e.preventDefault;
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].filter((item,i)=>i!==index)
+        }))
+        
+    }
+
+    function addNest(field,index,subfield){
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].map((item,i)=>
+            (i==index)?{...item,[subfield]:[...item[subfield],defaults[field][0][subfield][0]]}:item
+            )
         }))
     }
 
-    const removeLine = (index)=>{
-        setinput(prevdata=>({
-            ...prevdata,['Line Items']:prevdata['Line Items'].filter((item,i)=>i!==index)
+    function removeNest(field,index,subfield,subindex){
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].map((item,i)=>
+            (i==index)?{...item,[subfield]:item[subfield].filter((subitem,ii)=>ii!=subindex)}:item)
         }))
     }
 
-    const save = ()=>{
-        if (errors.length==0){
-            Transaction.post(output);
-            alert(`Saved!`)
-            window.location.reload();
-
-        } else {
-            alert("There are still errors unresolved")
-        }
+    function cancel(){
+        navigate(`/collection/${collection}`);
+        window.location.reload();
     }
-    
+
+    function save(){
+        const result = CRUD.save(data);
+        alert(result);
+        cancel();
+    }
+
     return(
-        <>
-        {URLcheck && 
-        <div className="transaction">
-            
-            <h2 className='transactionTitle'>{trans}</h2>
-            <div className="header">
-                {headerFields.map((item,index)=>
-                    <div className='headerField' key={index}><label>{item['name']}</label><input onChange={(e)=>headerChange(item['name'],e)} type={item['type']} value={output[item['name']]}/></div>
+        <div className='crudUI'>
+            <div className='crudTitle'>
+                <h2>Transaction</h2>
+            </div>
+            <div className='crudFields'>
+                {schema.map(field=>
+                    <>
+                        {field['datatype']=="single" && <SingleInput field={field} output={data} handleChange={singleChange}/>}
+                        {field['datatype']=="object" && <ObjectInput/>}
+                        {field['datatype']=="collection" && <CollectionInput field={field} output={data} handleChange={collectionChange} addItem={addCollection} removeItem={removeCollection}/>}
+                        {field['datatype']=="nest" && <NestInput field={field} output={data} handleChange1={collectionChange} handleChange2={nestChange} addItem1={addCollection} addItem2={addNest} removeItem1={removeCollection} removeItem2={removeNest}/>}
+                    </>
                 )}
-                {firstLineItem.map((item,index)=>
-                    <>{item['input']!='calculated' && <div className='headerField' key={index}><label>{item['name']}</label>
-                        {item['input']=='input' && <input onChange={(e)=>lineItemChange(0,item['name'],e)} type={item['type']} value={firstLine[item['name']]}/>}
-                        {item['input']=='option' && <select onChange={(e)=>lineItemChange(0,item['name'],e)} value={firstLine[item['name']]}>{item['options'].map(option=><option value={option}>{option}</option>)}</select>}
-                    </div>}</>
-                )}
-                <div className='headerField'><label>Balance</label><label>{output['Balance']}</label></div>
             </div>
-            <div className='lineItems'>
-                <table>
-                    <thead>
-                        <tr><th className='lineItemCell'></th>{lineItems.map(item=><th className='lineItemCell'>{item['name']}</th>)}</tr>  
-                    </thead>
-                    <tbody>
-                        {restOfLines.map((item,i)=>
-                            <tr><td className='lineItemCell'><button onClick={()=>removeLine(i+1)}>-</button></td>
-                           
-                            
-                            {transaction.lineItemByContent(item).map(field=>
-                                <td className='lineItemCell'>
-                                    {field['input']=="input" && <input onChange={(e)=>lineItemChange(i+1,field['name'],e)} type={field['type']} value={item[field['name']]}/>}
-                                    {field['input']=="option" && <select onChange={(e)=>lineItemChange(i+1,field['name'],e)} value={item[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
-                                    {field['input']=="calculated" && <label>{item[field['name']]}</label>}
-                                </td>
-                            )}</tr>
-                        )}
-                        {calculatedLines.map(item=>
-                            <tr>
-                                <td className='lineItemCell'></td>
-                                {lineItems.map(field=>
-                                <td className='lineItemCell'>{item[field['name']]}</td>
-                                )}
-                            
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            <div className='lineItemsButtons'><button className='blue' onClick={()=>addLine()}>+</button></div>
+            <div className='crudButtons'>
+                <button onClick={()=>cancel()}><FaArrowLeft/></button>
+                <button onClick={()=>save()}>Save</button>
             </div>
-            <div className='errors'>
-                <h4>Please consider:</h4>
-                <ul>
-                    {errors.map((item,i)=><li key={i}>{item}</li>)}
-                </ul>
-            </div>
-            <div className="transactionButtons">
-                <button onClick={()=>save()} className='green'>Save</button>
-                </div>
-        </div>}
-        {!URLcheck && 
-        <div className='transaction'>
-            <p>Uh-oh! We couldn't get you what you were searching for!</p>
-            <Record/>
         </div>
-        }
-        </>
     )
 }
+
 
 class MaterialIssue{
     constructor(material,location,valuedate,postingdate,data){
@@ -4143,7 +3826,6 @@ class MaterialIssue{
         {"name":"Location","input":"option","options":["",...Location.list()]},
         {"name":"Quantity","input":"input","type":"number"},
         {"name":"Product","input":"option","options":["",...Material.list()]},
-        {"name":"General Ledger","input":"option","options":["",...GeneralLedger.listtype('General'),...GeneralLedger.listtype('Cost Element')]},
         {"name":"Cost Center","input":"option","options":[""]},
         {"name":"Cost Object","input":"option","options":["",...CostObject.list()]},
         {"name":"Consumption Time From","input":"input","type":"date"},
@@ -4291,284 +3973,6 @@ class IncomeTax{
     static data = Database.load('Income Tax Code');
     static codes = ListItems(this.data,'Code');
 }
-class FASettings{
-    static data = ('fasettings' in localStorage)?JSON.parse(localStorage.getItem('fasettings')):this.defaults;
-    static defaults = {
-        "GL for Basic Salary":"",
-        "GL for Discount":"",
-        "GL for Emoluments and Deductions":[{"Item":"","Type":"","GL":""}],
-        "GL for Salary TDS":"",
-        "TDS Codes":[{"Code":"","Description":"","Rate":"","GL":""}],
-        "GST Codes":[{"State":0,"Code":0,"Description":"","IGST Rate":0,"CGST Rate":0,"SGST Rate":0,"UTGST Rate":0,"Cess rate":0,"IGST GL":"","CGST GL":"","SGST GL":"","UTGST GL":"","Cess GL":""}]
-    }
-    static changeTo(data){
-        saveData(data,'fasettings')
-    }
-}
-function FinancialAccountSettings(){
-    const settings = FASettings
-    const [data,setdata] = useState(settings.data || settings.defaults);
-    
-    const handleChange1 = (e,field) =>{
-        const {value} = e.target;
-        setdata(prevdata=>({
-            ...prevdata,[field]:value
-        }))
-    }
-
-    const handleChange2 = (e,field,index,subfield) =>{
-        const {value} = e.target;
-        setdata(prevdata=>({
-            ...prevdata,[field]:prevdata[field].map((item,i)=>
-            (index==i)?{...item,[subfield]:value}:item)
-        }))
-    }
-
-    const addItem = (field)=>{
-        const defaultitem = settings.defaults[field][0];
-        setdata(prevdata=>({
-            ...prevdata,[field]:[...prevdata[field],defaultitem]
-        }))
-    }
-
-    const removeItem = (field,index)=>{
-        setdata(prevdata=>({
-            ...prevdata,[field]:prevdata[field].filter((item,i)=>(i!==index))
-        }))
-    }
-
-    const save = () =>{
-        settings.changeTo(data);
-        alert('Financial Account Settings Changed');
-        window.location.reload()
-    }
-
-    return(
-        <div className='reportDisplay'>
-            <h2>Financial Account Settings</h2>
-            <div>
-                <label>General Ledger for Basic Salary</label>
-                <select value={data['GL for Basic Salary']} onChange={(e)=>handleChange1(e,'GL for Basic Salary')}>
-                    {GeneralLedger.list().map(option=>
-                        <option value={option}>{option}</option>
-                    )}
-                </select>
-            </div>
-            <div>
-                <label>General Ledger for Discount</label>
-                <select value={data['GL for Discount']} onChange={(e)=>handleChange1(e,'GL for Discount')}>
-                    {GeneralLedger.list().map(option=>
-                        <option value={option}>{option}</option>
-                    )}
-                </select>
-            </div>
-            <div>
-                <label>General Ledger for Salary TDS</label>
-                <select value={data['GL for Salary TDS']} onChange={(e)=>handleChange1(e,'GL for Salary TDS')}>
-                    {GeneralLedger.list().map(option=>
-                        <option value={option}>{option}</option>
-                    )}
-                </select>
-            </div>
-            <div className='crudTable'>
-                <label>Salary Emoluments and Deductions</label>
-                <table>
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>Item</th>
-                            <th>Emolument/ Deduction</th>
-                            <th>General Ledger</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {data['GL for Emoluments and Deductions'].map((item,i)=>
-                            <tr>
-                                <td><button onClick={()=>removeItem('GL for Emoluments and Deductions',i)}>-</button></td>
-                                <td><input type={"text"} value={item['Item']} onChange={(e)=>handleChange2(e,'GL for Emoluments and Deductions',i,'Item')}/></td>
-                                <td><select value={item['Type']} onChange={(e)=>handleChange2(e,'GL for Emoluments and Deductions',i,'Type')}><option value={"Deduction"}>Deduction</option><option value={"Emolument"}>Emolument</option></select></td>
-                                <td><select value={item['GL']} onChange={(e)=>handleChange2(e,'GL for Emoluments and Deductions',i,'GL')}>{GeneralLedger.list().map(option=><option value={option}>{option}</option>)}</select></td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-                <button onClick={()=>addItem('GL for Emoluments and Deductions')}>+</button>
-            </div>
-            <div  className='crudTable'>
-                <label>TDS and TCS Codes</label>
-                <table>
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>Code</th>
-                            <th>Description</th>
-                            <th>Rate</th>
-                            <th>General Ledger</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {data['TDS Codes'].map((item,i)=>
-                            <tr>
-                                <td><button onClick={()=>removeItem('TDS Codes',i)}>-</button></td>
-                                <td><input type={"text"} value={item['Code']} onChange={(e)=>handleChange2(e,'TDS Codes',i,'Code')}/></td>
-                                <td><input type={"text"} value={item['Description']} onChange={(e)=>handleChange2(e,'TDS Codes',i,'Description')}/></td>
-                                <td><input type={"number"} value={item['Rate']} onChange={(e)=>handleChange2(e,'TDS Codes',i,'Rate')}/></td>
-                                <td><select value={item['GL']} onChange={(e)=>handleChange2(e,'TDS Codes',i,'GL')}>{GeneralLedger.list().map(option=><option value={option}>{option}</option>)}</select></td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-                <button onClick={()=>addItem('TDS Codes')}>+</button>
-            </div>
-            <div className='crudTable'>
-                <label>GST Codes</label>
-                <table>
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>State</th>
-                            <th>Code</th>
-                            <th>Description</th>
-                            <th>IGST %</th>
-                            <th>CGST %</th>
-                            <th>SGST %</th>
-                            <th>UTGST %</th>
-                            <th>Cess %</th>
-                            <th>IGST General Ledger</th>
-                            <th>CGST General Ledger</th>
-                            <th>SGST General Ledger</th>
-                            <th>UTGST General Ledger</th>
-                            <th>Cess General Ledger</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {data['GST Codes'].map((item,i)=>
-                            <tr>
-                                <td><button onClick={()=>removeItem('GST Codes',i)}>-</button></td>
-                                <td><select value={item['State']} onChange={(e)=>handleChange2(e,'GST Codes',i,'State')}>{Intelligence.States.map(option=><option value={option}>{option}</option>)}{Intelligence.UTs.map(option=><option value={option}>{option}</option>)}</select></td>
-                                <td><input type={"text"} value={item['Code']} onChange={(e)=>handleChange2(e,'GST Codes',i,'Code')}/></td>
-                                <td><input type={"text"} value={item['Description']} onChange={(e)=>handleChange2(e,'GST Codes',i,'Description')}/></td>
-                                <td><input type={"number"} value={item['IGST Rate']} onChange={(e)=>handleChange2(e,'GST Codes',i,'IGST Rate')}/></td>
-                                <td><input type={"number"} value={item['CGST Rate']} onChange={(e)=>handleChange2(e,'GST Codes',i,'CGST Rate')}/></td>
-                                <td><input type={"number"} value={item['SGST Rate']} onChange={(e)=>handleChange2(e,'GST Codes',i,'SGST Rate')}/></td>
-                                <td><input type={"number"} value={item['UTGST Rate']} onChange={(e)=>handleChange2(e,'GST Codes',i,'UTGST Rate')}/></td>
-                                <td><input type={"number"} value={item['Cess Rate']} onChange={(e)=>handleChange2(e,'GST Codes',i,'Cess Rate')}/></td>
-                                <td><select value={item['IGST GL']} onChange={(e)=>handleChange2(e,'GST Codes',i,'IGST GL')}>{GeneralLedger.list().map(option=><option value={option}>{option}</option>)}</select></td>
-                                <td><select value={item['CGST GL']} onChange={(e)=>handleChange2(e,'GST Codes',i,'CGST GL')}>{GeneralLedger.list().map(option=><option value={option}>{option}</option>)}</select></td>
-                                <td><select value={item['SGST GL']} onChange={(e)=>handleChange2(e,'GST Codes',i,'SGST GL')}>{GeneralLedger.list().map(option=><option value={option}>{option}</option>)}</select></td>
-                                <td><select value={item['UTGST GL']} onChange={(e)=>handleChange2(e,'GST Codes',i,'UTGST GL')}>{GeneralLedger.list().map(option=><option value={option}>{option}</option>)}</select></td>
-                                <td><select value={item['Cess GL']} onChange={(e)=>handleChange2(e,'GST Codes',i,'Cess GL')}>{GeneralLedger.list().map(option=><option value={option}>{option}</option>)}</select></td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-                <button onClick={()=>addItem('GST Codes')}>+</button>
-            </div>
-            <button onClick={()=>save()}>Save</button>
-        </div>
-    )
-}
-
-class Attendance{
-    constructor(employee,year,month){
-        this.year = year;
-        this.month = month;
-        this.employee = employee;
-        this.data = Attendance.data.filter(item=>item['Year']==this.year && item['Month']==this.month)[0];
-    }
-    changeData(data){
-        const oldData = Attendance.data;
-        const newData = oldData.map(item=>(item['Year']==this.year && item['Month']==this.month && item['Employee'] == this.employee)?{...item,['Attendance']:data}:item) 
-        saveData(newData,'attendance');
-    }
-    createData(data){
-        const oldData = Attendance.data;
-        const newData = [...oldData,{"Year":this.year,"Month":this.month,"Employee":this.employee,"Attendance":data}];
-        saveData(newData,'attendance');
-    }
-    static isPresent(employee,date){
-        const year= new Date(Intelligence.yearStart(date)).getFullYear();
-        const month = new Date(date).getMonth();
-        const data = new Attendance(employee,year,month).data;
-        const present = (data.length==0 && (data['Attendance']['Present'].includes(date) || data['Attendance']['Leave'].includes(date)))?true:false;
-        return present
-    }
-    static defaults = {"Present":[],"Leave":[]}
-    static data = Database.load('Attendance')
-}
-
-function AttendanceUI({query}){
-    const {year,month,employee} = query;
-    const dates = datesInMonth(year['value'],month['value']);
-    const attendance = new Attendance(employee['value'],year['value'],month['value']);
-    const [data,setdata] = useState(attendance.data['Attendance'] || Attendance.defaults);
-    const changeTick=(e,field,i)=>{
-        const value = e.target.checked;
-        (value)?setdata(prevdata=>({
-            ...prevdata,[field]:addItem(prevdata[field],dates[i])
-        })):setdata(prevdata=>({
-            ...prevdata,[field]:removeItem(prevdata[field],dates[i])
-        }))
-    }
-
-    const removeItem = (array,i)=>{
-        return array.filter(item=>item!=i);
-    }
-
-    const addItem = (array,i)=>{
-        const newArray = [...array,i];
-        return newArray;
-    }
-
-    const selectAll = () =>{
-        const length = dates.length;
-        for (let i=0;i<length;i++){
-            setdata(prevdata=>({
-                ...prevdata,['Present']:addItem(prevdata['Present'],dates[i])
-            }))
-        }
-    }
-
-    const save = () =>{
-        attendance.createData(data);
-        alert('Saved');
-        window.location.reload();
-    }
-
-    return (
-        <div>
-            <div>
-                <h2>Attendance</h2>
-                <h4>Employee: {employee['value']}</h4>
-                <h4>Year: {year['value']}</h4>
-                <h4>Month: {month['value']}</h4>
-            </div>
-            <div className='crudTable'>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Present</th>
-                            <th>Agreed Leave</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {dates.map((date,i)=>
-                            <tr>
-                                <td>{date}</td>
-                                <td><input onChange={(e)=>changeTick(e,'Present',i)} checked={data['Present'].includes(date)} type="checkbox"/></td>
-                                <td><input onChange={(e)=>changeTick(e,'Leave',i)} checked={data['Leave'].includes(date)} type="checkbox"/></td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-                <button onClick={()=>selectAll()}>Select All</button>
-            </div>
-            <button className='blue' onClick={()=>save()}>Save</button>
-            {JSON.stringify(attendance.data)}
-        </div>
-    )
-}
 
 function SingleInput({field,handleChange,output}){
     return(
@@ -4590,7 +3994,7 @@ function ObjectInput({field,handleChange,output,editable}){
         <div className='crudField'>
             <div className='crudObject'>
                 <label>{field['name']}</label>
-                {field['structure'].map(subfield=>
+                {field['schema'].map(subfield=>
                     <>{subfield['datatype']=="single"&&
                         <div className='crudRow'><label>{subfield['name']}</label>
                             {subfield['input']=="input" && 
@@ -4700,7 +4104,9 @@ class KB{
         {"Name":"Australian Dollar", "Code":"AUD"},
         {"Name":"Qatari Rial", "Code":"QAR"},
     ]
-    static AccountTypes = ["Asset","General Ledger","Bank Account","Customer","Vendor","Material","Service"]
+    static AccountTypes = ["Asset","General Ledger","Bank Account","Customer","Vendor","Material","Service"];
+    static GeneralLedgerGroups = ["Asset","Liability","Equity","Income","Expense"];
+    static LedgerTypes = ["Asset","Bank Account","Cost Element","Customer","Depreciation","Material","Vendor"]
 }
 
 class Collection{
@@ -4753,6 +4159,7 @@ class Collection{
                         "Date of Capitalisation":"",
                         "Date of Retirement":"",
                         "Depreciation Method":"",
+                        "Depreciation Rate":"",
                     }
                     break
                 case 'AssetClass':
@@ -4796,8 +4203,7 @@ class Collection{
                 case 'ChartOfAccounts':
                     defaults = {
                         "Code":"",
-                        "Presentations":[{"Presentation":"","Group":""}],
-                        "Account Range":KB.AccountTypes.map(item=>({"Account Type":item,"From":"","To":""})),
+                        "General Ledger Range":KB.GeneralLedgerGroups.map(item=>({"Group":item,"From":"","To":""})),
                     }
                     break
                 case 'Company':
@@ -4897,7 +4303,8 @@ class Collection{
                         "Wage Types":[
                             {"Type":"","Description":"","GL":""}
                         ],
-                        "General Ledger for Salary TDS":""
+                        "General Ledger for Salary TDS":"",
+                        "Code Range":KB.AccountTypes.map(item=>({"Collection":item,"From":"","To":""}))
                     }
                     break
                 case 'FinancialStatementVersion':
@@ -4911,19 +4318,18 @@ class Collection{
                 case 'GeneralLedger':
                     defaults = {
                         "Code":"",
-                        "Company Code":"",
-                        "Chart of Accounts":"",
+                        "Company Code":data['Company Code'],
+                        "Chart of Accounts":new Company(data['Company Code']).data['Chart of Accounts'],
                         "Name":"",
                         "Ledger Type":"",
-                        "Presentation":"",
+                        "Group":"",
                         "Group General Ledger":"",
                     }
                     break
                 case 'GroupChartOfAccounts':
                     defaults = {
                         "Code":"",
-                        "Presentations":[{"Presentation":"","Group":"Asset"}],
-                        "General Ledgers":[{"General Ledger":"","Name":"","Presentation":""}],
+                        "General Ledger Range":KB.GeneralLedgerGroups.map(item=>({"Group":item,"From":"","To":""})),
                     }
                     break
                 case 'Holidays':
@@ -5096,6 +4502,7 @@ class Collection{
                     {"name":"Date of Capitalisation","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
                     {"name":"Date of Retirement","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
                     {"name":"Depreciation Method","datatype":"single","input":"option","options":["","Straight Line","Reducing Balance"],"noteditable":!this.editable},
+                    {"name":"Depreciation Rate","datatype":"single","input":"input","type":"number","noteditable":(!this.editable || data['Depreciation Method']!="Reducing Balance")},
                 ]
                 break
             case 'AssetClass':
@@ -5103,8 +4510,8 @@ class Collection{
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Depreciable","datatype":"single","input":"option","options":["","Yes","No"],"noteditable":!(this.method=="Create")},
-                    {"name":"General Ledger - Depreciation","datatype":"single","input":"option","options":[],"noteditable":(data['Depreciable']=="No" || !this.editable)},
-                    {"name":"General Ledger - Asset","datatype":"single","input":"option","options":[],"noteditable":(!this.editable)},
+                    {"name":"General Ledger - Depreciation","datatype":"single","input":"option","options":["",...GeneralLedger.listBytype(data['Company Code'],"Depreciation")],"noteditable":(data['Depreciable']!="Yes" || !this.method=="Create")},
+                    {"name":"General Ledger - Asset","datatype":"single","input":"option","options":["",...GeneralLedger.listBytype(data['Company Code'],"Asset")],"noteditable":(!this.method=="Create")},
                 ]
                 break
             case 'AssetDevelopment':
@@ -5132,9 +4539,9 @@ class Collection{
                     {"name":"Bank","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"IFSC","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Account","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"General Ledger","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
-                    {"name":"Profit Center","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
-                    {"name":"Business Place","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                    {"name":"General Ledger","datatype":"single","input":"option","options":[""],"noteditable":(!this.method=="Create")},
+                    {"name":"Profit Center","datatype":"single","input":"option","options":[""],"noteditable":(!this.method=="Create")},
+                    {"name":"Business Place","datatype":"single","input":"option","options":[""],"noteditable":(!this.method=="Create")},
                     {"name":"Virtual Accounts","datatype":"collection","noteditable":!this.editable,"schema":data['Virtual Accounts'].map(item=>[
                         {"name":"Virtual Account Number","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                         {"name":"Ledger","datatype":"single","input":"option","options":[],"noteditable":!this.editable},
@@ -5146,13 +4553,9 @@ class Collection{
                 break
             case 'ChartOfAccounts':
                 schema = [
-                    {"name":"Code","datatype":"single","input":"input","maxLength":4,"type":"number","noteditable":!(this.method=="Create")},
-                    {"name":"Presentations","datatype":"collection","noteditable":!this.editable,"schema":data['Presentations'].map(item=>[
-                        {"name":"Presentation","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                        {"name":"Group","input":"option","datatype":"single","options":["Asset","Liability","Equity","Income","Expense"],"noteditable":!this.editable},    
-                    ])},
-                    {"name":"Account Range","datatype":"collection","noteditable":true,"schema":data['Account Range'].map(item=>[
-                        {"name":"Account Type","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Code","datatype":"single","input":"input","maxLength":4,"type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"General Ledger Range","datatype":"collection","noteditable":true,"schema":data['General Ledger Range'].map(item=>[
+                        {"name":"Group","datatype":"single","input":"input","type":"text","noteditable":true},
                         {"name":"From","input":"input","datatype":"single","type":"number","noteditable":!this.editable},
                         {"name":"To","input":"input","datatype":"single","type":"number","noteditable":!this.editable},        
                     ])},
@@ -5164,16 +4567,17 @@ class Collection{
                     {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Address","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"PIN","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
-                    {"name":"PAN","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"PAN","datatype":"single","input":"input","type":"text","maxLength":10,"noteditable":!this.editable},
                     {"name":"Places of Business","datatype":"collection","noteditable":!this.editable,"schema":data['Places of Business'].map(item=>[
                         {"name":"Place","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                         {"name":"State","input":"option","datatype":"single","options":["",...KB.States,...KB.UTs],"noteditable":!this.editable},    
+                        {"name":"GSTIN","input":"input","datatype":"single","type":"text","maxLength":15,"noteditable":!this.editable},    
                     ])},
-                    {"name":"Functional Currency","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
-                    {"name":"Year Zero","datatype":"single","input":"input","type":"number","maxLength":4,"noteditable":!this.editable},
-                    {"name":"Financial Year Beginning","datatype":"single","input":"option","options":["","01","02","03","04","05","06","07","08","09","10","11","12"],"noteditable":!this.editable},
-                    {"name":"Chart of Accounts","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
-                    {"name":"Group Chart of Accounts","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                    {"name":"Functional Currency","datatype":"single","input":"option","options":["",...Currencies.listCurrencies],"noteditable":!(this.method=="Create")},
+                    {"name":"Year Zero","datatype":"single","input":"input","type":"number","maxLength":4,"noteditable":!(this.method=="Create")},
+                    {"name":"Financial Year Beginning","datatype":"single","input":"option","options":["","01","02","03","04","05","06","07","08","09","10","11","12"],"noteditable":!(this.method=="Create")},
+                    {"name":"Chart of Accounts","datatype":"single","input":"option","options":["",...ChartOfAccounts.listCompanyCoA],"noteditable":!(this.method=="Create")},
+                    {"name":"Group Chart of Accounts","datatype":"single","input":"option","options":["",...ChartOfAccounts.listGroupCoA],"noteditable":!(this.method=="Create")},
                 ];
                 break
             case 'CostObject':
@@ -5286,6 +4690,11 @@ class Collection{
                         {"name":"General Ledger","input":"option","datatype":"single","options":[""],"noteditable":!this.editable},    
                     ])},
                     {"name":"General Ledger for Salary TDS","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                    {"name":"Code Range", "datatype":"collection","noteditable":true,"schema":data['Code Range'].map(item=>[
+                        {"name":"Collection", "datatype":"single","input":"input", "noteditable":true},
+                        {"name":"From","datatype":"single","input":"input", "type":"number"},
+                        {"name":"To","datatype":"single","input":"input", "type":"number"},
+                    ])}
                 ]
                 break
             case 'FinancialStatementVersion':
@@ -5305,24 +4714,19 @@ class Collection{
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Chart of Accounts","datatype":"single","input":"option","options":[""],"noteditable":true},
                     {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Ledger Type","datatype":"single","input":"option","options":["",...KB.AccountTypes],"noteditable":!this.editable},
-                    {"name":"Presentation","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                    {"name":"Ledger Type","datatype":"single","input":"option","options":["",...KB.LedgerTypes],"noteditable":!this.editable},
+                    {"name":"Group","datatype":"single","input":"option","options":["",...KB.GeneralLedgerGroups],"noteditable":!this.editable},
                     {"name":"Group General Ledger", "datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
                 ]
                 break
             case 'GroupChartOfAccounts':
                 schema = [
-                    {"name":"Code","datatype":"single","input":"input","maxLength":4,"type":"number","noteditable":!(this.method=="Create")},
-                    {"name":"Presentations","datatype":"collection","noteditable":!this.editable,"schema":data['Presentations'].map(item=>[
-                        {"name":"Presentation","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                        {"name":"Group","input":"option","datatype":"single","options":["Asset","Liability","Equity","Income","Expense"],"noteditable":!this.editable},
+                    {"name":"Code","datatype":"single","input":"input","maxLength":5,"type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"General Ledger Range","datatype":"collection","noteditable":true,"schema":data['General Ledger Range'].map(item=>[
+                        {"name":"Group","datatype":"single","input":"input","type":"text","noteditable":true},
+                        {"name":"From","input":"input","datatype":"single","type":"number","noteditable":!this.editable},
+                        {"name":"To","input":"input","datatype":"single","type":"number","noteditable":!this.editable},        
                     ])},
-                    {"name":"General Ledgers","datatype":"collection","noteditable":!this.editable,"schema":data['General Ledgers'].map(item=>[
-                        {"name":"General Ledger","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
-                        {"name":"Name","input":"input","datatype":"single","type":"text","noteditable":!this.editable},
-                        {"name":"Presentation","input":"option", "placeholder":"","datatype":"single","options":["",...ListItems(data['Presentations'],"Presentation")],"noteditable":!this.editable},        
-                    ])},
-
                 ]
                 break
             case 'Holidays':
@@ -5502,11 +4906,13 @@ class Collection{
         const missed = [];
         mandatory.map(field=>data[field]==""?missed.push(field):()=>{});
         (missed.length>0)?list.push(`${missed.join(", ")} is/ are necessary`):()=>{};
+        (this.method=="Create" && this.exists(data))?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
         switch (this.name){
             case 'Asset':
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
                 data['Date of Retirement']!="" && (new Date(data['Date of Retirement']) < new Date(data['Date of Capitalisation']))?list.push("Date of Retirement cannot be before Date of Capitalisation"):()=>{};
                 data['Date of Capitalisation']!="" && (new Date(data['Date of Capitalisation']) > new Date())?list.push("Date of Capitalisation cannot be in future"):()=>{};
+                (data['Depreciation Rate']>100)?list.push(`Depreciation Rate cannot exceed 100%`):()=>{};
                 break
             case 'AssetClass':
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
@@ -5522,18 +4928,17 @@ class Collection{
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
                 break
             case 'ChartOfAccounts':
-                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
-                new Collection("GroupChartOfAccounts","Display").exists(data)?list.push(`Group Chart of Accounts with same identifier(s) already exists`):()=>{};
-                data['Presentations'].map((item,i)=>item['Group']==""?list.push(`Presentation ${i} requires a group`):()=>{})
-                data['Account Range'].map((item,i)=>(item['From']=="" || item['To']=="")?list.push(`Account type ${item['Account Type']} requires range`):()=>{})
-                data['Account Range'].map((item,i)=>(item['From']>=item['To'])?list.push(`${item['Account Type']}: 'To' range needs to be greater than 'from' range`):()=>{})
-                for (let i=1;i<data['Account Range'].length;i++){
-                    (data['Account Range'][i]['From'] <= data['Account Range'][i-1]['To'])?list.push(`'From' range of ${data['Account Range'][i]['Account Type']} to be greater than 'To' range of ${data['Account Range'][i-1]['Account Type']}`):()=>{};
+                (this.method=="Create" && new Collection("GroupChartOfAccounts").exists(data))?list.push(`Group Chart of Accounts with same identifier(s) already exists`):()=>{};
+                data['General Ledger Range'].map((item,i)=>(item['From']=="" || item['To']=="")?list.push(`Group ${item['Group']} requires range`):()=>{})
+                data['General Ledger Range'].map((item,i)=>(item['From']>=item['To'])?list.push(`${item['Group']}: 'To' range needs to be greater than 'from' range`):()=>{})
+                for (let i=1;i<data['General Ledger Range'].length;i++){
+                    (data['General Ledger Range'][i]['From'] <= data['General Ledger Range'][i-1]['To'])?list.push(`'From' range of ${data['General Ledger Range'][i]['Group']} to be greater than 'To' range of ${data['General Ledger Range'][i-1]['Group']}`):()=>{};
                 }
                 break
             case 'Company':
                 data['Places of Business'].map((item,i)=>(item['Place']=="" || item['State']=="")?list.push(`Place of Business ${i+1}: Information incomplete.`):()=>{});
                 data['Places of Business'].length==0?list.push("At least one Place of Business is required"):()=>{};
+                data['Places of Business'].map(item=>Count(item['Place'],ListItems(data['Places of Business'],"Place"))>1?list.push(`${item['Place']} repeats in Place of Business`):()=>{})
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
                 break
             case 'CostCenter':
@@ -5547,6 +4952,8 @@ class Collection{
                 break
             case 'FinancialAccountsSettings':
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                data['Code Range'].map(item=>(item['From']<=item['To'])?list.push(`Code Range ${item['Collection']}: 'To' range needs to be greater than 'from' range`):()=>{})
+                data['Code Range'].map(item=>item['From']<=0 || item['To']<=0?list.push(`Code Range ${item['Collection']}: 'From' and 'To' range should be positive numbers`):()=>{})
                 break
             case 'FinancialStatementVersion':
                 data['Hierarchy'].map((item,i)=>(item['Presentation']=="" || item['Hierarchy']=="")?list.push(`Hierarchy ${i+1}: Information incomplete.`):()=>{});
@@ -5555,20 +4962,20 @@ class Collection{
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
                 break
             case 'GeneralLedger':
+                const GLRange = new ChartOfAccounts(data['Company Code']).range(data['Group']);
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                (data['Code']!="" && data["Group"]!="" && !valueInRange(data['Code'],GLRange))?list.push(`General Ledger code ${data['Code']} not in range for ${data['Group']} ${JSON.stringify(GLRange)}`):()=>{};
                 break
             case 'GroupChartOfAccounts':
-                data['Presentations'].map((item,i)=>item['Group']=="" || item['Presentation']==""?list.push(`Presentation ${i+1}: Information Incomplete`):()=>{});
-                data['Presentations'].length==0?list.push("At least one Presentation is required"):()=>{};
-                data['Presentations'].map(item=>Count(item['Presentation'],ListItems(data['Presentations'],"Presentation"))>1?list.push(`${item['Presentation']} repeats in Presentation`):()=>{})
-                data['General Ledgers'].map((item,i)=>(item['Name']=="" || item['Presentation']=="")?list.push(`General Ledger ${i+1}: Information incomplete.`):()=>{})
-                data['General Ledgers'].map(item=>Count(item['General Ledger'],ListItems(data['General Ledgers'],"General Ledger"))>1?list.push(`${item['General Ledger']} repeats in General Ledger`):()=>{})
-                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
-                new Collection("ChartOfAccounts","Display").exists(data)?list.push(`Chart of Accounts with same identifier(s) already exists`):()=>{};
+                (this.method=="Create" && new Collection("ChartOfAccounts").exists(data))?list.push(`Chart of Accounts with same identifier(s) already exists`):()=>{};
+                data['General Ledger Range'].map((item,i)=>(item['From']=="" || item['To']=="")?list.push(`Group ${item['Group']} requires range`):()=>{})
+                data['General Ledger Range'].map((item,i)=>(item['From']>=item['To'])?list.push(`${item['Group']}: 'To' range needs to be greater than 'from' range`):()=>{})
+                for (let i=1;i<data['General Ledger Range'].length;i++){
+                    (data['General Ledger Range'][i]['From'] <= data['General Ledger Range'][i-1]['To'])?list.push(`'From' range of ${data['General Ledger Range'][i]['Group']} to be greater than 'To' range of ${data['General Ledger Range'][i-1]['Group']}`):()=>{};
+                }
                 break
             case 'Holidays':
                 data['Holidays'].map((item,i)=>(item['Date']=="" || item['Description']=="")?list.push(`At Holidays line ${i}, information incomplete`):()=>{})
-                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
                 break
             case 'IncomeTaxCode':
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
@@ -5622,7 +5029,19 @@ class Collection{
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
                 break
         }
-        return list
+        const uniquelist = [...new Set(list)];
+        return uniquelist;
+    }
+    process(data){
+        let result = {...data};
+        switch (this.name){
+            case 'Asset':
+                result['Depreciation Rate'] = (result['Depreciation Method']!="Reducing Balance")?0:result['Depreciation Rate'];
+                break
+            case 'GeneralLedger':
+                break
+        }
+        return result;
     }
     create(data){
         const existing = this.load();
@@ -5707,7 +5126,7 @@ class Collection{
     }
     static mandatory = {
         "Asset":["Company Code","Code","Name","Asset Class","Cost Center","Useful Life","Salvage Value","Date of Capitalisation","Depreciation Method"],
-        "AssetClass":["Code","Company Code"],
+        "AssetClass":["Code","Company Code","Depreciable","General Ledger - Asset"],
         "AssetDevelopment":["Company Code","Code","Name","Asset Class","Profit Center"],
         "Attendance":["Company Code","Employee","Year","Month"],
         "BankAccount":["Code","Company Code","Account Number","Bank Name","IFSC Code"],
@@ -5807,6 +5226,7 @@ function CRUDCollection(){
     const CRUD = new Collection(collection,method);
     const defaults = CRUD.defaults(parameters);
     const [data,setdata] = useState(defaults);
+    const output = CRUD.process(data);
     const schema = CRUD.schema(data);
     const errors = CRUD.errors(data);
     const navigate = useNavigate();
@@ -5900,17 +5320,17 @@ function CRUDCollection(){
             <div className='crudFields'>
                 {schema.map(field=>
                     <>
-                        {field['datatype']=="single" && <SingleInput field={field} output={data} handleChange={singleChange}/>}
-                        {field['datatype']=="collection" && <CollectionInput field={field} output={data} handleChange={collectionChange} addItem={addCollection} removeItem={removeCollection}/>}
-                        {field['datatype']=="nest" && <NestInput field={field} output={data} handleChange1={collectionChange} handleChange2={nestChange} addItem1={addCollection} addItem2={addNest} removeItem1={removeCollection} removeItem2={removeNest}/>}
+                        {field['datatype']=="single" && <SingleInput field={field} output={output} handleChange={singleChange}/>}
+                        {field['datatype']=="collection" && <CollectionInput field={field} output={output} handleChange={collectionChange} addItem={addCollection} removeItem={removeCollection}/>}
+                        {field['datatype']=="nest" && <NestInput field={field} output={output} handleChange1={collectionChange} handleChange2={nestChange} addItem1={addCollection} addItem2={addNest} removeItem1={removeCollection} removeItem2={removeNest}/>}
                     </>
                 )}
             </div>
             <div className='crudButtons'>
                 <button onClick={()=>cancel()}><FaArrowLeft/></button>
-                <button onClick={()=>save()}>Save</button>
+                {method!="Display" && <button onClick={()=>save()}>Save</button>}
             </div>
-            {errors.length>0 && <div className='crudError'>
+            {(errors.length>0 && method!="Display") && <div className='crudError'>
                 <h4>Things to Consider:</h4>
                 <ul>
                     {errors.map(error=>
@@ -5935,6 +5355,7 @@ class CRUDRoute{
         const errors = [];
         this.createRequirements.map(field=>(data[field]=="")?missing.push(field):()=>{});
         (this.createRequirements.includes("Company Code") && new Collection("Company").exists({"Code":data["Company Code"]})==false)?errors.push(`Company with Code ${data["Company Code"]} does not exist.`):()=>{};
+        (this.createRequirements==ListItems(this.schema,"name") && this.checkAvailability(data))?(errors.push(`${this.collection} with same identifier(s) already exists.`)):()=>{};
         (missing.length>0)?errors.push(`${missing.join(", ")} required.`):()=>{};
         return errors;
     }
@@ -5978,66 +5399,66 @@ class CRUDRoute{
     static schema = {
         "Asset":[
             {"name":"Code","input":"input","type":"number"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "AssetClass":[
             {"name":"Code","input":"input","type":"number"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "AssetDevelopment":[
             {"name":"Code","input":"input","type":"number"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "Attendance":[
-            {"name":"Company Code","input":"input","type":"number"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4},
             {"name":"Year","input":"input","type":"number"},
             {"name":"Month","input":"input","type":"number"},
             {"name":"Employee","input":"input","type":"text"}
         ],
         "BankAccount":[
             {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "ChartOfAccounts":[
-            {"name":"Code","input":"input","type":"number"}
+            {"name":"Code","input":"input","type":"text", "maxLength":4}
         ],
         "Company":[
-            {"name":"Code","input":"input","type":"number"}
+            {"name":"Code","input":"input","type":"text", "maxLength":4}
         ],
         "CostCenter":[
             {"name":"Code","input":"input","type":"number"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "CostObject":[
             {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "Currency":[
             {"name":"Code","input":"input","type":"text"}
         ],
         "Customer":[
             {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "Employee":[
             {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "FinancialAccountsSettings":[
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "FinancialStatementVersion":[
            {"name":"Code","input":"input","type":"number"} 
         ],
         "GeneralLedger":[
             {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "GroupChartOfAccounts":[
-            {"name":"Code","input":"input","type":"number"}
+            {"name":"Code","input":"input","type":"text", "maxLength":5}
         ],
         "Holidays":[
-            {"name":"Company Code","input":"input","type":"number"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4},
             {"name":"Year","input":"input","type":"number"},
         ],
         "IncomeTaxCode":[
@@ -6045,37 +5466,37 @@ class CRUDRoute{
         ],
         "Location":[
             {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "Material":[
             {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "OrganisationalUnit":[
             {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "PaymentTerms":[
             {"name":"Code","input":"input","type":"text"}
         ],
         "ProfitCenter":[
             {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "PurchaseOrder":[
             {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "SaleOrder":[
             {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "Segment":[
             {"name":"Code","input":"input","type":"text"}
         ],
         "Service":[
             {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "TimeControl":[
             {"name":"Company Code","input":"input","type":"number"}
@@ -6085,7 +5506,7 @@ class CRUDRoute{
         ],
         "Vendor":[
             {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
     }
     static defaults = {
@@ -6193,11 +5614,13 @@ class Table{
     }
     static defaults = {
         "Currencies":[{"Code":"","Description":""}],
-        "Units":[{"Unit":"","Description":""}]
+        "Units":[{"Unit":"","Description":""}],
+        "HSN":[{"Code":"","Description":""}]
     }
     static keys = {
         "Currencies":"Code",
-        "Units":"Unit"
+        "Units":"Unit",
+        "HSN":"Code"
     }
 }
 
@@ -6282,6 +5705,49 @@ function TableUI(){
     )
 }
 
+class ChartOfAccounts{
+    constructor(code){
+        this.code = code;
+        this.data = ChartOfAccounts.allData.find(item=>item['Code']==this.code);
+    }
+    range(group){
+        const data = this.data['General Ledger Range'];
+        const filtered = data.find(item=>item['Group']==group);
+        const result = [filtered['From'],filtered['To']]
+        return result;
+    }
+    static company = new Collection('ChartOfAccounts').load();
+    static group = new Collection('GroupChartOfAccounts').load();
+    static allData = [...this.company,...this.group];
+    static listCompanyCoA = ListItems(this.company,'Code');
+    static listGroupCoA = ListItems(this.group,'Code');
+    static listAllCoA = [...this.listCompanyCoA,...this.listGroupCoA];
+    static type(CoA){
+        if (this.listCompanyCoA.includes(CoA)){
+            return "Company";
+        } else if (this.listGroupCoA.includes(CoA)){
+            return "Group";
+        } else {
+            return "NA"
+        }
+    }
+}
+
+class Units{
+    static allData = new Table('Units').data;
+    static listUnits = ListItems(this.allData,'Unit');
+}
+
+class Currencies{
+    static allData = new Table('Currencies').data;
+    static listCurrencies = ListItems(this.allData,'Code');
+}
+
+class HSN{
+    static allData = new Table('HSN').data;
+    static listHSN = ListItems(this.allData,'Code');
+}
+
 function Scratch(){
     
     const ratios = {
@@ -6353,7 +5819,7 @@ function Scratch(){
 
     return(
         <div className='reportDisplay'>
-        {JSON.stringify(new Company(11).BusinessPlaces)}
+        {JSON.stringify(GeneralLedger.listBytype("FACT","Asset"))}
         </div>
     )
 }
@@ -6379,7 +5845,6 @@ function App(){
             <Route path="/table/:tablename" element={<TableUI/>}/>
             <Route path="/transaction/:trans" element={<TransactionUI/>}/>
             <Route path="/holidays" element={<Holidays/>}/>
-            <Route path="/fasettings" element={<FinancialAccountSettings/>}/>
             <Route path="*" element={<Home/>}/>
         </Routes>
         </div>

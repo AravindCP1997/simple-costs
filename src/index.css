@@ -60,7 +60,6 @@ button{
   transition: 0.5s;
   background: var(--bluet);
   color:white;
-  border-radius: 10px;
 }
 
 button:hover{
