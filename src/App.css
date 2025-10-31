@@ -549,7 +549,7 @@
   border:1px solid var(--blue);
   input,select{
     border-radius: 0;
-    width:100%;
+    width:max(100%,128px);
     font-size: 100%;
   }
 }

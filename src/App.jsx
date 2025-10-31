@@ -643,13 +643,19 @@ class GeneralLedger{
 }
 
 class Customer{
-    constructor(name){
-        this.name = name;
+    constructor(company,code){
+        this.code = code;
+        this.company = company;
     }
-    static data = Database.load("Customer")
-    static list(){
-        const list = ListItems(this.data,"Name")
-        return list
+    static data(company){
+        const data = new Collection('Customer').load();
+        const filtered = data.filter(item=>item['Company Code']==company);
+        return filtered;
+    }
+    static listAll(company){
+        const data = this.data(company);
+        const list = ListItems(data,'Code');
+        return list;
     }
 }
 
@@ -1068,44 +1074,19 @@ class Service{
 }
 
 class Vendor{
-    constructor(name){
-        this.name = name;
-        this.data = Vendor.data.filter(item=>item['Name']==this.name)[0];
+    constructor(company,code){
+        this.code = code;
+        this.company = company;
     }
-    openitems(date){
-        const transactions = new Intelligence().transactionstable()
-        const result = transactions.filter(item=>item['Account']==this.name && new Date(item['Posting Date'])<=new Date(date) && !item['Cleared'])
-        return result
+    static data(company){
+        const data = new Collection('Vendor').load();
+        const filtered = data.filter(item=>item['Company Code']==company);
+        return filtered;
     }
-    opening(date){
-        const data = new Intelligence().transactionstable()
-        const filtered = data.filter(item=>item['Account']==this.name && new Date(item['Posting Date']) < new Date(date))
-        const opening = (filtered.length>0)? SumFieldIfs(filtered,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,'Amount',["Debit/ Credit"],["Credit"]):0
-        return opening
-    }
-    closing(date){
-        const data = new Intelligence().transactionstable()
-        const filtered = data.filter(item=>item['Account']==this.name && new Date(item['Posting Date']) <= new Date(date))
-        const opening = (filtered.length>0)? SumFieldIfs(filtered,'Amount',["Debit/ Credit"],["Debit"]) - SumFieldIfs(filtered,'Amount',["Debit/ Credit"],["Credit"]):0
-        return opening
-    }
-    transactions(period){
-        const [from,to] = period;
-        const data = new Intelligence().transactionstable()
-        const filtered = data.filter(item=>item['Account']==this.name && new Date(item['Posting Date']) >= new Date(from) && new Date(item['Posting Date']) <= new Date(to) )
-        return filtered
-    }
-    ledger(period){
-        const [from,to] = period;
-        const list = [{"Date":from,"Description":"Opening", "Debit/ Credit":"", "Amount":this.opening(from)}];
-        this.transactions(period).map(item=>list.push({"Date":item['Posting Date'],"Description":item['Description'],"Debit/ Credit":item['Debit/ Credit'], "Amount":item['Amount']}))
-        list.push({"Date":to,"Description":"Closing","Debit/ Credit":"", "Amount":this.closing(to)})
-        return list
-    }
-    static data = Database.load("Vendor")
-    static list(){
-        const list = ListItems(this.data,"Name")
-        return list
+    static listAll(company){
+        const data = this.data(company);
+        const list = ListItems(data,'Code');
+        return list;
     }
 }
 
@@ -3554,10 +3535,33 @@ class Transaction{
                 defaults['Customer'] = {
                     "Customer":"",
                     "Presentation":"",
-                    "Amount":""
+                    "Amount":0
                 }
+                break;
+            case 'Sale Return':
+                defaults['Customer'] = {
+                    "Customer":"",
+                    "Presentation":"",
+                    "Amount":0
+                }
+                break;
+            case 'Purchase':
+                defaults['Vendor'] = {
+                    "Vendor":"",
+                    "Presentation":"",
+                    "Amount":0
+                }
+                break;
+            case 'Purchase Return':
+                defaults['Vendor'] = {
+                    "Vendor":"",
+                    "Presentation":"",
+                    "Amount":0
+                }
+                break;
         }
-        defaults['Line Items'] = [{"Account Type":""}] 
+        defaults['Line Items'] = [{"Account Type":"",'Account':"",'Amount':0,'Debit/ Credit':"",'Presentation':"",'General Ledger':"",'Cost Center':"",'Cost Object':"",'Profit Center':"",'Location':"",'Quantity':0,'Material Valuation From':"",'Material Valuation To':"",'Cost Valuation From':"",'Cost Valuation To':""}];
+        defaults['Balance'] = 0; 
         return defaults
     }
     schema(data){
@@ -3566,6 +3570,7 @@ class Transaction{
             {"name":"Posting Date", "datatype":"single","input":"input","type":"date", "noteditable":(data['Company Code']=="")},
             {"name":"Document Date", "datatype":"single","input":"input","type":"date","noteditable":(data['Company Code']=="")},
             {"name":"Reference", "datatype":"single","input":"input","type":"text","noteditable":(data['Company Code']=="")},
+            {"name":"Balance", "datatype":"single","input":"input","type":"text","noteditable":true},
         ]
         switch (this.type){
             case 'Sale':
@@ -3573,10 +3578,49 @@ class Transaction{
                     "name":"Customer",
                     "datatype":"object",
                     "schema":[
-                        {"name":"Customer","datatype":"single","input":"option","options":["",]}
+                        {"name":"Customer","datatype":"single","input":"option","options":["",Customer.listAll(data['Company Code'])]},
+                        {"name":"Presentation","datatype":"single","input":"option","options":[""]},
+                        {"name":"Amount","datatype":"single","input":"input","type":"number"}
                     ],
                     "noteditable":(data['Company Code']=="")
                 })
+                break;
+            case 'Sale Return':
+                schema.push({
+                    "name":"Customer",
+                    "datatype":"object",
+                    "schema":[
+                        {"name":"Customer","datatype":"single","input":"option","options":["",Customer.listAll(data['Company Code'])]},
+                        {"name":"Presentation","datatype":"single","input":"option","options":[""]},
+                        {"name":"Amount","datatype":"single","input":"input","type":"number"}
+                    ],
+                    "noteditable":(data['Company Code']=="")
+                })
+                break;
+            case 'Purchase':
+                schema.push({
+                    "name":"Vendor",
+                    "datatype":"object",
+                    "schema":[
+                        {"name":"Vendor","datatype":"single","input":"option","options":["",Vendor.listAll(data['Company Code'])]},
+                        {"name":"Presentation","datatype":"single","input":"option","options":[""]},
+                        {"name":"Amount","datatype":"single","input":"input","type":"number"}
+                    ],
+                    "noteditable":(data['Company Code']=="")
+                })
+                break;
+            case 'Purchase Return':
+                schema.push({
+                    "name":"Vendor",
+                    "datatype":"object",
+                    "schema":[
+                        {"name":"Vendor","datatype":"single","input":"option","options":["",Vendor.listAll(data['Company Code'])]},
+                        {"name":"Presentation","datatype":"single","input":"option","options":[""]},
+                        {"name":"Amount","datatype":"single","input":"input","type":"number"}
+                    ],
+                    "noteditable":(data['Company Code']=="")
+                })
+                break;
         }
         schema.push({
             "name":"Line Items",
@@ -3587,13 +3631,15 @@ class Transaction{
         return schema;
     }
     lineItem(data,item){
-        const list = [
-            {"name":"Account Type","datatype":"single","input":"input","type":"text"},
+        let list = [
+            {"name":"Account Type","datatype":"single","input":"option","options":["",...KB.PostingAccounts]},
             {"name":"Account","datatype":"single","input":"input","type":"text"},
+            {"name":"Transaction","datatype":"single","input":"input","type":"text"},
             {"name":"Amount","datatype":"single","input":"input","type":"number"},
-            {"name":"Debit/ Credit","datatype":"single","input":"option","options":['Debit','Credit']},
+            {"name":"Debit/ Credit","datatype":"single","input":"option","options":['','Debit','Credit']},
             {"name":"Presentation","datatype":"single","input":"option","options":[""]},
-            {"name":"General Ledger","datatype":"single","input":"input","type":"text"},
+            {"name":"Text","datatype":"single","input":"input","type":"text"},
+            {"name":"General Ledger","datatype":"single","input":"input","type":"text","noteditable":true},
             {"name":"Cost Center","datatype":"single","input":"option","options":["",CostCenter.listAll(data['Company Code'])]},
             {"name":"Cost Object","datatype":"single","input":"input","type":"text"},
             {"name":"Profit Center","datatype":"single","input":"option","options":["",...ProfitCenter.listAll(data['Company Code'])], "noteditable":(data['Company Code']=="")},
@@ -3604,32 +3650,118 @@ class Transaction{
             {"name":"Cost Valuation From","datatype":"single","input":"input","type":"date"},
             {"name":"Cost Valuation To","datatype":"single","input":"input","type":"date"},
         ]
+        let noteditables = [];
+        let notreq = [];
+        switch (this.type){
+            case 'Sale':
+                notreq = ["Cost Center","Cost Object","Cost Valuation From","Cost Valuation To"];
+                list = list.map(field=>(field['name']=="Account Type")?{...field,['options']:["","Asset","Material","Service"]}:field);
+                break
+            case 'Sale Return':
+                notreq = ["Cost Center","Cost Object","Cost Valuation From","Cost Valuation To"];
+                list = list.map(field=>(field['name']=="Account Type")?{...field,['options']:["","Asset","Material","Service"]}:field);
+                break
+            case 'Purchase':
+                notreq = [];
+                list = list.map(field=>(field['name']=="Account Type")?{...field,['options']:["","Asset","Material","Service"]}:field);
+                break
+        }
+        switch (item['Account Type']){
+            case 'Asset':
+                noteditables = ["Presentation","Cost Center","Cost Object","Profit Center","Location","Quantity","Material Valuation From","Material Valuation To","Cost Valuation From", "Cost Valuation To"]
+                break
+            case 'Asset Development':
+                noteditables = ["Presentation","Cost Center","Cost Object","Profit Center","Location","Quantity","Material Valuation From","Material Valuation To","Cost Valuation From", "Cost Valuation To"]
+                break
+            case 'Bank Account':
+                noteditables = ["Presentation","Cost Center","Cost Object","Profit Center","Location","Quantity","Material Valuation From","Material Valuation To","Cost Valuation From", "Cost Valuation To"]
+                break
+            case 'Customer':
+                noteditables = ["Cost Center","Cost Object","Location","Quantity","Material Valuation From","Material Valuation To","Cost Valuation From", "Cost Valuation To"]
+                break
+            case 'Material':
+                noteditables = ["Presentation","Cost Center","Cost Object","Profit Center","Cost Valuation From", "Cost Valuation To"]
+                break
+            case 'Service':
+                noteditables = ["Presentation","Profit Center","Location","Quantity","Material Valuation From","Material Valuation To"]
+                break
+            case 'Vendor':
+                noteditables = ["Cost Center","Cost Object","Location","Quantity","Material Valuation From","Material Valuation To","Cost Valuation From", "Cost Valuation To"]
+                break
+        }
+        list = list.filter(field=>!notreq.includes(field['name']));
+        list = list.map(field=>(noteditables.includes(field['name']))?{...field,['noteditable']:true}:field)
         return list
     }
     errors(data){
         let errors = [];
         (new Date(data['Posting Date']) > new Date())?errors.push(`Posting Date cannot be in future`):()=>{};
-        data['Line Items'].map(item=>errors.push(...this.lineItemErrors(item)));
+        (new Date(data['Document Date']) > new Date())?errors.push(`Document Date cannot be in future`):()=>{};
+        (data['Company Code']!="" && data['Posting Date']!="" && !(new Company(data['Company Code']).IsPostingOpen(data['Posting Date'])))?errors.push(`Posting Date not Open`):()=>{};
+        data['Line Items'].map((item,i)=>errors.push(...this.lineItemErrors(item,i)));
+        data['Balance']!=0?errors.push(`Transaction not balanced`):()=>{};
         const uniquelist = [...new Set(errors)];
         return uniquelist; 
     }
-    lineItemErrors(item){
+    lineItemErrors(item,index){
         let list = [];
+        let mandatory = ['Account Type','Debit/ Credit','Amount'];
+        switch (item['Account Type']) {
+            case 'Asset':
+                break
+            case 'Customer':
+                mandatory.push(...['Profit Center'])
+                break
+            case 'Material':
+                mandatory.push(...['Location','Quantity','Material Valuation From', 'Material Valuation To'])
+                break
+            case 'Vendor':
+                mandatory.push(...['Profit Center'])
+                break
+        }
+        mandatory.map(field=>(item[field]=="")?list.push(`Line Item ${index+1}: ${field} required.`):()=>{})
         return list;
     }
     process(data) {
         let result = {...data};
+        let balance = 0;
+        switch(this.type){
+            case 'Sale':
+                balance+=result['Customer']['Amount'];
+                break;
+            case 'Sale Return':
+                balance-=result['Customer']['Amount'];
+                break;
+            case 'Purchase':
+                balance-=Number(result['Vendor']['Amount']);
+                break;
+            case 'Purchase Return':
+                balance+=Number(result['Vendor']['Amount']);
+                break;
+        }
         result['Line Items'] = result['Line Items'].map(item=>this.lineItemProcess(item));
+        result['Line Items'].map(item=>
+            (item['Debit/ Credit']=="Debit")? balance += Number(item['Amount']): balance -= Number(item['Amount'])
+        )
+        result['Balance'] = balance;
         return result;
     }
     lineItemProcess(item){
         let result = {...item};
+        let notreq = [];
+        switch (item['Account Type']){
+            case 'Asset':
+                notreq = ["Presentation","Cost Center","Cost Object","Profit Center","Location","Quantity","Material Valuation From","Material Valuation To","Cost Valuation From", "Cost Valuation To"]
+                break
+        }
+        notreq.map(field=>result[field]="");
         return result;
     }
 }
 
 function TransactionUI(){
-    const transaction = new Transaction("Sale");
+    const {type} = useParams();
+    const transaction = new Transaction(type);
     const navigate = useNavigate();
     const defaults = transaction.defaults();
     const [data,setdata] = useState(defaults);
@@ -4160,6 +4292,7 @@ class KB{
         {"Name":"Qatari Rial", "Code":"QAR"},
     ]
     static AccountTypes = ["Asset","Asset Class","Asset Development","Bank Account","Cost Center","Cost Object","Customer","Employee","Location","Material","Organisational Unit","Profit Center","Purchase Order","Sale Order","Service","Vendor",];
+    static PostingAccounts = ["Asset","Asset Development","Bank Account","Customer","Material","Service","Vendor"];
     static GeneralLedgerGroups = ["Asset","Liability","Equity","Income","Expense"];
     static LedgerTypes = ["Asset","Bank Account","Cost Element","Customer","Depreciation","Material","Vendor"]
 }
@@ -5556,7 +5689,7 @@ class CRUDRoute{
             {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "TimeControl":[
-            {"name":"Company Code","input":"input","type":"number"}
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
         ],
         "UserSettings":[
             {"name":"User","input":"input","type":"text"}
@@ -5777,6 +5910,16 @@ class Company{
         const result = [range['From'],range['To']];
         return result;
     }
+    TimeControl(){
+        const data = new Collection('TimeControl').getData({'Company Code':this.code});
+        const timeControlData = data['Open Periods'];
+        return timeControlData;
+    }
+    IsPostingOpen(date){
+        let result = false;
+        this.TimeControl().map(time=>(new Date(date)<=new Date(time['To']) && new Date(date)>=new Date(time['From']))?result = true:()=>{})
+        return result
+    }
     static timeMaintained = ('timecontrol' in localStorage);
     static timeControls = JSON.parse(localStorage.getItem('timecontrol'));
     static isPostingDateOpen(date){
@@ -5927,7 +6070,7 @@ function Scratch(){
 
     return(
         <div className='reportDisplay'>
-        {JSON.stringify(OrganisationalUnit.listAll('FACT'))}
+        {JSON.stringify(new Company('FACT').IsPostingOpen("2025-04-01"))}
         </div>
     )
 }
@@ -5951,7 +6094,7 @@ function App(){
             <Route path="/collection/:collection" element={<CRUDRouter/>}/>
             <Route path="/crud" element={<CRUDCollection/>}/>
             <Route path="/table/:tablename" element={<TableUI/>}/>
-            <Route path="/transaction/" element={<TransactionUI/>}/>
+            <Route path="/t/:type" element={<TransactionUI/>}/>
             <Route path="/holidays" element={<Holidays/>}/>
             <Route path="*" element={<Home/>}/>
         </Routes>
