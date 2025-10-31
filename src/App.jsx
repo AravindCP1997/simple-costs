@@ -2408,7 +2408,7 @@ class Transaction{
         this.type = type;
     }
     defaults(){
-        const defaults = {"Company Code":"","Posting Date":"","Document Date":"","Reference":""};
+        const defaults = {"Company Code":"","Posting Date":"","Document Date":"","Reference":"","Currency":""};
         switch (this.type){
             case 'Sale':
                 defaults['Customer'] = {
@@ -2450,6 +2450,8 @@ class Transaction{
             {"name":"Document Date", "datatype":"single","input":"input","type":"date","noteditable":(data['Company Code']=="")},
             {"name":"Reference", "datatype":"single","input":"input","type":"text","noteditable":(data['Company Code']=="")},
             {"name":"Balance", "datatype":"single","input":"input","type":"text","noteditable":true},
+            {"name":"Currency", "datatype":"single","input":"option","options":["",...Currencies.listCurrencies], "noteditable":(data['Company Code']=="")},
+            {"name":"Exchange Rate", "datatype":"single","input":"input","type":"number", "noteditable":(data['Company Code']=="")},
         ]
         switch (this.type){
             case 'Sale':
@@ -2872,7 +2874,7 @@ function SingleInput({field,handleChange,output}){
         <div className='crudField'>
             <div className='crudRow'>
                 <label>{field['name']}</label>
-                {field['noteditable'] && <label>{output[field['name']]}</label>}
+                {field['noteditable'] && <p>{output[field['name']]}</p>}
                 {(field['input'] == "input" && !field['noteditable'] )&& 
                     <input type={field['type']} maxLength={field['maxLength']} placeholder={field['placeholder']} onChange={(e)=>handleChange(field['name'],e)} value={output[field['name']]}/>}
                 {(field['input']=="option" && !field['noteditable']) && 
@@ -2895,7 +2897,7 @@ function ObjectInput({field,handleChange,output,editable}){
                             {(!field['noteditable'] && subfield['input'] == "option") && 
                                 <select  onChange={(e)=>handleChange(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}
                             {field['noteditable'] && 
-                                <label>{output[field['name']][subfield['name']]}</label>
+                                <p>{output[field['name']][subfield['name']]}</p>
                             }
                         </div>}
                     </>)}
@@ -2921,7 +2923,7 @@ function CollectionInput({field,handleChange,output,addItem,removeItem}){
                                     {field['schema'][index].map(subfield=>
                                         <>{subfield['datatype']=="single" && 
                                             <td className='crudTableCell'>
-                                                {subfield['noteditable'] && <input value={output[field['name']][index][subfield['name']]} disabled={true}/>}
+                                                {subfield['noteditable'] && <p>{output[field['name']][index][subfield['name']]}</p>}
                                                 {(subfield['input']=="input" && !subfield['noteditable'])&& <input onChange={(e)=>handleChange(field['name'],subfield['name'],index,e)} type={subfield['type']} placeholder={subfield['placeholder']} value={output[field['name']][index][subfield['name']]}/>}
                                                 {(subfield['input']=="option"&& !subfield['noteditable']) && <select onChange={(e)=>handleChange(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}
                                             </td>}
@@ -3090,10 +3092,10 @@ class Collection{
                 case 'Attendance':
                     defaults = {
                         "Company Code":data['Company Code'],
-                        "Year":new Date().getFullYear(),
-                        "Month":new Date().getMonth(),
+                        "Year":data['Year'],
+                        "Month":data['Month'],
                         "Employee":data['Employee'],
-                        "Attendance":{"Present":[],"Leave":[]}
+                        "Attendance":datesInMonth(data['Year'],data['Month']).map(item=>({'Date':item,'Status':'','Remarks':''}))
                     }
                     break
                 case 'BankAccount':
@@ -3437,6 +3439,11 @@ class Collection{
                     {"name":"Employee","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Year","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Month","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Attendance","datatype":"collection","noteditable":true,"schema":data['Attendance'].map(item=>[
+                        {"name":"Date","datatype":"single","input":"input","type":"date","noteditable":true},
+                        {"name":"Status","datatype":"single","input":"option","options":["","Present","Leave","Absent"],"noteditable":!this.editable},
+                        {"name":"Remarks","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    ])}
                 ]
                 break
             case 'BankAccount':
@@ -3464,8 +3471,8 @@ class Collection{
                     {"name":"Code","datatype":"single","input":"input","maxLength":4,"type":"text","noteditable":!(this.method=="Create")},
                     {"name":"General Ledger Range","datatype":"collection","noteditable":true,"schema":data['General Ledger Range'].map(item=>[
                         {"name":"Group","datatype":"single","input":"input","type":"text","noteditable":true},
-                        {"name":"From","input":"input","datatype":"single","type":"number","noteditable":!this.editable},
-                        {"name":"To","input":"input","datatype":"single","type":"number","noteditable":!this.editable},        
+                        {"name":"From","input":"input","datatype":"single","type":"number","noteditable":!(this.method=="Create")},
+                        {"name":"To","input":"input","datatype":"single","type":"number","noteditable":!(this.method=="Create")},        
                     ])},
                 ]
                 break
@@ -3632,8 +3639,8 @@ class Collection{
                     {"name":"Code","datatype":"single","input":"input","maxLength":5,"type":"text","noteditable":!(this.method=="Create")},
                     {"name":"General Ledger Range","datatype":"collection","noteditable":true,"schema":data['General Ledger Range'].map(item=>[
                         {"name":"Group","datatype":"single","input":"input","type":"text","noteditable":true},
-                        {"name":"From","input":"input","datatype":"single","type":"number","noteditable":!this.editable},
-                        {"name":"To","input":"input","datatype":"single","type":"number","noteditable":!this.editable},        
+                        {"name":"From","input":"input","datatype":"single","type":"number","noteditable":!(this.method=="Create")},
+                        {"name":"To","input":"input","datatype":"single","type":"number","noteditable":!(this.method=="Create")},        
                     ])},
                 ]
                 break
@@ -3815,7 +3822,7 @@ class Collection{
         const missed = [];
         mandatory.map(field=>data[field]==""?missed.push(field):()=>{});
         (missed.length>0)?list.push(`${missed.join(", ")} is/ are necessary`):()=>{};
-        (this.method=="Create" && this.exists(data))?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+        (this.method=="Create" && this.exists(data))?list.push(`Record of ${this.title} with same identifier(s) already exists`):()=>{};
         (KB.AccountTypes.includes(this.title) && data['Code']!="" && !valueInRange(data['Code'],new Company(data['Company Code']).CollectionRange(this.title)))?list.push(`${this.title} code ${data['Code']} not in range for Company ${data['Company Code']} (${JSON.stringify(new Company(data['Company Code']).CollectionRange(this.title))})`):()=>{};
         switch (this.name){
             case 'Asset':
@@ -3829,10 +3836,9 @@ class Collection{
                 (data['Depreciable']=="Yes" && data['General Ledger - Depreciation']=="")?list.push(`General Ledger - Depreciation is required`):()=>{};
                 break
             case 'AssetDevelopment':
-                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
                 break
             case 'Attendance':
-                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                data['Attendance'].map(item=>(item['Status']=="")?list.push(`Attendance missing for ${item['Date']}`):()=>{});
                 break
             case 'BankAccount':
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
@@ -4211,7 +4217,7 @@ function CRUDCollection(){
     }
 
     function cancel(){
-        navigate(`/collection/${collection}`);
+        navigate(`/c/${collection}`);
         window.location.reload();
     }
 
@@ -4264,6 +4270,7 @@ class CRUDRoute{
         const errors = [];
         this.createRequirements.map(field=>(data[field]=="")?missing.push(field):()=>{});
         (this.createRequirements.includes("Company Code") && new Collection("Company").exists({"Code":data["Company Code"]})==false)?errors.push(`Company with Code ${data["Company Code"]} does not exist.`):()=>{};
+        (this.createRequirements.includes("Employee") && new Collection("Employee").exists({"Company Code":data["Company Code"], "Code":data['Employee']})==false)?errors.push(`Employee with Code ${data["Employee"]} does not exist in Company ${data["Company Code"]}.`):()=>{};
         (this.createRequirements==ListItems(this.schema,"name") && this.checkAvailability(data))?(errors.push(`${this.collection} with same identifier(s) already exists.`)):()=>{};
         (missing.length>0)?errors.push(`${missing.join(", ")} required.`):()=>{};
         return errors;
@@ -4485,6 +4492,11 @@ function CRUDRouter(){
         }
     }
 
+    const cancel = ()=>{
+        navigate('/control');
+        window.location.reload();
+    }
+
     return(
         <div className='collectionRoute'>
             <div className='collectionRouteTitle'>
@@ -4497,7 +4509,7 @@ function CRUDRouter(){
                 <button className='collectionCreateButton' onClick={()=>create()}>Create</button>
                 <button onClick={()=>display("Display")}>Display</button>
                 <button onClick={()=>display("Update")}>Update</button>
-                <button onClick={()=>display("Delete")}>Deactivate</button>
+                <button onClick={()=>cancel()}><FaArrowLeft/></button>
             </div>
         </div>
     )

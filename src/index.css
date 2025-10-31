@@ -49,9 +49,10 @@ a{
   justify-content: center;
 }
 
-button, input, select, option, label{
+button, input, select, option, label,p{
   padding: 8px;
   cursor: pointer;
+  margin: 0;
   border:none;
 }
 
