@@ -3281,7 +3281,7 @@ class Collection{
                 case 'Material':
                     defaults = {
                         "Code":"",
-                        "Company Code": "",
+                        "Company Code": data['Company Code'],
                         "Name":"",
                         "Price":[
                             {"Location":"","From":"","To":"","Price":""}
@@ -3687,16 +3687,16 @@ class Collection{
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Unit","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Unit","datatype":"single","input":"option","options":["",...Units.listUnits],"noteditable":!this.editable},
                     {"name":"Price","datatype":"collection","noteditable":!this.editable, "schema":data['Price'].map(item=>[
                         {"name":"Location","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                         {"name":"From","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
                         {"name":"To","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
                         {"name":"Price","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
                     ])},
-                    {"name":"General Ledger","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"General Ledger - Cost of Sales","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"General Ledger - Revenue","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"General Ledger","datatype":"single","input":"option","options":["",...GeneralLedger.listBytype('Material')],"noteditable":!this.editable},
+                    {"name":"General Ledger - Cost of Sales","datatype":"single","input":"option","options":["",...GeneralLedger.listBytype('General')],"noteditable":!this.editable},
+                    {"name":"General Ledger - Revenue","datatype":"single","input":"option","options":["",...GeneralLedger.listBytype('General')],"noteditable":!this.editable},
                 ]
                 break
             case 'OrganisationalUnit':
@@ -3821,8 +3821,8 @@ class Collection{
         const mandatory = Collection.mandatory[this.name];
         const missed = [];
         mandatory.map(field=>data[field]==""?missed.push(field):()=>{});
-        (missed.length>0)?list.push(`${missed.join(", ")} is/ are necessary`):()=>{};
-        (this.method=="Create" && this.exists(data))?list.push(`Record of ${this.title} with same identifier(s) already exists`):()=>{};
+        (missed.length>0)?list.push(`${missed.join(", ")} necessary`):()=>{};
+        (this.method=="Create" && this.exists(data))?list.push(`Record of ${this.title} with same identfiers ${JSON.stringify(this.identifiers)} already exists`):()=>{};
         (KB.AccountTypes.includes(this.title) && data['Code']!="" && !valueInRange(data['Code'],new Company(data['Company Code']).CollectionRange(this.title)))?list.push(`${this.title} code ${data['Code']} not in range for Company ${data['Company Code']} (${JSON.stringify(new Company(data['Company Code']).CollectionRange(this.title))})`):()=>{};
         switch (this.name){
             case 'Asset':

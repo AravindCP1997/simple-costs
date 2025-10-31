@@ -2,122 +2,10 @@
   box-sizing: border-box;
 }
 
-.companyInfo{
-  border-radius: 25px;
-  padding:5%;
-  display:flex;
-  flex-direction: column;
-  width:fit-content;
-  height:fit-content;
-  color:var(--blue);
-  box-shadow: 0px 3px 10px 0px lightgray;
-}
-
-.companyInfoTitle{
-  text-align: center;
-  background: var(--lightbluet);
-  border-radius: 20px;
-  padding: 20px;
-}
-
-.companyDetails{
-  display:flex;
-  flex-direction: column;
-  gap:20px;
-}
-
-.companyDetail{
-  display: grid;
-  grid-template-columns: 50% 50%;
-  padding: 5px;
-  border-radius: 15px;
-  background: var(--lightbluet);
-  backdrop-filter: blur(3px);
-  input,select{
-    border-radius: 10px;
-  }
-}
-
-.companyDetailObject{
-  border: 2px solid var(--lightgray);
-  display:flex;
-  flex-direction: column;
-  gap:2px;
-  padding: 5px;
-  border-radius: 15px;
-  background: var(--lightbluet);
-}
-
-.companyInfoButtons{
-  display:flex;
-  flex-direction: row;
-  justify-content: right;
-  gap:5px;
-  padding: 10px;
-}
-
-.createCompany{
-  display: grid;
-  grid-template-columns: 50% 50%;
-  row-gap:20px;
-  color:var(--blue);
-  padding: 10px;
-  width: min(100%,500px);
-  border-radius: 25px;
-  text-align: center;
-  margin-top: 10%;
-  padding: 20px;
-  transition: 0.5s;
-  height:min(100%,400px);
-}
-
-.titleCard{
-  grid-row: 1/ span 2;
-  border-bottom: 2px solid var(--lightgray);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap:10px;
-  padding:10px;
-  box-shadow: 0px 3px 10px 0px lightgray;
-  border-radius: 15px;
-  h1,p{
-    margin:0;
-  }
-}
-
-.createWelcome{
-  color:var(--blue);
-  border-radius: 20px;
-  padding:20px;
-  background: var(--lightgreent);
-  border: 2px solid var(--lightgray);
-  margin:0;
-}
-
-.createOptions{
-  display:flex;
-  flex-direction: column;
-  justify-content: center;
-  gap:20px;
-  height:100%;
-}
-.createOption{
-  display: flex;
-  flex-direction: column;
-  justify-content: top;
-  padding: 20px;
-  border-radius: 15px;
-
-  button{
-    border-radius: 15px;
-  }
-}
-
 .container{
   position: fixed;
   top:0;
-  width:min(100%,850px);
+  width:min(100%,960px);
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -166,17 +54,16 @@
   display: flex;
   flex-direction: row;
   justify-content: center;
-  padding: 10px;
+  padding: 20px;
+  height: 100%;
   overflow: auto;
-  height:100%;
 }
 
 .homeOuter{
   display: flex;
   flex-direction: column;
-  justify-content:center;
   border-radius: 25px;
-  padding: 10px;
+  padding:10px;
 }
 
 .home{
@@ -208,7 +95,7 @@
   .reg{
     opacity:0;
     transition: 0.5s;
-    
+    color:white;
   }
 }
 
@@ -264,7 +151,7 @@
 
 .menuContainerTitle{
   border-radius: 15px;
-  background: var(--whitet);
+  background: var(--lightredt);
   padding:10px;
   text-align: center;
   transition: 0.5s;
@@ -273,7 +160,8 @@
 }
 
 .menuContainerTitle:hover{
-  opacity: 0.8;
+  background: var(--lightgreent);
+
 }
 
 .menuList{
@@ -288,10 +176,6 @@
   overflow: auto;
   transition: 0.5s;
   cursor: pointer;
-}
-
-.menuList:hover{
-  background: var(--lightbluet);
 }
 
 .menuItem, .menuTitle{
@@ -463,8 +347,7 @@
 }
 
 .collectionRouteTitle{
-  background: var(--lightbluet);
-  border:2px solid white;
+  background: var(--lightgreent);
   text-align: center;
   border-radius: 15px;
 }
@@ -476,8 +359,7 @@
   justify-content: center;
   border-radius: 15px;
   padding: 10px;
-  background: var(--lightbluet);
-  border:2px solid white;
+  background: var(--whitet);
 
   button{
     border-radius: 10px;
@@ -506,7 +388,7 @@
   text-align: center;
   padding:15px;
   border-radius: 15px;
-  background: var(--lightgreent);
+  background: var(--lightbluet);
   margin:0;
   cursor: pointer;
   transition: 0.5s;
@@ -517,7 +399,7 @@
 }
 
 .crudTitle:hover{
-  background: none;
+  background: var(--lightgreent);
 }
 
 .crudFields{
@@ -531,9 +413,14 @@
   padding: 5px;
   border-radius: 15px;
   background: var(--lightbluet);
+  transition: 0.5s;
   input,select{
     border-radius: 10px;
   }
+}
+
+.crudField:hover{
+  background: var(--lightgreent);
 }
 
 .crudRow{
@@ -791,9 +678,6 @@
 
 @media screen and (max-width: 600px){
 
-  .container{
-    gap:10px;
-  }
 
   .homeOuter{ 
     width: 100%;
@@ -809,12 +693,24 @@
 
  .menu{
   width:unset;
-  border-radius: 50%;
+  border-radius: 15px;
+ }
+
+ .menu:hover{
+  transform: unset;
+ }
+
+ .menu:nth-child(1){
+  grid-column: 1/ span 2;
+  aspect-ratio: 2.2 / 1;
+  border-radius: 15px;
  }
  
   .actions{
   display:grid;
   grid-template-columns: 50% 50%;
+  padding: 10%;
+  font-size: 80%;
  } 
 }
 
