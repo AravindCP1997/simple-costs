@@ -122,37 +122,7 @@ function ageInDays(d,t){
     return result;
 }
 
-class Company{
-    constructor(Code){
-        this.code = Code;
-        this.data = new Collection('Company').getData({"Code":this.code})
-        this.BusinessPlaces = ListItems(this.data['Places of Business'],"Place");
-    }
-    AccountSettings(){
-        return new Collection('FinancialAccountsSettings').getData({"Company Code":this.code});
-    }
-    CollectionRange(collection){
-        const settings = this.AccountSettings();
-        const range = settings['Code Range'].filter(item=>item['Collection']===collection)[0];
-        const result = [range['From'],range['To']];
-        return result;
-    }
-    static timeMaintained = ('timecontrol' in localStorage);
-    static timeControls = JSON.parse(localStorage.getItem('timecontrol'));
-    static isPostingDateOpen(date){
-        const firstPeriod = [this.timeControls['First']['From'],this.timeControls['First']['To']];
-        const secondPeriod = [this.timeControls['Second']['From'],this.timeControls['Second']['To']]
-        const result = (valueInRange(new Date(date),[new Date(firstPeriod[0]),new Date(firstPeriod[1])]) || valueInRange(new Date(date),[new Date(secondPeriod[0]),new Date(secondPeriod[1])]))
-        return result;
-    }
-    static setTimeControl(periods){
-        localStorage.setItem('timecontrol',JSON.stringify(periods))
-    }
-    static removeTimeControl(){
-        localStorage.removeItem('timecontrol');
-    }
-    
-}
+
 
 class Database{
     static loadAll(){
@@ -697,6 +667,24 @@ class CostCenter{
     static listAll(Company){
         const data = this.data(Company);
         const list = ListItems(data,'Code');
+        return list;
+    }
+}
+
+class OrganisationalUnit{
+    constructor(company,code){
+        this.code = code;
+        this.company = company;
+        this.data = new Collection('OrganisationalUnit').getData({"Company Code":this.company,"Code":this.code})
+    }
+    static data(company){
+        const data = new Collection('OrganisationalUnit').load();
+        const filtered = data.filter(item=>item['Company Code']==company)
+        return filtered;
+    }
+    static listAll(company){
+        const data = this.data(company);
+        const list = ListItems(data,"Code");
         return list;
     }
 }
@@ -3559,13 +3547,22 @@ class Transaction{
     constructor(type){
         this.type = type;
     }
-    defaults(data){
-        let defaults = {};
+    defaults(){
+        const defaults = {"Company Code":"","Posting Date":"","Document Date":"","Reference":""};
+        switch (this.type){
+            case 'Sale':
+                defaults['Customer'] = {
+                    "Customer":"",
+                    "Presentation":"",
+                    "Amount":""
+                }
+        }
+        defaults['Line Items'] = [{"Account Type":""}] 
         return defaults
     }
     schema(data){
         let schema = [
-            {"name":"Company Code", "datatype":"single","input":"input","type":"text", "noteditable":!(data['Company Code']=="")},
+            {"name":"Company Code", "datatype":"single","input":"option","options":["",...Company.listAll], "noteditable":!(data['Company Code']=="")},
             {"name":"Posting Date", "datatype":"single","input":"input","type":"date", "noteditable":(data['Company Code']=="")},
             {"name":"Document Date", "datatype":"single","input":"input","type":"date","noteditable":(data['Company Code']=="")},
             {"name":"Reference", "datatype":"single","input":"input","type":"text","noteditable":(data['Company Code']=="")},
@@ -3576,19 +3573,69 @@ class Transaction{
                     "name":"Customer",
                     "datatype":"object",
                     "schema":[
-                        {"name":"Customer","datatype":"single"}
-                    ]
+                        {"name":"Customer","datatype":"single","input":"option","options":["",]}
+                    ],
+                    "noteditable":(data['Company Code']=="")
                 })
         }
+        schema.push({
+            "name":"Line Items",
+            "datatype":"collection",
+            "noteditable":data['Company Code']=="",
+            "schema":data['Line Items'].map(item=>this.lineItem(data,item))
+        })
         return schema;
+    }
+    lineItem(data,item){
+        const list = [
+            {"name":"Account Type","datatype":"single","input":"input","type":"text"},
+            {"name":"Account","datatype":"single","input":"input","type":"text"},
+            {"name":"Amount","datatype":"single","input":"input","type":"number"},
+            {"name":"Debit/ Credit","datatype":"single","input":"option","options":['Debit','Credit']},
+            {"name":"Presentation","datatype":"single","input":"option","options":[""]},
+            {"name":"General Ledger","datatype":"single","input":"input","type":"text"},
+            {"name":"Cost Center","datatype":"single","input":"option","options":["",CostCenter.listAll(data['Company Code'])]},
+            {"name":"Cost Object","datatype":"single","input":"input","type":"text"},
+            {"name":"Profit Center","datatype":"single","input":"option","options":["",...ProfitCenter.listAll(data['Company Code'])], "noteditable":(data['Company Code']=="")},
+            {"name":"Location","datatype":"single","input":"option","options":[""], "noteditable":(data['Company Code']=="")},
+            {"name":"Quantity","datatype":"single","input":"input","type":"number"},
+            {"name":"Material Valuation From","datatype":"single","input":"input","type":"date"},
+            {"name":"Material Valuation To","datatype":"single","input":"input","type":"date"},
+            {"name":"Cost Valuation From","datatype":"single","input":"input","type":"date"},
+            {"name":"Cost Valuation To","datatype":"single","input":"input","type":"date"},
+        ]
+        return list
+    }
+    errors(data){
+        let errors = [];
+        (new Date(data['Posting Date']) > new Date())?errors.push(`Posting Date cannot be in future`):()=>{};
+        data['Line Items'].map(item=>errors.push(...this.lineItemErrors(item)));
+        const uniquelist = [...new Set(errors)];
+        return uniquelist; 
+    }
+    lineItemErrors(item){
+        let list = [];
+        return list;
+    }
+    process(data) {
+        let result = {...data};
+        result['Line Items'] = result['Line Items'].map(item=>this.lineItemProcess(item));
+        return result;
+    }
+    lineItemProcess(item){
+        let result = {...item};
+        return result;
     }
 }
 
 function TransactionUI(){
-    const transaction = new Transaction("General");
+    const transaction = new Transaction("Sale");
     const navigate = useNavigate();
-    const [data,setdata] = useState({"Company Code":"","Line Items":[{"Account":""}]});
-    const schema = transaction.schema(data);
+    const defaults = transaction.defaults();
+    const [data,setdata] = useState(defaults);
+    const output = transaction.process(data);
+    const schema = transaction.schema(output);
+    const errors = transaction.errors(output);
     const singleChange = (field,e)=>{
         e.preventDefault;
         const {value} = e.target
@@ -3660,7 +3707,7 @@ function TransactionUI(){
     }
 
     function cancel(){
-        navigate(`/collection/${collection}`);
+        navigate('/report');
         window.location.reload();
     }
 
@@ -3678,10 +3725,10 @@ function TransactionUI(){
             <div className='crudFields'>
                 {schema.map(field=>
                     <>
-                        {field['datatype']=="single" && <SingleInput field={field} output={data} handleChange={singleChange}/>}
-                        {field['datatype']=="object" && <ObjectInput/>}
-                        {field['datatype']=="collection" && <CollectionInput field={field} output={data} handleChange={collectionChange} addItem={addCollection} removeItem={removeCollection}/>}
-                        {field['datatype']=="nest" && <NestInput field={field} output={data} handleChange1={collectionChange} handleChange2={nestChange} addItem1={addCollection} addItem2={addNest} removeItem1={removeCollection} removeItem2={removeNest}/>}
+                        {field['datatype']=="single" && <SingleInput field={field} output={output} handleChange={singleChange}/>}
+                        {field['datatype']=="object" && <ObjectInput field={field} output={output} handleChange={objectChange}/>}
+                        {field['datatype']=="collection" && <CollectionInput field={field} output={output} handleChange={collectionChange} addItem={addCollection} removeItem={removeCollection}/>}
+                        {field['datatype']=="nest" && <NestInput field={field} output={output} handleChange1={collectionChange} handleChange2={nestChange} addItem1={addCollection} addItem2={addNest} removeItem1={removeCollection} removeItem2={removeNest}/>}
                     </>
                 )}
             </div>
@@ -3689,6 +3736,14 @@ function TransactionUI(){
                 <button onClick={()=>cancel()}><FaArrowLeft/></button>
                 <button onClick={()=>save()}>Save</button>
             </div>
+            {errors.length>0 && <div className='crudError'>
+                <h4>Things to Consider:</h4>
+                <ul>
+                    {errors.map(error=>
+                        <li>{error}</li>
+                    )}
+                </ul>
+            </div>}
         </div>
     )
 }
@@ -3994,10 +4049,13 @@ function ObjectInput({field,handleChange,output,editable}){
                 {field['schema'].map(subfield=>
                     <>{subfield['datatype']=="single"&&
                         <div className='crudRow'><label>{subfield['name']}</label>
-                            {subfield['input']=="input" && 
-                                <input type={subfield['type']} onChange={(e)=>handleChange(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]} disabled={(field['disabled']||!editable)}/>}
-                            {subfield['input'] == "option" && 
-                                <select disabled={(field['disabled']||!editable)} onChange={(e)=>handleChange(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                            {(!field['noteditable'] && subfield['input']=="input" )&& 
+                                <input type={subfield['type']} onChange={(e)=>handleChange(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}/>}
+                            {(!field['noteditable'] && subfield['input'] == "option") && 
+                                <select  onChange={(e)=>handleChange(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                            {field['noteditable'] && 
+                                <label>{output[field['name']][subfield['name']]}</label>
+                            }
                         </div>}
                     </>)}
             </div>
@@ -4785,9 +4843,10 @@ class Collection{
             case 'OrganisationalUnit':
                 schema = [
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
-                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Code","datatype":"single","input":"input","type":"text","maxLength":6,"noteditable":!(this.method=="Create")},
                     {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Cost Center","datatype":"single","input":"option","options":[""],"noteditable":!(this.method=="Create")},
+                    {"name":"Business Place","datatype":"single","input":"option","options":["",...new Company(data['Company Code']).BusinessPlaces],"noteditable":!this.editable},
+                    {"name":"Cost Center","datatype":"single","input":"option","options":["",...CostCenter.listAll(data['Company Code'])],"noteditable":!(this.method=="Create")},
                 ]
                 break
             case 'PaymentTerms':
@@ -5703,6 +5762,40 @@ function TableUI(){
     )
 }
 
+class Company{
+    constructor(Code){
+        this.code = Code;
+        this.data = new Collection('Company').getData({"Code":this.code})
+        this.BusinessPlaces = ListItems(this.data['Places of Business'],"Place");
+    }
+    AccountSettings(){
+        return new Collection('FinancialAccountsSettings').getData({"Company Code":this.code});
+    }
+    CollectionRange(collection){
+        const settings = this.AccountSettings();
+        const range = settings['Code Range'].filter(item=>item['Collection']===collection)[0];
+        const result = [range['From'],range['To']];
+        return result;
+    }
+    static timeMaintained = ('timecontrol' in localStorage);
+    static timeControls = JSON.parse(localStorage.getItem('timecontrol'));
+    static isPostingDateOpen(date){
+        const firstPeriod = [this.timeControls['First']['From'],this.timeControls['First']['To']];
+        const secondPeriod = [this.timeControls['Second']['From'],this.timeControls['Second']['To']]
+        const result = (valueInRange(new Date(date),[new Date(firstPeriod[0]),new Date(firstPeriod[1])]) || valueInRange(new Date(date),[new Date(secondPeriod[0]),new Date(secondPeriod[1])]))
+        return result;
+    }
+    static setTimeControl(periods){
+        localStorage.setItem('timecontrol',JSON.stringify(periods))
+    }
+    static removeTimeControl(){
+        localStorage.removeItem('timecontrol');
+    }
+    static data = new Collection('Company').load();
+    static listAll = ListItems(this.data,"Code");
+    
+}
+
 class ChartOfAccounts{
     constructor(code){
         this.code = code;
@@ -5834,7 +5927,7 @@ function Scratch(){
 
     return(
         <div className='reportDisplay'>
-        {JSON.stringify(new Asset(10000,'FACT').depreciation("2025-10-31"))}
+        {JSON.stringify(OrganisationalUnit.listAll('FACT'))}
         </div>
     )
 }
@@ -5858,7 +5951,7 @@ function App(){
             <Route path="/collection/:collection" element={<CRUDRouter/>}/>
             <Route path="/crud" element={<CRUDCollection/>}/>
             <Route path="/table/:tablename" element={<TableUI/>}/>
-            <Route path="/transaction/:trans" element={<TransactionUI/>}/>
+            <Route path="/transaction/" element={<TransactionUI/>}/>
             <Route path="/holidays" element={<Holidays/>}/>
             <Route path="*" element={<Home/>}/>
         </Routes>
