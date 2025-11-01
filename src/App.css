@@ -419,10 +419,6 @@
   }
 }
 
-.crudField:hover{
-  background: var(--lightgreent);
-}
-
 .crudRow{
   display: grid;
   grid-template-columns: 50% 50%;
@@ -432,12 +428,18 @@
   display:flex;
   flex-direction: column;
   gap:2px;
+  padding: 5px;
+}
+
+.crudObjectHead{
+  display: flex;
+  flex-direction: row;
 }
 
 .crudObjectButtons{
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: right;
   padding:2px;
 }
 

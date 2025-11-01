@@ -344,6 +344,11 @@ class Asset{
         const filtered = data.filter(item=>(item['Company Code']==company));
         return filtered;
     }
+    static listAll(Company){
+        const data = this.data(Company);
+        const list = ListItems(data,"Code");
+        return list
+    }
     static register(date){
         const data = this.data;
         const list = [];
@@ -390,12 +395,37 @@ class AssetClass{
     }
 }
 
+class AssetDevelopment{
+    constructor(company,code){
+        this.code = code;
+        this.company = company;
+    }
+    static data(company){
+        const data = new Collection('AssetDevelopment').load();
+        const filtered = data.filter(item=>item['Company Code']==company);
+        return filtered;
+    }
+    static listAll(company){
+        const data = this.data(company);
+        const list = ListItems(data,'Code');
+        return list;
+    }
+}
+
 class BankAccount{
-    constructor(name){
-        this.name = name;
-        this.data = BankAccount.data.filter(item=>item['Name']==this.name)[0]
-        this.listOfVAN = ListItems(this.data['Virtual Accounts'],"Virtual Account Number");
-        this.VANData = this.data['Virtual Accounts'].map(item=>({...item,['Bank Account']:this.name}))
+    constructor(company,code){
+        this.code = code;
+        this.company = company;
+    }
+    static data(company){
+        const data = new Collection('BankAccount').load();
+        const filtered = data.filter(item=>item['Company Code']==company);
+        return filtered;
+    }
+    static listAll(company){
+        const data = this.data(company);
+        const list = ListItems(data,'Code');
+        return list;
     }
 }
 
@@ -559,10 +589,10 @@ class Employee{
 }
 
 class Material{
-    constructor(company,name){
-        this.name = name;
+    constructor(company,code){
+        this.code = code;
         this.company = company;
-        this.data = Material.data.filter(item=>item['Name']==this.name)[0]
+        this.data = new Collection('Material').getData({'Company Code':this.company,'Code':this.code});
     }
     transactionsBefore(date){
         const data = Transaction.transactionstable()
@@ -608,6 +638,16 @@ class Material{
         }))
         list.push({"Document No":"","Posting Date":to,"Text":"Closing","Quantity":this.closing(to)['Quantity'],"Amount":this.closing(to)['Amount'],"Debit/ Credit":""})
         return list;  
+    }
+    static data(Company){
+        const data = new Collection('Material').load();
+        const filtered = data.filter(material=>material['Company Code']==Company);
+        return filtered;
+    }
+    static listAll(Company){
+        const data = this.data(Company);
+        const list = ListItems(data,'Code');
+        return list;
     }
 }
 
@@ -811,6 +851,23 @@ class Segment{
     }
     static listAll(){
         const list = ListItems(new Collection('Segment').load(),'Code');
+        return list;
+    }
+}
+
+class Service{
+    constructor(company,code){
+        this.code = code;
+        this.company = company;
+    }
+    static data(company){
+        const data = new Collection('Service').load();
+        const filtered = data.filter(item=>item['Company Code']==company);
+        return filtered;
+    }
+    static listAll(company){
+        const data = this.data(company);
+        const list = ListItems(data,'Code');
         return list;
     }
 }
@@ -2514,7 +2571,8 @@ class Transaction{
     lineItem(data,item){
         let list = [
             {"name":"Account Type","datatype":"single","input":"option","options":["",...KB.PostingAccounts]},
-            {"name":"Account","datatype":"single","input":"input","type":"text"},
+            {"name":"Account","datatype":"single","input":"option","options":["",...this.accountsByType(data['Company Code'],item['Account Type'])],"noteditable":data['Company Code']==""},
+            {"name":"Account Description","datatype":"single","input":"input","type":"text", "noteditable":"true"},
             {"name":"Transaction","datatype":"single","input":"input","type":"text"},
             {"name":"Amount","datatype":"single","input":"input","type":"number"},
             {"name":"Debit/ Credit","datatype":"single","input":"option","options":['','Debit','Credit']},
@@ -2544,7 +2602,7 @@ class Transaction{
                 break
             case 'Purchase':
                 notreq = [];
-                list = list.map(field=>(field['name']=="Account Type")?{...field,['options']:["","Asset","Material","Service"]}:field);
+                list = list.map(field=>(field['name']=="Account Type")?{...field,['options']:["","Asset","Material","Service","General Ledger"]}:field);
                 break
         }
         switch (item['Account Type']){
@@ -2650,6 +2708,20 @@ class Transaction{
             const result = Transaction.postDocument(data);
             return result;
         }
+    }
+    accountsByType(Company,type){
+        const accounts = {
+            "":[],
+            "Asset":Asset.listAll(Company),
+            "Asset Development":AssetDevelopment.listAll(Company),
+            "Bank Account":BankAccount.listAll(Company),
+            "Customer":Customer.listAll(Company),
+            "General Ledger":GeneralLedger.listAll(Company),
+            "Material":Material.listAll(Company),
+            "Service":Service.listAll(Company),
+            "Vendor":Vendor.listAll(Company)
+        }
+        return accounts[type];
     }
     
     static database = ('transactions' in localStorage)?JSON.parse(localStorage.getItem('transactions')):[];
@@ -2910,7 +2982,13 @@ function CollectionInput({field,handleChange,output,addItem,removeItem}){
     return (
         <div className='crudField'>
             <div className='crudObject'>
-                <label>{field['name']}</label>
+                <div className='crudObjectHead'>
+                    <label>{field['name']}</label>
+                        <div className='crudObjectButtons'>
+                            {!field['noteditable'] && <button className="blue" onClick={(e)=>addItem(field['name'],e)}>Add</button>}
+                        </div>
+                </div>
+                
                 <div className='crudTable'>
                     <table>
                         <thead>
@@ -2931,9 +3009,6 @@ function CollectionInput({field,handleChange,output,addItem,removeItem}){
                                 </tr>
                             </tbody>)}
                     </table>
-                </div>
-                <div className='crudObjectButtons'>
-                    {!field['noteditable'] && <button className="blue" onClick={(e)=>addItem(field['name'],e)}>Add</button>}
                 </div>
             </div>
         </div>
@@ -3003,9 +3078,9 @@ class KB{
         {"Name":"Qatari Rial", "Code":"QAR"},
     ]
     static AccountTypes = ["Asset","Asset Class","Asset Development","Bank Account","Cost Center","Cost Object","Customer","Employee","Location","Material","Organisational Unit","Profit Center","Purchase Order","Sale Order","Service","Vendor",];
-    static PostingAccounts = ["Asset","Asset Development","Bank Account","Customer","Material","Service","Vendor"];
+    static PostingAccounts = ["Asset","Asset Development","Bank Account","Customer","General Ledger","Material","Service","Vendor"];
     static GeneralLedgerGroups = ["Asset","Liability","Equity","Income","Expense"];
-    static LedgerTypes = ["Asset","Bank Account","Cost Element","Customer","Depreciation","Material","Vendor"]
+    static LedgerTypes = ["Asset","Bank Account","Cost Element","Customer","General","Depreciation","Material","Vendor"]
     static YearStart(year,firstMonth){
         const result = `${year}-${firstMonth}-01`;
         return result;
@@ -3625,12 +3700,12 @@ class Collection{
                 break
             case 'GeneralLedger':
                 schema = [
-                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Chart of Accounts","datatype":"single","input":"option","options":[""],"noteditable":true},
+                    {"name":"Group","datatype":"single","input":"option","options":["",...KB.GeneralLedgerGroups],"noteditable":!this.editable},
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Ledger Type","datatype":"single","input":"option","options":["",...KB.LedgerTypes],"noteditable":!this.editable},
-                    {"name":"Group","datatype":"single","input":"option","options":["",...KB.GeneralLedgerGroups],"noteditable":!this.editable},
                     {"name":"Group General Ledger", "datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
                 ]
                 break
@@ -3694,9 +3769,9 @@ class Collection{
                         {"name":"To","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
                         {"name":"Price","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
                     ])},
-                    {"name":"General Ledger","datatype":"single","input":"option","options":["",...GeneralLedger.listBytype('Material')],"noteditable":!this.editable},
-                    {"name":"General Ledger - Cost of Sales","datatype":"single","input":"option","options":["",...GeneralLedger.listBytype('General')],"noteditable":!this.editable},
-                    {"name":"General Ledger - Revenue","datatype":"single","input":"option","options":["",...GeneralLedger.listBytype('General')],"noteditable":!this.editable},
+                    {"name":"General Ledger","datatype":"single","input":"option","options":["",...GeneralLedger.listBytype(data['Company Code'],'Material')],"noteditable":!this.editable},
+                    {"name":"General Ledger - Cost of Sales","datatype":"single","input":"option","options":["",...GeneralLedger.listBytype(data['Company Code'],'General')],"noteditable":!this.editable},
+                    {"name":"General Ledger - Revenue","datatype":"single","input":"option","options":["",...GeneralLedger.listBytype(data['Company Code'],'General')],"noteditable":!this.editable},
                 ]
                 break
             case 'OrganisationalUnit':
@@ -4823,14 +4898,14 @@ function App(){
             <Route path='/record' element={<Record/>}/>
             <Route path='/control' element={<Control/>}/>
             <Route path='/reports' element={<Reports/>}/>
-            <Route path="/report/:report" element={<ReportQuery/>}/>
-            <Route path="/reportdisplay/:report" element={<ReportDisplay/>}/>
-            <Route path="/scratch/" element={<Scratch/>}/>
             <Route path="/c/:collection" element={<CRUDRouter/>}/>
             <Route path="/crud" element={<CRUDCollection/>}/>
             <Route path="/table/:tablename" element={<TableUI/>}/>
             <Route path="/t/:type" element={<TransactionUI/>}/>
+            <Route path="/report/:report" element={<ReportQuery/>}/>
+            <Route path="/reportdisplay/:report" element={<ReportDisplay/>}/>
             <Route path="*" element={<Home/>}/>
+            <Route path="/scratch/" element={<Scratch/>}/>
         </Routes>
         </div>
         </BrowserRouter>
