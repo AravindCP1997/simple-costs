@@ -23,7 +23,7 @@ button, input, select, option, label{
 
 :root{
   --blue:rgb(64,82,106);
-  --bluet:rgb(64,82,106,0.6);
+  --bluet:rgb(64,82,106,0.8);
   --lightblue: rgb(80,150,220);
   --green:rgb(0,176,80);
   --red:rgb(255,0,30);
@@ -64,7 +64,7 @@ button{
 }
 
 button:hover{
-  transform: scale(.95)
+  background: var(--blue);
 }
 
 .red{

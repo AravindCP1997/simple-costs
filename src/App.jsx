@@ -1025,7 +1025,7 @@ function Record(){
     const transactions = [
         
         {"Group":"General","transactions":[
-            {"Name":"General Posting","URL":'/t/General'},
+            {"Name":"General Posting","URL":'/interface',"state":{"type":"Transaction","transaction":"General"}},
         ]},
         {"Group":"Procurement","transactions":[
             {"Name":"Purchase","URL":'/t/Purchase'},
@@ -1044,7 +1044,7 @@ function Record(){
                 <div className='menuList'>
                     <div className='menuTitle blue'><h4>{group["Group"]}</h4></div>
                     {group['transactions'].map(transaction=>
-                        <div className='menuItem' onClick={()=>{navigate(transaction['URL'])}}><h4>{transaction['Name']}</h4></div>
+                        <div className='menuItem' onClick={()=>{navigate(transaction['URL'],{state:transaction['state']})}}><h4>{transaction['Name']}</h4></div>
                     )}
                     
                 </div>
@@ -1059,12 +1059,12 @@ function Control(){
     const controls = [
         {"Group":"Global", "Controls":[
             {"Name":"Chart of Accounts", "URL":"/interface", "state":{"type":"Collection","method":"Create","collection":"ChartOfAccounts"}},
-            {"Name":"Company", "URL":"/c/Company"},
-            {"Name":"Financial Statement Version", "URL":"/c/FinancialStatementVersion"},
-            {"Name":"Group Chart of Accounts", "URL":"/c/GroupChartOfAccounts"},
-            {"Name":"Income Tax Code", "URL":"/c/IncomeTaxCode"},
-            {"Name":"Payment Terms", "URL":"/collection/","state":{'method':'Create','collection':'PaymentTerms','parameters':{}}},
-            {"Name":"Segment", "URL":"/c/Segment"},
+            {"Name":"Company", "URL":"/interface", "state":{"type":"Collection","method":"Create","collection":"Company"}},
+            {"Name":"Financial Statement Version", "URL":"/interface", "state":{"type":"Collection","method":"Create","collection":"FinancialStatementVersion"}},
+            {"Name":"Group Chart of Accounts", "URL":"/interface", "state":{"type":"Collection","method":"Create","collection":"GroupChartOfAccounts"}},
+            {"Name":"Income Tax Code", "URL":"/interface", "state":{"type":"Collection","method":"Create","collection":"IncomeTaxCode"}},
+            {"Name":"Payment Terms", "URL":"/interface", "state":{"type":"Collection","method":"Create","collection":"PaymentTerms"}},
+            {"Name":"Segment", "URL":"/interface", "state":{"type":"Collection","method":"Create","collection":"Segment"}},
         ]},
         {"Group":"Tables", "Controls":[
             {"Name":"Currencies", "URL":"/interface/","state":{'type':'Table','table':'Currencies','method':'Display'}},
@@ -1103,7 +1103,6 @@ function Control(){
         {"Group":"Material", "Controls":[
             {"Name":"Material", "URL":"/c/Material"},
             {"Name":"Location", "URL":"/c/Location"},
-            {"Name":"Unit", "URL":"/c/Unit"},
             {"Name":"Service", "URL":"/c/Service"},
         ]},
     ]
@@ -2082,7 +2081,7 @@ class Transaction{
     constructor(type){
         this.type = type;
     }
-    defaults(){
+    defaults(data){
         const defaults = {"Company Code":"","Posting Date":"","Document Date":"","Reference":"","Currency":""};
         switch (this.type){
             case 'Sale':
@@ -2327,6 +2326,12 @@ class Transaction{
             return result;
         }
     }
+    navigation(data){
+        const navigation = [
+            {"name":"Back", "url":"/record","state":{}}
+        ]
+        return navigation;
+    }
     accountsByType(Company,type){
         const accounts = {
             "":[],
@@ -2377,131 +2382,6 @@ class Transaction{
         const result = data.filter(document=>document['Company Code']==company && document['Year']==year && document['Document Number']==number)[0];
         return result;
     }
-}
-
-function TransactionUI(){
-    const {type} = useParams();
-    const transaction = new Transaction(type);
-    const navigate = useNavigate();
-    const defaults = transaction.defaults();
-    const [data,setdata] = useState(defaults);
-    const output = transaction.process(data);
-    const schema = transaction.schema(output);
-    const errors = transaction.errors(output);
-    const singleChange = (field,e)=>{
-        e.preventDefault;
-        const {value} = e.target
-        setdata(prevdata=>({
-            ...prevdata,
-            [field]:value
-        }))
-    }
-
-    function objectChange(field,subfield,e){
-        e.preventDefault;
-        const {value} = e.target
-        setdata(prevdata=>({
-            ...prevdata,
-            [field]:{...prevdata[field],[subfield]:value}
-        }))
-    }
-
-    function collectionChange(field,subfield,index,e){
-        e.preventDefault;
-        const {value} = e.target
-        setdata(prevdata=>({
-            ...prevdata,
-            [field]:prevdata[field].map((item,i)=>(i===index)?{...item,[subfield]:value}:item)
-        }))
-    }
-
-    function nestChange(field,index,subfield,subindex,subsubfield,e){
-        const {value} = e.target;
-        setdata(prevdata=>({
-            ...prevdata,[field]:prevdata[field].map((item,i)=>
-            (i==index)?{...item,[subfield]:item[subfield].map((subitem,ii)=>
-            (ii==subindex)?{...subitem,[subsubfield]:value}:subitem)}:item)
-        }))
-    }
-
-    function addCollection(field,e){
-        e.preventDefault;
-        setdata(prevdata=>({
-            ...prevdata,
-            [field]:[...prevdata[field],defaults[field][0]]
-        }))
-    }
-
-    function removeCollection(field,index,e){
-        e.preventDefault;
-        setdata(prevdata=>({
-            ...prevdata,
-            [field]:prevdata[field].filter((item,i)=>i!==index)
-        }))
-        
-    }
-
-    function addNest(field,index,subfield){
-        setdata(prevdata=>({
-            ...prevdata,
-            [field]:prevdata[field].map((item,i)=>
-            (i==index)?{...item,[subfield]:[...item[subfield],defaults[field][0][subfield][0]]}:item
-            )
-        }))
-    }
-
-    function removeNest(field,index,subfield,subindex){
-        setdata(prevdata=>({
-            ...prevdata,
-            [field]:prevdata[field].map((item,i)=>
-            (i==index)?{...item,[subfield]:item[subfield].filter((subitem,ii)=>ii!=subindex)}:item)
-        }))
-    }
-
-    function cancel(){
-        navigate('/report');
-        window.location.reload();
-    }
-
-    function save(){
-        if (errors.length==0){
-            const result = transaction.completeTransaction(output);
-            alert(result);
-            cancel();
-        } else {
-            alert('Validation unsuccesful with errors!')
-        }
-    }
-
-    return(
-        <div className='crudUI'>
-            <div className='crudTitle'>
-                <h2>{type}</h2>
-            </div>
-            <div className='crudFields'>
-                {schema.map(field=>
-                    <>
-                        {field['datatype']=="single" && <SingleInput field={field} output={output} handleChange={singleChange}/>}
-                        {field['datatype']=="object" && <ObjectInput field={field} output={output} handleChange={objectChange}/>}
-                        {field['datatype']=="collection" && <CollectionInput field={field} output={output} handleChange={collectionChange} addItem={addCollection} removeItem={removeCollection}/>}
-                        {field['datatype']=="nest" && <NestInput field={field} output={output} handleChange1={collectionChange} handleChange2={nestChange} addItem1={addCollection} addItem2={addNest} removeItem1={removeCollection} removeItem2={removeNest}/>}
-                    </>
-                )}
-            </div>
-            <div className='crudButtons'>
-                <button onClick={()=>cancel()}><FaArrowLeft/></button>
-                <button onClick={()=>save()}>Save</button>
-            </div>
-            {errors.length>0 && <div className='crudError'>
-                <h4>Things to Consider:</h4>
-                <ul>
-                    {errors.map(error=>
-                        <li>{error}</li>
-                    )}
-                </ul>
-            </div>}
-        </div>
-    )
 }
 
 class IncomeTax{
@@ -3565,8 +3445,8 @@ class Collection{
     }
     navigation(data){
         const navigation = [
-            {"name":"Back","url":'/control','state':{}},
-            {"name":"Save","url":'/post','state':{'data':data}}
+            {"name":"Back","type":"navigate","url":'/control','state':{},'onClick':()=>alert('Hi')},
+            {"name":"Save","type":"action","onClick":()=>alert(this.save(data))}
         ];
         return navigation;
 
@@ -3760,7 +3640,7 @@ class Collection{
             return ("Validation Unsuccessful!")
         } else {
             saveData(this.updatedCollection(data),this.collectionname);
-            return ('Succesfully Saved')
+            return ('Success');
         }
     }
     static collectionname = {
@@ -3897,21 +3777,31 @@ function Interface(){
     let defaults = {};
     let Display = {};
     let editable = false;
+    let title = "";
     if (type=="CollectionQuery"){
         const {collection,method} = inputData;
         Display = new CollectionQuery(collection,method);
         defaults = Display.defaults;
         editable = true;
+        title = `${method} ${new Collection(collection).title}`;
     } else if (type=="Collection"){
         const {collection,method,data} = inputData;
         Display = new Collection(collection,method);
         defaults = Display.defaults(data);
         editable = (method=="Create" || method=="Update");
+        title = `${method} ${Display.title}`;
     } else if (type=="Table"){
         const {table,method} = inputData;
         Display = new Table(table,method);
         defaults = Display.defaults;
         editable = (method=="Update");
+        title = table;
+    } else if (type=="Transaction"){
+        const {transaction} = inputData;
+        Display = new Transaction(transaction);
+        defaults = Display.defaults('');
+        editable = true;
+        title = transaction;
     }
     const [data,setdata] = useState(defaults);
     const output = Display.process(data);
@@ -4010,7 +3900,7 @@ function Interface(){
     return(
         <div className='display'>
             <div className='displayTitle'>
-                <h2>{Display.title}</h2>
+                <h2>{title}</h2>
             </div>
             <div className='displayInputFields'>
                 {type!="Table" && schema.map(field=>
@@ -4023,11 +3913,13 @@ function Interface(){
                 {type=="Table" && <TableInput addTableRow={addTableRow} removeTableRow={removeTableRow} data={output} schema={schema} tableChange={tableChange} editable={editable}/>}
             </div>
             <div className='navigation'>
-                {navigation.map(item=>
-                    <button onClick={()=>goto(item['url'],item['state'])}>{item['name']}</button>
+                {navigation.map(item=><>
+                    {item['type']=="navigate" && <button onClick={()=>goto(item['url'],item['state'])}>{item['name']}</button>}
+                    {item['type']=="action" && <button onClick={item['onClick']}>{item['name']}</button>}
+                    </>
                 )}
             </div>
-            {(errors.length>0) && <div className='error'>
+            {(editable && (errors.length>0)) && <div className='error'>
                 <h4>Things to Consider:</h4>
                 <ul>
                     {errors.map(error=>
@@ -4066,8 +3958,8 @@ class CollectionQuery{
     }
     navigation(data){
         return [
-            {"name":"Back","url":"/control","state":{}},
-            {"name":"Submit","url":"/interface","state":{'type':'Collection','collection':this.collection,'method':this.method,'data':data}}
+            {"name":"Back","type":"navigate","url":"/control","state":{}},
+            {"name":this.method,"type":"navigate","url":"/interface","state":{'type':'Collection','collection':this.collection,'method':this.method,'data':data}}
         ]
     }
     checkAvailability(data){
@@ -4276,14 +4168,15 @@ class Table{
     }
     navigation(data){
         const navigation = [
-            {"name":"Back","url":"/control","state":{}}
+            {"name":"Back","type":"navigate","url":"/control","state":{}},
         ];
-        (this.method!="Update")?navigation.push({"name":"Update","url":"/interface","state":{"type":"Table","method":"Update","table":this.name}}):()=>{};
-        (this.method=="Update")?navigation.push({"name":"Save","url":"/post","state":{"method":"Update","table":this.name}}):()=>{};
+        (this.method!="Update")?navigation.push({"name":"Update","type":"navigate","url":"/interface","state":{"type":"Table","method":"Update","table":this.name}}):()=>{};
+        (this.method=="Update")?navigation.push({"name":"Update","type":"action","onClick":()=>alert(this.save(data))}):()=>{};
         return navigation;
     }
     save(data){
         localStorage.setItem(this.name,JSON.stringify(data));
+        return ('Success');
     }
     schema(data){
         let schema = [];
@@ -4529,7 +4422,6 @@ function App(){
             <Route path='/control' element={<Control/>}/>
             <Route path='/reports' element={<Reports/>}/>
             <Route path="/interface" element={<Interface/>}/>
-            <Route path="/t/:type" element={<TransactionUI/>}/>
             <Route path="/report/:report" element={<ReportQuery/>}/>
             <Route path="/reportdisplay/:report" element={<ReportDisplay/>}/>
             <Route path="*" element={<Home/>}/>
