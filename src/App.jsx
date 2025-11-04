@@ -1303,28 +1303,29 @@ function daysInMonth(year,month){
 }
 
 function SearchBar(){
-    const navigate = useNavigate()
+    const navigate = useNavigate();
     const location = useLocation()
     const [url,seturl] = useState()
     function search(){
         navigate(url)
         seturl('');
+        window.location.reload();
     }
 
     const inputRef = useRef();
 
     const keyDownHandler = e =>{
-        if (e.ctrlKey && e.key==="g"){
+        if (e.altKey && e.key==="g"){
             e.preventDefault();
             inputRef.current.focus();
-        } else if (e.ctrlKey && e.key==="h"){
+        } else if (e.altKey && e.key==="h"){
             e.preventDefault();
             navigate('/');
             window.location.reload();
-        } else if (e.ctrlKey && e.key==="+"){
+        } else if (e.altKey && e.key==="+"){
             e.preventDefault();
             window.open(window.location.href,'_blank');
-        } else if (e.ctrlKey && e.key==="Backspace"){
+        } else if (e.altKey && e.key==="Backspace"){
             e.preventDefault();
             navigate(-1);
         } else if (e.altKey && e.key==="r"){
@@ -1428,9 +1429,9 @@ function Control(){
             {"Name":"Income Tax Code", "URL":"/c/IncomeTaxCode"},
             {"Name":"Payment Terms", "URL":"/c/PaymentTerms"},
             {"Name":"Segment", "URL":"/c/Segment"},
-            {"Name":"Currencies", "URL":"/table/Currencies"},
-            {"Name":"Units of Measure", "URL":"/table/Units"},
-            {"Name":"HSN", "URL":"/table/HSN"},
+            {"Name":"Currencies", "URL":"/table/","state":{'table':'Currencies','method':'Display'}},
+            {"Name":"HSN", "URL":"/table/","state":{'table':'HSN','method':'Display'}},
+            {"Name":"Units", "URL":"/table/","state":{'table':'Units','method':'Display'}},
         ]},
         {"Group":"Financial Accounting", "Controls":[
             {"Name":"Financial Accounts Settings", "URL":"/c/FinancialAccountsSettings"},
@@ -1438,7 +1439,8 @@ function Control(){
             {"Name":"General Ledger", "URL":"/c/GeneralLedger"},
         ]},
         {"Group":"Asset", "Controls":[
-            {"Name":"Asset", "URL":"/c/Asset"},
+            {"Name":"Create Asset", "URL":"/collectionquery","state":{'collection':'Asset','method':"Create"}},
+            {"Name":"Display Asset", "URL":"/collectionquery","state":{'collection':'Asset','method':"Display"}},
             {"Name":"Asset Class", "URL":"/c/AssetClass"},
             {"Name":"Asset Development", "URL":"/c/AssetDevelopment"},
         ]},
@@ -1475,7 +1477,7 @@ function Control(){
                 <div className='menuList'>
                     <div className='menuTitle blue'><h4>{group["Group"]}</h4></div>
                     {group['Controls'].map(control=>
-                        <div className='menuItem' onClick={()=>{navigate(control['URL'])}}><h4>{control['Name']}</h4></div>
+                        <div className='menuItem' onClick={()=>{navigate(control['URL'],{state:control['state']})}}><h4>{control['Name']}</h4></div>
                     )}
                     
                 </div>
@@ -1530,28 +1532,6 @@ function Reports(){
     )
 }
 
-
-function DisplayAsTable({collection}){
-
-    if (collection.length!=0){
-    const fields = Object.keys(collection[0]);
-
-    return (
-        <div className='displayAsTable'>
-            <table className='displayTable'>
-                <thead><tr>{fields.map(field=><th className='displayTableCell'>{field}</th>)}</tr></thead>
-                <tbody>{collection.map(data=><tr>{fields.map(field=><td className='displayTableCell'>{data[field]}</td>)}</tr>)}</tbody>
-            </table>
-        </div>
-    )
-} else {
-    return (
-        <div className='displayAsTable'>
-            Sorry! No data found.
-        </div>
-    )
-}
-}
 
 class Report{
     constructor(name){
@@ -2360,7 +2340,7 @@ function ReportDisplay(){
 
     function ViewDocument({query}){
         const {docno} = query
-        const data = new Doc(docno['value']).data;
+        const data = Transaction.getDocument('FACT',2025,docno['value']);
         const fields = Object.keys(data).filter(field=>field!="Line Items")
 
         return(
@@ -3058,6 +3038,58 @@ function NestInput({field,output,handleChange1,handleChange2,addItem1,addItem2,r
             </div>
         </div>
     )
+}
+
+function TableInput({addTableRow,removeTableRow,tableChange,schema,data,method}){
+    return (
+        <div className='crudTable'>
+                    <table>
+                        <thead>
+                            <tr>
+                                {method=="Update" && <th className='crudTableCell'></th>}
+                                {schema.map(field=><th className='crudTableCell'>{field['name']}</th>)}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.map((item,i)=>
+                                <tr>
+                                    {method=="Update" && <td className='crudTableCell'><button onClick={()=>removeTableRow(i)}>-</button></td>}
+                                    {schema.map(field=><td className='crudTableCell'>
+                                        {method=="Update" && <>
+                                        {field['input']=="input" && <input value={item[field['name']]} onChange={(e)=>tableChange(i,field['name'],e)}/>}
+                                        {field['input']=='option' && <select value={item[field['name']]} onChange={(e)=>tableChange(i,field['name'],e)}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                                        </>}
+                                        {method=="Display" && <label>{item[field['name']]}</label>}
+                                    </td>)}
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+            {method=="Update" && <button onClick={()=>addTableRow()}>+</button>}
+        </div>
+    )
+}
+
+function DisplayAsTable({collection}){
+
+    if (collection.length!=0){
+    const fields = Object.keys(collection[0]);
+
+    return (
+        <div className='displayAsTable'>
+            <table className='displayTable'>
+                <thead><tr>{fields.map(field=><th className='displayTableCell'>{field}</th>)}</tr></thead>
+                <tbody>{collection.map(data=><tr>{fields.map(field=><td className='displayTableCell'>{data[field]}</td>)}</tr>)}</tbody>
+            </table>
+        </div>
+    )
+} else {
+    return (
+        <div className='displayAsTable'>
+            Sorry! No data found.
+        </div>
+    )
+}
 }
 
 class KB{
@@ -3891,6 +3923,14 @@ class Collection{
         }
         return schema;
     }
+    navigation(data){
+        const navigation = [
+            {"name":"Back","url":'/control','state':{}},
+            {"name":"Save","url":'/post','state':{'data':data}}
+        ];
+        return navigation;
+
+    }
     errors(data){
         const list = [];
         const mandatory = Collection.mandatory[this.name];
@@ -4209,17 +4249,39 @@ class Collection{
     }
 }
 
-function CRUDCollection(){
+
+function Display({className}){
     const location = useLocation();
-    const query = location.state || {};
-    const {collection,method,parameters} = query;
-    const CRUD = new Collection(collection,method);
-    const defaults = CRUD.defaults(parameters);
+    const inputData = location.state || {};
+    let Display = {};
+    let defaults = {};
+    const {method} = inputData;
+    switch (className){
+        case 'Collection':
+            let {collection,parameters} = inputData;
+            Display = new Collection(collection,method);
+            defaults = Display.defaults(parameters);
+            break
+        case 'Table':
+            let {table} = inputData;
+            Display = new Table(table,method);
+            defaults = Display.defaults;
+            break
+        case 'CollectionQuery':
+            Display = new CollectionQuery(inputData['collection'],inputData['method']);
+            defaults = Display.defaults;
+            break
+    }
     const [data,setdata] = useState(defaults);
-    const output = CRUD.process(data);
-    const schema = CRUD.schema(data);
-    const errors = CRUD.errors(data);
+    const output = Display.process(data);
+    const schema = Display.schema(output);
+    const errors = Display.errors(output);
+    const navigation = Display.navigation(output);
     const navigate = useNavigate();
+    const goto = (url,data)=>{
+        navigate(url,{state:data});
+        window.location.reload();
+    }
 
     const singleChange = (field,e)=>{
         e.preventDefault;
@@ -4291,36 +4353,40 @@ function CRUDCollection(){
         }))
     }
 
-    function cancel(){
-        navigate(`/c/${collection}`);
-        window.location.reload();
+    const tableChange = (index,field,e)=>{
+        const {value} = e.target;
+        setdata(prevdata=>(prevdata.map((item,i)=>(i==index)?{...item,[field]:value}:item)))
     }
 
-    function save(){
-        const result = CRUD.save(data);
-        alert(result);
-        cancel();
+    const addTableRow=()=>{
+        setdata(prevdata=>([...prevdata,defaults[0]]));
+    }
+
+    const removeTableRow =(index)=>{
+        setdata(prevdata=>(prevdata.filter((item,i)=>i!=index)))
     }
 
     return(
         <div className='crudUI'>
             <div className='crudTitle'>
-                <h2>{method} {CRUD.title}</h2>
+                <h2>{Display.title}</h2>
             </div>
             <div className='crudFields'>
-                {schema.map(field=>
+                {className!="Table" && schema.map(field=>
                     <>
                         {field['datatype']=="single" && <SingleInput field={field} output={output} handleChange={singleChange}/>}
                         {field['datatype']=="collection" && <CollectionInput field={field} output={output} handleChange={collectionChange} addItem={addCollection} removeItem={removeCollection}/>}
                         {field['datatype']=="nest" && <NestInput field={field} output={output} handleChange1={collectionChange} handleChange2={nestChange} addItem1={addCollection} addItem2={addNest} removeItem1={removeCollection} removeItem2={removeNest}/>}
                     </>
                 )}
+                {className=="Table" && <TableInput addTableRow={addTableRow} removeTableRow={removeTableRow} data={output} schema={schema} tableChange={tableChange} method={method}/>}
             </div>
-            <div className='crudButtons'>
-                <button onClick={()=>cancel()}><FaArrowLeft/></button>
-                {method!="Display" && <button onClick={()=>save()}>Save</button>}
+            <div className='crudButtons navigation'>
+                {navigation.map(item=>
+                    <button onClick={()=>goto(item['url'],item['state'])}>{item['name']}</button>
+                )}
             </div>
-            {(errors.length>0 && method!="Display") && <div className='crudError'>
+            {(errors.length>0) && <div className='crudError'>
                 <h4>Things to Consider:</h4>
                 <ul>
                     {errors.map(error=>
@@ -4328,27 +4394,40 @@ function CRUDCollection(){
                     )}
                 </ul>
             </div>}
+            {JSON.stringify(output)}
         </div>
     )
 }
 
-class CRUDRoute{
+class CollectionQuery{
     constructor(collection){
         this.collection = collection;
+        this.title = this.collection;
         this.mandatory = new Collection(this.collection).identifiers;
-        this.createRequirements = CRUDRoute.createRequirements[this.collection];
-        this.schema = CRUDRoute.schema[this.collection];
-        this.defaults = CRUDRoute.defaults[this.collection];
+        this.createRequirements = CollectionQuery.createRequirements[this.collection];
+        this.defaults = CollectionQuery.defaults[this.collection];
     }
-    createError(data){
+    schema(data){
+        return CollectionQuery.schema[this.collection];
+    }
+    errors(data){
         const missing = [];
         const errors = [];
         this.createRequirements.map(field=>(data[field]=="")?missing.push(field):()=>{});
         (this.createRequirements.includes("Company Code") && new Collection("Company").exists({"Code":data["Company Code"]})==false)?errors.push(`Company with Code ${data["Company Code"]} does not exist.`):()=>{};
         (this.createRequirements.includes("Employee") && new Collection("Employee").exists({"Company Code":data["Company Code"], "Code":data['Employee']})==false)?errors.push(`Employee with Code ${data["Employee"]} does not exist in Company ${data["Company Code"]}.`):()=>{};
-        (this.createRequirements==ListItems(this.schema,"name") && this.checkAvailability(data))?(errors.push(`${this.collection} with same identifier(s) already exists.`)):()=>{};
+        (this.createRequirements==ListItems(this.schema(data),"name") && this.checkAvailability(data))?(errors.push(`${this.collection} with same identifier(s) already exists.`)):()=>{};
         (missing.length>0)?errors.push(`${missing.join(", ")} required.`):()=>{};
         return errors;
+    }
+    process(data){
+        return data;
+    }
+    navigation(data){
+        return [
+            {"name":"Back","url":"/control","state":{}},
+            {"name":"Submit","url":"/collection","state":{'collection':this.collection,'method':'Create','parameters':{'Company Code':'GFCT','Code':10000}}}
+        ]
     }
     checkAvailability(data){
         const availability = new Collection(this.collection).exists(data);
@@ -4389,8 +4468,8 @@ class CRUDRoute{
     }
     static schema = {
         "Asset":[
-            {"name":"Code","input":"input","type":"number"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+            {"name":"Code","datatype":"single","input":"input","type":"number"},
+            {"name":"Company Code","datatype":"single","input":"input","type":"text", "maxLength":4}
         ],
         "AssetClass":[
             {"name":"Code","input":"input","type":"number"},
@@ -4501,7 +4580,7 @@ class CRUDRoute{
         ],
     }
     static defaults = {
-        "Asset":{"Code":"","Company Code":1000},
+        "Asset":{"Code":"","Company Code":'FACT'},
         "AssetClass":{"Code":"","Company Code":1000},
         "AssetDevelopment":{"Code":"","Company Code":1000},
         "Attendance":{"Company Code":1000,"Year":"","Month":"","Employee":""},
@@ -4555,7 +4634,7 @@ function CRUDRouter(){
             alert(JSON.stringify(createError))
         }
         else {
-            navigate('/crud',{state:{'method':'Create','collection':collection,'parameters':data}})
+            navigate('/collection',{state:{'method':'Create','collection':collection,'parameters':data}})
         }
     }
 
@@ -4563,7 +4642,7 @@ function CRUDRouter(){
         if (!availability){
             alert(`Requested ${collection} not available.`)
         } else {
-            navigate('/crud',{state:{'method':method,'collection':collection,'parameters':data}})
+            navigate('/collection',{state:{'method':method,'collection':collection,'parameters':data}})
         }
     }
 
@@ -4593,112 +4672,78 @@ function CRUDRouter(){
 class Table{
     constructor(name,method="Display"){
         this.name = name;
+        this.title = this.name;
         this.method = method;
-        this.defaults = Table.defaults[this.name];
-        this.data = (this.name in localStorage)?JSON.parse(localStorage.getItem(this.name)):this.defaults;
+        this.data = (this.name in localStorage)?JSON.parse(localStorage.getItem(this.name)):[];
+        this.defaults = (this.method=="Create")?Table.defaults[this.name]:this.data;
         this.key = Table.keys[this.name];
+        this.mandatory = Table.mandatory[this.name];
     }
-    error(data){
+    errors(data){
         const list = [];
-        data.map((item,i)=>(item[this.key]=="")?list.push(`At line ${i+1}, ${this.key} required`):()=>{})
-        data.map(item=>Count(item[this.key],ListItems(data,this.key))>1?list.push(`${this.key} ${item[this.key]} exists ${Count(item[this.key],ListItems(data,this.key))} times.`):()=>{})
+        data.map((item,i)=>this.mandatory.map(field=>(item[field]=="")?list.push(`Item ${i+1} requires ${field}`):()=>{}));
+        data.map(item=>Count(item[this.key],ListItems(data,this.key))>1?list.push(`${this.key} ${item[this.key]} exists ${Count(item[this.key],ListItems(data,this.key))} times.`):()=>{});
         const uniquelist = [...new Set(list)]
         return uniquelist;
+    }
+    process(data){
+        return data;
+    }
+    navigation(data){
+        const navigation = [
+            {"name":"Back","url":"/control","state":{}}
+        ];
+        (this.method!="Update")?navigation.push({"name":"Update","url":"/table","state":{"method":"Update","table":this.name}}):()=>{};
+        (this.method=="Update")?navigation.push({"name":"Save","url":"/post","state":{"method":"Update","table":this.name}}):()=>{};
+        return navigation;
     }
     save(data){
         localStorage.setItem(this.name,JSON.stringify(data));
     }
+    schema(data){
+        let schema = [];
+        switch (this.name){
+            case 'Currencies':
+                schema = [
+                    {"name":"Code","datatype":"single","input":"input","type":"text"},
+                    {"name":"Description","datatype":"single","input":"input","type":"text"}
+
+                ]
+                break
+            case 'HSN':
+                schema = [
+                    {"name":"Code","datatype":"single","input":"input","type":"text"},
+                    {"name":"Type","datatype":"single","input":"option","options":["","Goods","Services"]},
+                    {"name":"Description","datatype":"single","input":"input","type":"text"}
+
+                ]
+                break
+            case 'Units':
+                schema = [
+                    {"name":"Symbol","datatype":"single","input":"input","type":"text"},
+                    {"name":"Name","datatype":"single","input":"input","type":"text"},
+                    {"name":"Quantity","datatype":"single","input":"input","type":"text"},
+                    {"name":"Description","datatype":"single","input":"input","type":"text"}
+                ]
+                break
+        }
+        return schema;
+    }
     static defaults = {
         "Currencies":[{"Code":"","Description":""}],
-        "Units":[{"Unit":"","Description":""}],
-        "HSN":[{"Code":"","Description":""}]
+        "Units":[{"Symbol":"","Name":"","Quantity":"","Description":""}],
+        "HSN":[{"Code":"","Type":"","Description":""}]
     }
     static keys = {
         "Currencies":"Code",
-        "Units":"Unit",
+        "Units":"Symbol",
         "HSN":"Code"
     }
-}
-
-function TableUI(){
-    const {tablename} = useParams();
-    const [method,setmethod]= useState("Display");
-    const changeMethod = ()=>{
-        (method=="Display")?setmethod("Update"):setmethod("Display");
+    static mandatory = {
+        "Currencies":["Code"],
+        "HSN":["Code","Type"],
+        "Units":["Symbol","Name","Quantity"]
     }
-    const table = new Table(tablename,method);
-    const defaults = table.defaults;
-    const [data,setdata] = useState(table.data);
-    const fields = Object.keys(data[0]);
-    const errors = table.error(data);
-    const navigate = useNavigate();
-
-    const handleChange = (index,field,e)=>{
-        const {value} = e.target;
-        setdata(prevdata=>(prevdata.map((item,i)=>(i==index)?{...item,[field]:value}:item)))
-    }
-
-    const addItem=()=>{
-        setdata(prevdata=>([...prevdata,defaults[0]]));
-    }
-
-    const removeItem =(index)=>{
-        setdata(prevdata=>(prevdata.filter((item,i)=>i!=index)))
-    }
-
-    const save = () =>{
-        if (errors.length==0){
-            table.save(data);
-            alert(`${tablename} updated !`);
-            changeMethod();
-            window.location.reload();
-        } else {
-            alert("Please consider the errors!")
-        }
-    }
-
-    return (
-        <div className='crudUI'>
-            <h2 className='crudTitle'>{`Table ${tablename}`}</h2>    
-            <div className='crudField'>
-                <div className='crudTable'>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th className='crudTableCell'></th>
-                                {fields.map(field=><th className='crudTableCell'>{field}</th>)}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {data.map((item,i)=>
-                                <tr>
-                                    <td className='crudTableCell'><button onClick={()=>removeItem(i)}>-</button></td>
-                                    {fields.map(field=><td className='crudTableCell'>
-                                        {method=="Update" && <input value={item[field]} onChange={(e)=>handleChange(i,field,e)}/>}
-                                        {method=="Display" && <label>{item[field]}</label>}
-                                    </td>)}
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                    {method=="Update" && <button onClick={()=>addItem()}>+</button>}
-                </div>
-                <div className='crudButtons'>
-                    {method=="Update" && <button onClick={()=>save()}>Save</button>}
-                    {method=="Update" && <button onClick={()=>changeMethod()}>Cancel</button>}
-                    {method=="Display" && <button onClick={()=>changeMethod()}>Update</button>}
-                </div>
-            </div>
-            {errors.length>0 && <div className='crudError'>
-                <h4>Things to Consider</h4>
-                <ul>
-                    {errors.map(error=>
-                        <li>{error}</li>
-                    )}
-                </ul>
-            </div>}
-        </div>
-    )
 }
 
 class Company{
@@ -4899,8 +4944,9 @@ function App(){
             <Route path='/control' element={<Control/>}/>
             <Route path='/reports' element={<Reports/>}/>
             <Route path="/c/:collection" element={<CRUDRouter/>}/>
-            <Route path="/crud" element={<CRUDCollection/>}/>
-            <Route path="/table/:tablename" element={<TableUI/>}/>
+            <Route path="/collection" element={<Display className={'Collection'}/>}/>
+            <Route path="/table" element={<Display className={'Table'}/>}/>
+            <Route path="/collectionquery" element={<Display className={'CollectionQuery'}/>}/>
             <Route path="/t/:type" element={<TransactionUI/>}/>
             <Route path="/report/:report" element={<ReportQuery/>}/>
             <Route path="/reportdisplay/:report" element={<ReportDisplay/>}/>

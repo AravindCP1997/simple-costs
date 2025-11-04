@@ -126,3 +126,127 @@ function ObjectUI({type,method}){
 {field['datatype']=="single" && <div className='querySingle'><label>{field['name']}</label>{ field['input'] == "input" && <input disabled={field['disabled']} type={field['type']} onChange={(e)=>setmaster(new ControlObject(object,{...data,[field['name']]:e.target.value}))} value={data[field['name']]}/>}{field['input']=="option" && <select onChange={(e)=>setmaster(new ControlObject(object,{...data,[field['name']]:e.target.value}))} value={data[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}
         {field['datatype']=="object" && <div><label>{field['name']}</label>{field['structure'].map(subfield=><>{subfield['datatype']=="single"&&<div className='querySingle'><label>{subfield['name']}</label>{subfield['input']=="input" && <input type={subfield['type']} onChange={(e)=>setmaster(new ControlObject(object,{...data,[field['name']]:{...data[field['name']],[subfield['name']]:e.target.value}}))} value={data[field['name']][subfield['name']]} />}{subfield['input'] == "option" && <select onChange={(e)=>setmaster(new ControlObject(object,{...data,[field['name']]:{...data[field['name']],[subfield['name']]:e.target.value}}))} value={data[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</div>}</>)}</div>}
         {field['datatype']=="collection" && <><label>{field['name']}</label><div className='queryTable'><table><thead><tr>{field['structure'].map(subfield=><th className='queryCell'>{subfield['name']}</th>)}</tr></thead>{data[field['name']].map((item,index)=><tbody><tr>{field['structure'].map(subfield=><>{subfield['datatype']=="single" && <td>{subfield['value']=="calculated" && <input value={data[field['name']][index][subfield['name']]} disabled={true}/>} {subfield['input']=="input"&& <input className='queryCell' onChange={(e)=>setmaster(new ControlObject(object,{...data,[field['name']]:data[field['name']].map((item,i)=>(i==index?{...item,[subfield['name']]:e.target.value}:item))}))} type={subfield['type']} value={data[field['name']][index][subfield['name']]}/>}{subfield['input']=="option" && <select onChange={(e)=>setmaster(new ControlObject(object,{...data,[field['name']]:data[field['name']].map((item,i)=>(i==index?{...item,[subfield['name']]:e.target.value}:item))}))} value={data[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}</td>}</>)}</tr></tbody>)}</table></div><div className="queryButtons"><button onClick={(e)=>setmaster(new ControlObject(object,{...data,[field['name']]:[...data[field['name']],{...field['use-state'][0],['id']:data[field['name']].length}]}))} className='blue'>Add</button></div></>}
+
+
+function CRUDCollection(){
+    const location = useLocation();
+    const query = location.state || {};
+    const {collection,method,parameters} = query;
+    const CRUD = new Collection(collection,method);
+    const defaults = CRUD.defaults(parameters);
+    const [data,setdata] = useState(defaults);
+    const output = CRUD.process(data);
+    const schema = CRUD.schema(data);
+    const errors = CRUD.errors(data);
+    const navigate = useNavigate();
+
+    const singleChange = (field,e)=>{
+        e.preventDefault;
+        const {value} = e.target
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:value
+        }))
+    }
+
+    function objectChange(field,subfield,e){
+        e.preventDefault;
+        const {value} = e.target
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:{...prevdata[field],[subfield]:value}
+        }))
+    }
+
+    function collectionChange(field,subfield,index,e){
+        e.preventDefault;
+        const {value} = e.target
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].map((item,i)=>(i===index)?{...item,[subfield]:value}:item)
+        }))
+    }
+
+    function nestChange(field,index,subfield,subindex,subsubfield,e){
+        const {value} = e.target;
+        setdata(prevdata=>({
+            ...prevdata,[field]:prevdata[field].map((item,i)=>
+            (i==index)?{...item,[subfield]:item[subfield].map((subitem,ii)=>
+            (ii==subindex)?{...subitem,[subsubfield]:value}:subitem)}:item)
+        }))
+    }
+
+    function addCollection(field,e){
+        e.preventDefault;
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:[...prevdata[field],defaults[field][0]]
+        }))
+    }
+
+    function removeCollection(field,index,e){
+        e.preventDefault;
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].filter((item,i)=>i!==index)
+        }))
+        
+    }
+
+    function addNest(field,index,subfield){
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].map((item,i)=>
+            (i==index)?{...item,[subfield]:[...item[subfield],defaults[field][0][subfield][0]]}:item
+            )
+        }))
+    }
+
+    function removeNest(field,index,subfield,subindex){
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].map((item,i)=>
+            (i==index)?{...item,[subfield]:item[subfield].filter((subitem,ii)=>ii!=subindex)}:item)
+        }))
+    }
+
+    function cancel(){
+        navigate(`/c/${collection}`);
+        window.location.reload();
+    }
+
+    function save(){
+        const result = CRUD.save(data);
+        alert(result);
+        cancel();
+    }
+
+    return(
+        <div className='crudUI'>
+            <div className='crudTitle'>
+                <h2>{method} {CRUD.title}</h2>
+            </div>
+            <div className='crudFields'>
+                {schema.map(field=>
+                    <>
+                        {field['datatype']=="single" && <SingleInput field={field} output={output} handleChange={singleChange}/>}
+                        {field['datatype']=="collection" && <CollectionInput field={field} output={output} handleChange={collectionChange} addItem={addCollection} removeItem={removeCollection}/>}
+                        {field['datatype']=="nest" && <NestInput field={field} output={output} handleChange1={collectionChange} handleChange2={nestChange} addItem1={addCollection} addItem2={addNest} removeItem1={removeCollection} removeItem2={removeNest}/>}
+                    </>
+                )}
+            </div>
+            <div className='crudButtons'>
+                <button onClick={()=>cancel()}><FaArrowLeft/></button>
+                {method!="Display" && <button onClick={()=>save()}>Save</button>}
+            </div>
+            {(errors.length>0 && method!="Display") && <div className='crudError'>
+                <h4>Things to Consider:</h4>
+                <ul>
+                    {errors.map(error=>
+                        <li>{error}</li>
+                    )}
+                </ul>
+            </div>}
+        </div>
+    )
+}

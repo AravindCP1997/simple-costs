@@ -446,6 +446,7 @@
 .crudTable{
   overflow: auto;
   font-size: 80%;
+  padding:5px;
 }
 
 .crudTableCell{
