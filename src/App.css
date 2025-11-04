@@ -207,170 +207,7 @@
   color:white
 }
 
-.timeControlUI{
-  width:fit-content;
-  background: var(--lightbluet);
-  box-shadow: 0px 0.5px 1px 0px black;
-  padding: 5%;
-  color:var(--blue);
-  border-radius: 25px;
-  display:flex;
-  flex-direction: column;
-  gap:10px;
-}
-
-.timeControlTitle{
-  border: 2px solid var(--lightgray);
-  padding:10px;
-  border-radius: 15px;
-  cursor: pointer;
-  margin: 0;
-  text-align: center;
-  background: var(--lightbluet);
-}
-
-.timeControlSubTitle{
-  border: 2px solid var(--lightgray);
-  padding:5px;
-  border-radius: 15px;
-  cursor: pointer;
-  margin: 0;
-  text-align: center;
-  background: var(--lightbluet);
-}
-
-.timePeriod{
-  background: var(--lightbluet);
-  color:var(--blue);
-  padding: 10px;
-  border-radius: 15px;
-  border: 2px solid var(--lightgray);
-}
-
-.timePeriodButtons{
-  display: flex;
-  flex-direction: row;
-  gap:10px;
-  justify-content: right;
-  padding: 10px;
-}
-
-.query{
-  background: var(--lightbluet);
-  backdrop-filter: blur(10px);
-  display: flex;
-  flex-direction: column;
-  gap:20px;
-  padding: 5%;
-  border-radius: 25px;
-  width:100%;
-  text-align: center;
-  box-shadow: 0px 0.5px 1px 0px black;
-}
-
-.queryTitle{
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  border: 2px solid var(--lightgray);
-  color:var(--blue);
-}
-
-.querySelect{
-  text-align: center;
-  border-radius: 20px;
-}
-
-.queryButtons{
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  gap:2%;
-
-  button{
-    width:100px;
-    border-radius: 15px;
-    border:none;
-  }
-}
-
-.queryDisplay{
-  border-radius:0px;
-  padding:10px;
-  display: flex;
-  flex-direction: column;
-  gap:5px;
-  width:100%;
-  overflow: auto;
-  background:var(--lightgray) ;
-  border-radius: 20px;
-}
-
-.queryField{
-  position:relative;
-  background: white;
-  padding: 5px;
-}
-
-.querySingle{
-  display: grid;
-  grid-template-columns: 50% 50%;
-}
-
-.queryTable{
-  position:relative;
-  overflow: auto;
-  padding: 5px;
-}
-
-.queryRow{
-  display:flex;
-  flex-direction:row;
-}
-
-.queryCell{
-  border:1px solid black;
-  text-align: center;
-  border-radius: 0;
-  font-size: 12px;
-  color:var(--blue)
-}
-
-.collectionRoute{
-  display: flex;
-  flex-direction: column;
-  gap:10px;
-  min-width:60%;
-  padding: 5%;
-  box-shadow: 0px 3px 10px 0px lightgray;
-  border-radius: 25px;
-  
-}
-
-.collectionRouteTitle{
-  background: var(--lightgreent);
-  text-align: center;
-  border-radius: 15px;
-}
-
-.collectionRouteButtons{
-  display: flex;
-  flex-direction:row;
-  gap:10px;
-  justify-content: center;
-  border-radius: 15px;
-  padding: 10px;
-  background: var(--whitet);
-
-  button{
-    border-radius: 10px;
-  }
-}
-
-.collectionCreateButton{
-  background: var(--greent);
-}
-
-.crudUI{
+.display{
   background: none;
   box-shadow: 0px 3px 10px 0px lightgray;
   border-radius: 20px;
@@ -383,12 +220,12 @@
   color:var(--bluet);
 }
 
-.crudTitle{
-  color:var(--bluet);
+.displayTitle{
+  color:white;
   text-align: center;
   padding:15px;
   border-radius: 15px;
-  background: var(--lightbluet);
+  background: var(--bluet);
   margin:0;
   cursor: pointer;
   transition: 0.5s;
@@ -398,58 +235,62 @@
   }
 }
 
-.crudTitle:hover{
-  background: var(--lightgreent);
+.displayTitle:hover{
+  background: var(--blue);
 }
 
-.crudFields{
+.displayInputFields{
   display:flex;
   flex-direction: column;
   gap:10px;
   color:var(--blue);
+  background: var(--lightbluet);
+  border-radius: 15px;
+  padding: 10px;
 }
 
-.crudField{
+.displayField{
   padding: 5px;
   border-radius: 15px;
   background: var(--lightbluet);
   transition: 0.5s;
+  border: 2px solid var(--lightgray);
   input,select{
     border-radius: 10px;
   }
 }
 
-.crudRow{
+.displayRow{
   display: grid;
   grid-template-columns: 50% 50%;
 }
 
-.crudObject{
+.displayObject{
   display:flex;
   flex-direction: column;
   gap:2px;
   padding: 5px;
 }
 
-.crudObjectHead{
+.displayObjectHead{
   display: flex;
   flex-direction: row;
 }
 
-.crudObjectButtons{
+.displayObjectButtons{
   display: flex;
   flex-direction: row;
   justify-content: right;
   padding:2px;
 }
 
-.crudTable{
+.displayTable{
   overflow: auto;
   font-size: 80%;
   padding:5px;
 }
 
-.crudTableCell{
+.displayTableCell{
   border:1px solid var(--blue);
   input,select{
     border-radius: 0;
@@ -458,7 +299,7 @@
   }
 }
 
-.crudError{
+.error{
   background: var(--lightredt);
   padding: 10px;
   border-radius: 15px;
@@ -466,7 +307,7 @@
   border: 2px solid var(--lightgray);
 }
 
-.crudButtons{
+.navigation{
   display:flex;
   flex-direction: row;
   justify-content: right;
@@ -592,18 +433,16 @@
   }
 }
 
+.tableButtons{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding: 5px;
+}
+
 .assets{
   width:100%;
 }
-
-.holidays{
-  border-radius:20px;
-  background: var(--lightredt);
-  backdrop-filter: blur(3px);
-  padding: 5%;
-  width:100%;
-}
-
 .reportQuery{
   border-radius: 25px;
   padding:5%;

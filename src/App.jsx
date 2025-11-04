@@ -889,370 +889,6 @@ class Vendor{
     }
 }
 
-function TrialBalance(){
-    const [query,setquery] = useState(["2025-04-01","2026-03-31"])
-    const [period,setperiod] = useState(["2025-04-01","2026-03-31"])
-    const data = GeneralLedger.trialbalance(period)
-    return(
-        <div>
-            <div className='query'>
-                <label>Period</label>
-                <label>From</label><input onChange={(e)=>setquery(prevdata=>[e.target.value,prevdata[1]])} value={query[0]} onCh type="date"/>
-                <label>To</label><input onChange={(e)=>setquery(prevdata=>[prevdata[0],e.target.value])} value={query[1]} type="date"/>
-                <button onClick={()=>setperiod(query)}>Get</button>
-            </div>
-            <DisplayAsTable collection={data}/>
-        </div>
-
-    )
-}
-
-// const objects = {
-//     "Asset":{
-//         "name":"Asset",
-//         "schema": [
-//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-//             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-//             {"name": "Asset Class", "datatype":"single", "input":"option", "options":["",...AssetClass.list()],"use-state":""},
-//             {"name": "Cost Center", "datatype":"single", "input":"option", "options":["",...CostCenter.list()],"use-state":""},
-//             {"name": "Useful Life", "datatype":"single", "input":"input", "type":"number","use-state":0},
-//             {"name": "Salvage Value", "datatype":"single", "input":"input", "type":"number","use-state":0},
-//             {"name": "Date of Capitalisation", "datatype":"single", "input":"input", "type":"date","use-state":0},
-//             {"name": "Date of Removal", "datatype":"single", "input":"input", "type":"date","use-state":0}
-//         ],
-//         "collection":'assets'
-//     },
-//     "Asset Class":{
-//         "name":"Asset Class",
-//         "schema": [
-//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-//             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-//             {"name": "Depreciable", "datatype":"single", "input":"option", "options":["","Yes","No"], "use-state":""},
-//             {"name": "General Ledger - Asset", "datatype":"single", "input":"option", "options":["",...GeneralLedger.listtype("Asset")], "use-state":""},
-//             {"name": "General Ledger - Depreciation", "datatype":"single", "input":"option", "options":["",...GeneralLedger.listtype("Depreciation")], "use-state":""}
-//         ],
-//         "collection":"assetclasses"
-//     },
-//     "Bank Account":{
-//         "name":"Bank Account",
-//         "collection":"bankaccounts",
-//         "schema":[
-//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-//             {"name":"Name","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name":"Bank Name","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name":"IFSC","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name":"Account Number","datatype":"single","input":"input","type":"number","use-state":""},
-//             {"name":"General Ledger","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('Bank Account')],"use-state":""},
-//             {"name":"Profit Center","datatype":"single","input":"option","options":["",...ProfitCenter.list()],"use-state":""},
-//             {"name":"Virtual Accounts","datatype":"collection","structure":[
-//                 {"name":"Virtual Account Number","datatype":"single","input":"input","type":"text","use-state":""},
-//                 {"name":"Ledger","datatype":"single","input":"option","options":["",...Customer.list(),...GeneralLedger.listtype('General')],"use-state":""},
-//                 {"name":"Presentation","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('Customer')]},
-//                 {"name":"Profit Center","datatype":"single","input":"option","options":["",...ProfitCenter.list()]}
-//             ],"use-state":[{"Virtual Account Number":"","Ledger":"","Profit Center":""}]},
-//         ]
-//     },
-//     "Cost Center":{
-//         "name": "Cost Center",
-//         "schema": [
-//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-//             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":"Chennai"},
-//             {"name": "Profit Center", "datatype":"single", "input":"option", "options":["",...ProfitCenter.list()], "use-state":"No"},
-//             {"name":"Apportionment Ratio","datatype":"nest","structure":[
-//                 {"name":"From", "datatype":"single", "input":"input", "type":"date"},
-//                 {"name":"To", "datatype":"single", "input":"input", "type":"date"},
-//                 {"name":"Ratio", "datatype":"collection", "structure":[
-//                     {"name":"To", "datatype":"single", "input":"input", "type":"text"},
-//                     {"name":"Ratio", "datatype":"single", "input":"input", "type":"text"}
-//                 ],'use-state':[{"To":"","Ratio":""}]}
-//             ],"use-state":[{"From":"2025-04-01","To":"2026-03-31","Ratio":[{"To":"Head Office","Ratio":0.50}]}]}
-//         ],
-//         "collection":"costcenters"
-//     },
-//     "Cost Object":{
-//         "name":"Cost Object",
-//         "collection":"costobjects",
-//         "schema":[
-//             {"name":"Description","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name":"Cost Accumulation Period","datatype":"object","structure":[{"name":"From", "datatype":"single", "input":"input", "type":"date"},{"name":"To", "datatype":"single", "input":"input", "type":"date"}],"use-state":{"From":"","To":""}},
-//             {"name":"Settlement Ratio","datatype":"collection","structure":[
-//                 {"name":"To","datatype":"single","input":"option","options":CostObject.transferablesList()},
-//                 {"name":"Proportion","datatype":"single","input":"input","type":"number"},
-//                 {"name":"Type","datatype":"single","value":"calculated"},
-//                 {"name":"Consumption Time From", "datatype":"single","input":"input","type":"date"},
-//                 {"name":"Consumption Time To", "datatype":"single","input":"input","type":"date"}
-//             ],
-//             "use-state":[{"To":"","Proportion":"","Consumption Time From":"","Consumption Time To":""}]},
-
-//         ]
-//     },
-//     "Currency":{
-//         "name":"Currency",
-//         "schema":[
-//             {"name":"Currency","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name":"Code","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name":"Exchange Rate","datatype":"single","input":"input","type":"number","use-state":""}
-//         ],
-//         "collection":"currencies"
-//     },
-//     "Customer":{
-//         "name":"Customer",
-//         "collection":"customers",
-//         "schema": [
-//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-//             {"name":"Name","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name":"Address","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name":"City","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name":"PIN","datatype":"single","input":"input","type":"number","use-state":""},
-//             {"name":"State","datatype":"single","input":"option","options":["",...Intelligence.States,...Intelligence.UTs,"Outside India"],"use-state":""},
-//             {"name":"Phone","datatype":"single","input":"input","type":"number","use-state":""},
-//             {"name":"E-mail","datatype":"single","input":"input","type":"number","use-state":""},
-//             {"name":"PAN","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name":"GSTIN","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
-//             {"name":"Payment Terms","datatype":"single","input":"option","options":[],"use-state":""},
-//         ]
-//     },
-//     "Employee":{
-//         "name":"Employee",
-//         "schema": [
-//             {"name":"Code", "datatype":"single", "input":"input","type":"text","use-state":""},
-//             {"name": "Name", "datatype":"single", "input":"input","type":"text","use-state":""},
-//             {"name": "Address", "datatype":"single", "input":"input","type":"text","use-state":""},
-//             {"name": "PIN", "datatype":"single", "input":"input","type":"number","use-state":""},
-//             {"name": "Phone", "datatype":"single", "input":"input","type":"number","use-state":""},
-//             {"name": "E-mail", "datatype":"single", "input":"input","type":"text","use-state":""},
-//             {"name": "PAN", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-//             {"name": "Date of Birth", "datatype":"single", "input":"input", "type":"date", "use-state":0},
-//             {"name":"Age","value":"calculated"},
-//             {"name": "Date of Hiring", "datatype":"single", "input":"input", "type":"date", "use-state":0},
-//             {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Validated", "value":"calculated", "datatype":"single"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
-//             {"name":"Employment Details", "datatype":"collection","structure":[{"name":"Organisational Unit", "datatype":"single", "input":"option", "options":[""]},{"name":"Position", "datatype":"single", "input":"input", "type":"text"},{"name":"Scale", "datatype":"single", "input":"input", "type":"number"},{"name":"From", "datatype":"single", "input":"input", "type":"date"},{"name":"To", "datatype":"single", "input":"input", "type":"date"}], "use-state":[{"id":0,"Organisational Unit":"Finance","Position":"Assistant Manager","Scale":100000,"From":0,"To":0}]},
-//             {"name":"Deductions - Recurring","datatype":"collection","structure":[{"name":"Description","datatype":"single", "input":"input", "type":"text"},{"name":"From","datatype":"single", "input":"input", "type":"date"},{"name":"To","datatype":"single", "input":"input", "type":"date"},{"name":"Amount","datatype":"single", "input":"input", "type":"number"}], "use-state":[{"Description":"","From":"","To":"","Amount":""}]},
-//             {"name":"Deductions - Onetime","datatype":"collection","structure":[{"name":"Description","datatype":"single", "input":"input", "type":"text"},{"name":"Date","datatype":"single", "input":"input", "type":"date"},{"name":"Amount","datatype":"single", "input":"input", "type":"number"}], "use-state":[{"Description":"","Date":"","Amount":""}]},
-//             {"name":"Incometax Regime","datatype":"single","input":"option","options":["New","Old"],"use-state":""},
-//             {"name":"Incometax - Additional Income","datatype":"collection","structure":[{"name": "Tax Year", "datatype":"single", "input":"input","type":"number"},{"name": "Description", "datatype":"single", "input":"input","type":"text"},{"name": "Amount", "datatype":"single", "input":"input","type":"number"}],"use-state":[{"Tax Year":"","Description":"","Amount":""}]},
-//             {"name":"Incometax - Deductions","datatype":"collection","structure":[{"name": "Tax Year", "datatype":"single", "input":"input","type":"number"},{"name": "Description", "datatype":"single", "input":"input","type":"text"},{"name": "Amount", "datatype":"single", "input":"input","type":"number"}],"use-state":[{"Tax Year":"","Description":"","Amount":""}]},
-//             {"name":"Leaves","datatype":"collection","structure":[{"name": "From", "datatype":"single", "input":"input","type":"date"},{"name": "To", "datatype":"single", "input":"input","type":"date"},{"name": "Type of Leave", "datatype":"single", "input":"input","type":"text"}],"use-state":[{"From":"","To":"","Type of Leave":""}]},
-//         ],
-//         "collection":'employees'
-//     },
-//     "General Ledger":{
-//         "name":"General Ledger",
-//         "schema":[
-//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-//             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-//             {"name":"Ledger Type","datatype":"single","input":"option","options":["","Asset", "Bank Account", "Cost Element",  "Customer", "Depreciation" ,"General", "GST",  "Material", "Vendor"]},
-//             {"name": "Presentation", "datatype":"single", "input":"option", "options":["Income", "Expense", "Asset", "Liability", "Equity"], "use-state":"Income"},
-//             {"name": "Enable Clearing", "datatype":"single", "input":"option","options":["True","False"], "use-state":"True"},
-//         ],
-//         "collection":"generalledgers"
-//     },
-//     "GST Code":{
-//         "name":"GST Code",
-//         "collection":"gstcodes",
-//         "schema":[
-//             {"name":"Code","datatype":"single", "input":"input", "type":"text", "use-state":""},
-//             {"name":"Rate","datatype":"single","input":"input","type":"number","use-state":0},
-//             {"name":"Cess Rate","datatype":"single","input":"input","type":"number","use-state":0},
-//             {"name":"CGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
-//             {"name":"IGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
-//             {"name":"SGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
-//             {"name":"UTGST Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0},
-//             {"name":"Cess Account","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('GST')],"use-state":0}
-//         ]
-//     },
-//     "Income Tax Code":{
-//         "name":"Income Tax Code",
-//         "collection":"incometaxcodes",
-//         "schema":[
-//             {"name":"Code", "datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name":"Taxation","datatype":"nest","structure":[
-//                 {"name":"From Year", "datatype":"single","input":"input","type":"number","use-state":""},
-//                 {"name":"To Year", "datatype":"single","input":"input","type":"number","use-state":""},
-//                 {"name":"Marginal Relief","datatype":"single","input":"option","options":["","Yes","No"],"use-state":"No"},
-//                 {"name":"Exemption Limit", "datatype":"single","input":"input","type":"number","use-state":""},
-//                 {"name":"Cess", "datatype":"single","input":"input","type":"number","use-state":""},
-//                 {"name":"Slab", "datatype":"collection", "structure":[
-//                     {"name":"From","datatype":"single","input":"input","type":"number"},
-//                     {"name":"To","datatype":"single","input":"input","type":"number"},
-//                     {"name":"Rate","datatype":"single","input":"input","type":"number"},
-//                 ], 'use-state':[{"From":"","To":"","Rate":""}]},
-//             ], "use-state":[{"From Year":"","To Year":"","Exemption Limit":"","Marginal Relief":"No","Slab":[{"From":"","To":"","Rate":""}]}]}
-//         ]
-//     },
-//     "Location":{
-//         "name":"Location",
-//         "schema": [
-//             {"name":"Name", "datatype":"single", "input":"input", "type":"text","use-state":""},
-//             {"name":"Cost Center", "datatype":"single", "input":"option", "options":["",...CostCenter.list()],"use-state":""},
-//         ],
-//         "collection":"locations"
-//     },
-//     "Material":{
-//         "name":"Material",
-//         "schema":[
-//             {"name":"Name", "datatype":"single", "input":"input", "type":"text","use-state":""},
-//             {"name":"General Ledger", "datatype":"single", "input":"option", "options":["",...GeneralLedger.listtype('Material')],"use-state":""},
-//             {"name":"Unit", "datatype":"single", "input":"option", "options":["",...Unit.list()],"use-state":""},
-//             {"name":"Price", "datatype":"collection", "structure":[{"name":"Location","datatype":"single","input":"input","type":"text"},{"name":"Date","datatype":"single","input":"input","type":"date"},{"name":"Price","datatype":"single","input":"input","type":"number"}],"use-state":[{"Location":"","Date":"","Price":""}]},
-//         ],
-//         "collection":"materials"
-//     },
-//     "Organisational Unit":{
-//         "name":"Organisational Unit",
-//         "collection":"organisationalunits",
-//         "schema":[
-//             {"name":"Name", "datatype":"single", "input":"input", "type":"text","use-state":""},
-//             {"name":"Cost Center", "datatype":"single", "input":"option", "options":["",...CostCenter.list()],"use-state":""}
-//         ]
-//     },
-//     "Payment Term":{
-//         "name":"Payment Term",
-//         "schema":[
-//             {"name": "Code", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-//             {"name":"Description","datatype":"single", "input":"input", "type":"text","use-state":"45 Days Net"},
-//             {"name":"Discounting Criteria", "datatype":"collection","structure":[{"name":"Days from Supply","datatype":"single","input":"input","type":"number"},{"name":"Discount %","datatype":"single","input":"input","type":"number"}] , "use-state":[{"Days from Supply":45,"Discount %":0}]}
-//         ],
-//         "collection":"paymentterms"
-//     },
-//     "Profit Center":{
-        
-//         "name":"Profit Center",
-//         "schema":[
-//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-//             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-//             {"name": "Segment", "datatype":"single", "input":"option", "options":["",...Segment.list()], "use-state":""},
-//         ],
-//         "collection":"profitcenters"
-//     },
-//     "Purchase Order":{
-//         "name": "Purchase Order",
-//         "schema":[
-//             {"name": "Vendor", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-//             {"name": "Description", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-//             {"name": "Item Details", "datatype":"collection", "structure":[
-//                 {"name":"Material/ Service","datatype":"single","input":"input","type":"text"},
-//                 {"name":"Quantity","datatype":"single","input":"input","type":"number"},
-//                 {"name":"Price","datatype":"single","input":"input","type":"number"},
-//                 {"name":"Value","datatype":"single","value":"calculated"},
-//                 {"name":"Cost Center","datatype":"single","input":"input","type":"text"},
-//                 {"name":"Cost Object","datatype":"single","input":"input","type":"text"},
-//             ],"use-state":[{"id":0,"Material/ Service":"","Quantity":0,"Price":0, "Value":0,"Cost Center":"","Cost Object":""}]}
-//         ],
-//         "collection":"purchaseorders"
-//     },
-//     "Segment":{
-//         "name": "Segment",
-//         "schema": [
-//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-//             {"name": "Name", "datatype":"single", "input":"input", "type":"text", "use-state":""}
-//         ],
-//         "collection":"segments"
-//     },
-//     "Service":{
-//         "name":"Service",
-//         "schema":[
-//             {"name":"Name","datatype":"single","input":"input","type":"text","use-State":""},
-//             {"name":"Unit","datatype":"single","input":"input","type":"text","use-State":""},
-//             {"name":"General Ledger","datatype":"single","input":"option","options":ListofItems(Database.load('General Ledger'),0),"use-State":""},
-//         ],
-//         "collection":"services"
-//     },
-//     "Sale Order":{
-//         "name": "Sale Order",
-//         "schema":[
-//             {"name": "Customer", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-//             {"name": "Description", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-//             {"name": "Item Details", "datatype":"collection", "structure":[
-//                 {"name":"Material/ Service","datatype":"single","input":"input","type":"text"},
-//                 {"name":"Quantity","datatype":"single","input":"input","type":"number"},
-//                 {"name":"Price","datatype":"single","input":"input","type":"number"}
-//             ],"use-state":[{"id":0,"Material/ Service":"","Quantity":0,"Price":0}]}
-//         ],
-        
-//         "collection":"saleeorders"
-//     },
-//     "TDS Code":{
-//         "name":"TDS Code",
-//         "collection":"tdscodes",
-//         "schema":[
-//             {"name":"Code","datatype":"single", "input":"input", "type":"text", "use-state":""},
-//             {"name":"Description","datatype":"single", "input":"input", "type":"text", "use-state":""},
-//             {"name":"General Ledger","datatype":"single","input":"option","options":["",...GeneralLedger.listtype('TDS')], "use-state":""},
-//         ]
-//     },
-//     "Unit":{
-//         "name":"Unit",
-//         "collection":"units",
-//         "schema":[
-//             {"name":"Code","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name":"Description","datatype":"single","input":"input","type":"text","use-state":""},
-//         ]
-//     },
-//     "Vendor":{
-//         "name":"Vendor",
-//         "collection":"vendors",
-//         "schema": [
-//             {"name": "Code", "datatype":"single", "input":"input", "type":"number", "use-state":""},
-//             {"name":"Name","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name":"Address","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name":"City","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name":"State","datatype":"single","input":"option","options":["",...Intelligence.States,...Intelligence.UTs,"Outside India"],"use-state":""},
-//             {"name":"PIN","datatype":"single","input":"input","type":"number","use-state":""},
-//             {"name":"MSME Status","datatype":"single","input":"option","options":["","Micro","Small","Medium","Non-MSME"],"use-state":""},
-//             {"name":"Phone","datatype":"single","input":"input","type":"number","use-state":""},
-//             {"name":"E-mail","datatype":"single","input":"input","type":"number","use-state":""},
-//             {"name":"PAN","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name":"GSTIN","datatype":"single","input":"input","type":"text","use-state":""},
-//             {"name": "Bank Accounts", "datatype":"collection", "structure":[{"name":"Bank", "datatype":"single", "input":"input", "type":"text"},{"name":"IFSC", "datatype":"single", "input":"input", "type":"text"},{"name":"Account Number", "datatype":"single", "input":"input", "type":"number"},{"name":"Confirm Account Number", "datatype":"single", "input":"input", "type":"number"}],"use-state":[{"id":0,"Bank":"SBI","IFSC":"SBIN0070056","Account Number":"000000000000", "Confirm Account Number":"000000000000"}]},
-//             {"name":"Payment Terms","datatype":"single","input":"option","options":[],"use-state":""},
-//         ]
-//     },
-//     "Transaction" : {
-//         "name":"Transaction",
-//         "collection":"transactions",
-//         "schema": [
-//             {"name": "Entry Date", "value":"calculated"},
-//             {"name": "Description", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-//             {"name": "Posting Date", "datatype":"single", "input":"input", "type":"date", "use-state":new Date()},
-//             {"name": "Document Date", "datatype":"single", "input":"input", "type":"date", "use-state":""},
-//             {"name": "Reference", "datatype":"single", "input":"input", "type":"text", "use-state":""},
-//             {"name": "Currency", "datatype":"single", "input":"option", "options":[], "use-state":""},
-//             {"name": "Calculate Tax", "datatype":"single", "input":"option", "options":["Yes","No"], "use-state":"No"},
-//             {"name":"Balance", "value":"calculated"},
-//             {"name": "Line Items", "datatype":"collection", "structure":
-//                 [
-//                     {"name":"Account", "datatype":"single","input":"option","options":[...Material.list(),...Asset.list(),...GeneralLedger.listtype('General'),...GeneralLedger.listtype('Cost Element'),...BankAccount.list(),...Vendor.list()],"use-State":""},
-//                     {"name":"General Ledger","value":"calculated","datatype":"single"},
-//                     {"name":"Account Type", "datatype":"single","value":"calculated"},
-//                     {"name":"Amount", "datatype":"single","input":"input","type":"number"},
-//                     {"name":"Debit/ Credit", "datatype":"single","input":"option","options":["Debit", "Credit"]},
-//                     {"name":"GST", "datatype":"single","input":"option","options":["Input 5%", "Input 12%", "Input 18%", "Input 40%","Output 5%", "Output 12%", "Output 18%", "Output 40%"]},
-//                     {"name":"Description", "datatype":"single","input":"input","type":"text"},
-//                     {"name":"Cost Center", "datatype":"single","input":"input","type":"text"},
-//                     {"name":"Quantity", "datatype":"single","input":"input","type":"number"},
-//                     {"name":"Value Date", "datatype":"single","input":"input","type":"date"},
-//                     {"name":"Location", "datatype":"single","input":"input","type":"text"},
-//                     {"name":"Profit Center", "datatype":"single","input":"option","options":ListofItems(loadData('profitcenters'),0)},
-//                     {"name":"Cost Object", "datatype":"single","input":"option","options":["",...CostObject.list()]},
-//                     {"name":"Purchase Order", "datatype":"single","input":"option","options":ListofItems(loadData('purchaseorders'),0)},
-//                     {"name":"Purchase Order Item", "datatype":"single","input":"option","options":[]},
-//                     {"name":"Sale Order", "datatype":"single","input":"option","options":ListofItems(loadData('serviceorders'),0)},
-//                     {"name":"Sale Order Item", "datatype":"single","input":"option","options":[]},
-//                     {"name":"Employee", "datatype":"single","input":"option","options":ListofItems(loadData('employees'),0)},
-//                     {"name":"Consumption Time From", "datatype":"single","input":"input","type":"date"},
-//                     {"name":"Consumption Time To", "datatype":"single","input":"input","type":"date"},
-//                     {"name":"Cost per Day","value":"calculated","datatype":"single"},
-//                     {"name":"Cleared","value":"calculated","datatype":"single"}
-
-//                 ],  
-//                 "use-state":[{"id":0,"Account":"","Account Type":"","General Ledger":"","Amount":0,"Debit/ Credit":"Debit","GST":"","Cost Center":"","Cost Object":"","Asset":"","Material":"","Quantity":"","Location":"","Profit Center":"","Purchase Order":"","Purchase Order Item":"","Sale Order":"","Sale Order Item":"","Consumption Time From":"","Consumption Time To":"","Employee":"","Cost per Day":0,"Cleared":false}]}
-//         ]
-//     }
-// }
-
-
 function SuperRange(collection,range,from,to){
     const filtered = collection.filter(item=>item[from]<=range[0] && item[to]>=range[1])
     return filtered
@@ -1422,16 +1058,18 @@ function Control(){
     const navigate = useNavigate();
     const controls = [
         {"Group":"Global", "Controls":[
-            {"Name":"Chart of Accounts", "URL":"/c/ChartOfAccounts"},
+            {"Name":"Chart of Accounts", "URL":"/interface", "state":{"type":"Collection","method":"Create","collection":"ChartOfAccounts"}},
             {"Name":"Company", "URL":"/c/Company"},
             {"Name":"Financial Statement Version", "URL":"/c/FinancialStatementVersion"},
             {"Name":"Group Chart of Accounts", "URL":"/c/GroupChartOfAccounts"},
             {"Name":"Income Tax Code", "URL":"/c/IncomeTaxCode"},
-            {"Name":"Payment Terms", "URL":"/c/PaymentTerms"},
+            {"Name":"Payment Terms", "URL":"/collection/","state":{'method':'Create','collection':'PaymentTerms','parameters':{}}},
             {"Name":"Segment", "URL":"/c/Segment"},
-            {"Name":"Currencies", "URL":"/table/","state":{'table':'Currencies','method':'Display'}},
-            {"Name":"HSN", "URL":"/table/","state":{'table':'HSN','method':'Display'}},
-            {"Name":"Units", "URL":"/table/","state":{'table':'Units','method':'Display'}},
+        ]},
+        {"Group":"Tables", "Controls":[
+            {"Name":"Currencies", "URL":"/interface/","state":{'type':'Table','table':'Currencies','method':'Display'}},
+            {"Name":"HSN", "URL":"/interface/","state":{'type':'Table','table':'HSN','method':'Display'}},
+            {"Name":"Units", "URL":"/interface/","state":{'type':'Table','table':'Units','method':'Display'}},
         ]},
         {"Group":"Financial Accounting", "Controls":[
             {"Name":"Financial Accounts Settings", "URL":"/c/FinancialAccountsSettings"},
@@ -1439,8 +1077,8 @@ function Control(){
             {"Name":"General Ledger", "URL":"/c/GeneralLedger"},
         ]},
         {"Group":"Asset", "Controls":[
-            {"Name":"Create Asset", "URL":"/collectionquery","state":{'collection':'Asset','method':"Create"}},
-            {"Name":"Display Asset", "URL":"/collectionquery","state":{'collection':'Asset','method':"Display"}},
+            {"Name":"Create Asset", "URL":"/interface","state":{'type':'CollectionQuery','collection':'Asset','method':"Create"}},
+            {"Name":"Display Asset", "URL":"/interface","state":{'type':'CollectionQuery','collection':'Asset','method':"Display"}},
             {"Name":"Asset Class", "URL":"/c/AssetClass"},
             {"Name":"Asset Development", "URL":"/c/AssetDevelopment"},
         ]},
@@ -2923,8 +2561,8 @@ class IncomeTax{
 
 function SingleInput({field,handleChange,output}){
     return(
-        <div className='crudField'>
-            <div className='crudRow'>
+        <div className='displayField'>
+            <div className='displayRow'>
                 <label>{field['name']}</label>
                 {field['noteditable'] && <p>{output[field['name']]}</p>}
                 {(field['input'] == "input" && !field['noteditable'] )&& 
@@ -2938,12 +2576,12 @@ function SingleInput({field,handleChange,output}){
 
 function ObjectInput({field,handleChange,output,editable}){
     return(
-        <div className='crudField'>
-            <div className='crudObject'>
+        <div className='displayField'>
+            <div className='displayObject'>
                 <label>{field['name']}</label>
                 {field['schema'].map(subfield=>
                     <>{subfield['datatype']=="single"&&
-                        <div className='crudRow'><label>{subfield['name']}</label>
+                        <div className='displayRow'><label>{subfield['name']}</label>
                             {(!field['noteditable'] && subfield['input']=="input" )&& 
                                 <input type={subfield['type']} onChange={(e)=>handleChange(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}/>}
                             {(!field['noteditable'] && subfield['input'] == "option") && 
@@ -2960,27 +2598,29 @@ function ObjectInput({field,handleChange,output,editable}){
 
 function CollectionInput({field,handleChange,output,addItem,removeItem}){
     return (
-        <div className='crudField'>
-            <div className='crudObject'>
-                <div className='crudObjectHead'>
+        <div className='displayField'>
+            <div className='displayObject'>
+                <div className='displayObjectHead'>
                     <label>{field['name']}</label>
-                        <div className='crudObjectButtons'>
+                        <div className='displayObjectButtons'>
                             {!field['noteditable'] && <button className="blue" onClick={(e)=>addItem(field['name'],e)}>Add</button>}
                         </div>
                 </div>
                 
-                <div className='crudTable'>
+                <div className='displayTable'>
                     <table>
                         <thead>
-                            <tr><th className='crudTableCell'></th>{field['schema'][0].map(subfield=><th className='crudTableCell'>{subfield['name']}</th>)}</tr>
+                            <tr>
+                                {!field['noteditable'] && <th className='displayTableCell'></th>}
+                                {field['schema'][0].map(subfield=><th className='displayTableCell'>{subfield['name']}</th>)}</tr>
                         </thead>
                         {output[field['name']].map((item,index)=>
                             <tbody>
                                 <tr>
-                                    <td className='crudTableCell'>{!field['noteditable'] && <button onClick={(e)=>removeItem(field['name'],index,e)}>-</button>}</td>
+                                    {!field['noteditable'] && <td className='displayTableCell'><button onClick={(e)=>removeItem(field['name'],index,e)}>-</button></td>}
                                     {field['schema'][index].map(subfield=>
                                         <>{subfield['datatype']=="single" && 
-                                            <td className='crudTableCell'>
+                                            <td className='displayTableCell'>
                                                 {subfield['noteditable'] && <p>{output[field['name']][index][subfield['name']]}</p>}
                                                 {(subfield['input']=="input" && !subfield['noteditable'])&& <input onChange={(e)=>handleChange(field['name'],subfield['name'],index,e)} type={subfield['type']} placeholder={subfield['placeholder']} value={output[field['name']][index][subfield['name']]}/>}
                                                 {(subfield['input']=="option"&& !subfield['noteditable']) && <select onChange={(e)=>handleChange(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}
@@ -2997,33 +2637,33 @@ function CollectionInput({field,handleChange,output,addItem,removeItem}){
 
 function NestInput({field,output,handleChange1,handleChange2,addItem1,addItem2,removeItem1,removeItem2}){
     return(
-        <div className="crudField">
-            <div className="crudObject">
+        <div className="displayField">
+            <div className="displayObject">
                 <label>{field['name']}</label>
                 <button onClick={(e)=>addItem1(field['name'],e)}>Add</button>
-                <div className='crudGrid'>{output[field['name']].map((item,index)=>
-                    <div className="crudFields">{field['schema'][index].map(subfield=>
-                        <div className='crudField'>
-                            {subfield['datatype']=="single" && <div className='crudRow'>
+                <div className='displayGrid'>{output[field['name']].map((item,index)=>
+                    <div className="displayFields">{field['schema'][index].map(subfield=>
+                        <div className='displayField'>
+                            {subfield['datatype']=="single" && <div className='displayRow'>
                                 <label>{subfield['name']}</label>
                                 {subfield['input']=="input" && <input onChange={(e)=>handleChange1(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]} type={subfield['type']}/>}
                                 {subfield['input']=="option" && <select onChange={(e)=>handleChange1(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>
                                     {subfield['options'].map(option=><option value={option}>{option}</option>)}
                                     </select>}
                             </div>}
-                            {subfield['datatype']=="collection" && <div className='crudObject'>
+                            {subfield['datatype']=="collection" && <div className='displayObject'>
                                 <label>{subfield['name']}</label>
-                                <div className='crudTable'>
+                                <div className='displayTable'>
                                     <table>
                                         <thead>
-                                            <tr><th className='crudTableCell'></th>{subfield['schema'][0].map(subsubfield=><th className='crudTableCell'>{subsubfield['name']}</th>)}</tr>
+                                            <tr><th className='displayTableCell'></th>{subfield['schema'][0].map(subsubfield=><th className='displayTableCell'>{subsubfield['name']}</th>)}</tr>
                                         </thead>
                                         <tbody>{output[field['name']][index][subfield['name']].map((subitem,subindex)=>
                                             <tr>
-                                                <td><div className='crudTableCell'><button onClick={()=>removeItem2(field['name'],index,subfield['name'],subindex)}>-</button></div></td>
+                                                <td><div className='displayTableCell'><button onClick={()=>removeItem2(field['name'],index,subfield['name'],subindex)}>-</button></div></td>
                                                 {subfield['schema'][subindex].map(subsubfield=>
                                                 <td>
-                                                    <div className='crudTableCell'><input value={output[field['name']][index][subfield['name']][subindex][subsubfield['name']]} onChange={(e)=>handleChange2(field['name'],index,subfield['name'],subindex,subsubfield['name'],e)}/></div>
+                                                    <div className='displayTableCell'><input value={output[field['name']][index][subfield['name']][subindex][subsubfield['name']]} onChange={(e)=>handleChange2(field['name'],index,subfield['name'],subindex,subsubfield['name'],e)}/></div>
                                                 </td>)}
                                             </tr>)}
                                         </tbody>
@@ -3040,32 +2680,32 @@ function NestInput({field,output,handleChange1,handleChange2,addItem1,addItem2,r
     )
 }
 
-function TableInput({addTableRow,removeTableRow,tableChange,schema,data,method}){
+function TableInput({addTableRow,removeTableRow,tableChange,schema,data,editable}){
     return (
-        <div className='crudTable'>
+        <div className='displayTable'>
                     <table>
                         <thead>
                             <tr>
-                                {method=="Update" && <th className='crudTableCell'></th>}
-                                {schema.map(field=><th className='crudTableCell'>{field['name']}</th>)}
+                                {editable && <th className='displayTableCell'></th>}
+                                {schema.map(field=><th className='displayTableCell'>{field['name']}</th>)}
                             </tr>
                         </thead>
                         <tbody>
                             {data.map((item,i)=>
                                 <tr>
-                                    {method=="Update" && <td className='crudTableCell'><button onClick={()=>removeTableRow(i)}>-</button></td>}
-                                    {schema.map(field=><td className='crudTableCell'>
-                                        {method=="Update" && <>
+                                    {editable && <td className='displayTableCell'><button onClick={()=>removeTableRow(i)}>-</button></td>}
+                                    {schema.map(field=><td className='displayTableCell'>
+                                        {editable && <>
                                         {field['input']=="input" && <input value={item[field['name']]} onChange={(e)=>tableChange(i,field['name'],e)}/>}
                                         {field['input']=='option' && <select value={item[field['name']]} onChange={(e)=>tableChange(i,field['name'],e)}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
                                         </>}
-                                        {method=="Display" && <label>{item[field['name']]}</label>}
+                                        {!editable && <label>{item[field['name']]}</label>}
                                     </td>)}
                                 </tr>
                             )}
                         </tbody>
                     </table>
-            {method=="Update" && <button onClick={()=>addTableRow()}>+</button>}
+            {editable && <div className='tableButtons'><button onClick={()=>addTableRow()}>+</button></div>}
         </div>
     )
 }
@@ -3820,7 +3460,7 @@ class Collection{
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Due Within Days","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
-                    {"name":"Discount Criteria","datatype":"collection","noteditable":!this.editable,"schema":data['Terms'].map(item=>[
+                    {"name":"Discount Criteria","datatype":"collection","noteditable":!this.editable,"schema":data['Discount Criteria'].map(item=>[
                         {"name":"Days","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
                         {"name":"Discount %","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
                     ])},
@@ -4027,7 +3667,7 @@ class Collection{
                 break
             case 'PaymentTerms':
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
-                data['Terms'].map((item,i)=>(item['Days']=="" || item['Discount %']=="")?list.push(`At Terms line ${i}, information incomplete`):()=>{})
+                data['Discount Criteria'].map((item,i)=>(item['Days']=="" || item['Discount %']=="")?list.push(`At Terms line ${i}, information incomplete`):()=>{})
                 data['Interest Criteria'].map((item,i)=>(item['Days']=="" || item['Interest %']=="")?list.push(`At Interest Criteria line ${i}, information incomplete`):()=>{})
                 break
             case 'ProfitCenter':
@@ -4250,27 +3890,28 @@ class Collection{
 }
 
 
-function Display({className}){
+function Interface(){
     const location = useLocation();
     const inputData = location.state || {};
-    let Display = {};
+    const {type} = inputData;
     let defaults = {};
-    const {method} = inputData;
-    switch (className){
-        case 'Collection':
-            let {collection,parameters} = inputData;
-            Display = new Collection(collection,method);
-            defaults = Display.defaults(parameters);
-            break
-        case 'Table':
-            let {table} = inputData;
-            Display = new Table(table,method);
-            defaults = Display.defaults;
-            break
-        case 'CollectionQuery':
-            Display = new CollectionQuery(inputData['collection'],inputData['method']);
-            defaults = Display.defaults;
-            break
+    let Display = {};
+    let editable = false;
+    if (type=="CollectionQuery"){
+        const {collection,method} = inputData;
+        Display = new CollectionQuery(collection,method);
+        defaults = Display.defaults;
+        editable = true;
+    } else if (type=="Collection"){
+        const {collection,method,data} = inputData;
+        Display = new Collection(collection,method);
+        defaults = Display.defaults(data);
+        editable = (method=="Create" || method=="Update");
+    } else if (type=="Table"){
+        const {table,method} = inputData;
+        Display = new Table(table,method);
+        defaults = Display.defaults;
+        editable = (method=="Update");
     }
     const [data,setdata] = useState(defaults);
     const output = Display.process(data);
@@ -4367,26 +4008,26 @@ function Display({className}){
     }
 
     return(
-        <div className='crudUI'>
-            <div className='crudTitle'>
+        <div className='display'>
+            <div className='displayTitle'>
                 <h2>{Display.title}</h2>
             </div>
-            <div className='crudFields'>
-                {className!="Table" && schema.map(field=>
+            <div className='displayInputFields'>
+                {type!="Table" && schema.map(field=>
                     <>
                         {field['datatype']=="single" && <SingleInput field={field} output={output} handleChange={singleChange}/>}
                         {field['datatype']=="collection" && <CollectionInput field={field} output={output} handleChange={collectionChange} addItem={addCollection} removeItem={removeCollection}/>}
                         {field['datatype']=="nest" && <NestInput field={field} output={output} handleChange1={collectionChange} handleChange2={nestChange} addItem1={addCollection} addItem2={addNest} removeItem1={removeCollection} removeItem2={removeNest}/>}
                     </>
                 )}
-                {className=="Table" && <TableInput addTableRow={addTableRow} removeTableRow={removeTableRow} data={output} schema={schema} tableChange={tableChange} method={method}/>}
+                {type=="Table" && <TableInput addTableRow={addTableRow} removeTableRow={removeTableRow} data={output} schema={schema} tableChange={tableChange} editable={editable}/>}
             </div>
-            <div className='crudButtons navigation'>
+            <div className='navigation'>
                 {navigation.map(item=>
                     <button onClick={()=>goto(item['url'],item['state'])}>{item['name']}</button>
                 )}
             </div>
-            {(errors.length>0) && <div className='crudError'>
+            {(errors.length>0) && <div className='error'>
                 <h4>Things to Consider:</h4>
                 <ul>
                     {errors.map(error=>
@@ -4394,14 +4035,14 @@ function Display({className}){
                     )}
                 </ul>
             </div>}
-            {JSON.stringify(output)}
         </div>
     )
 }
 
 class CollectionQuery{
-    constructor(collection){
+    constructor(collection,method){
         this.collection = collection;
+        this.method = method;
         this.title = this.collection;
         this.mandatory = new Collection(this.collection).identifiers;
         this.createRequirements = CollectionQuery.createRequirements[this.collection];
@@ -4426,7 +4067,7 @@ class CollectionQuery{
     navigation(data){
         return [
             {"name":"Back","url":"/control","state":{}},
-            {"name":"Submit","url":"/collection","state":{'collection':this.collection,'method':'Create','parameters':{'Company Code':'GFCT','Code':10000}}}
+            {"name":"Submit","url":"/interface","state":{'type':'Collection','collection':this.collection,'method':this.method,'data':data}}
         ]
     }
     checkAvailability(data){
@@ -4613,62 +4254,6 @@ class CollectionQuery{
     }
 }
 
-function CRUDRouter(){
-    const {collection} = useParams();
-    const title = Collection.titles[collection]
-    const Route = new CRUDRoute(collection);
-    const [data,setdata] = useState(Route.defaults);
-    const schema = Route.schema;
-    const createError = Route.createError(data);
-    const availability = Route.checkAvailability(data);
-    const handleChange = (field,e) =>{
-        const {value} = e.target;
-        setdata(prevdata=>({
-            ...prevdata,[field]:value
-        }))
-    }
-    const navigate = useNavigate();
-
-    function create(){
-        if (createError.length>0){
-            alert(JSON.stringify(createError))
-        }
-        else {
-            navigate('/collection',{state:{'method':'Create','collection':collection,'parameters':data}})
-        }
-    }
-
-    function display(method){
-        if (!availability){
-            alert(`Requested ${collection} not available.`)
-        } else {
-            navigate('/collection',{state:{'method':method,'collection':collection,'parameters':data}})
-        }
-    }
-
-    const cancel = ()=>{
-        navigate('/control');
-        window.location.reload();
-    }
-
-    return(
-        <div className='collectionRoute'>
-            <div className='collectionRouteTitle'>
-                <h3>{title}</h3>
-            </div>
-            {schema.map(field=>
-                <SingleInput output={data} field={field} handleChange={handleChange}/>
-            )}
-            <div className='collectionRouteButtons'>
-                <button className='collectionCreateButton' onClick={()=>create()}>Create</button>
-                <button onClick={()=>display("Display")}>Display</button>
-                <button onClick={()=>display("Update")}>Update</button>
-                <button onClick={()=>cancel()}><FaArrowLeft/></button>
-            </div>
-        </div>
-    )
-}
-
 class Table{
     constructor(name,method="Display"){
         this.name = name;
@@ -4693,7 +4278,7 @@ class Table{
         const navigation = [
             {"name":"Back","url":"/control","state":{}}
         ];
-        (this.method!="Update")?navigation.push({"name":"Update","url":"/table","state":{"method":"Update","table":this.name}}):()=>{};
+        (this.method!="Update")?navigation.push({"name":"Update","url":"/interface","state":{"type":"Table","method":"Update","table":this.name}}):()=>{};
         (this.method=="Update")?navigation.push({"name":"Save","url":"/post","state":{"method":"Update","table":this.name}}):()=>{};
         return navigation;
     }
@@ -4943,10 +4528,7 @@ function App(){
             <Route path='/record' element={<Record/>}/>
             <Route path='/control' element={<Control/>}/>
             <Route path='/reports' element={<Reports/>}/>
-            <Route path="/c/:collection" element={<CRUDRouter/>}/>
-            <Route path="/collection" element={<Display className={'Collection'}/>}/>
-            <Route path="/table" element={<Display className={'Table'}/>}/>
-            <Route path="/collectionquery" element={<Display className={'CollectionQuery'}/>}/>
+            <Route path="/interface" element={<Interface/>}/>
             <Route path="/t/:type" element={<TransactionUI/>}/>
             <Route path="/report/:report" element={<ReportQuery/>}/>
             <Route path="/reportdisplay/:report" element={<ReportDisplay/>}/>
