@@ -974,14 +974,13 @@ function SearchBar(){
             e.preventDefault();
             navigate('/control');
         }
-
-        
     }
+
     
     useEffect(()=>{
         const handle = document.addEventListener('keydown',keyDownHandler);
         return ()=>{
-            document.removeEventListener('keydown',handle)
+            document.removeEventListener('keydown',handle);
         }
     },[])
 
@@ -4271,12 +4270,11 @@ function App(){
         <div className="innerContainer">
         <Routes>
             <Route path='/' element={<Home/>}/>
+            <Route path="/navigate/:menu" element={<Navigation/>}/>
             <Route path='/record' element={<Record/>}/>
             <Route path='/control' element={<Control/>}/>
             <Route path='/reports' element={<Reports/>}/>
             <Route path="/interface" element={<Interface/>}/>
-            <Route path="/report/:report" element={<ReportQuery/>}/>
-            <Route path="/reportdisplay/:report" element={<ReportDisplay/>}/>
             <Route path="*" element={<Home/>}/>
             <Route path="/scratch/" element={<Scratch/>}/>
         </Routes>
