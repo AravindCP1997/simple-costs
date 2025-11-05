@@ -375,3 +375,73 @@ function TransactionUI(){
         </div>
     )
 }
+
+    const ratios = {
+        "A":[
+            {"Type":"Cost Center","To":"B","Ratio":50},
+            {"Type":"General Ledger","To":"A","Ratio":50},
+        ],
+        "B":[
+            {"Type":"Cost Center","To":"C","Ratio":50},
+            {"Type":"General Ledger","To":"B","Ratio":50},
+        ],
+        "C":[
+            {"Type":"Cost Center","To":"D","Ratio":50}
+        ],
+        "D":[
+            {"Type":"Cost Center","To":"E","Ratio":50},
+            {"Type":"Cost Center","To":"B","Ratio":50},
+        ],
+        "E":[
+            {"Type":"Cost Center","To":"C","Ratio":50},
+            {"Type":"Cost Center","To":"A","Ratio":50},
+        ]
+    }
+
+
+    function Costing(){
+    const ratio = (Receiver,Sender,NotThrough)=>{
+        const data = ratios[Sender];
+        let sum = 0;
+        for (let i = 0; i< data.length;i++){
+            let to = data[i];
+            if (to['Type']=="Cost Center" && to['To']==Receiver){
+                sum += to['Ratio']/100
+            } else if (to['Type']=="Cost Center" && !NotThrough.includes(to['To'])){
+                sum += to['Ratio'] * ratio(Receiver,to['To'],[...NotThrough,Sender])/100
+            }
+        }
+        sum = sum / (1-selfRatio(Sender,[Receiver,...NotThrough]))
+        return sum
+    }
+
+    const selfRatio = (Center,NotThrough)=>{
+        const data = ratios[Center];
+        let sum = 0;
+        for (let i = 0;i<data.length;i++){
+            let to = data[i];
+            if (to['Type']=="Cost Center" && to['To'] == ""){
+                sum += to['Ratio']/100;
+            } else if (to['Type']=="Cost Center" && !NotThrough.includes(to['To'])){
+                sum += to['Ratio'] * ratio(Center,to['To'],NotThrough)/100;
+            }
+        }
+        return sum;
+    }
+
+    const AllocationRatios = (Center,Weight,Self,NotThrough)=>{
+        const list = [];
+        const data = ratios[Center];
+        for (let i = 0; i<data.length;i++){
+            let to = data[i];
+            if (to['Type']!=="Cost Center"){
+                list.push({...to,['Absolute Ratio']:Weight*to['Ratio']/100/Self/(1-selfRatio(Center,[]))})
+            }
+            else if (to['Type']=="Cost Center" && !NotThrough.includes(to['To'])){
+                list.push(...AllocationRatios(to['To'],to['Ratio'],(1-selfRatio(Center,[...NotThrough,Center])),[...NotThrough,Center]))
+            }
+        }
+
+        return list
+    }
+}

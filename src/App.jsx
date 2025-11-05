@@ -1090,7 +1090,7 @@ function Control(){
         {"Group":"Payables & Receivables", "Controls":[
             {"Name":"Bank Account", "URL":"/c/BankAccount"},
             {"Name":"Customer", "URL":"/c/Customer"},
-            {"Name":"Vendor", "URL":"/c/Vendor"},
+            {"Name":"Vendor", "URL":"/interface", "state":{"type":"CollectionQuery","collection":"Vendor","method":"Create"}},
             {"Name":"Purchase Order", "URL":"/c/PurchaseOrder"},
             {"Name":"Sale Order", "URL":"/c/SaleOrder"},
         ]},
@@ -1146,7 +1146,7 @@ function Reports(){
                 <div className='menuItem' onClick={()=>{navigate(`/report/accountbalances`)}}><h4>Account Balances</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/generalledger`)}}><h4>Ledger</h4></div>
                 <div className='menuItem' onClick={()=>{navigate(`/report/transactions`)}}><h4>Transactions</h4></div>
-                <div className='menuItem' onClick={()=>{navigate(`/report/viewdocument`)}}><h4>View Document</h4></div>
+                <div className='menuItem' onClick={()=>{navigate(`/interface`,{state:{'type':'ReportQuery','report':'ViewDocument'}})}}><h4>View Document</h4></div>
             </div>
             <div className='menuList'>
                 <div className='menuTitle blue'><h4>Materials</h4></div>
@@ -1171,244 +1171,47 @@ function Reports(){
 
 
 class Report{
-    constructor(name){
-        this.name = name;
-        this.schema = Report.schema[this.name];
+    constructor(report){
+        this.report = report;
     }
-    default(){
-        const result = {};
-        this.schema.map(item=>result[item['name']]=Report.defaultobject(item['fields']))
-        return result
+    schema(data){
+        const allSchema = {
+            "ViewDocument":[
+                {"name":"Posting Date","datatype":"single","noteditable":true},
+                {"name":"Document Number","datatype":"single","noteditable":true},
+                {"name":"Line Items","datatype":"table"}
+            ]
+        }
+        return allSchema[this.report];
     }
-    static defaultobject(fields){
-        const result = {}
-        fields.map(field=>result[field]=this.defaults(field))
-        return result
-    }
-    static defaults(field){
-        let result = ""
-        switch (field){
-            case 'value':
-                result =  ''
-                break
-            case 'values':
-                result = ['']
-                break
-            case 'exclValues':
-            result = ['']
-            break
-            case 'range' :
-                result = ['','']
-                break
-            case 'ranges' :
-                result =  [['','']]
-                break
-            case 'exclRanges' :
-                result =  [['','']]
+    defaults(data){
+        let defaults = {};
+        switch (this.report){
+            case 'ViewDocument':
+                const documentData = Transaction.getDocument(data['Company Code'],data['Year'],data['Document Number']);
+                defaults = documentData;
                 break
         }
-        return result
+        return defaults;
     }
-    static schema = {
-        "accountbalances":[
-            {"name":"period","label":"Period","type":"date","fields":["range"]}
-        ],
-        "assetregister":[
-            {"name":"date","label":"As at","type":"date","fields":["value"]},
-            {"name":"segment", "label":"Segment", "type":"text", "fields":["values"]},
-            {"name":"profitcenter", "label":"Profit Center", "type":"text", "fields":["values"]},
-            {"name":"costcenter", "label":"Cost Center", "type":"text", "fields":["values"]},
-            {"name":"assetgl", "label":"General Ledger - Asset", "type":"text", "fields":["values"]},
-            {"name":"depreciationgl", "label":"General Ledger - Depreciation", "type":"text", "fields":["values"]},
-            {"name":"assetclass", "label":"Asset Class", "type":"text", "fields":["values"]},
-        ],
-        "assetledger":[
-            {"name":"asset", "label":"Asset", "type":"text", "fields":["value"]},
-            {"name":"period","label":"Period","type":"date","fields":["range"]}
-        ],
-        "assetschedule":[
-            {"name":"period","label":"Period","type":"date","fields":["range"]}
-        ],
-        "attendance":[
-            {"name":"employee","label":"Employee","type":"text","fields":["value"]},
-            {"name":"year","label":"Year","type":"number","fields":["value"]},
-            {"name":"month","label":"Month","type":"number","fields":["value"]},
-        ],
-        "clearing":[
-            {"name":"ledger","label":"Ledger","type":"text","fields":["value"]},
-            {"name":"date","label":"Date","type":"date","fields":["value"]},
-        ],
-        "costcenteritems":[
-            {"name":"centers","label":"Cost Centers","fields":['values']},
-            {"name":"date","label":"Date","fields":['values']}
-        ],
-        "costobjectbalance":[
-            {"name":"objects","label":"Cost Objects","fields":['values']}
-        ],
-        "costobjecttransactions":[
-            {"name":"objects","label":"Cost Objects","fields":['values']}
-        ],
-        "costobjectsettlement":[
-            {"name":"object","label":"Cost Object","fields":["value"]}
-        ],
-        "costtoprepaid":[
-            {"name":"date","type":"date","label":"Date","fields":["value"]}
-        ],
-        "depreciationpros":[
-            {"name":"date", "label":"Date","type":"date","fields":["value"]}
-        ],
-        "depreciationretro":[
-            {"name":"date", "label":"Date", "type":"date","fields":["value"]}
-        ],
-        "generalledger":[
-            {"name":"ledger", "type":"text","label":"General Ledger","fields":["value"]},
-            {"name":"period","type":"date","label":"Period","fields":["range"]}
-        ],
-        "ledger":[
-            {"name":"ledger","label":"Ledger","fields":["values"]},
-            {"name":"period","label":"Period","fields":["range"]},
-        ],
-        "materialissue":[
-            {"name":"postingdate","label":"Posting Date","type":"date","fields":["value"]},
-            {"name":"valuedate","label":"Value Date","type":"date","fields":["value"]},
-            {"name":"material","label":"Material","type":"text","fields":["value"]},
-            {"name":"location","label":"Location","type":"text","fields":["value"]},
-        ],
-        "materialinlocation":[
-            {"name":"material","label":"Material","type":"text","fields":["value"]},
-            {"name":"location","label":"Location","type":"text","fields":["value"]},
-            {"name":"period","label":"Period","type":"date","fields":["range"]},
-        ],
-        "materialledger":[
-            {"name":"material","label":"Material","type":"text","fields":["value"]},
-            {"name":"period","label":"Period","type":"date","fields":["range"]},
-        ],
-        "materialbalances":[
-            {"name":"period","label":"Period","type":"date","fields":["range"]},
-        ],
-        "materialmovement":[
-            {"name":"period","label":"Period","type":"date","fields":["range"]},
-        ],
-        "paycalc":[
-            {"name":"code", "label":"Employee Code","fields":["value"]},
-            {"name":"year", "label":"Year","fields":["value"]},
-            {"name":"month", "label":"Month","fields":["value"]},
-        ],
-        "personalaccountbalance":[
-            {"name":"date","label":"As at","type":"date","fields":["value"]}
-        ],
-        "salaryrun":[
-            {"name":"year", "label":"Year","fields":["value"]},
-            {"name":"month", "label":"Month","fields":["value"]},
-        ],
-        "transactions":[
-            {"name":"period","label":"Period","type":"date","fields":["range"]}
-        ],
-        "vanaccounting":[
-            {"name":"VAN","label":"VAN","type":"text","fields":["value"]}
-        ],
-        "viewdocument":[
-            {"name":"docno","label":"Document No","type":"text","fields":["value"]}
-        ],
-        "vendorledger":[
-            {'name':"vendor","label":"Vendor","type":"text" ,"fields":["value"]},
-            {'name':"period","label":"Period","type":"date","fields":["range"]},
-        ],
-        "vendoropenitem":[
-            {'name':"vendor","label":"Vendor","fields":["values"]},
-            {'name':"date","label":"Date","fields":["value"]},
+    errors(data){
+        return [];
+    }
+    process(data){
+        return data;
+    }
+    navigation(data){
+        const navigation = [
+            {"name":"Back","type":"navigate","url":"/interface","state":{"type":"ReportQuery","report":this.report}}
         ]
+        return navigation;
     }
-}
-
-function ReportQuery(){
-    const {report} = useParams();
-    const reportobject = new Report(report);
-    const [query,setquery] = useState(reportobject.default());
-    const {schema} = reportobject
-    const navigate = useNavigate();
-
-    function submitQuery(){
-        navigate('/reportdisplay/'+report, {state: query})
+    title(){
+        const titles = {
+            "ViewDocument":"View Document"
+        }
+        return (titles[this.report]);
     }
-
-    function valueChange(itemname,field,e){
-        const {value} = e.target;
-        setquery(prevdata=>({
-            ...prevdata,[itemname]:{...prevdata[itemname],[field]:value}
-        }))
-    }
-
-    function rangeChange(itemname,field,i,e){
-        const {value} = e.target;
-        const prevrange = [...query[itemname][field]];
-        const newrange = prevrange.map((item,index)=>(i==index)?value:item);
-        setquery(prevdata=>({
-            ...prevdata,[itemname]:{...prevdata[itemname],[field]:newrange}
-        }))
-    }
-
-    function valuesChange(itemname,field,i,e){
-        const {value} = e.target;
-        const prevvalues = [...query[itemname][field]];
-        const newvalues = prevvalues.map((item,index)=>(i==index)?value:item);
-        setquery(prevdata=>({
-            ...prevdata,[itemname]:{...prevdata[itemname],[field]:newvalues}
-        }))
-    }
-
-    function rangesChange(itemname,field,i,j,e){
-        const {value} = e.target;
-        const prevranges = [...query[itemname][field]];
-        const prevrange = prevranges[i];
-        const newrange = prevrange.map((item,index)=>(j==index)?value:item);
-        const newranges = prevranges.map((item,index)=>(i==index)?newrange:item);
-        setquery(prevdata=>({
-            ...prevdata,[itemname]:{...prevdata[itemname],[field]:newranges}
-        }))
-    }
-
-    function addValues(itemname,field){
-        const defaults = Report.defaults(field);
-        const newvalues = [...query[itemname][field],...defaults]
-        setquery(prevdata=>({
-            ...prevdata,[itemname]:{...prevdata[itemname],[field]:newvalues}}))
-    }
-
-    function addRanges(itemname,field){
-        const defaults = Report.defaults(field);
-        const newvalues = [...query[itemname][field],...defaults]
-        setquery(prevdata=>({
-            ...prevdata,[itemname]:{...prevdata[itemname],[field]:newvalues}}))
-    }
-
-    return(
-        <div className='reportQuery'>
-            <h2 className='reportQueryTitle'>Query</h2>
-        {schema.map(item=>
-            <div className="reportQueryField">
-                <label>{item['label']}</label>
-                {item["fields"].map(field=>
-                    <div className='reportQuerySubfield'>
-                        <label>{field}</label>
-                        {field == "option" && <>option</>}
-                        {field =="value" && <input type={item["type"]} className='reportQueryCell' onChange={(e)=>valueChange(item['name'],field,e)} value={query[item['name']][field]}/>}
-                        {field =="values" && <div className='reportQueryColumn'>{query[item['name']][field].map((values,i)=><div><input type={item["type"]} className='reportQueryCell' onChange={(e)=>valuesChange(item['name'],field,i,e)} value={query[item['name']][field][i]}/></div>)} <button onClick={()=>addValues(item['name'],field)}>+</button></div>}
-                        {field =="exclValues" && <div className='reportQueryColumn'>{query[item['name']][field].map((values,i)=><div><input className='reportQueryCell' type={item["type"]} onChange={(e)=>valuesChange(item['name'],field,i,e)} value={query[item['name']][field][i]}/></div>)} <button onClick={()=>addValues(item['name'],field)}>+</button></div>}
-                        {field =="range" && <div className='reportQueryRow'><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangeChange(item['name'],field,0,e)} value={query[item['name']][field][0]}/><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangeChange(item['name'],field,1,e)} value={query[item['name']][field][1]}/></div>}
-                        {field =="ranges" && <div className='reportQueryColumn'>{query[item['name']][field].map((ranges,i)=><div><div className='reportQueryRow'><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,0,e)} value={query[item['name']][field][i][0]}/><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,1,e)} value={query[item['name']][field][i][1]}/></div></div>)} <button onClick={()=>addRanges(item['name'],field)}>+</button></div>}
-                        {field =="exclRanges" && <div className='reportQueryColumn'>{query[item['name']][field].map((ranges,i)=><div><div className='reportQueryRow'><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,0,e)} value={query[item['name']][field][i][0]}/><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,1,e)} value={query[item['name']][field][i][1]}/></div></div>)} <button onClick={()=>addRanges(item['name'],field)}>+</button></div>}
-                        </div>
-                )}
-                </div>
-        )}
-        
-        <div className='reportQueryButtons'>
-            <button className='blue' onClick={()=>navigate('/reports')}>Back</button>
-            <button className='blue' onClick={()=>submitQuery()}>Submit</button>
-        </div>
-        </div>
-    )
 }
 
 function ReportDisplay(){
@@ -2328,7 +2131,8 @@ class Transaction{
     }
     navigation(data){
         const navigation = [
-            {"name":"Back", "url":"/record","state":{}}
+            {"name":"Back", 'type':'navigate',"url":"/record","state":{}},
+            {"name":"Post", 'type':'action',"onClick":()=>alert(this.completeTransaction(data))},
         ]
         return navigation;
     }
@@ -2476,6 +2280,27 @@ function ObjectInput({field,handleChange,output,editable}){
     )
 }
 
+function ListInput({field,handleChange,output,addList, removeList}){
+    return(
+        <div className='displayField'>
+            <div className='displayObject'>
+                <div className='displayRow'><label>{field['name']}</label><button onClick={()=>addList(field['name'])}>+</button></div>
+                <div className='displayList'>
+                    {output[field['name']].map((item,i)=>
+                        <div>
+                            {field['noteditable'] && <p>{item}</p>}
+                            {(field['input'] == "input" && !field['noteditable'] )&& 
+                            <div><input type={field['type']} maxLength={field['maxLength']} placeholder={field['placeholder']} onChange={(e)=>handleChange(field['name'],i,e)} value={item}/><button onClick={()=>removeList(field['name'],i)}>-</button></div>}
+                            {(field['input']=="option" && !field['noteditable']) && 
+                            <div><select onChange={(e)=>handleChange(field['name'],i,e)} value={item}>{field['options'].map(option=><option value={option}>{option}</option>)}</select><button onClick={()=>removeList(field['name'],i)}>-</button></div>}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    )
+}
+
 function CollectionInput({field,handleChange,output,addItem,removeItem}){
     return (
         <div className='displayField'>
@@ -2586,6 +2411,27 @@ function TableInput({addTableRow,removeTableRow,tableChange,schema,data,editable
                         </tbody>
                     </table>
             {editable && <div className='tableButtons'><button onClick={()=>addTableRow()}>+</button></div>}
+        </div>
+    )
+}
+
+function MultipleInput({data,schema}){
+    
+    return(
+        <div className="reportQueryField">
+                <label>{schema['label']}</label>
+                {schema["fields"].map(field=>
+                <div className='reportQuerySubfield'>
+                    <label>{field}</label>
+                    {field =="value" && <input type={schema["type"]} className='reportQueryCell' onChange={(e)=>valueChange(schema['name'],field,e)} value={data[schema['name']][field]}/>}
+                    {field =="values" && <div className='reportQueryColumn'>{data[schema['name']][field].map((values,i)=><div><input type={schema["type"]} className='reportQueryCell' onChange={(e)=>valuesChange(schema['name'],field,i,e)} value={data[schema['name']][field][i]}/></div>)} <button onClick={()=>addValues(schema['name'],field)}>+</button></div>}
+                    {/* {field =="exclValues" && <div className='reportQueryColumn'>{query[item['name']][field].map((values,i)=><div><input className='reportQueryCell' type={item["type"]} onChange={(e)=>valuesChange(item['name'],field,i,e)} value={query[item['name']][field][i]}/></div>)} <button onClick={()=>addValues(item['name'],field)}>+</button></div>}
+                    {field =="range" && <div className='reportQueryRow'><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangeChange(item['name'],field,0,e)} value={query[item['name']][field][0]}/><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangeChange(item['name'],field,1,e)} value={query[item['name']][field][1]}/></div>}
+                    {field =="ranges" && <div className='reportQueryColumn'>{query[item['name']][field].map((ranges,i)=><div><div className='reportQueryRow'><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,0,e)} value={query[item['name']][field][i][0]}/><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,1,e)} value={query[item['name']][field][i][1]}/></div></div>)} <button onClick={()=>addRanges(item['name'],field)}>+</button></div>}
+                    {field =="exclRanges" && <div className='reportQueryColumn'>{query[item['name']][field].map((ranges,i)=><div><div className='reportQueryRow'><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,0,e)} value={query[item['name']][field][i][0]}/><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,1,e)} value={query[item['name']][field][i][1]}/></div></div>)} <button onClick={()=>addRanges(item['name'],field)}>+</button></div>} */}
+                </div>
+                )}
+            {JSON.stringify(query)}
         </div>
     )
 }
@@ -3014,6 +2860,7 @@ class Collection{
                         "Bank Accounts":[
                             {"Account Number":"","Confirm Account Number":"","Bank Name":"","IFSC Code":""}
                         ],
+                        "Groups":[""]
                     }
                     break
                 
@@ -3438,6 +3285,7 @@ class Collection{
                     {"name":"Tax Identification Number","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"GSTIN","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Payment Terms","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                    {"name":"Groups","datatype":"list","input":"option","options":["A","B"],"noteditable":!this.editable}
                 ]
                 break
         }
@@ -3802,6 +3650,18 @@ function Interface(){
         defaults = Display.defaults('');
         editable = true;
         title = transaction;
+    } else if (type=="ReportQuery"){
+        const {report} = inputData;
+        Display = new ReportQuery(report);
+        defaults = Display.defaults();
+        editable = true;
+        title = report;
+    } else if (type=="Report"){
+        const {report,data} = inputData;
+        Display = new Report(report);
+        defaults = Display.defaults(data);
+        editable = false;
+        title = Display.title();
     }
     const [data,setdata] = useState(defaults);
     const output = Display.process(data);
@@ -3820,6 +3680,14 @@ function Interface(){
         setdata(prevdata=>({
             ...prevdata,
             [field]:value
+        }))
+    }
+
+    const listChange = (field,i,e)=>{
+        const {value} = e.target
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].map((item,index)=>i==index?value:item)
         }))
     }
 
@@ -3850,11 +3718,25 @@ function Interface(){
         }))
     }
 
+    function addList(field){
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:[...prevdata[field],""]
+        }))
+    }
+
     function addCollection(field,e){
         e.preventDefault;
         setdata(prevdata=>({
             ...prevdata,
             [field]:[...prevdata[field],defaults[field][0]]
+        }))
+    }
+
+    function removeList(field,index){
+        setdata(prevdata=>({
+            ...prevdata,
+            [field]:prevdata[field].filter((item,i)=>i!==index)
         }))
     }
 
@@ -3906,8 +3788,10 @@ function Interface(){
                 {type!="Table" && schema.map(field=>
                     <>
                         {field['datatype']=="single" && <SingleInput field={field} output={output} handleChange={singleChange}/>}
+                        {field['datatype']=="list" && <ListInput field={field} output={output} handleChange={listChange} addList={addList} removeList={removeList}/>}
                         {field['datatype']=="collection" && <CollectionInput field={field} output={output} handleChange={collectionChange} addItem={addCollection} removeItem={removeCollection}/>}
                         {field['datatype']=="nest" && <NestInput field={field} output={output} handleChange1={collectionChange} handleChange2={nestChange} addItem1={addCollection} addItem2={addNest} removeItem1={removeCollection} removeItem2={removeNest}/>}
+                        {field['datatype']=="table" && <DisplayAsTable collection={output[field['name']]}/>}
                     </>
                 )}
                 {type=="Table" && <TableInput addTableRow={addTableRow} removeTableRow={removeTableRow} data={output} schema={schema} tableChange={tableChange} editable={editable}/>}
@@ -4108,8 +3992,8 @@ class CollectionQuery{
             {"name":"User","input":"input","type":"text"}
         ],
         "Vendor":[
-            {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+            {"name":"Code","datatype":"single","input":"input","type":"text"},
+            {"name":"Company Code","datatype":"single","input":"input","type":"text", "maxLength":4}
         ],
     }
     static defaults = {
@@ -4142,7 +4026,7 @@ class CollectionQuery{
         "Service":{"Code":"","Company Code":1000},
         "TimeControl":{"Company Code":1000},
         "UserSettings":{"User":""},
-        "Vendor":{"Code":"","Company Code":1000},
+        "Vendor":{"Code":"","Company Code":'FACT'},
     }
 }
 
@@ -4221,6 +4105,41 @@ class Table{
         "Currencies":["Code"],
         "HSN":["Code","Type"],
         "Units":["Symbol","Name","Quantity"]
+    }
+}
+
+class ReportQuery{
+    constructor(report){
+        this.report = report;
+    }
+    schema(data){
+        const allSchema = {
+            "ViewDocument":[
+                {"name":"Company Code","datatype":"single","input":"option","options":["",...Company.listAll]},
+                {"name":"Year","datatype":"single","input":"input","type":"text"},
+                {"name":"Document Number","datatype":"single","input":"input","type":"text"}
+            ]
+        }
+        return allSchema[this.report];
+    }
+    defaults(data){
+        const allDefaults = {
+            "ViewDocument":{"Company Code":"","Year":"","Document Number":""}
+        }
+        return allDefaults[this.report]
+    }
+    errors(data){
+        return [];
+    }
+    process(data){
+        return data;
+    }
+    navigation(data){
+        const navigation = [
+            {"name":"Back","type":"navigate","url":"/reports","state":{}},
+            {"name":"Get","type":"navigate","url":"/interface","state":{'type':'Report','report':this.report,'data':data}}
+        ]
+        return navigation;
     }
 }
 
@@ -4335,77 +4254,11 @@ class ProfitCenter{
 }
 
 function Scratch(){
-    
-    const ratios = {
-        "A":[
-            {"Type":"Cost Center","To":"B","Ratio":50},
-            {"Type":"General Ledger","To":"A","Ratio":50},
-        ],
-        "B":[
-            {"Type":"Cost Center","To":"C","Ratio":50},
-            {"Type":"General Ledger","To":"B","Ratio":50},
-        ],
-        "C":[
-            {"Type":"Cost Center","To":"D","Ratio":50}
-        ],
-        "D":[
-            {"Type":"Cost Center","To":"E","Ratio":50},
-            {"Type":"Cost Center","To":"B","Ratio":50},
-        ],
-        "E":[
-            {"Type":"Cost Center","To":"C","Ratio":50},
-            {"Type":"Cost Center","To":"A","Ratio":50},
-        ]
-    }
-
-    const ratio = (Receiver,Sender,NotThrough)=>{
-        const data = ratios[Sender];
-        let sum = 0;
-        for (let i = 0; i< data.length;i++){
-            let to = data[i];
-            if (to['Type']=="Cost Center" && to['To']==Receiver){
-                sum += to['Ratio']/100
-            } else if (to['Type']=="Cost Center" && !NotThrough.includes(to['To'])){
-                sum += to['Ratio'] * ratio(Receiver,to['To'],[...NotThrough,Sender])/100
-            }
-        }
-        sum = sum / (1-selfRatio(Sender,[Receiver,...NotThrough]))
-        return sum
-    }
-
-    const selfRatio = (Center,NotThrough)=>{
-        const data = ratios[Center];
-        let sum = 0;
-        for (let i = 0;i<data.length;i++){
-            let to = data[i];
-            if (to['Type']=="Cost Center" && to['To'] == ""){
-                sum += to['Ratio']/100;
-            } else if (to['Type']=="Cost Center" && !NotThrough.includes(to['To'])){
-                sum += to['Ratio'] * ratio(Center,to['To'],NotThrough)/100;
-            }
-        }
-        return sum;
-    }
-
-    const AllocationRatios = (Center,Weight,Self,NotThrough)=>{
-        const list = [];
-        const data = ratios[Center];
-        for (let i = 0; i<data.length;i++){
-            let to = data[i];
-            if (to['Type']!=="Cost Center"){
-                list.push({...to,['Absolute Ratio']:Weight*to['Ratio']/100/Self/(1-selfRatio(Center,[]))})
-            }
-            else if (to['Type']=="Cost Center" && !NotThrough.includes(to['To'])){
-                list.push(...AllocationRatios(to['To'],to['Ratio'],(1-selfRatio(Center,[...NotThrough,Center])),[...NotThrough,Center]))
-            }
-        }
-
-        return list
-    }
+   
 
     return(
         <div className='reportDisplay'>
-        {JSON.stringify(Transaction.getDocument('FACT',2025,3))}
+        {JSON.stringify(new Report('ViewDocument').schema(new Report('ViewDocument').defaults()))}
         </div>
     )
 }

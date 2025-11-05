@@ -286,6 +286,7 @@
   padding:2px;
 }
 
+
 .displayTable{
   overflow: auto;
   font-size: 80%;
@@ -413,24 +414,6 @@
   overflow: auto;
 }
 
-.displayTable{
-  justify-content: left;
-}
-
-.displayColumn{
-  display:grid;
-  border:1px solid blue;
-}
-
-.displayTableCell{
-  text-align: center;
-  border:1px solid var(--blue);
-
-  p{
-    margin:0;
-    padding:0;
-  }
-}
 
 .tableButtons{
   display: flex;
