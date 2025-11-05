@@ -77,7 +77,7 @@
   height: fit-content;
   transition: 0.5s;
   box-shadow: none;
-  box-shadow: 0px 3px 10px 0px lightgray;
+  box-shadow: 0px 3px 10px 2px lightgray;
   border-radius: 25px;
   backdrop-filter: blur(1px);
 }
@@ -247,6 +247,7 @@
   gap:10px;
   color:var(--blue);
   background: var(--lightbluet);
+  backdrop-filter: blur(1px);
   border-radius: 15px;
   padding: 10px;
 }

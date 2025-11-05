@@ -2,6 +2,7 @@ import './App.css'
 import { useEffect, useState, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { FaPlus, FaHome, FaArrowRight, FaArrowLeft, FaCopy } from 'react-icons/fa';
+import exportFromJSON from 'export-from-json';
 
 function loadData(collection){
     const data = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
@@ -10,12 +11,6 @@ function loadData(collection){
 
 function saveData(data,collection){
   localStorage.setItem(collection,JSON.stringify(data));
-}
-
-const ListofItems  = (collection,n) => {
-    const keys = (collection.length!= 0) ? Object.keys(collection[0]) : [];
-    const List = (collection.length!= 0) ? collection.map(item=>item[keys[n]]) : [];
-    return List
 }
 
 const ListItems = (collection,key)=>{
@@ -1213,672 +1208,6 @@ class Report{
     }
 }
 
-function ReportDisplay(){
-    const {report} = useParams();
-    const location = useLocation()
-    const query = location.state || {}
-    const navigate = useNavigate()
-
-    function AccountBalances({query}){
-        const {period}= query
-        const data = GeneralLedger.accountBalances(period['range']);
-
-        return(
-            <div>
-                <DisplayAsTable collection={data}/>
-            </div>
-        )
-    }
-
-    function AssetRegister({query}){
-
-        const {segment,profitcenter,costcenter,assetclass,assetgl,depreciationgl, date} = query;
-        const [idate,setidate] = useState(date['value']);
-        const [odate,setodate] = useState(date['value']);
-        let data = Asset.register(odate);
-        data = (segment['values'].length>0 && segment['values'][0]!="")?data.filter(item=>segment['values'].includes(item['Segment'])):data;
-        data = (profitcenter['values'].length>0 && profitcenter['values'][0]!="")?data.filter(item=>profitcenter['values'].includes(item['Profit Center'])):data;
-        data = (costcenter['values'].length>0 && costcenter['values'][0]!="")?data.filter(item=>costcenter['values'].includes(item['Cost Center'])):data;
-        data = (assetclass['values'].length>0 && assetclass['values'][0]!="")?data.filter(item=>assetclass['values'].includes(item['Asset Class'])):data;
-        data = (assetgl['values'].length>0 && assetgl['values'][0]!="")?data.filter(item=>assetgl['values'].includes(item['General Ledger - Asset'])):data;
-        data = (depreciationgl['values'].length>0 && depreciationgl['values'][0]!="")?data.filter(item=>depreciationgl['values'].includes(item['General Ledger - Depreciation'])):data;
-
-        return (
-            <div>
-                <h2>Asset Register</h2>
-                <label>As at</label><input value={idate} onChange={(e)=>setidate(e.target.value)} type="date"/><button onClick={()=>setodate(idate)}>Get</button>
-                <DisplayAsTable collection={data}/>
-            </div>
-        )
-    }
-
-    function AssetLedger({query}){
-        const {asset, period} = query;
-        const navigate = useNavigate();
-
-        if (Asset.list().includes(asset['value'])){
-            const data = new Asset(asset['value']).ledger(period['range']);
-
-            return(
-                <div>
-                    <h2>Asset Ledger</h2>
-                    <p>{`Of ${asset['value']} for the period from ${period['range'][0]} to ${period['range'][1]}`}</p>
-                    <DisplayAsTable collection={data}/>
-                </div>
-            )
-        } else {
-            return (
-                <div className='negativeReport'>
-                    <p>Sorry, May be the asset is misspelled. Don't worry. You can choose one from the list below</p>
-                    <div>{Asset.list().map(item=><button onClick={()=>navigate('/reportdisplay/assetledger', {state:{"asset":{"value":item},"period":period}})}>{item}</button>)}</div>
-                </div>
-            )
-        }
-    }
-
-    function AssetSchedule({query}){
-        const {period} = query;
-        const data = Asset.schedule(period['range']);
-        const keys = Object.keys(data[0]);
-        const navigate = useNavigate();
-
-        const ledger = (asset)=>{
-            navigate('/reportdisplay/assetledger', {state:{'asset':{'value':asset},'period':period}})
-        }
-        return(
-            <div>
-                <h2>Asset Schedule</h2>
-                <p>{`from ${period['range'][0]} to ${period['range'][1]}`}</p>
-                <table>
-                    <thead>
-                        <tr>
-                            {keys.map(key=>
-                                <th>{key}</th>
-                            )}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {data.map(item=>
-                            <tr onDoubleClick={()=>ledger(item['Asset'])}>
-                                {keys.map(key=>
-                                    <td>{item[key]}</td>
-                                )}
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
-        )
-    }
-
-    function Clearing({query}){
-        const {ledger,date} = query;
-        const data = new Ledger(ledger['value']).openItems(date['value']);
-        const display = ["Posting Date","General Ledger","Document Date","Text","Amount","Debit/ Credit"]
-        const [selected,setselected] = useState([])
-        
-        const selectedData = data.filter((item,i)=>selected.includes(i));
-        
-        const entry = {}
-        entry['Line Items'] = [];
-        selectedData.map(item=>entry['Line Items'].push({'calculated':true,'Account':item['Account'],'General Ledger':item['General Ledger'],'Amount':item['Amount'],'Debit/ Credit':(item['Debit/ Credit']=='Debit')?'Credit':'Debit'}))
-        entry['Balance'] = SumFieldIfs(entry['Line Items'],'Amount',['Debit/ Credit'],['Debit'])-SumFieldIfs(entry['Line Items'],'Amount',['Debit/ Credit'],['Credit'])
-        const [type,settype] = useState("");
-        const transaction = new Transaction('General');
-        const lineItems = transaction.firstLineItem();
-        const [input,setinput] = useState(Transaction.defaults)
-        const output = {}
-        output['Posting Date'] = date['value'];
-        output['Document Date'] = date['value'];
-        output['Line Items'] = [...transaction.process(input)['Line Items'],...entry['Line Items']];
-        output['Balance'] = SumFieldIfs(output['Line Items'],'Amount',['Debit/ Credit'],['Debit'])-SumFieldIfs(output['Line Items'],'Amount',['Debit/ Credit'],['Credit'])
-        
-        const [bank,setbank] = useState("");
-        const payEntry = {...output,['Line Items']:entry['Line Items']};
-        (bank!="")?payEntry['Line Items'].push({'Account':bank,'Amount':entry['Balance'],"Payee":ledger['value'], "Debit/ Credit":"Credit","General Ledger":new BankAccount(bank).data['General Ledger'], "Profit Center":new BankAccount(bank).data['Profit Center']}):()=>{}
-        payEntry["Balance"] = SumFieldIfs(payEntry['Line Items'],'Amount',['Debit/ Credit'],['Debit'])-SumFieldIfs(payEntry['Line Items'],'Amount',['Debit/ Credit'],['Credit'])
-        const clearingEntries = output['Line Items'].filter(item=>!item['calculated'])
-        const calculatedEntries = output['Line Items'].filter(item=>item['calculated'])
-        const errors = transaction.validate(output);
-        const removeitem = (i,array)=>{
-            return array.filter(item=>item!==i)
-        }
-
-        const addItem = (i,array)=>{
-            const newarray = [...array,i]
-            return newarray;
-        }
-
-        const selection = (e,i)=>{
-            const value = e.target.checked;
-            (value)?setselected(prevdata=>addItem(i,prevdata)):setselected(prevdata=>removeitem(i,prevdata))
-        }
-
-        const selectAll = ()=>{
-            const length = data.length;
-            for (let i=0; i<length; i++){
-            setselected(prevdata=>addItem(i,prevdata))
-            }
-        }
-
-        const lineItemChange = (index,field,e)=>{
-        const {value} = e.target;
-        setinput(prevdata=>({
-            ...prevdata,['Line Items']:prevdata['Line Items'].map((item,i)=>(i==index)?{...item,[field]:value}:item)
-        }))
-    }
-
-    const addLine = ()=>{
-        setinput(prevdata=>({
-            ...prevdata,['Line Items']:[...prevdata['Line Items'],Transaction.defaults['Line Items'][0]]
-        }))
-    }
-
-    const removeLine = (index)=>{
-        setinput(prevdata=>({
-            ...prevdata,['Line Items']:prevdata['Line Items'].filter((item,i)=>i!==index)
-        }))
-    }
-
-    const save = (type)=>{
-        let newdata = [];
-        const collections = loadData('transactions');
-        if (errors.length==0){
-            switch (type){
-                case 'Clear':
-                    newdata = [...collections,{...output,["Entry Date"]:new Date().toLocaleDateString()}]
-                    break
-                case 'Pay':
-                    newdata = [...collections,{...payEntry,["Entry Date"]:new Date().toLocaleDateString()}]
-                    break
-            }
-            saveData(newdata,'transactions')
-            alert(`Saved!`)
-            window.location.reload();
-
-        } else {
-            alert("There are still errors unresolved")
-        }
-    }
-        
-
-        return(
-            <div>
-                <div>
-                    <table>
-                        <thead>
-                            <tr>
-                                {display.map(field=><th>{field}</th>)}<th>Select</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {data.map((item,i)=>
-                                <tr>
-                                    {display.map(field=>
-                                    <td><p>{item[field]}</p></td>
-                                    )}
-                                    <td><input onChange={(e)=>selection(e,i)} checked={selected.includes(i)} type={"checkbox"}/></td>
-                                </tr>
-                    )}
-                        </tbody>
-                    </table>
-                    <button onClick={()=>selectAll()}>Select All</button>
-                    <button onClick={()=>setselected([])}>Deselect All</button>
-                    <button onClick={()=>settype("Clear")}>Clear</button>
-                    <button onClick={()=>settype("Pay")}>Clear & Pay</button>
-                    <button></button>
-                </div>
-                {type==="Clear" && <div className='clear'>
-                    <table>
-                        <thead>
-                            <tr><th className='lineItemCell'></th>{transaction.lineItems().map(item=><th className='lineItemCell'>{item['name']}</th>)}</tr>  
-                        </thead>
-                        <tbody>
-                            {clearingEntries.map((item,i)=>
-                                <tr><td className='lineItemCell'><button onClick={()=>removeLine(i)}>-</button></td>
-                            
-                                
-                                {transaction.lineItemByContent(item).map(field=>
-                                    <td className='lineItemCell'>
-                                        {field['input']=="input" && <input onChange={(e)=>lineItemChange(i,field['name'],e)} type={field['type']} value={item[field['name']]}/>}
-                                        {field['input']=="option" && <select onChange={(e)=>lineItemChange(i,field['name'],e)} value={item[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
-                                        {field['input']=="calculated" && <label>{item[field['name']]}</label>}
-                                    </td>
-                                )}</tr>
-                            )}
-                            {calculatedEntries.map(item=>
-                            <tr>
-                                <td className='lineItemCell'></td>
-                                {transaction.lineItems().map(field=>
-                                    <td className='lineItemCell'>{item[field['name']]}</td>
-                                )}
-                            
-                            </tr>
-                            )}
-                        </tbody>
-                    </table>
-                    {output['Balance']}
-                    <button className='blue' onClick={()=>addLine()}>+</button>
-                    <div className='errors'>
-                <h4>Please consider:</h4>
-                <ul>
-                    {errors.map((item,i)=><li key={i}>{item}</li>)}
-                </ul>
-            </div>
-            <button onClick={()=>save()}>Save</button>
-                </div>}
-            {type==="Pay" && 
-                <div>
-                    <label>Bank Account</label>
-                    <select value={bank} onChange={(e)=>setbank(e.target.value)}>{["",...BankAccount.list()].map(option=><option value={option}>{option}</option>)}</select>
-                </div>
-            }
-            {JSON.stringify(payEntry)}
-            </div>
-        )
-    }
-
-    function Depreciation({query,method}){
-        const date = query['date']['value'];
-        let data = Asset.depreciationData(date);
-        data = data.map(item=>(new Date(item['Depreciated Till'])>= new Date(date))?{...item,['Depreciable']:"Retrospective"}:{...item,['Depreciable']:"Yes"})
-        const postingdata = (method=="Prospective")?data.filter(item=>item['Depreciable']!="Retrospective"):data.filter(item=>item['Depreciable']=="Retrospective")
-        const entry = Asset.depreciationEntry(date,postingdata,method);
-        const post = ()=>{
-            Transaction.post(entry);
-            alert('Depreciation Posted Succesfully');
-        }
-        return(
-            <div>
-                <DisplayAsTable collection={data}/>
-                <button onClick={()=>post()}>Post</button>
-                <button onClick={()=>navigate('/reportdisplay/depreciationretro',{state:query})}>Retro</button>
-            </div>
-        )
-    }
-
-    function CostCenterItems({query}){
-        const {centers,date} = query
-
-        return (
-            <>
-                {centers['values'].map(center=>
-                    <div>
-                        <h4>{center}</h4>
-                        {date['values'].map(item=>
-                            <div>
-                                <h5>{item}</h5>
-                                <DisplayAsTable collection={new CostCenter(center).itemsOfDate(item)}/>
-                            </div>
-                        )}
-                    </div>
-                )}   
-            </>
-        )
-    }
-
-    function CostObjectBalance({query}){
-    const {objects} = query
-    const data = [];
-    objects['values'].map(item=>data.push({"Cost Object":item,"Accumulated Cost":new CostObject(item).accumulatedCost()}))
-    
-    return(
-        <div>
-            <DisplayAsTable collection={data}/>
-            <button onClick={()=>navigate('/reportdisplay/costobjecttransactions', {state: query})}>Transactions</button>
-        </div>
-    )
-}
-
-    function CostObjectTransactions({query}){
-        const {objects} = query;
-        const data = [];
-        objects['values'].map(item=>data.push({"Object":item,"data":new CostObject(item).transactions()}))
-        return(
-            <div>
-                {data.map(item=>
-                    <div>
-                        <h3>{item["Object"]}</h3>
-                        <DisplayAsTable collection={item['data']}/>
-                    </div>
-                )}
-            </div>
-        )
-    }
-
-    function CostObjectSettlement({query}){
-        const {object} = query;
-        const name = object['value']
-        const costObject = new CostObject(name)
-        const totalCost = costObject.accumulatedCost()
-        const allocation = costObject.allocation()
-        return(
-            <div>
-                <h2>Cost Object Settlement</h2>
-                <h4>Object - {name}</h4>
-                <p>Total Cost Accumulated: {totalCost}</p>
-                <DisplayAsTable collection={allocation}/>
-                <button>Cancel</button>
-                <button>Post</button>
-            </div>
-        )
-    }
-
-    function CostToPrepaid({query}){
-        const {date}  = query;
-        const data = CostCenter.prepaidCostData(date['value']);
-
-        return(
-            <div>
-                <DisplayAsTable collection={data}/>
-            </div>
-        )
-    }
-
-    function GenLedger({query}){
-        const {ledger,period}  = query;
-        const data = new GeneralLedger(ledger['value']).ledger(period['range']);
-
-        return(
-            <div>
-                <DisplayAsTable collection={data}/>
-            </div>
-        )
-    }
-
-    function MaterialIssueUI({query}){
-
-    const{postingdate,valuedate,material,location} = query;
-
-    const PDate = postingdate['value'];
-    const Material = material['value'];
-    const Location = location['value'];
-    const VDate = valuedate['value'];
-
-    const defaults = [
-        {"Transaction":"Transfer","Location":"","Quantity":0,"Product":"","General Ledger":"","Cost Center":"","Cost Object":"","Profit Center":"","Consumption Time From":"","Consumption Time To":""}
-    ]
-    const [input,setinput] = useState(defaults);
-    const mi = new MaterialIssue(Material,Location,VDate,PDate,input);
-    const schema = mi.schema;
-    const errors = mi.validate();
-    const entry = mi.createEntry();
-
-    const lineItemChange = (index,field,e)=>{
-        const {value} = e.target;
-        setinput(prevdata=>(
-            prevdata.map((item,i)=>(i==index)?{...item,[field]:value}:item)
-        ))
-    }
-
-    const addLine = ()=>{
-        setinput(prevdata=>([...prevdata,defaults[0]]))
-    }
-
-    const removeLine = (index)=>{
-        setinput(prevdata=>(
-            prevdata.filter((item,i)=>i!==index)
-        ))
-    }
-
-    const post =()=>{
-        const result = mi.post();
-        alert(result);
-    }
-
-    return (
-        <div className='transaction'>
-            <div className='lineItems'>
-                <table>
-                    <thead>
-                        <tr><th></th>{schema[0].map(item=><th>{item['name']}</th>)}</tr>
-                    </thead>
-                    <tbody>
-                        {input.map((item,i)=>
-                            <tr><td><button onClick={()=>removeLine(i)}>-</button></td>{schema[i].map(field=>
-                            <td>
-                                {field['input']=="input" && <input onChange={(e)=>lineItemChange(i,field['name'],e)} type={field['type']} value={input[i][field['name']]}/>}
-                                {field['input']=="option" && <select onChange={(e)=>lineItemChange(i,field['name'],e)} value={input[i][field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
-                                {field['input']=="calculated" && <label></label>}
-                            </td>)}
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-                <button onClick={()=>addLine()}>+</button>
-            </div>
-            <button onClick={()=>post()}>POST</button>
-            {JSON.stringify(entry)}
-        </div>
-    )
-    }
-
-    function MaterialLedger({query}){
-        const {material, period} = query
-        const data = new Material(material['value']).ledger(period['range'])
-        return(
-            <div>
-                <DisplayAsTable collection={data}/>
-            </div>
-        )
-    }
-
-    function MaterialInLocationLedger({query}){
-        const {material,location, period} = query
-        const data = new MaterialInLocation(material['value'],location['value']).ledger(period['range'])
-        return(
-            <div>
-                <DisplayAsTable collection={data}/>
-            </div>
-        )
-    }
-
-    function MaterialBalances({query}){
-        const {period} = query;
-        const data = MaterialInLocation.MaterialBalances(period['range']);
-
-        return (
-            <div>
-                <DisplayAsTable collection={data}/>
-            </div>
-        )
-    }
-
-    function MaterialMovement({query}){
-        const {period} = query;
-        const data = MaterialInLocation.MaterialMovement(period['range']);
-
-        return (
-            <div>
-                <DisplayAsTable collection={data}/>
-            </div>
-        )
-    }
-
-    function PayCalc({query}){
-        const location = useLocation();
-        const {code,year,month} = query;
-        const data = new Employee(code['value']).salary(year['value'],month['value'])
-        return(
-            <>
-            <DisplayAsTable collection={data}/>
-            </>
-        )
-    }
-
-    function SalaryRun({query}){
-        const {year,month} = query
-        const data = Employee.salaryrun(year['value'],month['value']);
-        return(
-            <>
-            <DisplayAsTable collection={data}/>
-            </>
-        )
-}
-
-    function PersonalAccountBalance({query}){
-        const {date}= query;
-        const data = Ledger.accountBalances(date['value']);
-        
-        return(
-            <div>
-                <DisplayAsTable collection={data}/>
-            </div>
-        )
-    }
-
-    function Transactions({query}){
-        const {period}= query;
-        const data = Transaction.transactions(period['range']);
-        const fields = ["Document No","Posting Date","Document Date","Reference","Account","General Ledger","Amount","Debit/ Credit","Account Type", "Presentation","Transaction","Profit Center"]
-        const navigate = useNavigate();
-        const view = (docNo) =>{
-            navigate('/reportdisplay/viewdocument',{state:{"docno":{"value":docNo}}})
-        } 
-
-        return(
-            <div>
-                <table>
-                    <thead>
-                        <tr>{fields.map(item=><th>{item}</th>)}</tr>
-                    </thead>
-                    <tbody>
-                        {data.map(item=>
-                            <tr onDoubleClick={()=>view(item['Document No'])}>{fields.map(field=><td>{item[field]}</td>)}</tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
-        )
-    }
-
-    function VendorOpenItem({query}){
-        const {vendor,date} = query
-        return(
-            <div>
-                {vendor['values'].map(item=>
-                    <div>
-                        <h4>{item}</h4>
-                        <DisplayAsTable collection={new Ledger(item).openItems(date['value'])}/>
-                    </div>
-                )}
-            </div>
-        )
-    }
-
-    function VendorLedger({query}){
-        const {vendor,period} = query
-        const data = new Ledger(vendor['value']).ledger(period['range']);
-
-        return(
-            <div>
-                <DisplayAsTable collection={data}/>
-            </div>
-        )
-    }
-
-    function ViewDocument({query}){
-        const {docno} = query
-        const data = Transaction.getDocument('FACT',2025,docno['value']);
-        const fields = Object.keys(data).filter(field=>field!="Line Items")
-
-        return(
-            <div>
-                {fields.map(field=>
-                    <div><label>{field}</label><label>{data[field]}</label></div>
-                )}
-                <DisplayAsTable collection={data['Line Items']}/>
-            </div>
-        )
-    }
-
-    function VANAccounting({query}){
-        const {VAN} = query;
-        const defaults = {"Positng Date":"","Document Date":"","Amount":"","Text":""}
-        const [data,setdata] = useState([defaults]);
-
-        const handleChange = (e,i,field)=>{
-            const {value} = e.target;
-            setdata(prevdata=>(prevdata.map((item,index)=>(i==index)?{...item,[field]:value}:item)))
-        }
-
-        const removeLine = (i) =>{
-            setdata(prevdata=>(prevdata.filter((item,index)=>index!==i)))
-        }
-
-        const addLine = ()=>{
-            setdata(prevdata=>([...prevdata,defaults]))
-        }
-
-        const vanentry = new VANEntry(VAN['value'],data)
-        const simulation = vanentry.simulate();
-        const post =()=> {
-            const result = vanentry.post()
-            alert(result)
-        }
-        return(
-            <div>
-                <h4>VAN Accounting</h4>
-                <div>
-                    <table>
-                        <thead>
-                            <tr><th></th><th>Posting Date</th><th>Document Date</th><th>Amount</th><th>Text</th></tr>
-                        </thead>
-                        <tbody>
-                            {data.map((item,i)=>
-                                <tr>
-                                    <td><button onClick={()=>removeLine(i)}>-</button></td>
-                                    <td><input value={item['Posting Date']} onChange={(e)=>handleChange(e,i,"Posting Date")} type="date"/></td>
-                                    <td><input value={item['Document Date']} onChange={(e)=>handleChange(e,i,"Document Date")} type="date"/></td>
-                                    <td><input value={item['Amount']} onChange={(e)=>handleChange(e,i,"Amount")} type="number"/></td>
-                                    <td><input value={item['Text']} onChange={(e)=>handleChange(e,i,"Text")} type="text"/></td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                    <button onClick={()=>addLine()}>+</button>
-                </div>
-                <button onClick={()=>post()}>Post</button>
-            </div>
-        )
-    }
-
-    return (
-        <div className='reportDisplay'>
-            {report=="accountbalances" && <AccountBalances query={query}/>}
-            {report=="assetledger" && <AssetLedger query={query}/>}
-            {report=="assetregister" && <AssetRegister query={query}/>}
-            {report=="assetschedule" && <AssetSchedule query={query}/>}
-            {report=="attendance" && <AttendanceUI query={query}/>}
-            {report=="clearing" && <Clearing query={query}/>}
-            {report=="costcenteritems" && <CostCenterItems query={query}/>}
-            {report=="costtoprepaid" && <CostToPrepaid query={query}/>}
-            {report=="costobjectbalance" && <CostObjectBalance query={query}/>}
-            {report=="costobjecttransactions" && <CostObjectTransactions query={query}/>}
-            {report=="costobjectsettlement" && <CostObjectSettlement query={query}/>}
-            {report=="depreciationpros" && <Depreciation query={query} method={"Prospective"}/>}
-            {report=="depreciationretro" && <Depreciation query={query} method={"Retrospective"}/>}
-            {report=="generalledger" && <GenLedger query={query}/>}
-            {report=="materialissue" && <MaterialIssueUI query={query}/>}
-            {report=="materialinlocation" && <MaterialInLocationLedger query={query}/>}
-            {report=="materialledger" && <MaterialLedger query={query}/>}
-            {report=="materialbalances" && <MaterialBalances query={query}/>}
-            {report=="materialmovement" && <MaterialMovement query={query}/>}
-            {report=="personalaccountbalance" && <PersonalAccountBalance query={query}/>}
-            {report=="paycalc" && <PayCalc query={query}/>}
-            {report=="salaryrun" && <SalaryRun query={query}/>}
-            {report=="transactions" && <Transactions query={query}/>}
-            {report=="vendoropenitem" && <VendorOpenItem query={query}/>}
-            {report=="vendorledger" && <VendorLedger query={query}/>}
-            {report=="viewdocument" && <ViewDocument query={query}/>}
-            {report=="vanaccounting" && <VANAccounting query={query}/>}
-            <div className='reportDisplayButtons'>
-                <button className="blue" onClick={()=>navigate('/report/'+report)}>Back</button>
-            </div>
-        </div>
-    )
-}
-
 class Transaction{
     constructor(type){
         this.type = type;
@@ -2414,27 +1743,6 @@ function TableInput({addTableRow,removeTableRow,tableChange,schema,data,editable
     )
 }
 
-function MultipleInput({data,schema}){
-    
-    return(
-        <div className="reportQueryField">
-                <label>{schema['label']}</label>
-                {schema["fields"].map(field=>
-                <div className='reportQuerySubfield'>
-                    <label>{field}</label>
-                    {field =="value" && <input type={schema["type"]} className='reportQueryCell' onChange={(e)=>valueChange(schema['name'],field,e)} value={data[schema['name']][field]}/>}
-                    {field =="values" && <div className='reportQueryColumn'>{data[schema['name']][field].map((values,i)=><div><input type={schema["type"]} className='reportQueryCell' onChange={(e)=>valuesChange(schema['name'],field,i,e)} value={data[schema['name']][field][i]}/></div>)} <button onClick={()=>addValues(schema['name'],field)}>+</button></div>}
-                    {/* {field =="exclValues" && <div className='reportQueryColumn'>{query[item['name']][field].map((values,i)=><div><input className='reportQueryCell' type={item["type"]} onChange={(e)=>valuesChange(item['name'],field,i,e)} value={query[item['name']][field][i]}/></div>)} <button onClick={()=>addValues(item['name'],field)}>+</button></div>}
-                    {field =="range" && <div className='reportQueryRow'><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangeChange(item['name'],field,0,e)} value={query[item['name']][field][0]}/><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangeChange(item['name'],field,1,e)} value={query[item['name']][field][1]}/></div>}
-                    {field =="ranges" && <div className='reportQueryColumn'>{query[item['name']][field].map((ranges,i)=><div><div className='reportQueryRow'><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,0,e)} value={query[item['name']][field][i][0]}/><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,1,e)} value={query[item['name']][field][i][1]}/></div></div>)} <button onClick={()=>addRanges(item['name'],field)}>+</button></div>}
-                    {field =="exclRanges" && <div className='reportQueryColumn'>{query[item['name']][field].map((ranges,i)=><div><div className='reportQueryRow'><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,0,e)} value={query[item['name']][field][i][0]}/><input type={item["type"]} className='reportQueryCell' onChange={(e)=>rangesChange(item['name'],field,i,1,e)} value={query[item['name']][field][i][1]}/></div></div>)} <button onClick={()=>addRanges(item['name'],field)}>+</button></div>} */}
-                </div>
-                )}
-            {JSON.stringify(query)}
-        </div>
-    )
-}
-
 function DisplayAsTable({collection}){
 
     if (collection.length!=0){
@@ -2487,6 +1795,232 @@ class KB{
         const yearEnd = new Date(yearStart.getFullYear()+1,yearStart.getMonth(),0);
         const result = `${yearEnd.getFullYear()}-${(yearEnd.getMonth()+1).toString().padStart(2,0)}-${yearEnd.getDate()}`;
         return result;
+    }
+}
+
+class Operations{
+    static downloadJSON(data,fileName){
+        const exportType = exportFromJSON.types.json;
+        exportFromJSON({data,fileName,exportType});
+    }
+    static downloadCSV(data,fileName){
+        const exportType = exportFromJSON.types.csv;
+        exportFromJSON({data,fileName,exportType});
+    }
+}
+
+class CollectionQuery{
+    constructor(collection,method){
+        this.collection = collection;
+        this.method = method;
+        this.title = this.collection;
+        this.mandatory = new Collection(this.collection).identifiers;
+        this.createRequirements = CollectionQuery.createRequirements[this.collection];
+        this.defaults = CollectionQuery.defaults[this.collection];
+    }
+    schema(data){
+        return CollectionQuery.schema[this.collection];
+    }
+    errors(data){
+        const missing = [];
+        const errors = [];
+        this.createRequirements.map(field=>(data[field]=="")?missing.push(field):()=>{});
+        (this.createRequirements.includes("Company Code") && new Collection("Company").exists({"Code":data["Company Code"]})==false)?errors.push(`Company with Code ${data["Company Code"]} does not exist.`):()=>{};
+        (this.createRequirements.includes("Employee") && new Collection("Employee").exists({"Company Code":data["Company Code"], "Code":data['Employee']})==false)?errors.push(`Employee with Code ${data["Employee"]} does not exist in Company ${data["Company Code"]}.`):()=>{};
+        (this.createRequirements==ListItems(this.schema(data),"name") && this.checkAvailability(data))?(errors.push(`${this.collection} with same identifier(s) already exists.`)):()=>{};
+        (missing.length>0)?errors.push(`${missing.join(", ")} required.`):()=>{};
+        return errors;
+    }
+    process(data){
+        return data;
+    }
+    navigation(data){
+        return [
+            {"name":"Back","type":"navigate","url":"/control","state":{}},
+            {"name":this.method,"type":"navigate","url":"/interface","state":{'type':'Collection','collection':this.collection,'method':this.method,'data':data}}
+        ]
+    }
+    checkAvailability(data){
+        const availability = new Collection(this.collection).exists(data);
+        return availability;
+    }
+    static createRequirements = {
+        "Asset":["Company Code"],
+        "AssetClass":["Company Code"],
+        "AssetDevelopment":["Company Code"],
+        "Attendance":["Company Code","Year","Month","Employee"],
+        "BankAccount":["Company Code"],
+        "ChartOfAccounts":[],
+        "Company":[],
+        "CostCenter":["Company Code"],
+        "CostObject":["Company Code"],
+        "Currency":[],
+        "Customer":["Company Code"],
+        "Employee":["Company Code"],
+        "FinancialAccountsSettings":["Company Code"],
+        "FinancialStatementVersion":[],
+        "GeneralLedger":["Company Code"],
+        "GroupChartOfAccounts":[],
+        "Holidays":["Company Code","Year"],
+        "IncomeTaxCode":[],
+        "Location":["Company Code"],
+        "Material":["Company Code"],
+        "OrganisationalUnit":["Company Code"],
+        "PaymentTerms":[],
+        "ProfitCenter":["Company Code"],
+        "PurchaseOrder":["Company Code"],
+        "SaleOrder":["Company Code"],
+        "Segment":[],
+        "Service":["Company Code"],
+        "TimeControl":["Company Code"],
+        "UserSettings":["User"],
+        "Vendor":["Company Code"],
+
+    }
+    static schema = {
+        "Asset":[
+            {"name":"Code","datatype":"single","input":"input","type":"number"},
+            {"name":"Company Code","datatype":"single","input":"input","type":"text", "maxLength":4}
+        ],
+        "AssetClass":[
+            {"name":"Code","input":"input","type":"number"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "AssetDevelopment":[
+            {"name":"Code","input":"input","type":"number"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "Attendance":[
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4},
+            {"name":"Year","input":"input","type":"number"},
+            {"name":"Month","input":"input","type":"number"},
+            {"name":"Employee","input":"input","type":"text"}
+        ],
+        "BankAccount":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "ChartOfAccounts":[
+            {"name":"Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "Company":[
+            {"name":"Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "CostCenter":[
+            {"name":"Code","input":"input","type":"number"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "CostObject":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "Currency":[
+            {"name":"Code","input":"input","type":"text"}
+        ],
+        "Customer":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "Employee":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "FinancialAccountsSettings":[
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "FinancialStatementVersion":[
+           {"name":"Code","input":"input","type":"number"} 
+        ],
+        "GeneralLedger":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "GroupChartOfAccounts":[
+            {"name":"Code","input":"input","type":"text", "maxLength":5}
+        ],
+        "Holidays":[
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4},
+            {"name":"Year","input":"input","type":"number"},
+        ],
+        "IncomeTaxCode":[
+            {"name":"Code","input":"input","type":"text"}
+        ],
+        "Location":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "Material":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "OrganisationalUnit":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "PaymentTerms":[
+            {"name":"Code","input":"input","type":"text"}
+        ],
+        "ProfitCenter":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "PurchaseOrder":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "SaleOrder":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "Segment":[
+            {"name":"Code","input":"input","type":"text" ,"maxLength":4,}
+        ],
+        "Service":[
+            {"name":"Code","input":"input","type":"text"},
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "TimeControl":[
+            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
+        ],
+        "UserSettings":[
+            {"name":"User","input":"input","type":"text"}
+        ],
+        "Vendor":[
+            {"name":"Code","datatype":"single","input":"input","type":"text"},
+            {"name":"Company Code","datatype":"single","input":"input","type":"text", "maxLength":4}
+        ],
+    }
+    static defaults = {
+        "Asset":{"Code":"","Company Code":'FACT'},
+        "AssetClass":{"Code":"","Company Code":1000},
+        "AssetDevelopment":{"Code":"","Company Code":1000},
+        "Attendance":{"Company Code":1000,"Year":"","Month":"","Employee":""},
+        "BankAccount":{"Code":"","Company Code":1000},
+        "ChartOfAccounts":{"Code":""},
+        "Company":{"Code":""},
+        "CostCenter":{"Code":"","Company Code":1000},
+        "CostObject":{"Code":"","Company Code":1000},
+        "Currency":{"Code":""},
+        "Customer":{"Code":"","Company Code":1000},
+        "Employee":{"Code":"","Company Code":""},
+        "FinancialAccountsSettings":{"Company Code":1000},
+        "FinancialStatementVersion":{"Code":""},
+        "GeneralLedger":{"Code":"","Company Code":1000},
+        "GroupChartOfAccounts":{"Code":""},
+        "Holidays":{"Company Code":1000,"Year":""},
+        "IncomeTaxCode":{"Code":""},
+        "Location":{"Code":"","Company Code":1000},
+        "Material":{"Code":"","Company Code":""},
+        "OrganisationalUnit":{"Code":"","Company Code":1000},
+        "PaymentTerms":{"Code":""},
+        "ProfitCenter":{"Code":"","Company Code":1000},
+        "PurchaseOrder":{"Code":"","Company Code":1000},
+        "SaleOrder":{"Code":"","Company Code":1000},
+        "Segment":{"Code":""},
+        "Service":{"Code":"","Company Code":1000},
+        "TimeControl":{"Company Code":1000},
+        "UserSettings":{"User":""},
+        "Vendor":{"Code":"","Company Code":'FACT'},
     }
 }
 
@@ -3293,8 +2827,11 @@ class Collection{
     navigation(data){
         const navigation = [
             {"name":"Back","type":"navigate","url":'/control','state':{},'onClick':()=>alert('Hi')},
-            {"name":"Save","type":"action","onClick":()=>alert(this.save(data))}
+            {"name":"Save","type":"action","onClick":()=>alert(this.save(data))},
         ];
+        if (this.method!="Create"){
+            navigation.push({"name":"Export JSON","type":"action","onClick":()=>Operations.downloadJSON(data,this.name)})
+        }
         return navigation;
 
     }
@@ -3616,6 +3153,121 @@ class Collection{
     }
 }
 
+class Table{
+    constructor(name,method="Display"){
+        this.name = name;
+        this.title = this.name;
+        this.method = method;
+        this.data = (this.name in localStorage)?JSON.parse(localStorage.getItem(this.name)):[];
+        this.defaults = (this.method=="Create")?Table.defaults[this.name]:this.data;
+        this.key = Table.keys[this.name];
+        this.mandatory = Table.mandatory[this.name];
+    }
+    errors(data){
+        const list = [];
+        data.map((item,i)=>this.mandatory.map(field=>(item[field]=="")?list.push(`Item ${i+1} requires ${field}`):()=>{}));
+        data.map(item=>Count(item[this.key],ListItems(data,this.key))>1?list.push(`${this.key} ${item[this.key]} exists ${Count(item[this.key],ListItems(data,this.key))} times.`):()=>{});
+        const uniquelist = [...new Set(list)]
+        return uniquelist;
+    }
+    process(data){
+        return data;
+    }
+    navigation(data){
+        const navigation = [
+            {"name":"Back","type":"navigate","url":"/control","state":{}},
+        ];
+        if (this.method!="Update"){
+            navigation.push({"name":"CSV","type":"action","onClick":()=>Operations.downloadCSV(data,this.name)});
+            navigation.push({"name":"Update","type":"navigate","url":"/interface","state":{"type":"Table","method":"Update","table":this.name}});
+        }
+        (this.method=="Update")?navigation.push({"name":"Update","type":"action","onClick":()=>alert(this.save(data))}):()=>{};
+        return navigation;
+    }
+    save(data){
+        localStorage.setItem(this.name,JSON.stringify(data));
+        return ('Success');
+    }
+    schema(data){
+        let schema = [];
+        switch (this.name){
+            case 'Currencies':
+                schema = [
+                    {"name":"Code","datatype":"single","input":"input","type":"text"},
+                    {"name":"Description","datatype":"single","input":"input","type":"text"}
+
+                ]
+                break
+            case 'HSN':
+                schema = [
+                    {"name":"Code","datatype":"single","input":"input","type":"text"},
+                    {"name":"Type","datatype":"single","input":"option","options":["","Goods","Services"]},
+                    {"name":"Description","datatype":"single","input":"input","type":"text"}
+
+                ]
+                break
+            case 'Units':
+                schema = [
+                    {"name":"Symbol","datatype":"single","input":"input","type":"text"},
+                    {"name":"Name","datatype":"single","input":"input","type":"text"},
+                    {"name":"Quantity","datatype":"single","input":"input","type":"text"},
+                    {"name":"Description","datatype":"single","input":"input","type":"text"}
+                ]
+                break
+        }
+        return schema;
+    }
+    static defaults = {
+        "Currencies":[{"Code":"","Description":""}],
+        "Units":[{"Symbol":"","Name":"","Quantity":"","Description":""}],
+        "HSN":[{"Code":"","Type":"","Description":""}]
+    }
+    static keys = {
+        "Currencies":"Code",
+        "Units":"Symbol",
+        "HSN":"Code"
+    }
+    static mandatory = {
+        "Currencies":["Code"],
+        "HSN":["Code","Type"],
+        "Units":["Symbol","Name","Quantity"]
+    }
+}
+
+class ReportQuery{
+    constructor(report){
+        this.report = report;
+    }
+    schema(data){
+        const allSchema = {
+            "ViewDocument":[
+                {"name":"Company Code","datatype":"single","input":"option","options":["",...Company.listAll]},
+                {"name":"Year","datatype":"single","input":"input","type":"text"},
+                {"name":"Document Number","datatype":"single","input":"input","type":"text"}
+            ]
+        }
+        return allSchema[this.report];
+    }
+    defaults(data){
+        const allDefaults = {
+            "ViewDocument":{"Company Code":"","Year":"","Document Number":""}
+        }
+        return allDefaults[this.report]
+    }
+    errors(data){
+        return [];
+    }
+    process(data){
+        return data;
+    }
+    navigation(data){
+        const navigation = [
+            {"name":"Back","type":"navigate","url":"/reports","state":{}},
+            {"name":"Get","type":"navigate","url":"/interface","state":{'type':'Report','report':this.report,'data':data}}
+        ]
+        return navigation;
+    }
+}
 
 function Interface(){
     const location = useLocation();
@@ -3814,334 +3466,6 @@ function Interface(){
     )
 }
 
-class CollectionQuery{
-    constructor(collection,method){
-        this.collection = collection;
-        this.method = method;
-        this.title = this.collection;
-        this.mandatory = new Collection(this.collection).identifiers;
-        this.createRequirements = CollectionQuery.createRequirements[this.collection];
-        this.defaults = CollectionQuery.defaults[this.collection];
-    }
-    schema(data){
-        return CollectionQuery.schema[this.collection];
-    }
-    errors(data){
-        const missing = [];
-        const errors = [];
-        this.createRequirements.map(field=>(data[field]=="")?missing.push(field):()=>{});
-        (this.createRequirements.includes("Company Code") && new Collection("Company").exists({"Code":data["Company Code"]})==false)?errors.push(`Company with Code ${data["Company Code"]} does not exist.`):()=>{};
-        (this.createRequirements.includes("Employee") && new Collection("Employee").exists({"Company Code":data["Company Code"], "Code":data['Employee']})==false)?errors.push(`Employee with Code ${data["Employee"]} does not exist in Company ${data["Company Code"]}.`):()=>{};
-        (this.createRequirements==ListItems(this.schema(data),"name") && this.checkAvailability(data))?(errors.push(`${this.collection} with same identifier(s) already exists.`)):()=>{};
-        (missing.length>0)?errors.push(`${missing.join(", ")} required.`):()=>{};
-        return errors;
-    }
-    process(data){
-        return data;
-    }
-    navigation(data){
-        return [
-            {"name":"Back","type":"navigate","url":"/control","state":{}},
-            {"name":this.method,"type":"navigate","url":"/interface","state":{'type':'Collection','collection':this.collection,'method':this.method,'data':data}}
-        ]
-    }
-    checkAvailability(data){
-        const availability = new Collection(this.collection).exists(data);
-        return availability;
-    }
-    static createRequirements = {
-        "Asset":["Company Code"],
-        "AssetClass":["Company Code"],
-        "AssetDevelopment":["Company Code"],
-        "Attendance":["Company Code","Year","Month","Employee"],
-        "BankAccount":["Company Code"],
-        "ChartOfAccounts":[],
-        "Company":[],
-        "CostCenter":["Company Code"],
-        "CostObject":["Company Code"],
-        "Currency":[],
-        "Customer":["Company Code"],
-        "Employee":["Company Code"],
-        "FinancialAccountsSettings":["Company Code"],
-        "FinancialStatementVersion":[],
-        "GeneralLedger":["Company Code"],
-        "GroupChartOfAccounts":[],
-        "Holidays":["Company Code","Year"],
-        "IncomeTaxCode":[],
-        "Location":["Company Code"],
-        "Material":["Company Code"],
-        "OrganisationalUnit":["Company Code"],
-        "PaymentTerms":[],
-        "ProfitCenter":["Company Code"],
-        "PurchaseOrder":["Company Code"],
-        "SaleOrder":["Company Code"],
-        "Segment":[],
-        "Service":["Company Code"],
-        "TimeControl":["Company Code"],
-        "UserSettings":["User"],
-        "Vendor":["Company Code"],
-
-    }
-    static schema = {
-        "Asset":[
-            {"name":"Code","datatype":"single","input":"input","type":"number"},
-            {"name":"Company Code","datatype":"single","input":"input","type":"text", "maxLength":4}
-        ],
-        "AssetClass":[
-            {"name":"Code","input":"input","type":"number"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "AssetDevelopment":[
-            {"name":"Code","input":"input","type":"number"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "Attendance":[
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4},
-            {"name":"Year","input":"input","type":"number"},
-            {"name":"Month","input":"input","type":"number"},
-            {"name":"Employee","input":"input","type":"text"}
-        ],
-        "BankAccount":[
-            {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "ChartOfAccounts":[
-            {"name":"Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "Company":[
-            {"name":"Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "CostCenter":[
-            {"name":"Code","input":"input","type":"number"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "CostObject":[
-            {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "Currency":[
-            {"name":"Code","input":"input","type":"text"}
-        ],
-        "Customer":[
-            {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "Employee":[
-            {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "FinancialAccountsSettings":[
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "FinancialStatementVersion":[
-           {"name":"Code","input":"input","type":"number"} 
-        ],
-        "GeneralLedger":[
-            {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "GroupChartOfAccounts":[
-            {"name":"Code","input":"input","type":"text", "maxLength":5}
-        ],
-        "Holidays":[
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4},
-            {"name":"Year","input":"input","type":"number"},
-        ],
-        "IncomeTaxCode":[
-            {"name":"Code","input":"input","type":"text"}
-        ],
-        "Location":[
-            {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "Material":[
-            {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "OrganisationalUnit":[
-            {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "PaymentTerms":[
-            {"name":"Code","input":"input","type":"text"}
-        ],
-        "ProfitCenter":[
-            {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "PurchaseOrder":[
-            {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "SaleOrder":[
-            {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "Segment":[
-            {"name":"Code","input":"input","type":"text" ,"maxLength":4,}
-        ],
-        "Service":[
-            {"name":"Code","input":"input","type":"text"},
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "TimeControl":[
-            {"name":"Company Code","input":"input","type":"text", "maxLength":4}
-        ],
-        "UserSettings":[
-            {"name":"User","input":"input","type":"text"}
-        ],
-        "Vendor":[
-            {"name":"Code","datatype":"single","input":"input","type":"text"},
-            {"name":"Company Code","datatype":"single","input":"input","type":"text", "maxLength":4}
-        ],
-    }
-    static defaults = {
-        "Asset":{"Code":"","Company Code":'FACT'},
-        "AssetClass":{"Code":"","Company Code":1000},
-        "AssetDevelopment":{"Code":"","Company Code":1000},
-        "Attendance":{"Company Code":1000,"Year":"","Month":"","Employee":""},
-        "BankAccount":{"Code":"","Company Code":1000},
-        "ChartOfAccounts":{"Code":""},
-        "Company":{"Code":""},
-        "CostCenter":{"Code":"","Company Code":1000},
-        "CostObject":{"Code":"","Company Code":1000},
-        "Currency":{"Code":""},
-        "Customer":{"Code":"","Company Code":1000},
-        "Employee":{"Code":"","Company Code":""},
-        "FinancialAccountsSettings":{"Company Code":1000},
-        "FinancialStatementVersion":{"Code":""},
-        "GeneralLedger":{"Code":"","Company Code":1000},
-        "GroupChartOfAccounts":{"Code":""},
-        "Holidays":{"Company Code":1000,"Year":""},
-        "IncomeTaxCode":{"Code":""},
-        "Location":{"Code":"","Company Code":1000},
-        "Material":{"Code":"","Company Code":""},
-        "OrganisationalUnit":{"Code":"","Company Code":1000},
-        "PaymentTerms":{"Code":""},
-        "ProfitCenter":{"Code":"","Company Code":1000},
-        "PurchaseOrder":{"Code":"","Company Code":1000},
-        "SaleOrder":{"Code":"","Company Code":1000},
-        "Segment":{"Code":""},
-        "Service":{"Code":"","Company Code":1000},
-        "TimeControl":{"Company Code":1000},
-        "UserSettings":{"User":""},
-        "Vendor":{"Code":"","Company Code":'FACT'},
-    }
-}
-
-class Table{
-    constructor(name,method="Display"){
-        this.name = name;
-        this.title = this.name;
-        this.method = method;
-        this.data = (this.name in localStorage)?JSON.parse(localStorage.getItem(this.name)):[];
-        this.defaults = (this.method=="Create")?Table.defaults[this.name]:this.data;
-        this.key = Table.keys[this.name];
-        this.mandatory = Table.mandatory[this.name];
-    }
-    errors(data){
-        const list = [];
-        data.map((item,i)=>this.mandatory.map(field=>(item[field]=="")?list.push(`Item ${i+1} requires ${field}`):()=>{}));
-        data.map(item=>Count(item[this.key],ListItems(data,this.key))>1?list.push(`${this.key} ${item[this.key]} exists ${Count(item[this.key],ListItems(data,this.key))} times.`):()=>{});
-        const uniquelist = [...new Set(list)]
-        return uniquelist;
-    }
-    process(data){
-        return data;
-    }
-    navigation(data){
-        const navigation = [
-            {"name":"Back","type":"navigate","url":"/control","state":{}},
-        ];
-        (this.method!="Update")?navigation.push({"name":"Update","type":"navigate","url":"/interface","state":{"type":"Table","method":"Update","table":this.name}}):()=>{};
-        (this.method=="Update")?navigation.push({"name":"Update","type":"action","onClick":()=>alert(this.save(data))}):()=>{};
-        return navigation;
-    }
-    save(data){
-        localStorage.setItem(this.name,JSON.stringify(data));
-        return ('Success');
-    }
-    schema(data){
-        let schema = [];
-        switch (this.name){
-            case 'Currencies':
-                schema = [
-                    {"name":"Code","datatype":"single","input":"input","type":"text"},
-                    {"name":"Description","datatype":"single","input":"input","type":"text"}
-
-                ]
-                break
-            case 'HSN':
-                schema = [
-                    {"name":"Code","datatype":"single","input":"input","type":"text"},
-                    {"name":"Type","datatype":"single","input":"option","options":["","Goods","Services"]},
-                    {"name":"Description","datatype":"single","input":"input","type":"text"}
-
-                ]
-                break
-            case 'Units':
-                schema = [
-                    {"name":"Symbol","datatype":"single","input":"input","type":"text"},
-                    {"name":"Name","datatype":"single","input":"input","type":"text"},
-                    {"name":"Quantity","datatype":"single","input":"input","type":"text"},
-                    {"name":"Description","datatype":"single","input":"input","type":"text"}
-                ]
-                break
-        }
-        return schema;
-    }
-    static defaults = {
-        "Currencies":[{"Code":"","Description":""}],
-        "Units":[{"Symbol":"","Name":"","Quantity":"","Description":""}],
-        "HSN":[{"Code":"","Type":"","Description":""}]
-    }
-    static keys = {
-        "Currencies":"Code",
-        "Units":"Symbol",
-        "HSN":"Code"
-    }
-    static mandatory = {
-        "Currencies":["Code"],
-        "HSN":["Code","Type"],
-        "Units":["Symbol","Name","Quantity"]
-    }
-}
-
-class ReportQuery{
-    constructor(report){
-        this.report = report;
-    }
-    schema(data){
-        const allSchema = {
-            "ViewDocument":[
-                {"name":"Company Code","datatype":"single","input":"option","options":["",...Company.listAll]},
-                {"name":"Year","datatype":"single","input":"input","type":"text"},
-                {"name":"Document Number","datatype":"single","input":"input","type":"text"}
-            ]
-        }
-        return allSchema[this.report];
-    }
-    defaults(data){
-        const allDefaults = {
-            "ViewDocument":{"Company Code":"","Year":"","Document Number":""}
-        }
-        return allDefaults[this.report]
-    }
-    errors(data){
-        return [];
-    }
-    process(data){
-        return data;
-    }
-    navigation(data){
-        const navigation = [
-            {"name":"Back","type":"navigate","url":"/reports","state":{}},
-            {"name":"Get","type":"navigate","url":"/interface","state":{'type':'Report','report':this.report,'data':data}}
-        ]
-        return navigation;
-    }
-}
-
 class Company{
     constructor(Code){
         this.code = Code;
@@ -4257,10 +3581,57 @@ function Scratch(){
 
     return(
         <div className='reportDisplay'>
-        {JSON.stringify(new Report('ViewDocument').schema(new Report('ViewDocument').defaults()))}
+        <TreeView data={[{'id':1,'name':'Aravind', 'parentId':null},{'id':2,'name':'Aravind', 'parentId':1}]}/>
         </div>
     )
 }
+
+function buildTree(data, parentId = null) {
+  let tree = [];
+  data.forEach(item => {
+    if (item.parentId === parentId) {
+      let children = buildTree(data, item.id);
+      if (children.length) {
+        item.children = children;
+      }
+      tree.push(item);
+    }
+  });
+  return tree;
+}
+
+const TreeNode = ({ node, key,setdata }) => {
+  return (
+    <li>
+      <input value={node.name}/> {/* Assuming 'name' is a property in your node object */}
+      <button>Add Item</button>
+      <button>Add Level</button>
+      {node.children && node.children.length > 0 && (
+        <ul>
+          {node.children.map(child => (
+            <TreeNode key={child.id} node={child} />
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+};
+
+const TreeView = () => {
+    const [data,setdata] = useState([{'id':'a','name':'name','parentId':null},{id:'2','name':'firstName','parentId':'a'}]);
+    const treeStructure = buildTree(data); 
+
+    return (<>
+    <ul>
+        {treeStructure.map(node => (
+        <TreeNode key={node.id} node={node} setdata={setdata}/>
+        ))}
+    </ul>
+    {JSON.stringify(treeStructure)}
+    </>
+    );
+};
+
 
 function App(){
     return(
