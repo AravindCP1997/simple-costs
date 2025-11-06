@@ -211,7 +211,7 @@
 .display{
   background: none;
   box-shadow: 0px 3px 10px 0px var(--gray);
-  backdrop-filter: blur(1px);
+  backdrop-filter: blur(2px);
   border-radius: 20px;
   padding:5%;
   width:100%;

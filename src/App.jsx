@@ -1572,22 +1572,34 @@ class IncomeTax{
     }
 }
 
-function SingleInput({field,handleChange,output}){
+function SingleInput({field,output,setdata}){
+
+    const handleChange = (e) =>{
+        const {value} = e.target;
+        setdata(prevdata=>({
+            ...prevdata,[field['name']]:value}))
+    }
+
     return(
         <div className='displayField'>
             <div className='displayRow'>
                 <label>{field['name']}</label>
                 {field['noteditable'] && <p>{output[field['name']]}</p>}
                 {(field['input'] == "input" && !field['noteditable'] )&& 
-                    <input type={field['type']} maxLength={field['maxLength']} placeholder={field['placeholder']} onChange={(e)=>handleChange(field['name'],e)} value={output[field['name']]}/>}
+                    <input type={field['type']} maxLength={field['maxLength']} placeholder={field['placeholder']} onChange={(e)=>handleChange(e)} value={output[field['name']]}/>}
                 {(field['input']=="option" && !field['noteditable']) && 
-                    <select onChange={(e)=>handleChange(field['name'],e)} value={output[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                    <select onChange={(e)=>handleChange(e)} value={output[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
             </div>
         </div>
     )
 }
 
-function ObjectInput({field,handleChange,output,editable}){
+function ObjectInput({field,setdata,output}){
+    const handleChange=(field,e)=>{
+        setdata(prevdata=>({
+            ...prevdata,[field['name']]:{...prevdata[field['name']],[field]:value}
+        }))
+    }
     return(
         <div className='displayField'>
             <div className='displayObject'>
@@ -1596,9 +1608,9 @@ function ObjectInput({field,handleChange,output,editable}){
                     <>{subfield['datatype']=="single"&&
                         <div className='displayRow'><label>{subfield['name']}</label>
                             {(!field['noteditable'] && subfield['input']=="input" )&& 
-                                <input type={subfield['type']} onChange={(e)=>handleChange(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}/>}
+                                <input type={subfield['type']} onChange={(e)=>handleChange(subfield['name'],e)} value={output[field['name']][subfield['name']]}/>}
                             {(!field['noteditable'] && subfield['input'] == "option") && 
-                                <select  onChange={(e)=>handleChange(field['name'],subfield['name'],e)} value={output[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                                <select  onChange={(e)=>handleChange(subfield['name'],e)} value={output[field['name']][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}
                             {field['noteditable'] && 
                                 <p>{output[field['name']][subfield['name']]}</p>
                             }
@@ -1609,19 +1621,42 @@ function ObjectInput({field,handleChange,output,editable}){
     )
 }
 
-function ListInput({field,handleChange,output,addList, removeList}){
+function ListInput({field,setdata,output}){
+
+    const handleChange = (i,e)=>{
+        const {value} = e.target; 
+        setdata(prevdata=>({
+            ...prevdata,
+            [field['name']]:prevdata[field['name']].map((item,index)=>i==index?value:item)
+        }))
+    }
+
+    function addItem(){
+        setdata(prevdata=>({
+            ...prevdata,
+            [field['name']]:[...prevdata[field['name']],""]
+        }))
+    }
+
+    function removeItem(i){
+        setdata(prevdata=>({
+            ...prevdata,
+            [field['name']]:prevdata[field['name']].filter((item,index)=>i!==index)
+        }))
+    }
+
     return(
         <div className='displayField'>
             <div className='displayObject'>
-                <div className='displayRow'><label>{field['name']}</label><button onClick={()=>addList(field['name'])}>+</button></div>
+                <div className='displayRow'><label>{field['name']}</label><button onClick={()=>addItem()}>+</button></div>
                 <div className='displayList'>
                     {output[field['name']].map((item,i)=>
                         <div>
                             {field['noteditable'] && <p>{item}</p>}
                             {(field['input'] == "input" && !field['noteditable'] )&& 
-                            <div><input type={field['type']} maxLength={field['maxLength']} placeholder={field['placeholder']} onChange={(e)=>handleChange(field['name'],i,e)} value={item}/><button onClick={()=>removeList(field['name'],i)}>-</button></div>}
+                            <div><input type={field['type']} maxLength={field['maxLength']} placeholder={field['placeholder']} onChange={(e)=>handleChange(i,e)} value={item}/><button onClick={()=>removeItem(i)}>-</button></div>}
                             {(field['input']=="option" && !field['noteditable']) && 
-                            <div><select onChange={(e)=>handleChange(field['name'],i,e)} value={item}>{field['options'].map(option=><option value={option}>{option}</option>)}</select><button onClick={()=>removeList(field['name'],i)}>-</button></div>}
+                            <div><select onChange={(e)=>handleChange(i,e)} value={item}>{field['options'].map(option=><option value={option}>{option}</option>)}</select><button onClick={()=>removeItem(i)}>-</button></div>}
                         </div>
                     )}
                 </div>
@@ -1669,19 +1704,69 @@ function CollectionInput({field,handleChange,output,addItem,removeItem}){
     )
 }
 
-function NestInput({field,output,handleChange1,handleChange2,addItem1,addItem2,removeItem1,removeItem2}){
+function NestInput({field,output,setdata,defaults}){
+    
+    function collectionChange(subfield,index,e){
+        const {value} = e.target
+        setdata(prevdata=>({
+            ...prevdata,
+            [field['name']]:prevdata[field['name']].map((item,i)=>(i===index)?{...item,[subfield]:value}:item)
+        }))
+    }
+
+    function nestChange(index,subfield,subindex,subsubfield,e){
+        const {value} = e.target;
+        setdata(prevdata=>({
+            ...prevdata,[field['name']]:prevdata[field['name']].map((item,i)=>
+            (i==index)?{...item,[subfield]:item[subfield].map((subitem,ii)=>
+            (ii==subindex)?{...subitem,[subsubfield]:value}:subitem)}:item)
+        }))
+    }
+
+    function addCollection(){
+        setdata(prevdata=>({
+            ...prevdata,
+            [field['name']]:[...prevdata[field['name']],defaults[field['name']][0]]
+        }))
+    }
+
+    function removeCollection(index){
+        setdata(prevdata=>({
+            ...prevdata,
+            [field['name']]:prevdata[field['name']].filter((item,i)=>i!==index)
+        }))
+        
+    }
+
+    function addNest(index,subfield){
+        setdata(prevdata=>({
+            ...prevdata,
+            [field['name']]:prevdata[field['name']].map((item,i)=>
+            (i==index)?{...item,[subfield]:[...item[subfield],defaults[field['name']][0][subfield][0]]}:item
+            )
+        }))
+    }
+
+    function removeNest(index,subfield,subindex){
+        setdata(prevdata=>({
+            ...prevdata,
+            [field['name']]:prevdata[field['name']].map((item,i)=>
+            (i==index)?{...item,[subfield]:item[subfield].filter((subitem,ii)=>ii!=subindex)}:item)
+        }))
+    }
+    
     return(
         <div className="displayField">
             <div className="displayObject">
                 <label>{field['name']}</label>
-                <button onClick={(e)=>addItem1(field['name'],e)}>Add</button>
+                <button onClick={()=>addCollection()}>Add</button>
                 <div className='displayGrid'>{output[field['name']].map((item,index)=>
                     <div className="displayFields">{field['schema'][index].map(subfield=>
                         <div className='displayField'>
                             {subfield['datatype']=="single" && <div className='displayRow'>
                                 <label>{subfield['name']}</label>
-                                {subfield['input']=="input" && <input onChange={(e)=>handleChange1(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]} type={subfield['type']}/>}
-                                {subfield['input']=="option" && <select onChange={(e)=>handleChange1(field['name'],subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>
+                                {subfield['input']=="input" && <input onChange={(e)=>collectionChange(subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]} type={subfield['type']}/>}
+                                {subfield['input']=="option" && <select onChange={(e)=>collectionChange(subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>
                                     {subfield['options'].map(option=><option value={option}>{option}</option>)}
                                     </select>}
                             </div>}
@@ -1694,24 +1779,103 @@ function NestInput({field,output,handleChange1,handleChange2,addItem1,addItem2,r
                                         </thead>
                                         <tbody>{output[field['name']][index][subfield['name']].map((subitem,subindex)=>
                                             <tr>
-                                                <td><div className='displayTableCell'><button onClick={()=>removeItem2(field['name'],index,subfield['name'],subindex)}>-</button></div></td>
+                                                <td><div className='displayTableCell'><button onClick={()=>removeNest(index,subfield['name'],subindex)}>-</button></div></td>
                                                 {subfield['schema'][subindex].map(subsubfield=>
                                                 <td>
-                                                    <div className='displayTableCell'><input value={output[field['name']][index][subfield['name']][subindex][subsubfield['name']]} onChange={(e)=>handleChange2(field['name'],index,subfield['name'],subindex,subsubfield['name'],e)}/></div>
+                                                    <div className='displayTableCell'><input value={output[field['name']][index][subfield['name']][subindex][subsubfield['name']]} onChange={(e)=>nestChange(index,subfield['name'],subindex,subsubfield['name'],e)}/></div>
                                                 </td>)}
                                             </tr>)}
                                         </tbody>
                                     </table>
-                                    <button onClick={()=>addItem2(field['name'],index,subfield['name'])}>+</button>
+                                    <button onClick={()=>addNest(index,subfield['name'])}>+</button>
                                 </div>
                             </div> }
                         </div>)}
-                        <button onClick={(e)=>removeItem1(field['name'],index,e)}>-</button>
+                        <button onClick={()=>removeCollection(index)}>-</button>
                     </div>)}
                 </div>
             </div>
         </div>
     )
+}
+
+const MultipleInput = ({field,output,setdata})=>{
+    
+    const valueChange=(req,i,e)=>{
+        const {value} = e.target;
+        setdata(prevdata=>({
+            ...prevdata,[field['name']]:{...prevdata[field['name']],[req]:prevdata[field['name']][req].map((item,index)=>(i==index)?value:item)}
+        }))
+    }
+
+    const removeItem=(req,i)=>{
+        setdata(prevdata=>({
+            ...prevdata,[field['name']]:{...prevdata[field['name']],[req]:prevdata[field['name']][req].filter((item,index)=>i!=index)}
+        }))
+    }
+
+    const addValue=(req)=>{
+        setdata(prevdata=>({
+            ...prevdata,[field['name']]:{...prevdata[field['name']],[req]:[...prevdata[field['name']][req],""]}
+        }))
+    }
+
+    const addRange=(req)=>{
+        setdata(prevdata=>({
+            ...prevdata,[field['name']]:{...prevdata[field['name']],[req]:[...prevdata[field['name']][req],{"from":"","to":""}]}
+        }))
+    }
+
+    const rangeChange =(req,i,subfield,e)=>{
+        const {value} = e.target;
+        setdata(prevdata=>({
+            ...prevdata,[field['name']]:{...prevdata[field['name']],[req]:prevdata[field['name']][req].map((item,index)=>(i==index)?{...item,[subfield]:value}:item)}
+        }))
+    }
+    
+    return (
+        <div className='displayField'>
+            <label>{field['name']}</label>
+            {field['req'].map(req=>
+                <div className='displayObject'>
+                    <div className='displayRow'><label>{req}</label></div>
+                    {(req=="values" || req=="exclValues") && <div className='displayList'>
+                        <button onClick={()=>addValue(req)}>+</button>
+                        {output[field['name']][req].map((item,i)=>
+                        <div>
+                            {field['noteditable'] && <p>{item}</p>}
+                            {(field['input'] == "input" && !field['noteditable'] )&& 
+                            <div><input type={field['type']} maxLength={field['maxLength']} placeholder={field['placeholder']} onChange={(e)=>valueChange(req,i,e)} value={item}/><button onClick={()=>removeItem(req,i)}>-</button></div>}
+                            {(field['input']=="option" && !field['noteditable']) && 
+                            <div><select onChange={(e)=>valueChange(i,e)} value={item}>{field['options'].map(option=><option value={option}>{option}</option>)}</select><button onClick={()=>removeItem(req,i)}>-</button></div>}
+                        </div>
+                        )}
+                    </div>}
+                    {(req=="ranges" || req=="exclRanges") &&<div className='displayList'>
+                        <button onClick={()=>addRange(req)}>+</button>
+                        {output[field['name']][req].map((item,i)=>
+                        <div>
+                            {field['noteditable'] && <p>{item}</p>}
+                            {(field['input'] == "input" && !field['noteditable'] )&& 
+                            <div>
+                                <input type={field['type']} maxLength={field['maxLength']} placeholder={field['placeholder']} onChange={(e)=>rangeChange(req,i,'from',e)} value={item['from']}/>
+                                <input type={field['type']} maxLength={field['maxLength']} placeholder={field['placeholder']} onChange={(e)=>rangeChange(req,i,'to',e)} value={item['to']}/>
+                                <button onClick={()=>removeItem(req,i)}>-</button>
+                            </div>}
+                            {(field['input']=="option" && !field['noteditable']) && 
+                            <div>
+                                <select onChange={(e)=>rangeChange(req,i,'from',e)} value={item['from']}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>
+                                <select onChange={(e)=>rangeChange(req,i,'to',e)} value={item['to']}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>
+                                <button onClick={()=>removeItem(req,i)}>-</button>
+                            </div>}
+                        </div>
+                        )}
+                    </div>}
+                </div>
+            )}
+        </div>
+    )
+
 }
 
 function TableInput({addTableRow,removeTableRow,tableChange,schema,data,editable}){
@@ -1743,6 +1907,26 @@ function TableInput({addTableRow,removeTableRow,tableChange,schema,data,editable
         </div>
     )
 }
+
+const Collapsible = ({ children, title }) => {
+      const [isOpen, setIsOpen] = useState(false);
+      const contentRef = useRef(null);
+
+      const toggleCollapse = () => {
+        setIsOpen(!isOpen);
+      };
+
+      return (
+        <div> 
+            <div ref={contentRef} style={{maxHeight: isOpen ? `${contentRef.current.scrollHeight}px` : '0',overflow: 'hidden',transition: 'max-height 0.3s ease-in-out',}}>
+            {children}
+            </div>
+            <div className="left">
+                <button onClick={toggleCollapse} aria-expanded={isOpen}>{isOpen && `Hide`}{!isOpen && `${title}`}</button>
+            </div> 
+        </div>
+      );
+};
 
 function DisplayAsTable({collection}){
 
@@ -3244,14 +3428,15 @@ class ReportQuery{
             "ViewDocument":[
                 {"name":"Company Code","datatype":"single","input":"option","options":["",...Company.listAll]},
                 {"name":"Year","datatype":"single","input":"input","type":"text"},
-                {"name":"Document Number","datatype":"single","input":"input","type":"text"}
+                {"name":"Document Number","datatype":"single","input":"input","type":"text"},
+                {"name":"Segment","datatype":"multiple","input":"input","type":"number","req":["values","ranges","exclValues","exclRanges"]}
             ]
         }
         return allSchema[this.report];
     }
     defaults(data){
         const allDefaults = {
-            "ViewDocument":{"Company Code":"","Year":"","Document Number":""}
+            "ViewDocument":{"Company Code":"","Year":"","Document Number":"","Segment":{"values":[""],"exclValues":[""],"ranges":[{"from":"","to":""}],"exclRanges":[{"from":"","to":""}]}}
         }
         return allDefaults[this.report]
     }
@@ -3326,23 +3511,6 @@ function Interface(){
         window.location.reload();
     }
 
-    const singleChange = (field,e)=>{
-        e.preventDefault;
-        const {value} = e.target
-        setdata(prevdata=>({
-            ...prevdata,
-            [field]:value
-        }))
-    }
-
-    const listChange = (field,i,e)=>{
-        const {value} = e.target
-        setdata(prevdata=>({
-            ...prevdata,
-            [field]:prevdata[field].map((item,index)=>i==index?value:item)
-        }))
-    }
-
     function objectChange(field,subfield,e){
         e.preventDefault;
         const {value} = e.target
@@ -3361,34 +3529,11 @@ function Interface(){
         }))
     }
 
-    function nestChange(field,index,subfield,subindex,subsubfield,e){
-        const {value} = e.target;
-        setdata(prevdata=>({
-            ...prevdata,[field]:prevdata[field].map((item,i)=>
-            (i==index)?{...item,[subfield]:item[subfield].map((subitem,ii)=>
-            (ii==subindex)?{...subitem,[subsubfield]:value}:subitem)}:item)
-        }))
-    }
-
-    function addList(field){
-        setdata(prevdata=>({
-            ...prevdata,
-            [field]:[...prevdata[field],""]
-        }))
-    }
-
     function addCollection(field,e){
         e.preventDefault;
         setdata(prevdata=>({
             ...prevdata,
             [field]:[...prevdata[field],defaults[field][0]]
-        }))
-    }
-
-    function removeList(field,index){
-        setdata(prevdata=>({
-            ...prevdata,
-            [field]:prevdata[field].filter((item,i)=>i!==index)
         }))
     }
 
@@ -3399,23 +3544,6 @@ function Interface(){
             [field]:prevdata[field].filter((item,i)=>i!==index)
         }))
         
-    }
-
-    function addNest(field,index,subfield){
-        setdata(prevdata=>({
-            ...prevdata,
-            [field]:prevdata[field].map((item,i)=>
-            (i==index)?{...item,[subfield]:[...item[subfield],defaults[field][0][subfield][0]]}:item
-            )
-        }))
-    }
-
-    function removeNest(field,index,subfield,subindex){
-        setdata(prevdata=>({
-            ...prevdata,
-            [field]:prevdata[field].map((item,i)=>
-            (i==index)?{...item,[subfield]:item[subfield].filter((subitem,ii)=>ii!=subindex)}:item)
-        }))
     }
 
     const tableChange = (index,field,e)=>{
@@ -3436,6 +3564,19 @@ function Interface(){
             <div className='displayTitle'>
                 <h2>{title}</h2>
             </div>
+            <div className='displayInputFields'>
+                {type!="Table" && schema.map(field=>
+                    <>
+                        {field['datatype']=="single" && <SingleInput field={field} output={output} setdata={setdata}/>}
+                        {field['datatype']=="list" && <ListInput field={field} output={output} setdata={setdata}/>}
+                        {field['datatype']=="collection" && <CollectionInput field={field} output={output} handleChange={collectionChange} addItem={addCollection} removeItem={removeCollection}/>}
+                        {field['datatype']=="nest" && <NestInput field={field} output={output} setdata={setdata} defaults={defaults}/>}
+                        {field['datatype']=="multiple" && <MultipleInput field={field} output={output} setdata={setdata}/>}
+                        {field['datatype']=="table" && <DisplayAsTable collection={output[field['name']]}/>}
+                    </>
+                )}
+                {type=="Table" && <TableInput addTableRow={addTableRow} removeTableRow={removeTableRow} data={output} schema={schema} tableChange={tableChange} editable={editable}/>}
+            </div>
             {(editable && (errors.length>0)) && <div className='error'>
                 <Collapsible title={`Things to Consider (${errors.length}) `} children={<ul>
                     {errors.map(error=>
@@ -3443,18 +3584,6 @@ function Interface(){
                     )}
                 </ul>}/>
             </div>}
-            <div className='displayInputFields'>
-                {type!="Table" && schema.map(field=>
-                    <>
-                        {field['datatype']=="single" && <SingleInput field={field} output={output} handleChange={singleChange}/>}
-                        {field['datatype']=="list" && <ListInput field={field} output={output} handleChange={listChange} addList={addList} removeList={removeList}/>}
-                        {field['datatype']=="collection" && <CollectionInput field={field} output={output} handleChange={collectionChange} addItem={addCollection} removeItem={removeCollection}/>}
-                        {field['datatype']=="nest" && <NestInput field={field} output={output} handleChange1={collectionChange} handleChange2={nestChange} addItem1={addCollection} addItem2={addNest} removeItem1={removeCollection} removeItem2={removeNest}/>}
-                        {field['datatype']=="table" && <DisplayAsTable collection={output[field['name']]}/>}
-                    </>
-                )}
-                {type=="Table" && <TableInput addTableRow={addTableRow} removeTableRow={removeTableRow} data={output} schema={schema} tableChange={tableChange} editable={editable}/>}
-            </div>
             <div className='navigation'>
                 {navigation.map(item=><>
                     {item['type']=="navigate" && <button onClick={()=>goto(item['url'],item['state'])}>{item['name']}</button>}
@@ -3462,6 +3591,7 @@ function Interface(){
                     </>
                 )}
             </div>
+            {JSON.stringify(data)}
         </div>
     )
 }
@@ -3581,7 +3711,7 @@ function Scratch(){
 
     return(
         <div className='reportDisplay'>
-        <TreeView/>
+        <MultipleInput/>
         </div>
     )
 }
@@ -3640,25 +3770,6 @@ const TreeView = () => {
     );
 };
 
- const Collapsible = ({ children, title }) => {
-      const [isOpen, setIsOpen] = useState(false);
-      const contentRef = useRef(null);
-
-      const toggleCollapse = () => {
-        setIsOpen(!isOpen);
-      };
-
-      return (
-        <div> 
-            <div ref={contentRef} style={{maxHeight: isOpen ? `${contentRef.current.scrollHeight}px` : '0',overflow: 'hidden',transition: 'max-height 0.3s ease-in-out',}}>
-            {children}
-            </div>
-            <div className="left">
-                <button onClick={toggleCollapse} aria-expanded={isOpen}>{isOpen && `Hide`}{!isOpen && `${title}`}</button>
-            </div> 
-        </div>
-      );
-    };
 
 
 
