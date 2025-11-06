@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { FaPlus, FaHome, FaArrowRight, FaArrowLeft, FaCopy } from 'react-icons/fa';
 import exportFromJSON from 'export-from-json';
+import { PiTreeView } from 'react-icons/pi';
 
 function loadData(collection){
     const data = (collection in localStorage) ? JSON.parse(localStorage.getItem(collection)) : [];
@@ -3435,6 +3436,13 @@ function Interface(){
             <div className='displayTitle'>
                 <h2>{title}</h2>
             </div>
+            {(editable && (errors.length>0)) && <div className='error'>
+                <Collapsible title={`Things to Consider (${errors.length}) `} children={<ul>
+                    {errors.map(error=>
+                        <li>{error}</li>
+                    )}
+                </ul>}/>
+            </div>}
             <div className='displayInputFields'>
                 {type!="Table" && schema.map(field=>
                     <>
@@ -3454,14 +3462,6 @@ function Interface(){
                     </>
                 )}
             </div>
-            {(editable && (errors.length>0)) && <div className='error'>
-                <h4>Things to Consider:</h4>
-                <ul>
-                    {errors.map(error=>
-                        <li>{error}</li>
-                    )}
-                </ul>
-            </div>}
         </div>
     )
 }
@@ -3581,35 +3581,27 @@ function Scratch(){
 
     return(
         <div className='reportDisplay'>
-        <TreeView data={[{'id':1,'name':'Aravind', 'parentId':null},{'id':2,'name':'Aravind', 'parentId':1}]}/>
+        <TreeView/>
         </div>
     )
 }
 
 function buildTree(data, parentId = null) {
-  let tree = [];
-  data.forEach(item => {
-    if (item.parentId === parentId) {
-      let children = buildTree(data, item.id);
-      if (children.length) {
-        item.children = children;
-      }
-      tree.push(item);
-    }
-  });
-  return tree;
+    let tree = [];
+    data.map(item=>(item['parentId']===parentId)?tree.push({...item,['children']:buildTree(data,item['id'])}):()=>{})
+    return tree;
 }
 
-const TreeNode = ({ node, key,setdata }) => {
+const TreeNode = ({ node, addItem , handleChange,removeItem}) => {
   return (
     <li>
-      <input value={node.name}/> {/* Assuming 'name' is a property in your node object */}
-      <button>Add Item</button>
-      <button>Add Level</button>
+      <input value={node.name} onChange={(e)=>handleChange(node.id,e)}/> {/* Assuming 'name' is a property in your node object */}
+      <button onClick={()=>addItem(node.id)}>+</button>
+      <button onClick={()=>removeItem(node.id)}>-</button>
       {node.children && node.children.length > 0 && (
         <ul>
           {node.children.map(child => (
-            <TreeNode key={child.id} node={child} />
+            <TreeNode key={child.id} node={child} addItem={addItem} handleChange={handleChange} removeItem={removeItem} />
           ))}
         </ul>
       )}
@@ -3618,19 +3610,56 @@ const TreeNode = ({ node, key,setdata }) => {
 };
 
 const TreeView = () => {
-    const [data,setdata] = useState([{'id':'a','name':'name','parentId':null},{id:'2','name':'firstName','parentId':'a'}]);
+    const [data,setdata] = useState([{'id':1,'name':'name','parentId':null},{id:2,'name':'firstName','parentId':1}]);
     const treeStructure = buildTree(data); 
+    const addItem = (parentId)=>{
+        const prevdata = [...data];
+        const id = prevdata.length;
+        const newdata = [...prevdata,{'id':id+1,'name':'','parentId':parentId}]
+        setdata(newdata)
+    }
+    const handleChange = (id,e) =>{
+        const {value} = e.target;
+        setdata(prevdata=>(prevdata.map((item)=>
+        (item['id']==id)?{...item,['name']:value}:item
+        )))
+    }
+
+    const removeItem = (id)=>{
+        setdata(prevdata=>prevdata.filter(item=>(item['id']!=id && item['parentId']!=id)))
+    }
 
     return (<>
     <ul>
         {treeStructure.map(node => (
-        <TreeNode key={node.id} node={node} setdata={setdata}/>
+        <TreeNode key={node.id} node={node} addItem={addItem} handleChange={handleChange} removeItem={removeItem}/>
         ))}
     </ul>
-    {JSON.stringify(treeStructure)}
+    {JSON.stringify(data)}
     </>
     );
 };
+
+ const Collapsible = ({ children, title }) => {
+      const [isOpen, setIsOpen] = useState(false);
+      const contentRef = useRef(null);
+
+      const toggleCollapse = () => {
+        setIsOpen(!isOpen);
+      };
+
+      return (
+        <div> 
+            <div ref={contentRef} style={{maxHeight: isOpen ? `${contentRef.current.scrollHeight}px` : '0',overflow: 'hidden',transition: 'max-height 0.3s ease-in-out',}}>
+            {children}
+            </div>
+            <div className="left">
+                <button onClick={toggleCollapse} aria-expanded={isOpen}>{isOpen && `Hide`}{!isOpen && `${title}`}</button>
+            </div> 
+        </div>
+      );
+    };
+
 
 
 function App(){

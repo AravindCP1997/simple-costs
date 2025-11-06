@@ -445,3 +445,57 @@ function TransactionUI(){
         return list
     }
 }
+
+
+ const defaults = {"General Ledger":{"value":"","values":[""]}};
+    const [data,setdata] = useState(defaults);
+    
+    function valueChange(itemname,field,e){
+        const {value} = e.target;
+        setquery(prevdata=>({
+            ...prevdata,[itemname]:{...prevdata[itemname],[field]:value}
+        }))
+    }
+
+    function rangeChange(itemname,field,i,e){
+        const {value} = e.target;
+        const prevrange = [...query[itemname][field]];
+        const newrange = prevrange.map((item,index)=>(i==index)?value:item);
+        setquery(prevdata=>({
+            ...prevdata,[itemname]:{...prevdata[itemname],[field]:newrange}
+        }))
+    }
+
+    function valuesChange(itemname,field,i,e){
+        const {value} = e.target;
+        const prevvalues = [...query[itemname][field]];
+        const newvalues = prevvalues.map((item,index)=>(i==index)?value:item);
+        setquery(prevdata=>({
+            ...prevdata,[itemname]:{...prevdata[itemname],[field]:newvalues}
+        }))
+    }
+
+    function rangesChange(itemname,field,i,j,e){
+        const {value} = e.target;
+        const prevranges = [...query[itemname][field]];
+        const prevrange = prevranges[i];
+        const newrange = prevrange.map((item,index)=>(j==index)?value:item);
+        const newranges = prevranges.map((item,index)=>(i==index)?newrange:item);
+        setquery(prevdata=>({
+            ...prevdata,[itemname]:{...prevdata[itemname],[field]:newranges}
+        }))
+    }
+
+    function addValues(itemname,field){
+        const defaults = Report.defaults(field);
+        const newvalues = [...query[itemname][field],...defaults]
+        setquery(prevdata=>({
+            ...prevdata,[itemname]:{...prevdata[itemname],[field]:newvalues}}))
+    }
+
+    function addRanges(itemname,field){
+        const defaults = defaults(field);
+        const newvalues = [...query[itemname][field],...defaults]
+        setdata(prevdata=>({
+            ...prevdata,[itemname]:{...prevdata[itemname],[field]:newvalues}}))
+    }

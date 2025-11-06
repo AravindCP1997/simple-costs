@@ -77,9 +77,8 @@
   height: fit-content;
   transition: 0.5s;
   box-shadow: none;
-  box-shadow: 0px 3px 10px 2px lightgray;
+  box-shadow: 0px 3px 10px 0px var(--gray);
   border-radius: 25px;
-  backdrop-filter: blur(1px);
 }
 
 
@@ -145,7 +144,7 @@
   width:100%;
   height: fit-content;
   border-radius: 25px;
-  box-shadow: 0px 3px 10px 0px lightgray;
+  box-shadow: 0px 3px 10px 0px var(--gray);
   border: 2px solid var(--lightgray);
 }
 
@@ -211,7 +210,8 @@
 
 .display{
   background: none;
-  box-shadow: 0px 3px 10px 0px lightgray;
+  box-shadow: 0px 3px 10px 0px var(--gray);
+  backdrop-filter: blur(1px);
   border-radius: 20px;
   padding:5%;
   width:100%;
@@ -247,7 +247,6 @@
   gap:10px;
   color:var(--blue);
   background: var(--lightbluet);
-  backdrop-filter: blur(1px);
   border-radius: 15px;
   padding: 10px;
 }
