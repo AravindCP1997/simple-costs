@@ -177,8 +177,10 @@ class Navigator{
         {'code':'sc','url':'/scratch','state':{},'type':'home'},
         {'code':'cc1','name':'Create Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Create'},'type':'Control','group':'Asset Accounting'},
         {'code':'cu1','name':'Update Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Update'},'type':'Control','group':'Asset Accounting'},
+        {'code':'tr1','name':'General','url':'/interface','state':{'type':'Transaction','transaction':'General','data':{}},'type':'Record','group':'Financial Accounting'},
         {'code':'cd1','name':'Display Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Display'},'type':'Control','group':'Asset Accounting'},
         {'code':'r1','name':'View Document','url':'/interface','state':{'type':'ReportQuery','report':'ViewDocument'},'type':'Reports','group':'Financial Accounting'},
+        {'code':'itsimulate','name':'Income Tax Simulator', 'url':'/interface', 'state':{'type':'Report','report':'IncomeTaxSimulator','data':{}},'type':'Reports','group':'Intelligence'}
     ]
     static getRoute(code){
         const route = this.codes.find(item=>item['code']==code.toLowerCase());
@@ -323,14 +325,27 @@ class Report{
         this.report = report;
     }
     schema(data){
-        const allSchema = {
-            "ViewDocument":[
+        let schema = {};
+        switch (this.report){
+            case 'IncomeTaxSimulator':
+                schema = [
+                    {'name':'Income Tax Code', 'datatype':'single','input':'option','options':["",...new Collection('IncomeTaxCode').listAll('Code')]},
+                    {'name':'Financial Year', 'datatype':'single','input':'input','type':"number"},
+                    {'name':'Total Income', 'datatype':'single','input':'input','type':"number"},
+                    {'name':'Tax on Total Income','datatype':'single','noteditable':true},
+                    {'name':'Marginal Relief','datatype':'single','noteditable':true},
+                    {'name':'Net Tax on Total Income','datatype':'single','noteditable':true},
+                ]
+                break
+            case 'ViewDocument':
+                schema = [
                 {"name":"Posting Date","datatype":"single","noteditable":true},
                 {"name":"Document Number","datatype":"single","noteditable":true},
                 {"name":"Line Items","datatype":"table"}
-            ]
+                ];
+                break
         }
-        return allSchema[this.report];
+        return schema
     }
     defaults(data){
         let defaults = {};
@@ -339,24 +354,46 @@ class Report{
                 const documentData = Transaction.getDocument(data['Company Code'],data['Year'],data['Document Number']);
                 defaults = documentData;
                 break
+            case 'IncomeTaxSimulator':
+                defaults = {'Income Tax Code':'115BAC','Year':2024,'Total Income':0,'Tax on Total Income':0,'Marginal Relief':0,'Net Tax on Total Income':0};
+                break
         }
         return defaults;
     }
     errors(data){
-        return [];
+        const list = [];
+        if (this.report=="IncomeTaxSimulator"){
+            if (data['Income Tax Code']=="" && data['Year']==""){
+                list.push('Income Tax Code or Year is Missing');
+            }
+        }
+        return list;
     }
     process(data){
-        return data;
+        let result = {...data};
+        if (this.report=="IncomeTaxSimulator"){
+            if (result['Income Tax Code']!==""){
+                const IT = new IncomeTaxCode(result['Income Tax Code']);
+                result['Tax on Total Income'] = IT.tax(result['Year'],result['Total Income']);
+                result['Marginal Relief'] = IT.marginalRelief(result['Year'],result['Total Income']);
+                result['Net Tax on Total Income'] = IT.netTax(result['Year'],result['Total Income']);
+            }
+        }
+        return result;
     }
     navigation(data){
-        const navigation = [
-            {"name":"Back","type":"navigate","url":"/interface","state":{"type":"ReportQuery","report":this.report}}
-        ]
+        let navigation = [];
+        if (['ViewDocument'].includes(this.report)){  
+            navigation = [
+                {"name":"Back","type":"navigate","url":"/interface","state":{"type":"ReportQuery","report":this.report}}
+            ]
+        }
         return navigation;
     }
     title(){
         const titles = {
-            "ViewDocument":"View Document"
+            "ViewDocument":"View Document",
+            "IncomeTaxSimulator":"Income Tax Simulate"
         }
         return (titles[this.report]);
     }
@@ -533,6 +570,7 @@ class Transaction{
             {"name":"Material Valuation To","datatype":"single","input":"input","type":"date"},
             {"name":"Cost Valuation From","datatype":"single","input":"input","type":"date"},
             {"name":"Cost Valuation To","datatype":"single","input":"input","type":"date"},
+            {"name":"HSN","datatype":"single","input":"option","options":["",...new Table('HSN').list]}
         ]
         let noteditables = [];
         let notreq = [];
@@ -709,61 +747,6 @@ class Transaction{
         const data = this.database;
         const result = data.filter(document=>document['Company Code']==company && document['Year']==year && document['Document Number']==number)[0];
         return result;
-    }
-}
-
-class IncomeTax{
-    constructor(code){
-        this.code = code;
-        this.data = new Collection('IncomeTaxCode').getData({'Code':this.code});
-    }
-    taxOnSlab(slab,income){
-        const {From,To,Rate} = slab;
-        const applicableIncome = Math.max(0,income-From);
-        const slabLimit = To - From;
-        const tax = Math.min(slabLimit,applicableIncome)* Rate/100;
-        return tax
-    }
-    taxation(year){
-        const taxation = this.data['Taxation'];
-        const taxationyear = taxation.filter(item=>(year>=item['From Year'] && year<=item['To Year']))[0];
-        return taxationyear
-    }
-    tax(year,income){
-        const taxation = this.taxation(year)
-        const slabs = taxation['Slab'];
-        const exemptionLimit = taxation['Exemption Limit'];
-        let tax = 0;
-        for (let i=0; i<slabs.length; i++){
-            tax+=this.taxOnSlab(slabs[i],income);
-        }
-        const cesspercent = taxation['Cess'];
-        const cess = tax * cesspercent/100;
-        const taxWithCess = tax + cess
-        const result = (income<=exemptionLimit)?0:taxWithCess;
-        return result
-    }
-    marginalRelief(year,income){
-        const taxation = this.taxation(year);
-        const reliefApplicable = (taxation['Marginal Relief'] =="Yes");
-        const exemptionLimit = taxation['Exemption Limit'];
-        
-        const taxOnExemptionLimit = this.tax(year,exemptionLimit);
-        const taxOnIncome = this.tax(year,income);
-        
-        const excessOfIncome = Math.max(income-exemptionLimit,0);
-        const excessOfTax = Math.max(taxOnIncome-taxOnExemptionLimit,0);
-        
-        const relief = Math.max(excessOfTax - excessOfIncome,0);
-        
-        const result  = (reliefApplicable)?relief:0;
-        return result
-    }
-    netTax(year,income){
-        const tax = this.tax(year,income);
-        const marginalRelief = this.marginalRelief(year,income);
-        const netTax = tax-marginalRelief;
-        return netTax;
     }
 }
 
@@ -1160,7 +1143,9 @@ const Collapsible = ({ children, title }) => {
 function DisplayAsTable({collection}){
 
     if (collection.length!=0){
-    const fields = Object.keys(collection[0]);
+    const allfields = [];
+    collection.map(item=>allfields.push(...Object.keys(item)));
+    const fields = [...new Set(allfields)];
     const CSV = ()=>{
         Operations.downloadCSV(collection,'Table')
     }
@@ -2746,6 +2731,62 @@ class GeneralLedger extends CompanyCollection{
     }
 }
 
+class IncomeTaxCode extends Collection{
+    constructor(code,name="IncomeTaxCode"){
+        super(name);
+        this.code = code;
+        this.data = super.getData({'Code':this.code});
+    }
+    taxOnSlab(slab,income){
+        const {From,To,Rate} = slab;
+        const applicableIncome = Math.max(0,income-From);
+        const slabLimit = To - From;
+        const tax = Math.min(slabLimit,applicableIncome)* Rate/100;
+        return tax
+    }
+    taxation(year){
+        const taxation = this.data['Taxation'];
+        const taxationyear = taxation.filter(item=>(year>=item['From Year'] && year<=item['To Year']))[0];
+        return taxationyear
+    }
+    tax(year,income){
+        const taxation = this.taxation(year)
+        const slabs = taxation['Slab'];
+        const exemptionLimit = taxation['Exemption Limit'];
+        let tax = 0;
+        for (let i=0; i<slabs.length; i++){
+            tax+=this.taxOnSlab(slabs[i],income);
+        }
+        const cesspercent = taxation['Cess'];
+        const cess = tax * cesspercent/100;
+        const taxWithCess = tax + cess
+        const result = (income<=exemptionLimit)?0:taxWithCess;
+        return result.toFixed(3)
+    }
+    marginalRelief(year,income){
+        const taxation = this.taxation(year);
+        const reliefApplicable = (taxation['Marginal Relief'] =="Yes");
+        const exemptionLimit = taxation['Exemption Limit'];
+        
+        const taxOnExemptionLimit = this.tax(year,exemptionLimit);
+        const taxOnIncome = this.tax(year,income);
+        
+        const excessOfIncome = Math.max(income-exemptionLimit,0);
+        const excessOfTax = Math.max(taxOnIncome-taxOnExemptionLimit,0);
+        
+        const relief = Math.max(excessOfTax - excessOfIncome,0);
+        
+        const result  = (reliefApplicable)?relief:0;
+        return result.toFixed(3)
+    }
+    netTax(year,income){
+        const tax = this.tax(year,income);
+        const marginalRelief = this.marginalRelief(year,income);
+        const netTax = tax-marginalRelief;
+        return netTax.toFixed(3);
+    }
+}
+
 class Table{
     constructor(name,method="Display"){
         this.name = name;
@@ -2961,13 +3002,13 @@ function View({title,editable,output,schema,defaults,setdata,errors,navigation,t
                     )}
                 </ul>}/>
             </div>}
-            <div className='navigation'>
+            {navigation.length>0 && <div className='navigation'>
                 {navigation.map(item=><>
                     {item['type']=="navigate" && <button onClick={()=>goto(item['url'],item['state'])}>{item['name']}</button>}
                     {item['type']=="action" && <button onClick={item['onClick']}>{item['name']}</button>}
                     </>
                 )}
-            </div>
+            </div>}
         </div>
     )
 }
@@ -3074,11 +3115,12 @@ class ChartOfAccounts{
 
 
 function Scratch(){
-   
-
+    const IT = new IncomeTaxCode('115BAC');
+    const year = 2024
+    const income = 750000;
     return(
         <div className='reportDisplay'>
-        {JSON.stringify(new CompanyCollection('FACT','Asset').listAll('Code'))}
+        {IT.netTax(year,income)}
         </div>
     )
 }
@@ -3136,6 +3178,92 @@ const TreeView = () => {
     </>
     );
 };
+
+
+function isPlainObject(value){
+    return (typeof(value)==='object' && value!==null && !Array.isArray(value))
+}
+function ArrayJSON(data,parentId=null,id=0){
+    const array = [];
+    if (isPlainObject(data)){
+        const keys = Object.keys(data);
+        for (let i=0;i<keys.length;i++){
+            const key = keys[i];
+            const value = data[key];
+            const keyinfo = {'id':id,'elementType':'key','elementOf':'object','key':parentId, 'name':key};
+            if (typeof(value)!=='object'){
+                keyinfo['valueType']='value';
+                const valueinfo = {'id':id+1,'elementType':'value','elementOf':'object','key':id, 'name':value};
+                array.push(valueinfo);
+                id+=2
+            } else if (isPlainObject(value)){
+                keyinfo['valueType']='object';
+                const valuesinfo = ArrayJSON(value,id,id+1);
+                id = valuesinfo.id;
+                array.push(...valuesinfo.array);
+            } else if (Array.isArray(value)){
+                keyinfo['valueType']='array';
+                const valuesinfo = ArrayJSON(value,id,id+1);
+                id = valuesinfo.id;
+                array.push(...valuesinfo.array);
+            }
+            array.push(keyinfo);
+        }
+    } else if (Array.isArray(data)){
+        for (let i=0;i<data.length;i++){
+            const value = data[i];
+            const indexinfo = {'id':id,'elementType':'index','index':i,'elementOf':'array','arrayId':parentId,'name':''};
+            if (typeof(value)!=='object'){
+                indexinfo['valueType']='value';
+                const valueinfo = {'id':id+1,'elementType':'value','elementOf':'array','arrayId':parentId, 'index':i, 'name':value};
+                array.push(valueinfo);
+                id+=2
+            } else if (isPlainObject(value)){
+                indexinfo['valueType']='object';
+                const valuesinfo = ArrayJSON(value,id,id+1);
+                id = valuesinfo.id;
+                array.push(...valuesinfo.array);
+            } else if (Array.isArray(value)){
+                indexinfo['valueType']='array';
+                const valuesinfo = ArrayJSON(value,id,id+1);
+                id = valuesinfo.id;
+                array.push(...valuesinfo.array);
+            }
+            array.push(indexinfo);
+        }
+    }
+    return {'array':array.sort((a,b)=>a.id-b.id),'id':id}
+}
+
+function JSONArray(array,parentId=null){
+    const type = array.find(item=>((item['elementType']==='key' && item['key']===parentId)||(item['elementType']==='index' && item['arrayId']===parentId)))['elementOf'];
+    let result = {};
+    if (type==="object"){
+        const keys = array.filter(item=>item['key']==parentId && item['elementType']=='key');
+        for (let i = 0; i<keys.length;i++){
+            const key = keys[i];
+            const valueType = key['valueType'];
+            if (valueType=="value"){
+                result[key['name']]=array.find(item=>(item['elementType']=="value" && item['key']==key['id']))['name'];
+            } else if (valueType=="object" || valueType=="array"){
+                result[key['name']]=JSONArray(array,key['id']);
+            }
+        }
+    } else if (type==="array"){
+        result = [];
+        const indexes = array.filter(item=>item['arrayId']==parentId && item['elementType']=='index');
+        for (let i =0; i<indexes.length; i++){
+            const index = indexes[i];
+            const valueType = index['valueType'];
+            if (valueType=="value"){
+                result[index['index']]=array.find(item=>(item['elementType']=="value" && item['index']==index['index'] && item['arrayId']==parentId))['name'];
+            } else if (valueType=="object" || valueType=="array"){
+                result[index['index']]=JSONArray(array,index['id']);
+            }
+        }
+    }
+    return result
+}
 
 
 
