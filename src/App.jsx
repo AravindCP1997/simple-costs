@@ -175,12 +175,31 @@ class Navigator{
         {'code':'record','url':'/record','state':{},'type':'home'},
         {'code':'reports','url':'/reports','state':{},'type':'home'},
         {'code':'sc','url':'/scratch','state':{},'type':'home'},
-        {'code':'cc1','name':'Create Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Create'},'type':'Control','group':'Asset Accounting'},
-        {'code':'cu1','name':'Update Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Update'},'type':'Control','group':'Asset Accounting'},
+        {'code':'ca1c','name':'Create Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Create'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'ca1u','name':'Update Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Update'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'ca1d','name':'Display Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Display'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'ca2c','name':'Create Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Create'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'ca2u','name':'Update Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Update'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'ca2d','name':'Display Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Display'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'ca3c','name':'Create Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Create'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'ca3u','name':'Update Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Update'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'ca3d','name':'Display Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Display'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'ch1c','name':'Create Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Create'},'type':'Control','group':'Human Resources'},
+        {'code':'ch1u','name':'Update Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Update'},'type':'Control','group':'Human Resources'},
+        {'code':'ch1d','name':'Display Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Display'},'type':'Control','group':'Human Resources'},
+        {'code':'m1c','name':'Create Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Create'},'type':'Control','group':'Material and Costing'},
+        {'code':'m1u','name':'Update Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Update'},'type':'Control','group':'Material and Costing'},
+        {'code':'m1d','name':'Display Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Display'},'type':'Control','group':'Material and Costing'},
+        {'code':'g3c','name':'Create Income Tax Code','url':'/interface','state':{'type':'Collection','collection':'IncomeTaxCode','method':'Create'},'type':'Control','group':'Global'},
+        {'code':'g3u','name':'Update Income Tax Code','url':'/interface','state':{'type':'CollectionQuery','collection':'IncomeTaxCode','method':'Update'},'type':'Control','group':'Global'},
+        {'code':'g3d','name':'Display Income Tax Code','url':'/interface','state':{'type':'CollectionQuery','collection':'IncomeTaxCode','method':'Display'},'type':'Control','group':'Global'},
+        {'code':'thsn', 'name':'HSN', 'url':'/interface','state':{'type':'Table','table':'HSN','method':'Display'},'type':'Control','group':'Tables'},
+        {'code':'tunits', 'name':'Units', 'url':'/interface','state':{'type':'Table','table':'Units','method':'Display'},'type':'Control','group':'Tables'},
         {'code':'tr1','name':'General','url':'/interface','state':{'type':'Transaction','transaction':'General','data':{}},'type':'Record','group':'Financial Accounting'},
-        {'code':'cd1','name':'Display Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Display'},'type':'Control','group':'Asset Accounting'},
+        {'code':'tcurrencies', 'name':'Currencies', 'url':'/interface','state':{'type':'Table','table':'Currencies','method':'Display'},'type':'Control','group':'Tables'},
         {'code':'r1','name':'View Document','url':'/interface','state':{'type':'ReportQuery','report':'ViewDocument'},'type':'Reports','group':'Financial Accounting'},
         {'code':'itsimulate','name':'Income Tax Simulator', 'url':'/interface', 'state':{'type':'Report','report':'IncomeTaxSimulator','data':{}},'type':'Reports','group':'Intelligence'}
+
     ]
     static getRoute(code){
         const route = this.codes.find(item=>item['code']==code.toLowerCase());
@@ -201,7 +220,7 @@ function SearchBar(){
             setcode('');
             window.location.reload();
         } else {
-            alert('Specified path does not exist!');
+            alert("We're Sorry! The code may have been misspelled. Please check!");
             setcode('');
             inputRef.current.focus();
         }
@@ -286,10 +305,12 @@ function Navigation({type,next}){
             <h3 className='menuContainerTitle' onClick={()=>navigate(`/${next}`)}>{type}</h3>
             {groups.map(group=>
                 <div className='menuList'>
-                    <div className='menuTitle blue'><h4>{group}</h4></div>
+                    <div className='menuTitle'><h4>{group}</h4></div>
+                    <div className='menuItems'>
                     {singleFilter(codes,'group',group).map(code=>
                         <div className='menuItem' onClick={()=>{navigate(code['url'],{state:code['state']})}}><h4>{code['name']}</h4></div>
                     )}
+                    </div>
                     
                 </div>
             )}
@@ -1293,9 +1314,12 @@ class Collection{
                     defaults = {
                         "Company Code":data['Company Code'],
                         "Code":"",
-                        "Name":"",
-                        "Genral Ledger":"",
+                        "Description":"",
+                        "Status":"",
                         "Profit Center":"",
+                        "Settlement Ratio":[
+                            {"Asset":"","Ratio":""}
+                        ]
                     }
                     break
                 case 'Attendance':
@@ -1489,6 +1513,18 @@ class Collection{
                         "Business Place":""
                     }
                     break
+                case 'MaintenanceOrder':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Code":"",
+                        "Organisational Unit":"",
+                        "Status":"",
+                        "Type of Activity":"",
+                        "Date of Maintenance":"",
+                        "Period From":"",
+                        "Period To":""
+                    }
+                    break
                 case 'Material':
                     defaults = {
                         "Code":"",
@@ -1636,13 +1672,17 @@ class Collection{
                     {"name":"General Ledger - Asset","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'GeneralLedger').filteredList({'Ledger Type':'Depreciation'},'Code')],"noteditable":(!this.method=="Create")},
                 ]
                 break
-            case 'AssetDevelopment':
+            case 'AssetConstructionOrder':
                 schema = [
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
-                    {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"General Ledger","datatype":"single","input":"option","options":["",...GeneralLedger.listBytype(data['Company Code'],'Asset')],"noteditable":!(this.method=="Create")},
-                    {"name":"Profit Center","datatype":"single","input":"option","options":["",...ProfitCenter.listAll(data['Company Code'])],"noteditable":!(this.method=="Create")},
+                    {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!(this.editable)},
+                    {"name":"Status","datatype":"single","input":"option","options":["","Draft","Ready","Completed"],"noteditable":!this.editable},
+                    {"name":"Profit Center","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'AssetConstructionOrder').listAll('Code')],"noteditable":!(this.method=="Create")},
+                    {"name":"Settlement Ratio","datatype":"collection","noteditable":!this.editable,"schema":data['Settlement Ratio'].map(item=>[
+                        {'name':'Asset','datatype':'single','input':'option','options':['',...new CompanyCollection(data['Company Code'],'Asset').listAll('Code')],'noteditable':!this.editable},
+                        {"name":"Ratio","datatype":"single","input":"input","type":"number","noteditable":!(this.editable)},
+                    ])}
                 ]
                 break
             case 'Attendance':
@@ -1894,6 +1934,20 @@ class Collection{
                     {"name":"Address","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                 ]
                 break
+            case 'MaintenanceOrder':
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Cost Center","datatype":"single","input":"option","options":["", ...new CompanyCollection(data['Company Code'],'CostCenter').listAll('Code')], 'noteditable':!this.editable},
+                    {"name":"Status","datatype":"single","input":"option","options":["","Draft","Ready","Completed"],"noteditable":!this.editable},
+                    {"name":"Organisational Unit","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'CostCenter').listAll('Code'),...new CompanyCollection(data['Company Code'],'Plant').listAll('Code'),...new CompanyCollection(data['Company Code'],'Location').listAll('Code'),...new CompanyCollection(data['Company Code'],'RevenueCenter').listAll('Code')],"noteditable":!this.editable},
+                    {"name":"Type of Activity","datatype":"single","input":"option","options":["","Period","Time Point"],"noteditable":!this.editable},
+                    {"name":"Date of Maintenance","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                    {"name":"Period From","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                    {"name":"Period To","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                ]
+                break
             case 'Material':
                 schema = [
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
@@ -2056,10 +2110,11 @@ class Collection{
                 (data['Depreciation Rate']>100)?list.push(`Depreciation Rate cannot exceed 100%`):()=>{};
                 break
             case 'AssetClass':
-                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
                 (data['Depreciable']=="Yes" && data['General Ledger - Depreciation']=="")?list.push(`General Ledger - Depreciation is required`):()=>{};
                 break
-            case 'AssetDevelopment':
+            case 'AssetConstructionOrder':
+                (SumField(data['Settlement Ratio'],'Ratio')>100?list.push(`Total of ratio cannot be more than 100`):()=>{});
+                data['Settlement Ratio'].map((ratio,i)=>ratio['Ratio']<0?list.push(`Ratio ${i+1} is negative`):()=>{});
                 break
             case 'Attendance':
                 data['Attendance'].map(item=>(item['Status']=="")?list.push(`Attendance missing for ${item['Date']}`):()=>{});
@@ -2235,7 +2290,7 @@ class Collection{
     static collectionname = {
         "Asset":"assets",
         "AssetClass":"assetclasses",
-        "AssetDevelopment":"assetdevelopments",
+        "AssetConstructionOrder":"assetconstructionorders",
         "Attendance":"attendances",
         "BankAccount":"bankaccounts",
         'ChartOfAccounts':'chartsofaccounts',
@@ -2251,6 +2306,7 @@ class Collection{
         "Holidays":"holidays",
         "IncomeTaxCode":"incometaxcodes",
         "Location":"locations",
+        "MaintenanceOrder":"maintenanceorders",
         "Material":"materials",
         "OrganizationUnit":"organisationalunits",
         "PaymentTerms":"paymentterms",
@@ -2266,7 +2322,7 @@ class Collection{
     static mandatory = {
         "Asset":["Company Code","Code","Name","Asset Class","Cost Center","Useful Life","Salvage Value","Date of Capitalisation","Depreciation Method"],
         "AssetClass":["Code","Company Code","Depreciable","General Ledger - Asset"],
-        "AssetDevelopment":["Company Code","Code","Name","General Ledger","Profit Center"],
+        "AssetConstructionOrder":["Company Code","Code","Description","Profit Center"],
         "Attendance":["Company Code","Employee","Year","Month"],
         "BankAccount":["Code","Company Code","Name","Account","Bank","IFSC"],
         "ChartOfAccounts":["Code"],
@@ -2282,6 +2338,7 @@ class Collection{
         "Holidays":["Company Code","Year"],
         "IncomeTaxCode":["Code"],
         "Location":["Code","Company Code","Name","Cost Center","Business Place"],
+        "MaintenanceOrder":["Code","Company Code","Organisational Unit","Type of Activity"],
         "Material":["Code","Company Code","Name","Unit","General Ledger","General Ledger - Cost of Sales", "General Ledger - Revenue"],
         "OrganisationalUnit":["Code","Company Code","Name","Cost Center","Business Place"],
         "PaymentTerms":["Code","Description"],
@@ -2297,7 +2354,7 @@ class Collection{
     static identifiers = {
         "Asset":["Company Code","Code"],
         "AssetClass":["Code","Company Code"],
-        "AssetDevelopment":["Company Code","Code"],
+        "AssetConstructionOrder":["Company Code","Code"],
         "Attendance":["Company Code","Employee","Year","Month"],
         "BankAccount":["Code","Company Code"],
         "ChartOfAccounts":["Code"],
@@ -2313,6 +2370,7 @@ class Collection{
         "Holidays":["Company Code","Year"],
         "IncomeTaxCode":["Code"],
         "Location":["Code","Company Code"],
+        "MaintenanceOrder":["Company Code"],
         "Material":["Code","Company Code"],
         "OrganisationalUnit":["Code","Company Code"],
         "PaymentTerms":["Code","Company Code"],
@@ -2328,7 +2386,7 @@ class Collection{
     static titles = {
         "Asset":"Asset",
         "AssetClass":"Asset Class",
-        "AssetDevelopment":"Asset Development",
+        "AssetConstructionOrder":"Asset Construction Order",
         "Attendance":"Attendance",
         "BankAccount":"Bank Account",
         'ChartOfAccounts':'Chart of Accounts',
@@ -2344,6 +2402,7 @@ class Collection{
         "Holidays":"Holidays",
         "IncomeTaxCode":"Income Tax Code",
         "Location":"Location",
+        "MaintenanceOrder":"Maintenance Order",
         "Material":"Material",
         "OrganisationalUnit":"Organizational Unit",
         "PaymentTerms":"Payment Terms",
@@ -2465,7 +2524,7 @@ class CollectionQuery{
                 break
             case 'IncomeTaxCode':
                 schema = [
-                    {'name':'Code', 'datatype':'single','input':'input', 'type':'text', 'maxLength':4},
+                    {'name':'Code', 'datatype':'single','input':'input', 'type':'text'},
                 ]
                 break
             case 'Location':
@@ -2574,6 +2633,9 @@ class CollectionQuery{
                 ]
                 break
              
+        }
+        if (this.method=="Create"){
+            schema = schema.filter(field=>this.createRequirements.includes(field['name']));
         }
         return schema
     }
@@ -2761,7 +2823,7 @@ class IncomeTaxCode extends Collection{
         const cess = tax * cesspercent/100;
         const taxWithCess = tax + cess
         const result = (income<=exemptionLimit)?0:taxWithCess;
-        return result.toFixed(3)
+        return result
     }
     marginalRelief(year,income){
         const taxation = this.taxation(year);
@@ -2777,13 +2839,13 @@ class IncomeTaxCode extends Collection{
         const relief = Math.max(excessOfTax - excessOfIncome,0);
         
         const result  = (reliefApplicable)?relief:0;
-        return result.toFixed(3)
+        return result
     }
     netTax(year,income){
         const tax = this.tax(year,income);
         const marginalRelief = this.marginalRelief(year,income);
         const netTax = tax-marginalRelief;
-        return netTax.toFixed(3);
+        return netTax
     }
 }
 
@@ -3115,70 +3177,13 @@ class ChartOfAccounts{
 
 
 function Scratch(){
-    const IT = new IncomeTaxCode('115BAC');
-    const year = 2024
-    const income = 750000;
+    const collection = new CompanyCollection('1000','Employee').getData({'Code':201052})
     return(
         <div className='reportDisplay'>
-        {IT.netTax(year,income)}
+            <TreeInput output={collection}/>
         </div>
     )
 }
-
-function buildTree(data, parentId = null) {
-    let tree = [];
-    data.map(item=>(item['parentId']===parentId)?tree.push({...item,['children']:buildTree(data,item['id'])}):()=>{})
-    return tree;
-}
-
-const TreeNode = ({ node, addItem , handleChange,removeItem}) => {
-  return (
-    <li>
-      <input value={node.name} onChange={(e)=>handleChange(node.id,e)}/> {/* Assuming 'name' is a property in your node object */}
-      <button onClick={()=>addItem(node.id)}>+</button>
-      <button onClick={()=>removeItem(node.id)}>-</button>
-      {node.children && node.children.length > 0 && (
-        <ul>
-          {node.children.map(child => (
-            <TreeNode key={child.id} node={child} addItem={addItem} handleChange={handleChange} removeItem={removeItem} />
-          ))}
-        </ul>
-      )}
-    </li>
-  );
-};
-
-const TreeView = () => {
-    const [data,setdata] = useState([{'id':1,'name':'name','parentId':null},{id:2,'name':'firstName','parentId':1}]);
-    const treeStructure = buildTree(data); 
-    const addItem = (parentId)=>{
-        const prevdata = [...data];
-        const id = prevdata.length;
-        const newdata = [...prevdata,{'id':id+1,'name':'','parentId':parentId}]
-        setdata(newdata)
-    }
-    const handleChange = (id,e) =>{
-        const {value} = e.target;
-        setdata(prevdata=>(prevdata.map((item)=>
-        (item['id']==id)?{...item,['name']:value}:item
-        )))
-    }
-
-    const removeItem = (id)=>{
-        setdata(prevdata=>prevdata.filter(item=>(item['id']!=id && item['parentId']!=id)))
-    }
-
-    return (<>
-    <ul>
-        {treeStructure.map(node => (
-        <TreeNode key={node.id} node={node} addItem={addItem} handleChange={handleChange} removeItem={removeItem}/>
-        ))}
-    </ul>
-    {JSON.stringify(data)}
-    </>
-    );
-};
-
 
 function isPlainObject(value){
     return (typeof(value)==='object' && value!==null && !Array.isArray(value))
@@ -3265,7 +3270,51 @@ function JSONArray(array,parentId=null){
     return result
 }
 
+const buildTree = (data,parentId=null) =>{
+    const list = [];
+    const array = ArrayJSON(data).array;
+    const parents = array.filter(item=>(item['elementType']==='index' && item['arrayId']===parentId) ||(item['elementType']==='key' && item['key']===parentId) )
+    for (let i=0; i<parents.length;i++){
+        let parent = parents[i];
+        if (parent['valueType']==='value'){
+            parent = {...parent,['value']:array.find(item=>item.elementType==='value' && (item['key']===parent['id'] || item['arrayId']===parent['id']))};
+        } else {
+            parent = {...parent,...{'children':buildTree(data,parent['id'])}};
+        }
+        list.push(parent);
+    }
+    return list;
+}
 
+const Node = ({node, handleChange})=>{
+        return (
+            <>
+                {node.elementType==='key' && <>
+                {node.valueType==='value' && <li><input onChange={(e)=>handleChange(node['id'],e)} value={node['name']}/><input onChange={(e)=>handleChange(node.value['id'],e)} value={node.value['name']}/></li>}
+                {node.valueType!=='value' && <li><details><summary><input onChange={(e)=>handleChange(node['id'],e)} value={node['name']}/></summary><ul>{node.children.map(subNode=><Node node={subNode} handleChange={handleChange}/>)}</ul></details></li>}
+                </>}
+                {node.elementType==='index' && <>
+                {node.valueType==='value' && <li><input onChange={(e)=>handleChange(node.value['id'],e)} value={node.value['name']}/></li>}
+                {node.valueType!=='value' && <li><details><summary><label>{node['index']}</label></summary><ul>{node.children.map(subNode=><Node node={subNode} handleChange={handleChange}/>)}</ul></details></li>}
+                </>}
+            </>
+        )
+    }
+
+const TreeInput=()=>{
+    const [output,setdata] = useState(new CompanyCollection('1000','Employee').getData({'Code':201052}))
+    const treeStructure  = buildTree(output);
+    const handleChange= (id,e)=>{
+        const {value} = e.target;
+        setdata(prevdata=>JSONArray(ArrayJSON(prevdata).array.map(item=>item['id']===id?{...item,['name']:value}:item)))
+    }
+    return (
+        <ul>
+            {treeStructure.map(item=><Node node={item} handleChange={handleChange}/>)}
+            {JSON.stringify(ArrayJSON(output).array)}
+        </ul>
+    )
+}
 
 
 function App(){

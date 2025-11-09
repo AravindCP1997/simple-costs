@@ -164,21 +164,29 @@
 }
 
 .menuList{
+  display: flex;
+  flex-direction: column;
+  background: var(--lightbluet);
+  width: 100%;
+  padding:5%;
+  border-radius: 15px;
+}
+
+.menuItems{
   display:flex;
   flex-direction: row;
   gap:2%;
   row-gap: 10px;
   width: 100%;
-  padding:5%;
+  padding:15px;
   border-radius: 15px;
   height:fit-content;
   overflow: auto;
   transition: 0.5s;
   cursor: pointer;
-  background: var(--lightbluet);
 }
 
-.menuItem, .menuTitle{
+.menuItem{
   text-align: center;
   cursor: pointer;
   border-radius: 15px;
@@ -187,16 +195,14 @@
   justify-content: center;
   aspect-ratio: 1/1;
   padding: 10px;
+  backdrop-filter: blur(2px);
+  transition: 0.5s;
+  background: var(--lightbluet);
+  border:2px solid white;
   
   h4{
     width:120px;
   }
-}
-
-.menuItem{
-  transition: 0.5s;
-  background: var(--lightbluet);
-  border:2px solid white;
 }
 
 .menuItem:hover{
@@ -205,13 +211,18 @@
 }
 
 .menuTitle{
-  color:white
+  color:var(--blue);
+  border-bottom:2px solid white;
+  padding:10px;
+  width:min(100%,450px);
+  h4{
+    margin:0;
+  } 
 }
 
 .display{
   background: none;
   box-shadow: 0px 3px 10px 0px var(--gray);
-  backdrop-filter: blur(2px);
   border-radius: 20px;
   padding:5%;
   width:100%;
@@ -249,6 +260,7 @@
   background: var(--lightbluet);
   border-radius: 15px;
   padding: 10px;
+  backdrop-filter: blur(2px);
 }
 
 .displayField{
@@ -308,6 +320,7 @@
   border-radius: 15px;
   color:var(--blue);
   border: 2px solid var(--lightgray);
+  backdrop-filter: blur(2px);
 }
 
 .navigation{
