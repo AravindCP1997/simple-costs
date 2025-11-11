@@ -167,6 +167,7 @@
   display: flex;
   flex-direction: column;
   background: var(--lightbluet);
+  border: 2px solid white;
   width: 100%;
   padding:5%;
   border-radius: 15px;
@@ -198,6 +199,7 @@
   backdrop-filter: blur(2px);
   transition: 0.5s;
   background: var(--lightbluet);
+  color:var(--blue);
   border:2px solid white;
   
   h4{
@@ -207,7 +209,7 @@
 
 .menuItem:hover{
   color:var(--blue);
-  background: var(--lightredt);
+  background: var(--whitet);
 }
 
 .menuTitle{
@@ -261,6 +263,7 @@
   border-radius: 15px;
   padding: 10px;
   backdrop-filter: blur(2px);
+  border: 2px solid white;
 }
 
 .displayField{
@@ -321,6 +324,7 @@
   color:var(--blue);
   border: 2px solid var(--lightgray);
   backdrop-filter: blur(2px);
+  border: 2px solid white;
 }
 
 .navigation{
@@ -514,10 +518,15 @@
 
 
 @media screen and (max-width: 600px){
-
+  
+  .searchBar{
+    box-shadow: none;
+    background: white;
+  }
 
   .homeOuter{ 
     width: 100%;
+    padding: 0;
   }
 
  .home{
@@ -526,6 +535,8 @@
   padding: 25px;
   gap:25px;
   width:100%;
+  box-shadow: none;
+  border:2px solid white;
  }
 
  .menu{
@@ -549,6 +560,18 @@
   padding: 10%;
   font-size: 80%;
  } 
+ .menuContainer{
+  box-shadow: none;
+  border: 2px solid white;
+ }
+
+ .menuList{
+  border:2px solid white;
+ }
+ .display{
+  box-shadow: none;
+  background: var(--lightbluet);
+ }
 }
 
 @media print {

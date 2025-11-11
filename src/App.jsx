@@ -184,19 +184,37 @@ class Navigator{
         {'code':'ca3c','name':'Create Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Create'},'type':'Control','group':'Asset Lifecycle'},
         {'code':'ca3u','name':'Update Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Update'},'type':'Control','group':'Asset Lifecycle'},
         {'code':'ca3d','name':'Display Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Display'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'ch1c','name':'Create Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Create'},'type':'Control','group':'Human Resources'},
-        {'code':'ch1u','name':'Update Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Update'},'type':'Control','group':'Human Resources'},
-        {'code':'ch1d','name':'Display Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Display'},'type':'Control','group':'Human Resources'},
-        {'code':'m1c','name':'Create Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Create'},'type':'Control','group':'Material and Costing'},
-        {'code':'m1u','name':'Update Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Update'},'type':'Control','group':'Material and Costing'},
-        {'code':'m1d','name':'Display Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Display'},'type':'Control','group':'Material and Costing'},
-        {'code':'g3c','name':'Create Income Tax Code','url':'/interface','state':{'type':'Collection','collection':'IncomeTaxCode','method':'Create'},'type':'Control','group':'Global'},
-        {'code':'g3u','name':'Update Income Tax Code','url':'/interface','state':{'type':'CollectionQuery','collection':'IncomeTaxCode','method':'Update'},'type':'Control','group':'Global'},
-        {'code':'g3d','name':'Display Income Tax Code','url':'/interface','state':{'type':'CollectionQuery','collection':'IncomeTaxCode','method':'Display'},'type':'Control','group':'Global'},
+        {'code':'ch1c','name':'Create Attendance','url':'/interface','state':{'type':'CollectionQuery','collection':'Attendance','method':'Create'},'type':'Control','group':'Human Resources'},
+        {'code':'ch1u','name':'Update Attendance','url':'/interface','state':{'type':'CollectionQuery','collection':'Attendance','method':'Update'},'type':'Control','group':'Human Resources'},
+        {'code':'ch1d','name':'Display Attendance','url':'/interface','state':{'type':'CollectionQuery','collection':'Attendance','method':'Display'},'type':'Control','group':'Human Resources'},
+        {'code':'ch2c','name':'Create Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Create'},'type':'Control','group':'Human Resources'},
+        {'code':'ch2u','name':'Update Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Update'},'type':'Control','group':'Human Resources'},
+        {'code':'ch2d','name':'Display Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Display'},'type':'Control','group':'Human Resources'},
+        {'code':'ch3c','name':'Create Holidays','url':'/interface','state':{'type':'CollectionQuery','collection':'Holidays','method':'Create'},'type':'Control','group':'Human Resources'},
+        {'code':'ch3u','name':'Update Holidays','url':'/interface','state':{'type':'CollectionQuery','collection':'Holidays','method':'Update'},'type':'Control','group':'Human Resources'},
+        {'code':'ch3d','name':'Display Holidays','url':'/interface','state':{'type':'CollectionQuery','collection':'Holidays','method':'Display'},'type':'Control','group':'Human Resources'},
+        {'code':'cm1c','name':'Create Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Create'},'type':'Control','group':'Material and Costing'},
+        {'code':'cm1u','name':'Update Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Update'},'type':'Control','group':'Material and Costing'},
+        {'code':'cm1d','name':'Display Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Display'},'type':'Control','group':'Material and Costing'},
+        {'code':'cp1c','name':'Create Bank Account','url':'/interface','state':{'type':'CollectionQuery','collection':'BankAccount','method':'Create'},'type':'Control','group':'Payables and Receivables'},
+        {'code':'cp1u','name':'Update Bank Account','url':'/interface','state':{'type':'CollectionQuery','collection':'BankAccount','method':'Update'},'type':'Control','group':'Payables and Receivables'},
+        {'code':'cp1d','name':'Display Bank Account','url':'/interface','state':{'type':'CollectionQuery','collection':'BankAccount','method':'Display'},'type':'Control','group':'Payables and Receivables'},
+        {'code':'cg1c','name':'Create Chart of Accounts','url':'/interface','state':{'type':'Collection','collection':'ChartOfAccounts','method':'Create'},'type':'Control','group':'Global'},
+        {'code':'cg1d','name':'Display Chart of Accounts','url':'/interface','state':{'type':'CollectionQuery','collection':'ChartOfAccounts','method':'Display'},'type':'Control','group':'Global'},
+        {'code':'cg2c','name':'Create Company','url':'/interface','state':{'type':'Collection','collection':'Company','method':'Create'},'type':'Control','group':'Global'},
+        {'code':'cg2u','name':'Update Company','url':'/interface','state':{'type':'CollectionQuery','collection':'Company','method':'Update'},'type':'Control','group':'Global'},
+        {'code':'cg2d','name':'Display Company','url':'/interface','state':{'type':'CollectionQuery','collection':'Company','method':'Display'},'type':'Control','group':'Global'},
+        {'code':'cg3c','name':'Create Group Chart of Accounts','url':'/interface','state':{'type':'Collection','collection':'GroupChartOfAccounts','method':'Create'},'type':'Control','group':'Global'},
+        {'code':'cg3u','name':'Update Group Chart of Accounts','url':'/interface','state':{'type':'CollectionQuery','collection':'GroupChartOfAccounts','method':'Update'},'type':'Control','group':'Global'},
+        {'code':'cg3d','name':'Display Group Chart of Accounts','url':'/interface','state':{'type':'CollectionQuery','collection':'GroupChartOfAccounts','method':'Display'},'type':'Control','group':'Global'},
+        {'code':'cg4c','name':'Create Income Tax Code','url':'/interface','state':{'type':'Collection','collection':'IncomeTaxCode','method':'Create'},'type':'Control','group':'Global'},
+        {'code':'cg4u','name':'Update Income Tax Code','url':'/interface','state':{'type':'CollectionQuery','collection':'IncomeTaxCode','method':'Update'},'type':'Control','group':'Global'},
+        {'code':'cg4d','name':'Display Income Tax Code','url':'/interface','state':{'type':'CollectionQuery','collection':'IncomeTaxCode','method':'Display'},'type':'Control','group':'Global'},
         {'code':'thsn', 'name':'HSN', 'url':'/interface','state':{'type':'Table','table':'HSN','method':'Display'},'type':'Control','group':'Tables'},
         {'code':'tunits', 'name':'Units', 'url':'/interface','state':{'type':'Table','table':'Units','method':'Display'},'type':'Control','group':'Tables'},
-        {'code':'tr1','name':'General','url':'/interface','state':{'type':'Transaction','transaction':'General','data':{}},'type':'Record','group':'Financial Accounting'},
         {'code':'tcurrencies', 'name':'Currencies', 'url':'/interface','state':{'type':'Table','table':'Currencies','method':'Display'},'type':'Control','group':'Tables'},
+        {'code':'tgen','name':'General','url':'/interface','state':{'type':'Transaction','transaction':'General','data':{}},'type':'Record','group':'Financial Accounting'},
+        {'code':'tdep','name':'Depreciation','url':'/interface','state':{'type':'TransactionQuery','transaction':'Depreciation','data':{}},'type':'Record','group':'Asset Lifecycle'},
         {'code':'r1','name':'View Document','url':'/interface','state':{'type':'ReportQuery','report':'ViewDocument'},'type':'Reports','group':'Financial Accounting'},
         {'code':'itsimulate','name':'Income Tax Simulator', 'url':'/interface', 'state':{'type':'Report','report':'IncomeTaxSimulator','data':{}},'type':'Reports','group':'Intelligence'}
 
@@ -427,7 +445,12 @@ class TransactionQuery{
     schema(data){
         let schema = [];
         switch (this.type){
-            case 'vanAccounting':
+            case 'Depreciation':
+                schema = [
+                    {'name':'Company Code','datatype':'single','input':'option',"options":["",...Company.listAll]}
+                ]
+                break
+            case 'VanAccounting':
                 schema = [
                     {'name':'Bank Account', 'datatype':'single','input':'option','options':[''], 'noteditable':false},
                     {'name':'Virtual Account', 'datatype':'single','input':'option','options':[''], 'noteditable':false},
@@ -440,6 +463,9 @@ class TransactionQuery{
     defaults(data){
         let defaults = {};
         switch (this.type){
+            case 'Depreciation':
+                defaults = {'Company Code':''};
+                break
             case 'vanAccounting':
                 defaults = {"Bank Account":"","Virtual Account":"","Company Code":Company.listAll[0]}
                 break
@@ -2936,21 +2962,27 @@ class ReportQuery{
         this.report = report;
     }
     schema(data){
-        const allSchema = {
-            "ViewDocument":[
+        let schema = [];
+        switch (this.report){
+            case 'ViewDocument':
+                schema = [
                 {"name":"Company Code","datatype":"single","input":"option","options":["",...Company.listAll]},
                 {"name":"Year","datatype":"single","input":"input","type":"text"},
                 {"name":"Document Number","datatype":"single","input":"input","type":"text"},
                 {"name":"Segment","datatype":"multiple","input":"input","type":"number","req":["values","ranges","exclValues","exclRanges"]}
             ]
+            break
         }
-        return allSchema[this.report];
+        return schema;
     }
     defaults(data){
-        const allDefaults = {
-            "ViewDocument":{"Company Code":"","Year":"","Document Number":"","Segment":{"values":[""],"exclValues":[""],"ranges":[{"from":"","to":""}],"exclRanges":[{"from":"","to":""}]}}
+        let defaults = {};
+        switch (this.report){
+            case 'ViewDocument':
+                defaults = {"Company Code":"","Year":"","Document Number":"","Segment":{"values":[""],"exclValues":[""],"ranges":[{"from":"","to":""}],"exclRanges":[{"from":"","to":""}]}};
+            break
         }
-        return allDefaults[this.report]
+        return defaults;
     }
     errors(data){
         return [];
@@ -3286,33 +3318,43 @@ const buildTree = (data,parentId=null) =>{
     return list;
 }
 
-const Node = ({node, handleChange})=>{
+const Node = ({node, setkey, setvalue, schema})=>{
+
+    const keyChange = (id,e) =>{
+        const {value}= e.target;
+        setkey(prevdata=>JSONArray(ArrayJSON(prevdata).array.map(item=>item.id===id?{...item,['name']:value}:item)))
+    }
+
+    const valueChange = (id,field,e)=>{
+        const {value} = e.target;
+        setvalue(prevdata=>prevdata.map(item=>item.id===id?{...item,[field]:value}:item));
+    }
+
         return (
             <>
                 {node.elementType==='key' && <>
-                {node.valueType==='value' && <li><input onChange={(e)=>handleChange(node['id'],e)} value={node['name']}/><input onChange={(e)=>handleChange(node.value['id'],e)} value={node.value['name']}/></li>}
-                {node.valueType!=='value' && <li><details><summary><input onChange={(e)=>handleChange(node['id'],e)} value={node['name']}/></summary><ul>{node.children.map(subNode=><Node node={subNode} handleChange={handleChange}/>)}</ul></details></li>}
+                {node.valueType==='value' && <tr><td><input onChange={(e)=>keyChange(node['id'],e)} value={node['name']}/></td>
+                <td><input onChange={(e)=>valueChange(node.value['id'],'a',e)} value={node.value['name']}/></td></tr>}
+                {node.valueType!=='value' && <><tr><input onChange={(e)=>keyChange(node['id'],e)} value={node['name']}/></tr>{node.children.map(subNode=><Node node={subNode} schema={schema} setkey={setkey}/>)}</>}
                 </>}
                 {node.elementType==='index' && <>
-                {node.valueType==='value' && <li><input onChange={(e)=>handleChange(node.value['id'],e)} value={node.value['name']}/></li>}
-                {node.valueType!=='value' && <li><details><summary><label>{node['index']}</label></summary><ul>{node.children.map(subNode=><Node node={subNode} handleChange={handleChange}/>)}</ul></details></li>}
+                {node.valueType==='value' && <tr><td><input onChange={(e)=>keyChange(node.value['id'],e)} value={node.value['name']}/></td></tr>}
+                {node.valueType!=='value' && <><tr><td>{node['index']}</td></tr>{node.children.map(subNode=><Node node={subNode} schema={schema} setkey={setkey}/>)}</>}
                 </>}
             </>
         )
     }
 
 const TreeInput=()=>{
-    const [output,setdata] = useState(new CompanyCollection('1000','Employee').getData({'Code':201052}))
-    const treeStructure  = buildTree(output);
-    const handleChange= (id,e)=>{
-        const {value} = e.target;
-        setdata(prevdata=>JSONArray(ArrayJSON(prevdata).array.map(item=>item['id']===id?{...item,['name']:value}:item)))
-    }
+    const [key,setkey] = useState(new CompanyCollection('1000','Employee').getData({'Code':201052}))
+    const [value,setvalue] = useState([]);
+    const treeStructure  = buildTree(key);
+    const inputSchema = {'datatype':'single',"input":"input","type":"text"};
+
     return (
-        <ul>
-            {treeStructure.map(item=><Node node={item} handleChange={handleChange}/>)}
-            {JSON.stringify(ArrayJSON(output).array)}
-        </ul>
+        <table>
+            {treeStructure.map(item=><Node node={item} setkey={setkey} setvalue={setvalue} schema={inputSchema}/>)}
+        </table>
     )
 }
 
