@@ -499,3 +499,59 @@ function TransactionUI(){
         setdata(prevdata=>({
             ...prevdata,[itemname]:{...prevdata[itemname],[field]:newvalues}}))
     }
+
+    const buildTree = (data,parentId=null) =>{
+    const list = [];
+    const array = ArrayJSON(data).array;
+    const parents = array.filter(item=>(item['elementType']==='index' && item['arrayId']===parentId) ||(item['elementType']==='key' && item['key']===parentId) )
+    for (let i=0; i<parents.length;i++){
+        let parent = parents[i];
+        if (parent['valueType']==='value'){
+            parent = {...parent,['value']:array.find(item=>item.elementType==='value' && (item['key']===parent['id'] || item['arrayId']===parent['id']))};
+        } else {
+            parent = {...parent,...{'children':buildTree(data,parent['id'])}};
+        }
+        list.push(parent);
+    }
+    return list;
+}
+
+const Node = ({node, setkey, setvalue, schema})=>{
+
+    const keyChange = (id,e) =>{
+        const {value}= e.target;
+        setkey(prevdata=>JSONArray(ArrayJSON(prevdata).array.map(item=>item.id===id?{...item,['name']:value}:item)))
+    }
+
+    const valueChange = (id,field,e)=>{
+        const {value} = e.target;
+        setvalue(prevdata=>prevdata.map(item=>item.id===id?{...item,[field]:value}:item));
+    }
+
+        return (
+            <>
+                {node.elementType==='key' && <>
+                {node.valueType==='value' && <tr><td>{node.id}</td><td><input onChange={(e)=>keyChange(node['id'],e)} value={node['name']}/></td>
+                <td><input onChange={(e)=>valueChange(node.value['id'],'a',e)} value={node.value['name']}/></td></tr>}
+                {node.valueType!=='value' && <><tr><td>{node.id}</td><td><input onChange={(e)=>keyChange(node['id'],e)} value={node['name']}/></td></tr>{node.children.map(subNode=><Node node={subNode} schema={schema} setkey={setkey}/>)}</>}
+                </>}
+                {node.elementType==='index' && <>
+                {node.valueType==='value' && <tr><td>{node.id}</td><td><input onChange={(e)=>keyChange(node.value['id'],e)} value={node.value['name']}/></td></tr>}
+                {node.valueType!=='value' && <><tr><td>{node.id}</td><td>{node['index']}</td></tr>{node.children.map(subNode=><Node node={subNode} schema={schema} setkey={setkey}/>)}</>}
+                </>}
+            </>
+        )
+    }
+
+const TreeInput=()=>{
+    const [key,setkey] = useState(new CompanyCollection('1000','Employee').getData({'Code':201052}))
+    const [value,setvalue] = useState([]);
+    const treeStructure  = buildTree(key);
+    const inputSchema = {'datatype':'single',"input":"input","type":"text"};
+
+    return (
+        <table>
+            {treeStructure.map(item=><Node node={item} setkey={setkey} setvalue={setvalue} schema={inputSchema}/>)}
+        </table>
+    )
+}

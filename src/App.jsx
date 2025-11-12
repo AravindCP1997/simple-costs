@@ -394,28 +394,40 @@ class Report{
                 defaults = documentData;
                 break
             case 'IncomeTaxSimulator':
-                defaults = {'Income Tax Code':'115BAC','Year':2024,'Total Income':0,'Tax on Total Income':0,'Marginal Relief':0,'Net Tax on Total Income':0};
+                defaults = {'Income Tax Code':'115BAC','Financial Year':2024,'Total Income':0,'Tax on Total Income':0,'Marginal Relief':0,'Net Tax on Total Income':0};
                 break
         }
         return defaults;
     }
     errors(data){
         const list = [];
-        if (this.report=="IncomeTaxSimulator"){
-            if (data['Income Tax Code']=="" && data['Year']==""){
-                list.push('Income Tax Code or Year is Missing');
-            }
+        if (this.report==="IncomeTaxSimulator"){
+            if (data['Income Tax Code']===""){
+                list.push(`Incom Tax Code required`);
+            } else {
+                if (data['Financial Year']===""){
+                    list.push('Financial Year required');
+                } else {
+                    if (!new IncomeTaxCode(data['Income Tax Code']).yearExists(data['Financial Year'])){
+                        list.push(`Taxation for specified year not available in Income Tax Code: ${data['Income Tax Code']}`)
+                    }
+                }
+            }   
+                
+
         }
         return list;
     }
     process(data){
         let result = {...data};
         if (this.report=="IncomeTaxSimulator"){
-            if (result['Income Tax Code']!==""){
+            if (result['Income Tax Code']!=="" && data['Financial Year']!==""){
                 const IT = new IncomeTaxCode(result['Income Tax Code']);
-                result['Tax on Total Income'] = IT.tax(result['Year'],result['Total Income']);
-                result['Marginal Relief'] = IT.marginalRelief(result['Year'],result['Total Income']);
-                result['Net Tax on Total Income'] = IT.netTax(result['Year'],result['Total Income']);
+                if (IT.yearExists(data['Financial Year'])){
+                    result['Tax on Total Income'] = IT.tax(Number(result['Financial Year']),Number(result['Total Income']));
+                    result['Marginal Relief'] = IT.marginalRelief(result['Financial Year'],result['Total Income']);
+                    result['Net Tax on Total Income'] = IT.netTax(Number(result['Financial Year']),Number(result['Total Income']));
+                }
             }
         }
         return result;
@@ -2832,6 +2844,10 @@ class IncomeTaxCode extends Collection{
         const tax = Math.min(slabLimit,applicableIncome)* Rate/100;
         return tax
     }
+    yearExists(year){
+        const result = this.data['Taxation'].find(item=>(year>=item['From Year'] && year<=item['To Year']));
+        return (result!==undefined)
+    }
     taxation(year){
         const taxation = this.data['Taxation'];
         const taxationyear = taxation.filter(item=>(year>=item['From Year'] && year<=item['To Year']))[0];
@@ -3049,7 +3065,7 @@ function Interface(){
         const {report,data} = inputData;
         Display = new Report(report);
         defaults = Display.defaults(data);
-        editable = false;
+        editable = true;
         title = Display.title();
     }
     const [data,setdata] = useState(defaults);
@@ -3085,6 +3101,7 @@ function View({title,editable,output,schema,defaults,setdata,errors,navigation,t
                         {field['datatype']=="nest" && <NestInput field={field} output={output} setdata={setdata} defaults={defaults}/>}
                         {field['datatype']=="multiple" && <MultipleInput field={field} output={output} setdata={setdata}/>}
                         {field['datatype']=="table" && <DisplayAsTable collection={output[field['name']]}/>}
+                        {field['datatype']==='tree'&& <TreeInput data={output} setdata={setdata} schema={field['schema']}/>}
                     </>
                 )}
                 {table && <TableInput  data={output} schema={schema} setdata={setdata} defaults={defaults} editable={editable}/>}
@@ -3206,14 +3223,114 @@ class ChartOfAccounts{
     }
 }
 
+const buildTree = (data,parentId=null)=>{
+    const list = [];
+    const keys = data.filter(item=>item['parentId']===parentId && item['type']=='key');
+    for (let i=0;i<keys.length;i++){
+        const key = {...keys[i]};
+        key['children']=buildTree(data,key['id']);
+        key['value']=data.find(item=>item['type']==='value' && item['parentId']===key.id)
+        list.push(key);
+    }
+    return list
+}
 
+const TreeInput = ({data,setdata,schema}) =>{
+    const treeStructure = buildTree(data);
+    return(
+        <ol>
+            {treeStructure.map(node=><Node schema={schema} setdata={setdata} node={node}/>)}
+        </ol>
+    )
+}
+
+const Node = ({node,schema,setdata})=>{
+    
+    const keyChange =(id,e)=>{
+        const {value} = e.target;
+        setdata(prevdata=>(prevdata.map(item=>item.id===id?{...item,['name']:value}:item)))
+    }
+
+    const singleChange = (parentId,e)=>{
+        const {value} = e.target;
+        setdata(prevdata=>(prevdata.map(item=>item.parentId===parentId?{...item,['value']:value}:item)))
+    }
+    const listChange = (parentId,index,e)=>{
+        const {value} = e.target;
+        setdata(prevdata=>(prevdata.map(item=>item.parentId===parentId?{...item,['value']:item['value'].map((subitem,i)=>i===index?value:subitem)}:item)))
+    }
+    const tableChange = (parentId,index,field,e)=>{
+        const {value} = e.target;
+        setdata(prevdata=>(prevdata.map(item=>item.parentId===parentId?{...item,['value']:item['value'].map((subitem,i)=>i===index?{...subitem,[field]:value}:subitem)}:item)))
+    }
+    const addNode=(id)=>{
+        let defaults = "";
+        switch (schema.datatype){
+            case 'single':
+                defaults = '';
+                break
+            case 'list':
+                defaults = [''];
+                break
+            case 'table':
+                const item = {};
+                schema.schema.map(field=>item[field.name]="");
+                defaults = [item];
+                break 
+        }
+        setdata(prevdata=>([...prevdata,...[{'type':'key','id':prevdata.length,'parentId':id,'name':''},{'type':'value','parentId':prevdata.length,'value':defaults}]]));
+    }
+
+    const listAdd = (parentId)=>{
+        setdata(prevdata=>(prevdata.map(item=>item.parentId===parentId?{...item,['value']:[...item['value'],""]}:item)))
+    }
+
+    const tableAdd = (parentId)=>{
+        const defaults = {}; 
+        schema.schema.map(field=>defaults[field.name]="");  
+        setdata(prevdata=>(prevdata.map(item=>item.parentId===parentId?{...item,['value']:[...item['value'],defaults]}:item)))
+    }
+
+    return (
+        <>
+        {node.children.length===0 && <li>
+            <input value={node.name} onChange={(e)=>keyChange(node.id,e)}/>
+            <button onClick={()=>addNode(node.id)}>Node +</button>
+            <div>
+                {schema.datatype==='single' && <input value={node.value.value} onChange={(e)=>singleChange(node.id,e)}/>}
+                {schema.datatype==='list' && <div>{node.value.value.map((item,i)=><input type={schema.type} value={item} onChange={(e)=>listChange(node.id,i,e)}/>)}<button onClick={()=>listAdd(node.id)}>+</button></div>}
+                {schema.datatype==='table' && <div className='displayTable'>
+                    <table>
+                        <thead>
+                            <tr>
+                                {schema.schema.map(field=><td className='displayTableCell'>{field.name}</td>)}
+                            </tr>
+                            {node.value.value.map((item,i)=><tr>
+                                {schema.schema.map(field=><td className='displayTableCell'><input onChange={(e)=>tableChange(node.id,i,field.name,e)} value={item[field.name]}/></td>)}
+                                </tr>)}
+                        </thead>
+                    </table>
+                    <button onClick={()=>tableAdd(node.id)}>+</button>    
+                </div>}
+            </div>    
+        </li>}
+        {node.children.length>0 && <li>
+            <input value={node.name} onChange={(e)=>keyChange(node.id,e)}/>
+            <button onClick={()=>addNode(node.id)}>N</button>
+            <ul>
+                {node.children.map(child=><Node node={child} schema={schema} setdata={setdata}/>)}
+            </ul>
+        </li>}
+        </>
+    )
+}
 
 function Scratch(){
-    const collection = new CompanyCollection('1000','Employee').getData({'Code':201052})
+    
     return(
-        <div className='reportDisplay'>
-            <TreeInput output={collection}/>
-        </div>
+        <>
+            {JSON.stringify(new IncomeTaxCode('115BAC').yearExists(2024))}        
+        </>
     )
 }
 
@@ -3302,61 +3419,7 @@ function JSONArray(array,parentId=null){
     return result
 }
 
-const buildTree = (data,parentId=null) =>{
-    const list = [];
-    const array = ArrayJSON(data).array;
-    const parents = array.filter(item=>(item['elementType']==='index' && item['arrayId']===parentId) ||(item['elementType']==='key' && item['key']===parentId) )
-    for (let i=0; i<parents.length;i++){
-        let parent = parents[i];
-        if (parent['valueType']==='value'){
-            parent = {...parent,['value']:array.find(item=>item.elementType==='value' && (item['key']===parent['id'] || item['arrayId']===parent['id']))};
-        } else {
-            parent = {...parent,...{'children':buildTree(data,parent['id'])}};
-        }
-        list.push(parent);
-    }
-    return list;
-}
 
-const Node = ({node, setkey, setvalue, schema})=>{
-
-    const keyChange = (id,e) =>{
-        const {value}= e.target;
-        setkey(prevdata=>JSONArray(ArrayJSON(prevdata).array.map(item=>item.id===id?{...item,['name']:value}:item)))
-    }
-
-    const valueChange = (id,field,e)=>{
-        const {value} = e.target;
-        setvalue(prevdata=>prevdata.map(item=>item.id===id?{...item,[field]:value}:item));
-    }
-
-        return (
-            <>
-                {node.elementType==='key' && <>
-                {node.valueType==='value' && <tr><td><input onChange={(e)=>keyChange(node['id'],e)} value={node['name']}/></td>
-                <td><input onChange={(e)=>valueChange(node.value['id'],'a',e)} value={node.value['name']}/></td></tr>}
-                {node.valueType!=='value' && <><tr><input onChange={(e)=>keyChange(node['id'],e)} value={node['name']}/></tr>{node.children.map(subNode=><Node node={subNode} schema={schema} setkey={setkey}/>)}</>}
-                </>}
-                {node.elementType==='index' && <>
-                {node.valueType==='value' && <tr><td><input onChange={(e)=>keyChange(node.value['id'],e)} value={node.value['name']}/></td></tr>}
-                {node.valueType!=='value' && <><tr><td>{node['index']}</td></tr>{node.children.map(subNode=><Node node={subNode} schema={schema} setkey={setkey}/>)}</>}
-                </>}
-            </>
-        )
-    }
-
-const TreeInput=()=>{
-    const [key,setkey] = useState(new CompanyCollection('1000','Employee').getData({'Code':201052}))
-    const [value,setvalue] = useState([]);
-    const treeStructure  = buildTree(key);
-    const inputSchema = {'datatype':'single',"input":"input","type":"text"};
-
-    return (
-        <table>
-            {treeStructure.map(item=><Node node={item} setkey={setkey} setvalue={setvalue} schema={inputSchema}/>)}
-        </table>
-    )
-}
 
 
 function App(){
