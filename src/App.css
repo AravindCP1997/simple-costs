@@ -519,8 +519,12 @@
 
 @media screen and (max-width: 600px){
   
+  html{
+    background-size: 50%;
+  }
+
   .searchBar{
-    box-shadow: none;
+  box-shadow: 0px 0.5px 3px 0px var(--gray);
     background: white;
   }
 
@@ -532,11 +536,11 @@
  .home{
   gap:30px;
   min-height: unset;
-  padding: 25px;
+  padding: 20px;
   gap:25px;
   width:100%;
-  box-shadow: none;
-  border:2px solid white;
+  box-shadow: 0px 0.5px 3px 0px var(--gray);
+  backdrop-filter: blur(1px);
  }
 
  .menu{
@@ -562,15 +566,20 @@
  } 
  .menuContainer{
   box-shadow: none;
-  border: 2px solid white;
+  box-shadow: 0px 0.5px 3px 0px var(--gray);
+  background: var(--lightbluet);
+  border: none;
+  backdrop-filter: blur(1px);
  }
 
  .menuList{
   border:2px solid white;
  }
  .display{
-  box-shadow: none;
+  box-shadow: 0px 0.5px 3px 0px var(--gray);
   background: var(--lightbluet);
+  border: none;
+  backdrop-filter: blur(1px);
  }
 }
 

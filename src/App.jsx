@@ -3107,7 +3107,7 @@ function View({title,editable,output,schema,defaults,setdata,errors,navigation,t
                 {table && <TableInput  data={output} schema={schema} setdata={setdata} defaults={defaults} editable={editable}/>}
             </div>
             {(editable && (errors.length>0)) && <div className='error'>
-                <Collapsible title={`Things to Consider (${errors.length}) `} children={<ul>
+                <Collapsible title={`Alert (${errors.length}) `} children={<ul>
                     {errors.map(error=>
                         <li>{error}</li>
                     )}
