@@ -27,6 +27,13 @@ const ListUniqueItems = (collection,key)=>{
     return uniquelist
 }
 
+const ExistsDuplicates = (value,collection,key)=>{
+    const list = ListItems(collection,key);
+    const count = Count(value,list);
+    const result = (count>1);
+    return result;
+}
+
 function SumField(collection,field){
     let subtotal = 0;
     collection.map(item=>subtotal+=parseFloat(item[field]))
@@ -190,21 +197,33 @@ class Navigator{
         {'code':'a30c','name':'Create Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Create'},'type':'Control','group':'Asset Lifecycle'},
         {'code':'a30u','name':'Update Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Update'},'type':'Control','group':'Asset Lifecycle'},
         {'code':'a30d','name':'Display Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Display'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'cost10c','name':'Create Cost Center','url':'/interface','state':{'type':'CollectionQuery','collection':'CostCenter','method':'Create'},'type':'Control','group':'Costing'},
+        {'code':'cost10d','name':'Display Cost Center','url':'/interface','state':{'type':'CollectionQuery','collection':'CostCenter','method':'Display'},'type':'Control','group':'Costing'},
+        {'code':'cost10u','name':'Update Cost Center','url':'/interface','state':{'type':'CollectionQuery','collection':'CostCenter','method':'Update'},'type':'Control','group':'Costing'},
         {'code':'h10c','name':'Create Attendance','url':'/interface','state':{'type':'CollectionQuery','collection':'Attendance','method':'Create'},'type':'Control','group':'Human Resources'},
         {'code':'h10u','name':'Update Attendance','url':'/interface','state':{'type':'CollectionQuery','collection':'Attendance','method':'Update'},'type':'Control','group':'Human Resources'},
         {'code':'h10d','name':'Display Attendance','url':'/interface','state':{'type':'CollectionQuery','collection':'Attendance','method':'Display'},'type':'Control','group':'Human Resources'},
-        {'code':'ch2c','name':'Create Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Create'},'type':'Control','group':'Human Resources'},
-        {'code':'ch2u','name':'Update Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Update'},'type':'Control','group':'Human Resources'},
-        {'code':'ch2d','name':'Display Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Display'},'type':'Control','group':'Human Resources'},
-        {'code':'ch3c','name':'Create Holidays','url':'/interface','state':{'type':'CollectionQuery','collection':'Holidays','method':'Create'},'type':'Control','group':'Human Resources'},
-        {'code':'ch3u','name':'Update Holidays','url':'/interface','state':{'type':'CollectionQuery','collection':'Holidays','method':'Update'},'type':'Control','group':'Human Resources'},
-        {'code':'ch3d','name':'Display Holidays','url':'/interface','state':{'type':'CollectionQuery','collection':'Holidays','method':'Display'},'type':'Control','group':'Human Resources'},
+        {'code':'h20c','name':'Create Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Create'},'type':'Control','group':'Human Resources'},
+        {'code':'h20u','name':'Update Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Update'},'type':'Control','group':'Human Resources'},
+        {'code':'h20d','name':'Display Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Display'},'type':'Control','group':'Human Resources'},
+        {'code':'h30c','name':'Create Holidays','url':'/interface','state':{'type':'CollectionQuery','collection':'Holidays','method':'Create'},'type':'Control','group':'Human Resources'},
+        {'code':'h30u','name':'Update Holidays','url':'/interface','state':{'type':'CollectionQuery','collection':'Holidays','method':'Update'},'type':'Control','group':'Human Resources'},
+        {'code':'h30d','name':'Display Holidays','url':'/interface','state':{'type':'CollectionQuery','collection':'Holidays','method':'Display'},'type':'Control','group':'Human Resources'},
         {'code':'cm1c','name':'Create Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Create'},'type':'Control','group':'Material and Costing'},
         {'code':'cm1u','name':'Update Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Update'},'type':'Control','group':'Material and Costing'},
         {'code':'cm1d','name':'Display Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Display'},'type':'Control','group':'Material and Costing'},
+        {'code':'o20c','name':'Create Location','url':'/interface','state':{'type':'CollectionQuery','collection':'Location','method':'Create'},'type':'Control','group':'Organisational Units'},
+        {'code':'o20u','name':'Update Location','url':'/interface','state':{'type':'CollectionQuery','collection':'Location','method':'Update'},'type':'Control','group':'Organisational Units'},
+        {'code':'o20d','name':'Display Location','url':'/interface','state':{'type':'CollectionQuery','collection':'Location','method':'Display'},'type':'Control','group':'Organisational Units'},
         {'code':'p10c','name':'Create Bank Account','url':'/interface','state':{'type':'CollectionQuery','collection':'BankAccount','method':'Create'},'type':'Control','group':'Payables and Receivables'},
         {'code':'p10u','name':'Update Bank Account','url':'/interface','state':{'type':'CollectionQuery','collection':'BankAccount','method':'Update'},'type':'Control','group':'Payables and Receivables'},
         {'code':'p10d','name':'Display Bank Account','url':'/interface','state':{'type':'CollectionQuery','collection':'BankAccount','method':'Display'},'type':'Control','group':'Payables and Receivables'},
+        {'code':'p20c','name':'Create Customer','url':'/interface','state':{'type':'CollectionQuery','collection':'Customer','method':'Create'},'type':'Control','group':'Payables and Receivables'},
+        {'code':'p20u','name':'Update Customer','url':'/interface','state':{'type':'CollectionQuery','collection':'Customer','method':'Update'},'type':'Control','group':'Payables and Receivables'},
+        {'code':'p20d','name':'Display Customer','url':'/interface','state':{'type':'CollectionQuery','collection':'Customer','method':'Display'},'type':'Control','group':'Payables and Receivables'},
+        {'code':'p30c','name':'Create Vendor','url':'/interface','state':{'type':'CollectionQuery','collection':'Vendor','method':'Create'},'type':'Control','group':'Payables and Receivables'},
+        {'code':'p30u','name':'Update Vendor','url':'/interface','state':{'type':'CollectionQuery','collection':'Vendor','method':'Update'},'type':'Control','group':'Payables and Receivables'},
+        {'code':'p30d','name':'Display Vendor','url':'/interface','state':{'type':'CollectionQuery','collection':'Vendor','method':'Display'},'type':'Control','group':'Payables and Receivables'},
         {'code':'g10c','name':'Create Chart of Accounts','url':'/interface','state':{'type':'Collection','collection':'ChartOfAccounts','method':'Create'},'type':'Control','group':'Global'},
         {'code':'g10d','name':'Display Chart of Accounts','url':'/interface','state':{'type':'CollectionQuery','collection':'ChartOfAccounts','method':'Display'},'type':'Control','group':'Global'},
         {'code':'g30c','name':'Create Group Chart of Accounts','url':'/interface','state':{'type':'Collection','collection':'GroupChartOfAccounts','method':'Create'},'type':'Control','group':'Global'},
@@ -220,7 +239,7 @@ class Navigator{
         {'code':'c10d','name':'Display Company','url':'/interface','state':{'type':'CollectionQuery','collection':'Company','method':'Display'},'type':'Control','group':'Company'},
         {'code':'c20c','name':'Create Customisation','url':'/interface','state':{'type':'CollectionQuery','collection':'Customisation','method':'Create'},'type':'Control','group':'Company'},
         {'code':'c20u','name':'Update Customisation','url':'/interface','state':{'type':'CollectionQuery','collection':'Customisation','method':'Update'},'type':'Control','group':'Company'},
-        {'code':'c20d','name':'Display Customisation','url':'/interface','state':{'type':'CollectionQuery','collection':'Cusomisation','method':'Display'},'type':'Control','group':'Company'},
+        {'code':'c20d','name':'Display Customisation','url':'/interface','state':{'type':'CollectionQuery','collection':'Customisation','method':'Display'},'type':'Control','group':'Company'},
         {'code':'c30c','name':'Create Time Control','url':'/interface','state':{'type':'CollectionQuery','collection':'TimeControl','method':'Create'},'type':'Control','group':'Company'},
         {'code':'c30u','name':'Update Time Control','url':'/interface','state':{'type':'CollectionQuery','collection':'TimeControl','method':'Update'},'type':'Control','group':'Company'},
         {'code':'c30d','name':'Display Time Control','url':'/interface','state':{'type':'CollectionQuery','collection':'TimeControl','method':'Display'},'type':'Control','group':'Company'},
@@ -901,7 +920,7 @@ function ListInput({field,setdata,output}){
     return(
         <div className='displayField'>
             <div className='displayObject'>
-                <div className='displayRow'><label>{field['name']}</label><button onClick={()=>addItem()}>+</button></div>
+                <div className='displayObjectHead'><label>{field['name']}</label><button onClick={()=>addItem()}>+</button></div>
                 <div className='displayList'>
                     {output[field['name']].length>0 && output[field['name']].map((item,i)=>
                         <div>
@@ -953,7 +972,7 @@ function CollectionInput({field,output,setdata,defaults}){
                 </div>
                 
                 <div className='displayTable'>
-                    <table>
+                    {field['schema'].length>0 && <table>
                         <thead>
                             <tr>
                                 {!field['noteditable'] && <th className='displayTableCell'></th>}
@@ -967,13 +986,13 @@ function CollectionInput({field,output,setdata,defaults}){
                                         <>{subfield['datatype']=="single" && 
                                             <td className='displayTableCell'>
                                                 {subfield['noteditable'] && <input disabled value={output[field['name']][index][subfield['name']]}/>}
-                                                {(subfield['input']=="input" && !subfield['noteditable'])&& <input onChange={(e)=>handleChange(subfield['name'],index,e)} type={subfield['type']} placeholder={subfield['placeholder']} value={output[field['name']][index][subfield['name']]}/>}
+                                                {(subfield['input']=="input" && !subfield['noteditable'])&& <input onChange={(e)=>handleChange(subfield['name'],index,e)} type={subfield['type']} placeholder={subfield['placeholder']} value={output[field['name']][index][subfield['name']]} maxLength={subfield['maxLength']}/>}
                                                 {(subfield['input']=="option"&& !subfield['noteditable']) && <select onChange={(e)=>handleChange(subfield['name'],index,e)} value={output[field['name']][index][subfield['name']]}>{subfield['options'].map(option=><option value={option}>{option}</option>)}</select>}
                                             </td>}
                                         </>)}
                                 </tr>
                             </tbody>)}
-                    </table>
+                    </table>}
                 </div>
             </div>
         </div>
@@ -1033,8 +1052,12 @@ function NestInput({field,output,setdata,defaults}){
     return(
         <div className="displayField">
             <div className="displayObject">
-                <label>{field['name']}</label>
-                <button onClick={()=>addCollection()}>Add</button>
+                <div className='displayObjectHead'>
+                    <label>{field['name']}</label>
+                    <div className='displayObjectButtons'>
+                        <button onClick={()=>addCollection()}>Add</button>
+                    </div>
+                </div>
                 <div className='displayGrid'>{output[field['name']].map((item,index)=>
                     <div className="displayFields">{field['schema'][index].map(subfield=>
                         <div className='displayField'>
@@ -1046,10 +1069,14 @@ function NestInput({field,output,setdata,defaults}){
                                     </select>}
                             </div>}
                             {subfield['datatype']=="collection" && <div className='displayObject'>
-                                <label>{subfield['name']}</label>
-                                
+                                <div className='displayObjectHead'>
+                                    <label>{subfield['name']}</label>
+                                    <div className='displayObjectButtons'>
+                                        <button onClick={()=>addNest(index,subfield['name'])}>+</button>
+                                    </div>
+                                </div>
                                 <div className='displayTable'>
-                                    <table>
+                                    {subfield['schema'].length>0 && <table>
                                         <thead>
                                             <tr><th className='displayTableCell'></th>{subfield['schema'][0].map(subsubfield=><th className='displayTableCell'>{subsubfield['name']}</th>)}</tr>
                                         </thead>
@@ -1058,12 +1085,14 @@ function NestInput({field,output,setdata,defaults}){
                                                 <td><div className='displayTableCell'><button onClick={()=>removeNest(index,subfield['name'],subindex)}>-</button></div></td>
                                                 {subfield['schema'][subindex].map(subsubfield=>
                                                 <td>
-                                                    <div className='displayTableCell'><input value={output[field['name']][index][subfield['name']][subindex][subsubfield['name']]} onChange={(e)=>nestChange(index,subfield['name'],subindex,subsubfield['name'],e)}/></div>
+                                                    <div className='displayTableCell'>
+                                                        {subsubfield['input']==='input' && <input value={output[field['name']][index][subfield['name']][subindex][subsubfield['name']]} onChange={(e)=>nestChange(index,subfield['name'],subindex,subsubfield['name'],e)} type={subsubfield['type']}/>}
+                                                        {subsubfield['input']==='option' && <select value={output[field['name']][index][subfield['name']][subindex][subsubfield['name']]} onChange={(e)=>nestChange(index,subfield['name'],subindex,subsubfield['name'],e)}>{subsubfield['options'].map(option=><option value={option}>{option}</option>)}</select>}
+                                                        </div>
                                                 </td>)}
                                             </tr>)}
                                         </tbody>
-                                    </table>
-                                    <button onClick={()=>addNest(index,subfield['name'])}>+</button>
+                                    </table>}
                                 </div>
                             </div> }
                         </div>)}
@@ -1262,7 +1291,8 @@ class KB{
     static AccountTypes = ["Asset","Asset Class","Asset Development","Bank Account","Cost Center","Cost Object","Customer","Employee","Location","Material","Organisational Unit","Profit Center","Purchase Order","Sale Order","Service","Vendor",];
     static PostingAccounts = ["Asset","Asset Development","Bank Account","Customer","General Ledger","Material","Service","Vendor"];
     static GeneralLedgerGroups = ["Asset","Liability","Equity","Income","Expense"];
-    static LedgerTypes = ["Asset","Bank Account","Cost Element","Customer","General","Depreciation","Material","Vendor"]
+    static LedgerTypes = ["Asset","Bank Account","Cost Element","Customer","General","Depreciation","Material","Vendor"];
+    static Numbering = ["Asset","AssetConstructionOrder","BankAccount","CostCenter","Customer","Employee","Location","MaintenanceOrder","Material","Plant","ProcessOrder","ProductionOrder","ProfitCenter","PurchaseOrder","RevenueCenter","SaleOrder","Service","TransportOrder","Vendor"];
     static YearStart(year,firstMonth){
         const result = `${year}-${firstMonth}-01`;
         return result;
@@ -1404,13 +1434,14 @@ class Collection{
                     {"name":"SWIFT Code","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Account","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"General Ledger","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'GeneralLedger').filteredList({'Ledger Type':'Bank Account'},'Code')],"noteditable":(!this.method=="Create")},
-                    {"name":"Profit Center","datatype":"single","input":"option","options":["",new CompanyCollection(data['Company Code'],'ProfitCenter').listAll],"noteditable":(!this.method=="Create")},
+                    {"name":"Profit Center","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'ProfitCenter').listAll('Code')],"noteditable":(!this.method=="Create")},
                     {"name":"Virtual Accounts","datatype":"collection","noteditable":!this.editable,"schema":data['Virtual Accounts'].map(item=>[
                         {"name":"Virtual Account Number","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                        {"name":"Customer","datatype":"single","input":"option","options":["",new CompanyCollection(data['Company Code'],'Customer').listAll],"noteditable":!this.editable},
+                        {"name":"Customer","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'Customer').listAll('Code')],"noteditable":!this.editable},
                         {"name":"Presentation","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'GeneralLedger').filteredList({'Ledger Type':'Customer'},'Code')],"noteditable":!this.editable},
-                        {"name":"Profit Center","datatype":"single","input":"option","options":["",new CompanyCollection(data['Company Code'],'ProfitCenter').listAll],"noteditable":!this.editable},
+                        {"name":"Profit Center","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'ProfitCenter').listAll('Code')],"noteditable":!this.editable},
                     ])},
+                    {"name":"Status","datatype":"single","input":"option","options":["Draft","Ready","Blocked"],"noteditable":!this.editable}
                 ]
                 break
             case 'ChartOfAccounts':
@@ -1421,6 +1452,7 @@ class Collection{
                         {"name":"From","input":"input","datatype":"single","type":"number","noteditable":!(this.method=="Create")},
                         {"name":"To","input":"input","datatype":"single","type":"number","noteditable":!(this.method=="Create")},        
                     ])},
+                    {"name":"Status","datatype":"single","input":"option","options":["Draft","Ready","Blocked"],"noteditable":!this.editable}
                 ]
                 break
             case 'Company':
@@ -1428,8 +1460,9 @@ class Collection{
                     {"name":"Code","datatype":"single","input":"input","maxLength":4,"type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Address","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"PIN","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
-                    {"name":"PAN","datatype":"single","input":"input","type":"text","maxLength":10,"noteditable":!this.editable},
+                    {"name":"Postal Code","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    {"name":"Permanent Account Number","datatype":"single","input":"input","type":"text","maxLength":10,"noteditable":!this.editable},
+                    {"name":"Corporate Identification Number","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Places of Business","datatype":"collection","noteditable":!this.editable,"schema":data['Places of Business'].map(item=>[
                         {"name":"Place","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                         {"name":"State","input":"option","datatype":"single","options":["",...KB.States,...KB.UTs],"noteditable":!this.editable},    
@@ -1438,38 +1471,28 @@ class Collection{
                     {"name":"Functional Currency","datatype":"single","input":"option","options":["",...new Table('Currencies').list],"noteditable":!(this.method=="Create")},
                     {"name":"Year Zero","datatype":"single","input":"input","type":"number","maxLength":4,"noteditable":!(this.method=="Create")},
                     {"name":"Financial Year Beginning","datatype":"single","input":"option","options":["","01","02","03","04","05","06","07","08","09","10","11","12"],"noteditable":!(this.method=="Create")},
-                    {"name":"Chart of Accounts","datatype":"single","input":"option","options":["",...ChartOfAccounts.listCompanyCoA],"noteditable":!(this.method=="Create")},
-                    {"name":"Group Chart of Accounts","datatype":"single","input":"option","options":["",...ChartOfAccounts.listGroupCoA],"noteditable":!(this.method=="Create")},
+                    {"name":"Chart of Accounts","datatype":"single","input":"option","options":["",...new Collection('ChartOfAccounts').listAll('Code')],"noteditable":!(this.method=="Create")},
+                    {"name":"Group Chart of Accounts","datatype":"single","input":"option","options":["",...new Collection('GroupChartOfAccounts').listAll('Code')],"noteditable":!(this.method=="Create")},
+                    {"name":"Status","datatype":"single","input":"option","options":["Draft","Ready","Blocked"],"noteditable":!this.editable}
                 ];
-                break
-            case 'CostObject':
-                schema = [
-                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
-                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
-                    {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Profit Center","datatype":"single","input":"option","options":[""],"noteditable":!(this.method=="Create")} ,
-                    {"name":"Settlement Ratio","datatype":"collection","noteditable":!this.editable,"schema":data['Settlement Ratio'].map(item=>[
-                        {"name":"To", "datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
-                        {"name":"Percentage","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
-                    ])
-                    }
-                ]
                 break
             case 'CostCenter':
                 schema = [
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
-                    {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Profit Center","datatype":"single","input":"option","options":["",...ProfitCenter.listAll(data['Company Code'])],"noteditable":!(this.method=="Create")} ,
-                    {"name":"Apportionment Ratio","datatype":"nest","noteditable":!this.editable,"schema":data['Apportionment Ratio'].map(item=>[
+                    {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Profit Center","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'ProfitCenter').listAll('Code')],"noteditable":(!this.method=="Create")},
+                    {"name":"Business Place","datatype":"single","input":"option","options":["",...new Company(data['Company Code']).BusinessPlaces],"noteditable":!this.editable},
+                    {"name":"Allocation Ratio","datatype":"nest","noteditable":!this.editable,"schema":data['Allocation Ratio'].map(item=>[
                         {"name":"From","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
                         {"name":"To","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
-                        {"name":"Ratio","datatype":"collection","noteditable":!this.editable,"schema":item['Ratio'].map(subitem=>[
-                            {"name":"Type","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
-                            {"name":"To","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                        {"name":"Ratio","datatype":"collection","noteditable":!this.editable,"schema":item['Ratio'].map((subitem,i)=>[
+                            {"name":"Type","datatype":"single","input":"option","options":["","CostCenter","Location","Plant","RevenueCenter","AssetConstructionOrder","MaintenanceOrder","ProcessOrder","ProductionOrder","PurchaseOrder","TransportOrder"],"noteditable":!this.editable},
+                            {"name":"To","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],subitem['Type']).listAll('Code')],"noteditable":!this.editable},
                             {"name":"Percentage","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
                         ])},
                     ])},
+                    {"name":"Status","datatype":"single","input":"option","options":["Draft","Ready","Blocked"],"noteditable":!this.editable}
                 ]
                 break
             case 'Customer':
@@ -1478,14 +1501,33 @@ class Collection{
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Address","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"PIN","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    {"name":"PAN","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"GSTIN","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Postal Code","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
                     {"name":"State","datatype":"single","input":"option","options":["",...KB.States,...KB.UTs],"noteditable":!this.editable},
                     {"name":"Phone","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
                     {"name":"Email","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Tax Identification Number","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"GSTIN","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Payment Terms","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                    {"name":"Payment Terms","datatype":"single","input":"option","options":["",...new Collection('PaymentTerms').listAll('Code')],"noteditable":!this.editable},
+                    {"name":"Bank Accounts","datatype":"collection","noteditable":!this.editable,"schema":data['Bank Accounts'].map(item=>[
+                        {"name":"Ref ID","datatype":"single","input":"input","type":"text","noteditable":!this.editable, "maxLength":4},
+                        {"name":"Bank Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},   
+                        {"name":"IFSC","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Account","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Confirm Account","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    ])},
+                    {"name":"Groups","datatype":"list","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Status","datatype":"single","input":"option","options":["Draft","Ready","Blocked"],"noteditable":!this.editable}
                 ]
+                break
+            case 'Customisation':
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Numbering","datatype":"collection","noteditable":true,"schema":data['Numbering'].map(item=>[
+                        {"name":"Item","datatype":"single","input":"input","type":"text","noteditable":true},
+                        {"name":"From","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                        {"name":"To","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    ])},
+                ];
                 break
             case 'Employee':
                 schema = [
@@ -1539,24 +1581,6 @@ class Collection{
                         {"name":"Type","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                         {"name":"Amount","input":"input","datatype":"single","type":"number","noteditable":!this.editable},     
                     ])},
-                ]
-                break
-            case 'FinancialAccountsSettings':
-                schema = [
-                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
-                    {"name":"General Ledger for Profit and Loss Account","datatype":"single","input":"option","options":["",...GeneralLedger.listAll(data['Company Code'])],"noteditable":!this.editable},
-                    {"name":"General Ledger for Cash Discount","datatype":"single","input":"option","options":["",...GeneralLedger.listAll(data['Company Code'])],"noteditable":!this.editable},
-                    {"name":"Wage Types","datatype":"collection","noteditable":!this.editable,"schema":data['Wage Types'].map(item=>[
-                        {"name":"Wage Type","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                        {"name":"Type","input":"option","datatype":"single","options":["Earning","Deduction"],"noteditable":!this.editable},
-                        {"name":"General Ledger","input":"option","datatype":"single","options":[""],"noteditable":!this.editable},    
-                    ])},
-                    {"name":"General Ledger for Salary TDS","datatype":"single","input":"option","options":["",...GeneralLedger.listAll(data['Company Code'])],"noteditable":!this.editable},
-                    {"name":"Code Range", "datatype":"collection","noteditable":true,"schema":data['Code Range'].map(item=>[
-                        {"name":"Collection", "datatype":"single","input":"input", "noteditable":true},
-                        {"name":"From","datatype":"single","input":"input", "type":"number"},
-                        {"name":"To","datatype":"single","input":"input", "type":"number"},
-                    ])}
                 ]
                 break
             case 'FinancialStatementVersion':
@@ -1623,10 +1647,19 @@ class Collection{
                 schema = [
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
-                    {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Cost Center", "datatype":"single","input":"option","options":[""],"noteditable":!(this.method=="Create")},
-                    {"name":"Business Place", "datatype":"single","input":"option","options":[""],"noteditable":!(this.method=="Create")},
-                    {"name":"Address","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Profit Center","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'ProfitCenter').listAll('Code')],"noteditable":(!this.method=="Create")},
+                    {"name":"Business Place","datatype":"single","input":"option","options":["",...new Company(data['Company Code']).BusinessPlaces],"noteditable":!this.editable},
+                    {"name":"Cost Distribution","datatype":"nest","noteditable":!this.editable,"schema":data['Cost Distribution'].map(item=>[
+                        {"name":"From","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                        {"name":"To","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                        {"name":"Ratio","datatype":"collection","noteditable":!this.editable,"schema":item['Ratio'].map((subitem,i)=>[
+                            {"name":"Material","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'Material').listAll('Code')],"noteditable":!this.editable},
+                            {"name":"Multiplier","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                            {"name":"Remarks","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        ])},
+                    ])},
+                    {"name":"Status","datatype":"single","input":"option","options":["Draft","Ready","Blocked"],"noteditable":!this.editable}
                 ]
                 break
             case 'MaintenanceOrder':
@@ -1745,28 +1778,28 @@ class Collection{
                     ])},
                 ]
                 break
-            case 'UserSettings':
-                schema = [
-                    {"name":"Username","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
-                    {"name":"Full Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Email","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Role","datatype":"single","input":"option","options":["Admin","User"],"noteditable":!this.editable},
-                ]
-                break
             case 'Vendor':
                 schema = [
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Address","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"PIN","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                    {"name":"PAN","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"GSTIN","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Postal Code","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
                     {"name":"State","datatype":"single","input":"option","options":["",...KB.States,...KB.UTs],"noteditable":!this.editable},
                     {"name":"Phone","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
                     {"name":"Email","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Tax Identification Number","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"GSTIN","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Payment Terms","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
-                    {"name":"Groups","datatype":"list","input":"option","options":["A","B"],"noteditable":!this.editable}
+                    {"name":"Payment Terms","datatype":"single","input":"option","options":["",...new Collection('PaymentTerms').listAll('Code')],"noteditable":!this.editable},
+                    {"name":"Bank Accounts","datatype":"collection","noteditable":!this.editable,"schema":data['Bank Accounts'].map(item=>[
+                        {"name":"Ref ID","datatype":"single","input":"input","type":"text","noteditable":!this.editable, "maxLength":4},
+                        {"name":"Bank Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},   
+                        {"name":"IFSC","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Account","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                        {"name":"Confirm Account","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    ])},
+                    {"name":"Groups","datatype":"list","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Status","datatype":"single","input":"option","options":["Draft","Ready","Blocked"],"noteditable":!this.editable}
                 ]
                 break
         }
@@ -1774,7 +1807,7 @@ class Collection{
     }
     defaults(data){
         let defaults = {};
-        if (this.method=="Create"){
+        if (this.method==="Create"){
             switch (this.name){
                 case 'Asset':
                     defaults = {
@@ -1791,7 +1824,6 @@ class Collection{
                         "Useful Life":0,
                         "Salvage Value":0,
                         "Status":"Draft"
-                        
                     }
                     break
                 case 'AssetClass':
@@ -1839,13 +1871,15 @@ class Collection{
                         "General Ledger":"",
                         "Profit Center":"",
                         "Virtual Accounts":[{"Virtual Account Number":"","Customer":"","Presentation":"","Profit Center":""}],
-                        "Group Keys":[]
+                        "Group Keys":[],
+                        "Status":"Draft"
                     }
                     break
                 case 'ChartOfAccounts':
                     defaults = {
                         "Code":"",
                         "General Ledger Range":KB.GeneralLedgerGroups.map(item=>({"Group":item,"From":"","To":""})),
+                        "Status":"Draft"
                     }
                     break
                 case 'Company':
@@ -1860,28 +1894,23 @@ class Collection{
                         "Year Zero":"",
                         "Financial Year Beginning":"",
                         "Chart of Accounts":"",
-                        "Group Chart of Accounts":"",                        
+                        "Group Chart of Accounts":"", 
+                        "Status":"Draft"                       
                     }
                     break
                 case 'CostCenter':
                     defaults = {
                         "Company Code":data['Company Code'],
                         "Code":"",
-                        "Name":"",
+                        "Description":"",
                         "Profit Center":"",
-                        "Apportionment Ratio":[
+                        "Business Place":"",
+                        "Allocation Ratio":[
                             {"From":"","To":"","Ratio":[
                                 {"Type":"","To":"","Percentage":0}
                             ]}
-                        ]
-                    }
-                    break
-                case 'CostObject':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Code":"",
-                        "Name":"",
-                        "Profit Center":"",
+                        ],
+                        "Status":"Draft"
                     }
                     break
                 case 'Customer':
@@ -1889,18 +1918,24 @@ class Collection{
                         "Code":"",
                         "Company Code":data['Company Code'],
                         "Name":"",
+                        "PAN":"",
+                        "GSTIN":"",
                         "Address":"",
-                        "PIN":"",
+                        "Postal Code":"",
                         "State":"",
                         "Phone":"",
                         "Email":"",
-                        "GSTIN":"",
-                        "PAN":"",
                         "Payment Terms":"",
-                        "Bank Accounts":[
-                            {"Account Number":"","Confirm Account Number":"","Bank Name":"","IFSC Code":""}
-                        ],
+                        "Bank Accounts":[{"Ref Id":"","Bank Name":"","IFSC":"","Account":"","Confirm Account":""}],
+                        "Groups":[""],
+                        "Status":"Draft"
                     }
+                    break
+                case 'Customisation':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Numbering":KB.Numbering.map(item=>({"Item":item,"From":"","To":""}))
+                    };
                     break
                 case 'Employee':
                     defaults = {
@@ -1937,19 +1972,7 @@ class Collection{
                         ]
                     }
                     break
-                case 'FinancialAccountsSettings':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "General Ledger for Profit and Loss":"",
-                        "General Ledger for Cash Discount":"",
-                        "Wage Types":[
-                            {"Type":"","Description":"","GL":""}
-                        ],
-                        "General Ledger for Salary TDS":"",
-                        "Code Range":KB.AccountTypes.map(item=>({"Collection":item,"From":"","To":""}))
-                    }
-                    break
-                case 'FinancialStatementVersion':
+                case 'FinancialStatement':
                     defaults = {
                         "Code":"",
                         "Chart of Accounts":"",
@@ -1991,7 +2014,7 @@ class Collection{
                                 "From Year":0,
                                 "To Year":0,
                                 "Exemption Limit":0,
-                                "Marginal Relief":"",
+                                "Marginal Relief":"Yes",
                                 "Standard Deduction - Salary":0,
                                 "Cess":0,
                                 "Slab":[
@@ -2005,10 +2028,15 @@ class Collection{
                     defaults = {
                         "Company Code":data['Company Code'],
                         "Code":"",
-                        "Name":"",
-                        "Address":"",
-                        "Cost Center":"",
-                        "Business Place":""
+                        "Description":"",
+                        "Profit Center":"",
+                        "Business Place":"",
+                        "Cost Distribution":[
+                            {"From":"","To":"","Ratio":[
+                                {"Material":"","Multiplier":"","Remarks":""}
+                            ]}
+                        ],
+                        "Status":""
                     }
                     break
                 case 'MaintenanceOrder':
@@ -2106,18 +2134,17 @@ class Collection{
                         "Code":"",
                         "Company Code":data['Company Code'],
                         "Name":"",
+                        "PAN":"",
+                        "GSTIN":"",
                         "Address":"",
-                        "PIN":"",
+                        "Postal Code":"",
                         "State":"",
                         "Phone":"",
                         "Email":"",
-                        "GSTIN":"",
-                        "PAN":"",
                         "Payment Terms":"",
-                        "Bank Accounts":[
-                            {"Account Number":"","Confirm Account Number":"","Bank Name":"","IFSC Code":""}
-                        ],
-                        "Groups":[""]
+                        "Bank Accounts":[{"Ref Id":"","Bank Name":"","IFSC":"","Account":"","Confirm Account":""}],
+                        "Groups":[""],
+                        "Status":"Draft"
                     }
                     break
                 
@@ -2183,8 +2210,8 @@ class Collection{
                 const vans = data['Virtual Accounts'];
                 for (let i = 0; i < vans.length; i++){
                     const van = vans[i];
-                    if (Count(van['Virtual Account Number'],ListItems(vans,'Virtual Account Number'))>1){
-                        list.push(`VAN ${van['Virtual Account Number']} exists in duplicate`);
+                    if (ExistsDuplicates(van['Virtual Account Number'],vans,'Virtual Account Number')){
+                        list.push(`VAN '${van['Virtual Account Number']}' exists in duplicate`);
                     }
                     const necessary = ["Virtual Account Number","Customer","Presentation","Profit Center"];
                     necessary.map(field=>van[field]===""?list.push(`At VAN ${i+1}, ${field} necessary.`):()=>{})
@@ -2199,19 +2226,64 @@ class Collection{
                 }
                 break
             case 'Company':
-                data['Places of Business'].map((item,i)=>(item['Place']=="" || item['State']=="")?list.push(`Place of Business ${i+1}: Information incomplete.`):()=>{});
-                data['Places of Business'].length==0?list.push("At least one Place of Business is required"):()=>{};
-                data['Places of Business'].map(item=>Count(item['Place'],ListItems(data['Places of Business'],"Place"))>1?list.push(`${item['Place']} repeats in Place of Business`):()=>{})
-                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                const businessplaces = data['Places of Business'];
+                businessplaces.length==0?list.push("At least one Place of Business is required"):()=>{};
+                for (let i=0;i<businessplaces.length;i++){
+                    const place = businessplaces[i];
+                    if (ExistsDuplicates(place['Place'],businessplaces,'Place')){
+                        list.push(`Business Place '${place['Place']}' exists in duplicate.`)
+                    }
+                    if (place['Place']===""){
+                        list.push(`At Business Place ${i+1}, Place required`);
+                    }
+                    if (place['State']===""){
+                        list.push(`At Business Place ${i+1}, State required`);
+                    }
+                }
                 break
             case 'CostCenter':
-                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                const allocations = data['Allocation Ratio'];
+                for (let i = 0; i<allocations.length; i ++){
+                    const allocation = allocations[i];
+                    if (allocation['From']>allocation['To']){
+                        list.push(`At allocation ${i+1}, 'From' is greater than 'To'`);
+                    }
+                    if (i>0 && allocation['From']<=allocations[i-1]['To']){
+                        list.push(`At allocation ${i+1}, 'From' is lower than previous 'To'`);
+                    }
+                    const ratios = allocation['Ratio'];
+                    for (let j = 0; j<ratios.length; j++){
+                        const ratio = ratios[j];
+                        const necessary = ["Type","To","Percentage"];
+                        necessary.map(field=>ratio[field]===""?list.push(`At allocation ${i+1}, item ${j+1}, '${field}' necessary.`):()=>{});
+                        (ratio['Percentage']<0)?list.push(`At allocation ${i+1}, item ${j+1}, 'Percentage is negative'`):()=>{};
+                    }
+                    if (SumField(ratios,'Percentage')>100){
+                        list.push(`At allocation ${i+1}, total of ratios greater than 100.`)
+                    }
+                }
                 break
             case 'Customer':
-                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                const banks = data['Bank Accounts'];
+                for (let i = 0; i < banks.length; i++){
+                    const bank = banks[i];
+                    if (ExistsDuplicates(bank['Ref ID'],banks,'Ref ID')){
+                        list.push(`'Ref ID' ${bank['Ref ID']} exists in duplicate.`)
+                    }
+                    if (bank['Account']!==bank['Confirm Account']){
+                        list.push(`Bank ${i+1}, Account number does not match`);
+                    }
+                }
+                break
+            case 'Customisation':
+                const numbering = data['Numbering'];
+                numbering.forEach(item=>{
+                    Number(item['From'])<0?list.push(`For ${item['Item']}, 'From' is negative.`):()=>{};
+                    Number(item['To'])<0?list.push(`For ${item['Item']}, 'To' is negative.`):()=>{};
+                    (Number(item['From'])>Number(item['To'])?list.push(`For ${item['Item']}, 'From' is greater than 'To'.`):()=>{})
+                })
                 break
             case 'Employee':
-                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
                 break
             case 'FinancialAccountsSettings':
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
@@ -2237,18 +2309,81 @@ class Collection{
                 }
                 break
             case 'Holidays':
-                data['Holidays'].map((item,i)=>(item['Date']=="" || item['Description']=="")?list.push(`At Holidays line ${i}, information incomplete`):()=>{})
-                break
-            case 'IncomeTaxCode':
-                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
-                data['Taxation'].map((item,i)=>(item['From Year']=="" || item['To Year']=="")?list.push(`At Taxation line ${i}, From Year and To Year are required`):()=>{});
-                data['Taxation'].map((item,i)=>(item['From Year']>=item['To Year'])?list.push(`At Taxation line ${i}, To Year should be greater than From Year`):()=>{});
-                for (let i=1;i<data['Taxation'].length;i++){
-                    (data['Taxation'][i]['From Year'] <= data['Taxation'][i-1]['To Year'])?list.push(`At Taxation line ${i}, From Year should be greater than To Year of previous line`):()=>{};
+                const holidays = data['Holidays'];
+                for (let i=0; i<holidays.length; i++){
+                    const holiday = holidays[i];
+                    const necessary = ["Date","Description"];
+                    necessary.map(field=>holiday[field]===""?list.push(`At holiday ${1+i}, ${field} necessary.`):()=>{});
+                    !valueInRange(new Date (holiday['Date']),[new Date(new Company(data['Company Code']).yearData(data['Year']).begin),new Date(new Company(data['Company Code']).yearData(data['Year']).end)])?list.push(`Date ${i+1} not in the year.`):()=>{};
                 }
                 break
+            case 'IncomeTaxCode':
+                const taxations = data['Taxation'];
+                taxations.forEach((taxation,i)=>{
+                    const necessary = ["From Year","To Year","Exemption Limit","Marginal Relief","Standard Deduction - Salary", "Cess"];
+                    necessary.forEach(field=>{
+                        if (taxation[field]===""){
+                            list.push(`At taxation ${i+1}, '${field}' necessary.`)
+                        };
+                    });
+                    const nonNegatives = ["From Year","To Year","Exemption Limit","Standard Deduction - Salary", "Cess"];
+                    nonNegatives.forEach(field=>{
+                        if (taxation[field]<0){
+                            list.push(`At taxation ${i+1}, '${field}' cannot be negative.`)
+                        }
+                    });
+                    if (taxation['From Year']> taxation['To Year']){
+                        list.push(`At taxation ${i+1}, 'From Year' greater than 'To Year'.`)
+                    };
+                    if (i>0 && taxation['From Year']> taxations[i-1]['To Year']){
+                        list.push(`At taxation ${i+1}, 'From Year' lower than previous 'To Year'.`)
+                    };
+                    const slabs = taxation['Slab'];
+                    if (slabs.length==0){
+                        list.push(`At taxation ${i+1}, provide at least one slab.`);
+                    };
+                    slabs.forEach((slab,s)=>{
+                        const necessary = ['From','To','Rate'];
+                        necessary.forEach(field=>{
+                            if (slab[field]===""){
+                                list.push(`At taxation ${i+1}, slab ${s+1}, '${field}' necessary.`)
+                            };
+                            if (slab[field]<0){
+                                list.push(`At taxation ${i+1}, slab ${s+1}, '${field}' is negative.`)
+                            };
+                        });
+                        if (slab['From']>=slab['To']){
+                            list.push(`At taxation ${i+1}, slab ${s+1}, 'To' should be greater than 'From'.`)
+                        }
+                        if (s>0 && slab['From']<slabs[s-1]['To']){
+                            list.push(`At taxation ${i+1}, slab ${s+1}, 'From' is lower than previous 'To'.`)
+                        }
+                    })
+                    if (slabs[slabs.length-1]['To']<999999999){
+                        list.push(`At taxation ${i+1}, 'To of last tax slab must be 999999999 or higher.'`)
+                    }
+                })
+                break
             case 'Location':
-                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                const lcostdist = data['Cost Distribution'];
+                for (let i = 0; i<lcostdist.length; i ++){
+                    const distribution = lcostdist[i];
+                    const necessary = ["From", "To"];
+                    necessary.map(field=>distribution[field]===""?list.push(`At distribution ${i+1}, ${field} required.`):()=>{})
+                    if (distribution['From']>distribution['To']){
+                        list.push(`At distribution ${i+1}, 'From' is greater than 'To'`);
+                    }
+                    if (i>0 && distribution['From']<=distribution[i-1]['To']){
+                        list.push(`At distribution ${i+1}, 'From' is lower than previous 'To'`);
+                    }
+                    const ratios = distribution['Ratio'];
+                    for (let j = 0; j<ratios.length; j++){
+                        const ratio = ratios[j];
+                        const necessary = ["Material","Multiplier"];
+                        necessary.map(field=>ratio[field]===""?list.push(`At distribution ${i+1}, item ${j+1}, '${field}' necessary.`):()=>{});
+                        (ratio['Multiplier']<0)?list.push(`At distribution ${i+1}, item ${j+1}, 'Multiplier is negative'`):()=>{};
+                    }
+                }
                 break
             case 'Material':
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
@@ -2287,7 +2422,16 @@ class Collection{
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
                 break
             case 'Vendor':
-                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                const vendorbanks = data['Bank Accounts'];
+                for (let i = 0; i < vendorbanks.length; i++){
+                    const bank = vendorbanks[i];
+                    if (ExistsDuplicates(bank['Ref ID'],vendorbanks,'Ref ID')){
+                        list.push(`'Ref ID' ${bank['Ref ID']} exists in duplicate.`)
+                    }
+                    if (bank['Account']!==bank['Confirm Account']){
+                        list.push(`Bank ${i+1}, Account number does not match`);
+                    }
+                }
                 break
         }
         const missed = [];
@@ -2373,6 +2517,7 @@ class Collection{
         'CostObject':'costobjects',
         'CostCenter':'costcenters',
         'Customer':'customers',
+        "Customisation":"customisations",
         "Employee":"employees",
         "FinancialAccountsSettings":"financialaccountsettings",
         "FinancialStatementVersion":"financialstatementversions",
@@ -2401,9 +2546,9 @@ class Collection{
         "BankAccount":["Code","Company Code","Name","Business Place","General Ledger","Profit Center"],
         "ChartOfAccounts":["Code"],
         "Company":["Code","Name","Year Zero","Financial Year Beginning","Functional Currency","Chart of Accounts"],
-        "CostObject":["Company Code","Code","Name","Profit Center"],
-        "CostCenter":["Company Code","Code","Name","Profit Center"],
+        "CostCenter":["Company Code","Code","Description","Profit Center","Business Place"],
         "Customer":["Code","Company Code","Name","State"],
+        "Customisation":["Company Code"],
         "Employee":["Code","Company Code","Name","State","Income Tax Code"],
         "FinancialAccountsSettings":["Company Code","General Ledger for Profit and Loss Account","General Ledger for Cash Discount","General Ledger for Salary TDS"],
         "FinancialStatementVersion":["Code"],
@@ -2411,7 +2556,7 @@ class Collection{
         "GroupChartOfAccounts":["Code"],
         "Holidays":["Company Code","Year"],
         "IncomeTaxCode":["Code"],
-        "Location":["Code","Company Code","Name","Cost Center","Business Place"],
+        "Location":["Code","Company Code","Name","Cost Center","Business Place","Profit Center"],
         "MaintenanceOrder":["Code","Company Code","Organisational Unit","Type of Activity"],
         "Material":["Code","Company Code","Name","Unit","General Ledger","General Ledger - Cost of Sales", "General Ledger - Revenue"],
         "OrganisationalUnit":["Code","Company Code","Name","Cost Center","Business Place"],
@@ -2432,9 +2577,9 @@ class Collection{
         "BankAccount":["Code","Company Code"],
         "ChartOfAccounts":["Code"],
         "Company":["Code"],
-        "CostObject":["Company Code","Code"],
         "CostCenter":["Company Code","Code"],
         "Customer":["Code","Company Code"],
+        "Customisation":["Company Code"],
         "Employee":["Code","Company Code"],
         "FinancialAccountsSettings":["Company Code"],
         "FinancialStatementVersion":["Code"],
@@ -2466,6 +2611,7 @@ class Collection{
         'CostObject':'Cost Object',
         'CostCenter':'Cost Center',
         'Customer':'Customer',
+        "Customisation":'Customisation',
         "Employee":"Employee",
         "FinancialAccountsSettings":"Financial Accounts Settings",
         "FinancialStatementVersion":"Financial Statement Version",
@@ -2708,9 +2854,26 @@ class CollectionQuery{
     errors(data){
         const missing = [];
         const errors = [];
-        this.createRequirements.map(field=>(data[field]=="")?missing.push(field):()=>{});
-        (this.createRequirements.includes("Employee") && new Collection("Employee").exists({"Company Code":data["Company Code"], "Code":data['Employee']})==false)?errors.push(`Employee with Code ${data["Employee"]} does not exist in Company ${data["Company Code"]}.`):()=>{};
-        (this.createRequirements==ListItems(this.schema(data),"name") && this.checkAvailability(data))?(errors.push(`${this.collection} with same identifier(s) already exists.`)):()=>{};
+        let fields = [];
+        if (this.method!=="Create"){
+            fields = ListItems(this.schema(data),'name');
+            const query = {};
+            fields.map(field=>query[field]=data[field]);
+            if (!new Collection(this.collection).exists(query)){
+                errors.push(`Record of ${this.collection} with ${JSON.stringify(query)} does not exist.`);
+            }
+        } else if (this.method==="Create"){
+            fields = this.createRequirements;
+            if (['Holidays','Attendance'].includes(this.collection)){
+                const query = {};
+                fields.map(field=>query[field]=data[field]);
+                if (new Collection(this.collection).exists(query)){
+                    errors.push(`Record of ${this.collection} with ${JSON.stringify(query)} already exists.`);
+                }
+            }
+        }
+        fields.map(field=>(data[field]=="")?missing.push(field):()=>{});
+        (fields.includes("Employee") && new Collection("Employee").exists({"Company Code":data["Company Code"], "Code":data['Employee']})==false)?errors.push(`Employee with Code ${data["Employee"]} does not exist in Company ${data["Company Code"]}.`):()=>{};
         (missing.length>0)?errors.push(`${missing.join(", ")} required.`):()=>{};
         return errors;
     }
@@ -2853,6 +3016,12 @@ class Company extends Collection{
         this.code = Code;
         this.data = super.getData({'Code':this.code});
         this.BusinessPlaces = ListItems(this.data['Places of Business'],"Place");
+    }
+    yearData(year){
+        const beginMonth = this.data['Financial Year Beginning'];
+        const yearBeginning = KB.YearStart(year,beginMonth);
+        const yearEnd = KB.YearEnd(year,beginMonth);
+        return {'begin':yearBeginning, 'end':yearEnd};
     }
     collection(collectionname){
         const data = new Collection(collectionname).filtered({'Company Code':this.code});
@@ -3258,11 +3427,11 @@ function View({title,editable,output,schema,defaults,setdata,errors,navigation,t
                 {table && <TableInput  data={output} schema={schema} setdata={setdata} defaults={defaults} editable={editable}/>}
             </div>
             {(editable && (errors.length>0)) && <div className='error'>
-                <Collapsible title={`Alert (${errors.length}) `} children={<ul>
+                <Collapsible title={`Alert (${errors.length}) `} children={<ol>
                     {errors.map(error=>
                         <li>{error}</li>
                     )}
-                </ul>}/>
+                </ol>}/>
             </div>}
             {navigation.length>0 && <div className='navigation'>
                 {navigation.map(item=><>
@@ -3381,9 +3550,10 @@ const Node = ({node,schema,setdata})=>{
 
 function Scratch(){
     
+    const collection = [{"Name":"A","Age":20},{"Name":"A","Age":20}]
     return(
         <>
-            {JSON.stringify(new Company('FACT').BusinessPlaces)}        
+            {JSON.stringify(new Company('FACT').yearData(2024).begin)}
         </>
     )
 }
