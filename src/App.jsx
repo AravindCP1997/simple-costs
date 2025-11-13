@@ -190,9 +190,9 @@ class Navigator{
         {'code':'a30c','name':'Create Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Create'},'type':'Control','group':'Asset Lifecycle'},
         {'code':'a30u','name':'Update Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Update'},'type':'Control','group':'Asset Lifecycle'},
         {'code':'a30d','name':'Display Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Display'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'ch1c','name':'Create Attendance','url':'/interface','state':{'type':'CollectionQuery','collection':'Attendance','method':'Create'},'type':'Control','group':'Human Resources'},
-        {'code':'ch1u','name':'Update Attendance','url':'/interface','state':{'type':'CollectionQuery','collection':'Attendance','method':'Update'},'type':'Control','group':'Human Resources'},
-        {'code':'ch1d','name':'Display Attendance','url':'/interface','state':{'type':'CollectionQuery','collection':'Attendance','method':'Display'},'type':'Control','group':'Human Resources'},
+        {'code':'h10c','name':'Create Attendance','url':'/interface','state':{'type':'CollectionQuery','collection':'Attendance','method':'Create'},'type':'Control','group':'Human Resources'},
+        {'code':'h10u','name':'Update Attendance','url':'/interface','state':{'type':'CollectionQuery','collection':'Attendance','method':'Update'},'type':'Control','group':'Human Resources'},
+        {'code':'h10d','name':'Display Attendance','url':'/interface','state':{'type':'CollectionQuery','collection':'Attendance','method':'Display'},'type':'Control','group':'Human Resources'},
         {'code':'ch2c','name':'Create Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Create'},'type':'Control','group':'Human Resources'},
         {'code':'ch2u','name':'Update Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Update'},'type':'Control','group':'Human Resources'},
         {'code':'ch2d','name':'Display Employee','url':'/interface','state':{'type':'CollectionQuery','collection':'Employee','method':'Display'},'type':'Control','group':'Human Resources'},
@@ -202,13 +202,12 @@ class Navigator{
         {'code':'cm1c','name':'Create Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Create'},'type':'Control','group':'Material and Costing'},
         {'code':'cm1u','name':'Update Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Update'},'type':'Control','group':'Material and Costing'},
         {'code':'cm1d','name':'Display Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Display'},'type':'Control','group':'Material and Costing'},
-        {'code':'cp1c','name':'Create Bank Account','url':'/interface','state':{'type':'CollectionQuery','collection':'BankAccount','method':'Create'},'type':'Control','group':'Payables and Receivables'},
-        {'code':'cp1u','name':'Update Bank Account','url':'/interface','state':{'type':'CollectionQuery','collection':'BankAccount','method':'Update'},'type':'Control','group':'Payables and Receivables'},
-        {'code':'cp1d','name':'Display Bank Account','url':'/interface','state':{'type':'CollectionQuery','collection':'BankAccount','method':'Display'},'type':'Control','group':'Payables and Receivables'},
+        {'code':'p10c','name':'Create Bank Account','url':'/interface','state':{'type':'CollectionQuery','collection':'BankAccount','method':'Create'},'type':'Control','group':'Payables and Receivables'},
+        {'code':'p10u','name':'Update Bank Account','url':'/interface','state':{'type':'CollectionQuery','collection':'BankAccount','method':'Update'},'type':'Control','group':'Payables and Receivables'},
+        {'code':'p10d','name':'Display Bank Account','url':'/interface','state':{'type':'CollectionQuery','collection':'BankAccount','method':'Display'},'type':'Control','group':'Payables and Receivables'},
         {'code':'g10c','name':'Create Chart of Accounts','url':'/interface','state':{'type':'Collection','collection':'ChartOfAccounts','method':'Create'},'type':'Control','group':'Global'},
         {'code':'g10d','name':'Display Chart of Accounts','url':'/interface','state':{'type':'CollectionQuery','collection':'ChartOfAccounts','method':'Display'},'type':'Control','group':'Global'},
         {'code':'g30c','name':'Create Group Chart of Accounts','url':'/interface','state':{'type':'Collection','collection':'GroupChartOfAccounts','method':'Create'},'type':'Control','group':'Global'},
-        {'code':'g30u','name':'Update Group Chart of Accounts','url':'/interface','state':{'type':'CollectionQuery','collection':'GroupChartOfAccounts','method':'Update'},'type':'Control','group':'Global'},
         {'code':'g30d','name':'Display Group Chart of Accounts','url':'/interface','state':{'type':'CollectionQuery','collection':'GroupChartOfAccounts','method':'Display'},'type':'Control','group':'Global'},
         {'code':'g40c','name':'Create Income Tax Code','url':'/interface','state':{'type':'Collection','collection':'IncomeTaxCode','method':'Create'},'type':'Control','group':'Global'},
         {'code':'g40u','name':'Update Income Tax Code','url':'/interface','state':{'type':'CollectionQuery','collection':'IncomeTaxCode','method':'Update'},'type':'Control','group':'Global'},
@@ -1337,358 +1336,6 @@ class Collection{
         }
         return result;
     }
-    defaults(data){
-        let defaults = {};
-        if (this.method=="Create"){
-            switch (this.name){
-                case 'Asset':
-                    defaults = {
-                        "Code":"",
-                        "Company Code":data['Company Code'],
-                        "Description":"",
-                        "Asset Class":"",
-                        "Organisational Unit Type":"",
-                        "Organisational Unit":"",
-                        "Date of Capitalisation":"",
-                        "Date of Retirement":"",
-                        "Depreciation Method":"",
-                        "Depreciation Rate":"",
-                        "Useful Life":0,
-                        "Salvage Value":0,
-                        "Status":"Draft"
-                        
-                    }
-                    break
-                case 'AssetClass':
-                    defaults = {
-                        "Code":"",
-                        "Company Code":data['Company Code'],
-                        "Description":"",
-                        "Depreciable":"Yes",
-                        "General Ledger - Depreciation":"",
-                        "General Ledger - Asset":"",
-                        "Status":"Draft"
-                    }
-                    break
-                case 'AssetConstructionOrder':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Code":"",
-                        "Description":"",
-                        "Profit Center":"",
-                        "Settlement Ratio":[
-                            {"Asset":"","Ratio":""}
-                        ],
-                        "Status":"Draft"
-                    }
-                    break
-                case 'Attendance':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Year":data['Year'],
-                        "Month":data['Month'],
-                        "Employee":data['Employee'],
-                        "Attendance":datesInMonth(data['Year'],data['Month']).map(item=>({'Date':item,'Status':'','Remarks':''}))
-                    }
-                    break
-                case 'BankAccount':
-                    defaults = {
-                        "Code":"",
-                        "Company Code":data['Company Code'],
-                        "Name":"",
-                        "Bank":"",
-                        "Account":"",
-                        "IFSC":"",
-                        "Profit Center":"",
-                        "Virtual Accounts":[{"Virtual Account Number":"","Ledger":"","Profit Center":""}],
-                        "Group Keys":[]
-                    }
-                    break
-                case 'ChartOfAccounts':
-                    defaults = {
-                        "Code":"",
-                        "General Ledger Range":KB.GeneralLedgerGroups.map(item=>({"Group":item,"From":"","To":""})),
-                    }
-                    break
-                case 'Company':
-                    defaults = {
-                        "Code":"",
-                        "Name":"",
-                        "Address":"",
-                        "PIN":"",
-                        "PAN":"",
-                        "Places of Business":[{"Place":"","State":""}],
-                        "Functional Currency":"",
-                        "Year Zero":"",
-                        "Financial Year Beginning":"",
-                        "Chart of Accounts":"",
-                        "Group Chart of Accounts":"",                        
-                    }
-                    break
-                case 'CostCenter':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Code":"",
-                        "Name":"",
-                        "Profit Center":"",
-                        "Apportionment Ratio":[
-                            {"From":"","To":"","Ratio":[
-                                {"Type":"","To":"","Percentage":0}
-                            ]}
-                        ]
-                    }
-                    break
-                case 'CostObject':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Code":"",
-                        "Name":"",
-                        "Profit Center":"",
-                    }
-                    break
-                case 'Customer':
-                    defaults = {
-                        "Code":"",
-                        "Company Code":data['Company Code'],
-                        "Name":"",
-                        "Address":"",
-                        "PIN":"",
-                        "State":"",
-                        "Phone":"",
-                        "Email":"",
-                        "GSTIN":"",
-                        "PAN":"",
-                        "Payment Terms":"",
-                        "Bank Accounts":[
-                            {"Account Number":"","Confirm Account Number":"","Bank Name":"","IFSC Code":""}
-                        ],
-                    }
-                    break
-                case 'Employee':
-                    defaults = {
-                        "Code":"",
-                        "Company Code":data['Company Code'],
-                        "Name":"",
-                        "Address":"",
-                        "PIN":"",
-                        "State":"",
-                        "Phone":"",
-                        "Email":"",
-                        "Tax Identification Number":"",
-                        "Date of Birth":"",
-                        "Date of Joining":"",
-                        "Date of Seperation":"",
-                        "Bank Accounts":[
-                            {"Account Number":"","Confirm Account Number":"","Bank Name":"","IFSC Code":""}
-                        ],
-                        "Employment Details":[
-                            {"Organisational Unit":"","From":"","To":"","Position":""}
-                        ],
-                        "Variable Wages":[
-                            {"Wage Type":"","Amount":"","From":"","To":""}
-                        ],
-                        "Fixed Wages":[
-                            {"Wage Type":"","Amount":"","From Year":"","From Month":"","To Year":"","To Month":""}
-                        ],
-                        "One Time Wages":[
-                            {"Wage Type":"","Amount":"","Date":""}
-                        ],
-                        "Income Tax Code":"",
-                        "Additional Income and Deductions":[
-                            {"Tax Year":"","Description":"","Type":"","Amount":""}
-                        ]
-                    }
-                    break
-                case 'FinancialAccountsSettings':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "General Ledger for Profit and Loss":"",
-                        "General Ledger for Cash Discount":"",
-                        "Wage Types":[
-                            {"Type":"","Description":"","GL":""}
-                        ],
-                        "General Ledger for Salary TDS":"",
-                        "Code Range":KB.AccountTypes.map(item=>({"Collection":item,"From":"","To":""}))
-                    }
-                    break
-                case 'FinancialStatementVersion':
-                    defaults = {
-                        "Code":"",
-                        "Chart of Accounts":"",
-                        "Type":"",
-                        "Hierarchy":[{"Presentation":"","Hierarchy":""}],
-                    }
-                    break
-                case 'GeneralLedger':
-                    defaults = {
-                        "Code":"",
-                        "Company Code":data['Company Code'],
-                        "Chart of Accounts":new Company(data['Company Code']).data['Chart of Accounts'],
-                        "Name":"",
-                        "Ledger Type":"",
-                        "Group":"",
-                        "Group General Ledger":"",
-                    }
-                    break
-                case 'GroupChartOfAccounts':
-                    defaults = {
-                        "Code":"",
-                        "General Ledger Range":KB.GeneralLedgerGroups.map(item=>({"Group":item,"From":"","To":""})),
-                    }
-                    break
-                case 'Holidays':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Year":new Date().getFullYear(),
-                        "Holidays":[
-                            {"Date":"","Description":""}
-                        ],
-                    }
-                    break
-                case 'IncomeTaxCode':
-                    defaults = {
-                        "Code":"",
-                        "Taxation":[
-                            {
-                                "From Year":0,
-                                "To Year":0,
-                                "Exemption Limit":0,
-                                "Marginal Relief":"",
-                                "Standard Deduction - Salary":0,
-                                "Cess":0,
-                                "Slab":[
-                                    {"From":0,"To":0,"Rate":0}
-                                ]
-                            }
-                        ]
-                    }
-                    break
-                case 'Location':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Code":"",
-                        "Name":"",
-                        "Address":"",
-                        "Cost Center":"",
-                        "Business Place":""
-                    }
-                    break
-                case 'MaintenanceOrder':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Code":"",
-                        "Organisational Unit":"",
-                        "Status":"",
-                        "Type of Activity":"",
-                        "Date of Maintenance":"",
-                        "Period From":"",
-                        "Period To":""
-                    }
-                    break
-                case 'Material':
-                    defaults = {
-                        "Code":"",
-                        "Company Code": data['Company Code'],
-                        "Name":"",
-                        "Price":[
-                            {"Location":"","From":"","To":"","Price":""}
-                        ],
-                        "General Ledger":"",
-                        "General Ledger - Cost of Sales":"",
-                        "General Ledger - Revenue":""
-                    }
-                    break
-                case 'PaymentTerms':
-                    defaults = {
-                        "Code":"",
-                        "Description":"",
-                        "Due Within Days":0,
-                        "Discount Criteria":[
-                            {"Days":0,"Rate":0}
-                        ],
-                        "Interest Criteria":[
-                            {"Days":0,"Rate":0}
-                        ],
-                    }
-                    break
-                case 'ProfitCenter':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Code":"",
-                        "Segment":"",
-                        "Name":"",
-                    }
-                    break
-                case 'PurchaseOrder':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Order Number":"",
-                        "Date":"",
-                        "Vendor":"",
-                        "Items":[
-                            {"Material":"","Description":"","Quantity":0,"Unit Price":0,"Total Price":0}
-                        ],
-                        "Total Amount":0,
-                    }
-                    break
-                case 'SaleOrder':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Order Number":"",
-                        "Date":"",
-                        "Customer":"",
-                        "Items":[
-                            {"Material":"","Description":"","Quantity":0,"Unit Price":0,"Total Price":0}
-                        ],
-                        "Total Amount":0,
-                    }
-                    break
-                case 'Service':
-                    defaults = {
-                        "Code":"",
-                        "Company Code": "",
-                        "Name":"",
-                        "Price":[
-                            {"Business Place":"","From":"","To":"","Price":""}
-                        ],
-                        "General Ledger - Expense":"",
-                        "General Ledger - Revenue":""
-                    }
-                    break
-                case 'TimeControl':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Open Periods":[
-                            {"From":"","To":""}
-                        ],
-                    }
-                    break
-                case 'Vendor':
-                    defaults = {
-                        "Code":"",
-                        "Company Code":data['Company Code'],
-                        "Name":"",
-                        "Address":"",
-                        "PIN":"",
-                        "State":"",
-                        "Phone":"",
-                        "Email":"",
-                        "GSTIN":"",
-                        "PAN":"",
-                        "Payment Terms":"",
-                        "Bank Accounts":[
-                            {"Account Number":"","Confirm Account Number":"","Bank Name":"","IFSC Code":""}
-                        ],
-                        "Groups":[""]
-                    }
-                    break
-                
-            }
-        } else if (this.method=="Update" || this.method =="Display") {
-            defaults = this.getData(data);
-        }
-        return defaults
-    }
     schema(data){
         let schema = [];
         switch (this.name){
@@ -1750,20 +1397,20 @@ class Collection{
                 schema = [
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!this.method=="Create"},
+                    {"name":"Business Place","datatype":"single","input":"option","options":["",...new Company(data['Company Code']).BusinessPlaces],"noteditable":!this.editable},
                     {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Bank","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"IFSC","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Bank Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                    {"name":"Address","datatype":"single","input":"input","type":"textarea","noteditable":!this.editable},
+                    {"name":"SWIFT Code","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Account","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"General Ledger","datatype":"single","input":"option","options":["",...GeneralLedger.listBytype('Bank Account')],"noteditable":(!this.method=="Create")},
-                    {"name":"Profit Center","datatype":"single","input":"option","options":["",...ProfitCenter.listAll('FACT')],"noteditable":(!this.method=="Create")},
-                    {"name":"Business Place","datatype":"single","input":"option","options":[""],"noteditable":(!this.method=="Create")},
+                    {"name":"General Ledger","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'GeneralLedger').filteredList({'Ledger Type':'Bank Account'},'Code')],"noteditable":(!this.method=="Create")},
+                    {"name":"Profit Center","datatype":"single","input":"option","options":["",new CompanyCollection(data['Company Code'],'ProfitCenter').listAll],"noteditable":(!this.method=="Create")},
                     {"name":"Virtual Accounts","datatype":"collection","noteditable":!this.editable,"schema":data['Virtual Accounts'].map(item=>[
                         {"name":"Virtual Account Number","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                        {"name":"Ledger","datatype":"single","input":"option","options":[],"noteditable":!this.editable},
-                        {"name":"Presentation","datatype":"single","input":"option","options":[],"noteditable":!this.editable},
-                        {"name":"Profit Center","datatype":"single","input":"option","options":[],"noteditable":!this.editable},
+                        {"name":"Customer","datatype":"single","input":"option","options":["",new CompanyCollection(data['Company Code'],'Customer').listAll],"noteditable":!this.editable},
+                        {"name":"Presentation","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'GeneralLedger').filteredList({'Ledger Type':'Customer'},'Code')],"noteditable":!this.editable},
+                        {"name":"Profit Center","datatype":"single","input":"option","options":["",new CompanyCollection(data['Company Code'],'ProfitCenter').listAll],"noteditable":!this.editable},
                     ])},
-                    {"name":"Group Keys","datatype":"list","input":"input","type":"text","noteditable":!this.editable},
                 ]
                 break
             case 'ChartOfAccounts':
@@ -2125,6 +1772,361 @@ class Collection{
         }
         return schema;
     }
+    defaults(data){
+        let defaults = {};
+        if (this.method=="Create"){
+            switch (this.name){
+                case 'Asset':
+                    defaults = {
+                        "Code":"",
+                        "Company Code":data['Company Code'],
+                        "Description":"",
+                        "Asset Class":"",
+                        "Organisational Unit Type":"",
+                        "Organisational Unit":"",
+                        "Date of Capitalisation":"",
+                        "Date of Retirement":"",
+                        "Depreciation Method":"",
+                        "Depreciation Rate":"",
+                        "Useful Life":0,
+                        "Salvage Value":0,
+                        "Status":"Draft"
+                        
+                    }
+                    break
+                case 'AssetClass':
+                    defaults = {
+                        "Code":"",
+                        "Company Code":data['Company Code'],
+                        "Description":"",
+                        "Depreciable":"Yes",
+                        "General Ledger - Depreciation":"",
+                        "General Ledger - Asset":"",
+                        "Status":"Draft"
+                    }
+                    break
+                case 'AssetConstructionOrder':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Code":"",
+                        "Description":"",
+                        "Profit Center":"",
+                        "Settlement Ratio":[
+                            {"Asset":"","Ratio":""}
+                        ],
+                        "Status":"Draft"
+                    }
+                    break
+                case 'Attendance':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Year":data['Year'],
+                        "Month":data['Month'],
+                        "Employee":data['Employee'],
+                        "Attendance":datesInMonth(data['Year'],data['Month']).map(item=>({'Date':item,'Status':'','Remarks':''}))
+                    }
+                    break
+                case 'BankAccount':
+                    defaults = {
+                        "Code":"",
+                        "Company Code":data['Company Code'],
+                        "Business Place":"",
+                        "Name":"",
+                        "Bank Name":"",
+                        "Address":"",
+                        "Account":"",
+                        "SWIFT Code":"",
+                        "General Ledger":"",
+                        "Profit Center":"",
+                        "Virtual Accounts":[{"Virtual Account Number":"","Customer":"","Presentation":"","Profit Center":""}],
+                        "Group Keys":[]
+                    }
+                    break
+                case 'ChartOfAccounts':
+                    defaults = {
+                        "Code":"",
+                        "General Ledger Range":KB.GeneralLedgerGroups.map(item=>({"Group":item,"From":"","To":""})),
+                    }
+                    break
+                case 'Company':
+                    defaults = {
+                        "Code":"",
+                        "Name":"",
+                        "Address":"",
+                        "PIN":"",
+                        "PAN":"",
+                        "Places of Business":[{"Place":"","State":""}],
+                        "Functional Currency":"",
+                        "Year Zero":"",
+                        "Financial Year Beginning":"",
+                        "Chart of Accounts":"",
+                        "Group Chart of Accounts":"",                        
+                    }
+                    break
+                case 'CostCenter':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Code":"",
+                        "Name":"",
+                        "Profit Center":"",
+                        "Apportionment Ratio":[
+                            {"From":"","To":"","Ratio":[
+                                {"Type":"","To":"","Percentage":0}
+                            ]}
+                        ]
+                    }
+                    break
+                case 'CostObject':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Code":"",
+                        "Name":"",
+                        "Profit Center":"",
+                    }
+                    break
+                case 'Customer':
+                    defaults = {
+                        "Code":"",
+                        "Company Code":data['Company Code'],
+                        "Name":"",
+                        "Address":"",
+                        "PIN":"",
+                        "State":"",
+                        "Phone":"",
+                        "Email":"",
+                        "GSTIN":"",
+                        "PAN":"",
+                        "Payment Terms":"",
+                        "Bank Accounts":[
+                            {"Account Number":"","Confirm Account Number":"","Bank Name":"","IFSC Code":""}
+                        ],
+                    }
+                    break
+                case 'Employee':
+                    defaults = {
+                        "Code":"",
+                        "Company Code":data['Company Code'],
+                        "Name":"",
+                        "Address":"",
+                        "PIN":"",
+                        "State":"",
+                        "Phone":"",
+                        "Email":"",
+                        "Tax Identification Number":"",
+                        "Date of Birth":"",
+                        "Date of Joining":"",
+                        "Date of Seperation":"",
+                        "Bank Accounts":[
+                            {"Account Number":"","Confirm Account Number":"","Bank Name":"","IFSC Code":""}
+                        ],
+                        "Employment Details":[
+                            {"Organisational Unit":"","From":"","To":"","Position":""}
+                        ],
+                        "Variable Wages":[
+                            {"Wage Type":"","Amount":"","From":"","To":""}
+                        ],
+                        "Fixed Wages":[
+                            {"Wage Type":"","Amount":"","From Year":"","From Month":"","To Year":"","To Month":""}
+                        ],
+                        "One Time Wages":[
+                            {"Wage Type":"","Amount":"","Date":""}
+                        ],
+                        "Income Tax Code":"",
+                        "Additional Income and Deductions":[
+                            {"Tax Year":"","Description":"","Type":"","Amount":""}
+                        ]
+                    }
+                    break
+                case 'FinancialAccountsSettings':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "General Ledger for Profit and Loss":"",
+                        "General Ledger for Cash Discount":"",
+                        "Wage Types":[
+                            {"Type":"","Description":"","GL":""}
+                        ],
+                        "General Ledger for Salary TDS":"",
+                        "Code Range":KB.AccountTypes.map(item=>({"Collection":item,"From":"","To":""}))
+                    }
+                    break
+                case 'FinancialStatementVersion':
+                    defaults = {
+                        "Code":"",
+                        "Chart of Accounts":"",
+                        "Type":"",
+                        "Hierarchy":[{"Presentation":"","Hierarchy":""}],
+                    }
+                    break
+                case 'GeneralLedger':
+                    defaults = {
+                        "Code":"",
+                        "Company Code":data['Company Code'],
+                        "Chart of Accounts":new Company(data['Company Code']).data['Chart of Accounts'],
+                        "Name":"",
+                        "Ledger Type":"",
+                        "Group":"",
+                        "Group General Ledger":"",
+                    }
+                    break
+                case 'GroupChartOfAccounts':
+                    defaults = {
+                        "Code":"",
+                        "General Ledger Range":KB.GeneralLedgerGroups.map(item=>({"Group":item,"From":"","To":""})),
+                    }
+                    break
+                case 'Holidays':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Year":new Date().getFullYear(),
+                        "Holidays":[
+                            {"Date":"","Description":""}
+                        ],
+                    }
+                    break
+                case 'IncomeTaxCode':
+                    defaults = {
+                        "Code":"",
+                        "Taxation":[
+                            {
+                                "From Year":0,
+                                "To Year":0,
+                                "Exemption Limit":0,
+                                "Marginal Relief":"",
+                                "Standard Deduction - Salary":0,
+                                "Cess":0,
+                                "Slab":[
+                                    {"From":0,"To":0,"Rate":0}
+                                ]
+                            }
+                        ]
+                    }
+                    break
+                case 'Location':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Code":"",
+                        "Name":"",
+                        "Address":"",
+                        "Cost Center":"",
+                        "Business Place":""
+                    }
+                    break
+                case 'MaintenanceOrder':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Code":"",
+                        "Organisational Unit":"",
+                        "Status":"",
+                        "Type of Activity":"",
+                        "Date of Maintenance":"",
+                        "Period From":"",
+                        "Period To":""
+                    }
+                    break
+                case 'Material':
+                    defaults = {
+                        "Code":"",
+                        "Company Code": data['Company Code'],
+                        "Name":"",
+                        "Price":[
+                            {"Location":"","From":"","To":"","Price":""}
+                        ],
+                        "General Ledger":"",
+                        "General Ledger - Cost of Sales":"",
+                        "General Ledger - Revenue":""
+                    }
+                    break
+                case 'PaymentTerms':
+                    defaults = {
+                        "Code":"",
+                        "Description":"",
+                        "Due Within Days":0,
+                        "Discount Criteria":[
+                            {"Days":0,"Rate":0}
+                        ],
+                        "Interest Criteria":[
+                            {"Days":0,"Rate":0}
+                        ],
+                    }
+                    break
+                case 'ProfitCenter':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Code":"",
+                        "Segment":"",
+                        "Name":"",
+                    }
+                    break
+                case 'PurchaseOrder':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Order Number":"",
+                        "Date":"",
+                        "Vendor":"",
+                        "Items":[
+                            {"Material":"","Description":"","Quantity":0,"Unit Price":0,"Total Price":0}
+                        ],
+                        "Total Amount":0,
+                    }
+                    break
+                case 'SaleOrder':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Order Number":"",
+                        "Date":"",
+                        "Customer":"",
+                        "Items":[
+                            {"Material":"","Description":"","Quantity":0,"Unit Price":0,"Total Price":0}
+                        ],
+                        "Total Amount":0,
+                    }
+                    break
+                case 'Service':
+                    defaults = {
+                        "Code":"",
+                        "Company Code": "",
+                        "Name":"",
+                        "Price":[
+                            {"Business Place":"","From":"","To":"","Price":""}
+                        ],
+                        "General Ledger - Expense":"",
+                        "General Ledger - Revenue":""
+                    }
+                    break
+                case 'TimeControl':
+                    defaults = {
+                        "Company Code":data['Company Code'],
+                        "Open Periods":[
+                            {"From":"","To":""}
+                        ],
+                    }
+                    break
+                case 'Vendor':
+                    defaults = {
+                        "Code":"",
+                        "Company Code":data['Company Code'],
+                        "Name":"",
+                        "Address":"",
+                        "PIN":"",
+                        "State":"",
+                        "Phone":"",
+                        "Email":"",
+                        "GSTIN":"",
+                        "PAN":"",
+                        "Payment Terms":"",
+                        "Bank Accounts":[
+                            {"Account Number":"","Confirm Account Number":"","Bank Name":"","IFSC Code":""}
+                        ],
+                        "Groups":[""]
+                    }
+                    break
+                
+            }
+        } else if (this.method=="Update" || this.method =="Display") {
+            defaults = this.getData(data);
+        }
+        return defaults
+    }
     navigation(data){
         let navigation = [
             {"name":"Back","type":"navigate","url":'/control','state':{},'onClick':()=>alert('Hi')},
@@ -2178,14 +2180,22 @@ class Collection{
                 data['Attendance'].map(item=>(item['Status']=="")?list.push(`Attendance missing for ${item['Date']}`):()=>{});
                 break
             case 'BankAccount':
-                this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
+                const vans = data['Virtual Accounts'];
+                for (let i = 0; i < vans.length; i++){
+                    const van = vans[i];
+                    if (Count(van['Virtual Account Number'],ListItems(vans,'Virtual Account Number'))>1){
+                        list.push(`VAN ${van['Virtual Account Number']} exists in duplicate`);
+                    }
+                    const necessary = ["Virtual Account Number","Customer","Presentation","Profit Center"];
+                    necessary.map(field=>van[field]===""?list.push(`At VAN ${i+1}, ${field} necessary.`):()=>{})
+                }
                 break
             case 'ChartOfAccounts':
                 (this.method=="Create" && new Collection("GroupChartOfAccounts").exists(data))?list.push(`Group Chart of Accounts with same identifier(s) already exists`):()=>{};
                 data['General Ledger Range'].map((item,i)=>(item['From']=="" || item['To']=="")?list.push(`Group ${item['Group']} requires range`):()=>{})
-                data['General Ledger Range'].map((item,i)=>(item['From']>=item['To'])?list.push(`${item['Group']}: 'To' range needs to be greater than 'from' range`):()=>{})
+                data['General Ledger Range'].map((item,i)=>(Number(item['From'])>=Number(item['To']))?list.push(`${item['Group']}: 'To' range needs to be greater than 'from' range`):()=>{})
                 for (let i=1;i<data['General Ledger Range'].length;i++){
-                    (data['General Ledger Range'][i]['From'] <= data['General Ledger Range'][i-1]['To'])?list.push(`'From' range of ${data['General Ledger Range'][i]['Group']} to be greater than 'To' range of ${data['General Ledger Range'][i-1]['Group']}`):()=>{};
+                    (Number(data['General Ledger Range'][i]['From']) <= Number(data['General Ledger Range'][i-1]['To']))?list.push(`'From' range of ${data['General Ledger Range'][i]['Group']} to be greater than 'To' range of ${data['General Ledger Range'][i-1]['Group']}`):()=>{};
                 }
                 break
             case 'Company':
@@ -2221,9 +2231,9 @@ class Collection{
             case 'GroupChartOfAccounts':
                 (this.method=="Create" && new Collection("ChartOfAccounts").exists(data))?list.push(`Chart of Accounts with same identifier(s) already exists`):()=>{};
                 data['General Ledger Range'].map((item,i)=>(item['From']=="" || item['To']=="")?list.push(`Group ${item['Group']} requires range`):()=>{})
-                data['General Ledger Range'].map((item,i)=>(item['From']>=item['To'])?list.push(`${item['Group']}: 'To' range needs to be greater than 'from' range`):()=>{})
+                data['General Ledger Range'].map((item,i)=>(Number(item['From'])>=Number(item['To']))?list.push(`${item['Group']}: 'To' range needs to be greater than 'from' range`):()=>{})
                 for (let i=1;i<data['General Ledger Range'].length;i++){
-                    (data['General Ledger Range'][i]['From'] <= data['General Ledger Range'][i-1]['To'])?list.push(`'From' range of ${data['General Ledger Range'][i]['Group']} to be greater than 'To' range of ${data['General Ledger Range'][i-1]['Group']}`):()=>{};
+                    (Number(data['General Ledger Range'][i]['From']) <= Number(data['General Ledger Range'][i-1]['To']))?list.push(`'From' range of ${data['General Ledger Range'][i]['Group']} to be greater than 'To' range of ${data['General Ledger Range'][i-1]['Group']}`):()=>{};
                 }
                 break
             case 'Holidays':
@@ -2388,7 +2398,7 @@ class Collection{
         "AssetClass":["Code","Company Code","Description","Depreciable","General Ledger - Asset"],
         "AssetConstructionOrder":["Company Code","Code","Description","Profit Center"],
         "Attendance":["Company Code","Employee","Year","Month"],
-        "BankAccount":["Code","Company Code","Name","Account","Bank","IFSC"],
+        "BankAccount":["Code","Company Code","Name","Business Place","General Ledger","Profit Center"],
         "ChartOfAccounts":["Code"],
         "Company":["Code","Name","Year Zero","Financial Year Beginning","Functional Currency","Chart of Accounts"],
         "CostObject":["Company Code","Code","Name","Profit Center"],
@@ -2837,6 +2847,106 @@ class BankAccount extends CompanyCollection{
     }
 }
 
+class Company extends Collection{
+    constructor(Code, name="Company"){
+        super(name);
+        this.code = Code;
+        this.data = super.getData({'Code':this.code});
+        this.BusinessPlaces = ListItems(this.data['Places of Business'],"Place");
+    }
+    collection(collectionname){
+        const data = new Collection(collectionname).filtered({'Company Code':this.code});
+        return data
+    }
+    listCollection(collectionname,key){
+        const data = this.collection(collectionname);
+        return ListItems(data,key)
+    }
+    filteredCollection(collectionname,data){
+        const collection = this.collection(collectionname);
+        const fields = Object.keys(data);
+        let filtered = collection;
+            for (let i = 0; i<fields.length;i++){
+                filtered = singleFilter(filtered,fields[i],data[fields[i]]);
+            }
+        return filtered;
+    }
+    filteredList(collectionname,data,key){
+        const filtered = this.filteredCollection(collectionname,data);
+        return ListItems(filtered,key);
+    }
+    AccountSettings(){
+        return new Collection('FinancialAccountsSettings').getData({"Company Code":this.code});
+    }
+    CollectionRange(collection){
+        const settings = this.AccountSettings();
+        const range = settings['Code Range'].filter(item=>item['Collection']===collection)[0];
+        const result = [range['From'],range['To']];
+        return result;
+    }
+    TimeControl(){
+        const data = new Collection('TimeControl').getData({'Company Code':this.code});
+        const timeControlData = data['Open Periods'];
+        return timeControlData;
+    }
+    IsPostingOpen(date){
+        let result = false;
+        this.TimeControl().map(time=>(new Date(date)<=new Date(time['To']) && new Date(date)>=new Date(time['From']))?result = true:()=>{})
+        return result
+    }
+    PostingYear(PostingDate){
+        const pdate = new Date(PostingDate);
+        const reference = `${pdate.getFullYear()}-${this.data['Financial Year Beginning']}-01`;
+        const result = (new Date(reference)>pdate)?pdate.getFullYear()-1:pdate.getFullYear();
+        return result
+    }
+    static timeMaintained = ('timecontrol' in localStorage);
+    static timeControls = JSON.parse(localStorage.getItem('timecontrol'));
+    static isPostingDateOpen(date){
+        const firstPeriod = [this.timeControls['First']['From'],this.timeControls['First']['To']];
+        const secondPeriod = [this.timeControls['Second']['From'],this.timeControls['Second']['To']]
+        const result = (valueInRange(new Date(date),[new Date(firstPeriod[0]),new Date(firstPeriod[1])]) || valueInRange(new Date(date),[new Date(secondPeriod[0]),new Date(secondPeriod[1])]))
+        return result;
+    }
+    static setTimeControl(periods){
+        localStorage.setItem('timecontrol',JSON.stringify(periods))
+    }
+    static removeTimeControl(){
+        localStorage.removeItem('timecontrol');
+    }
+    static data = new Collection('Company').load();
+    static listAll = ListItems(this.data,"Code");
+    
+}
+
+class ChartOfAccounts{
+    constructor(code){
+        this.code = code;
+        this.data = ChartOfAccounts.allData.find(item=>item['Code']==this.code);
+    }
+    range(group){
+        const data = this.data['General Ledger Range'];
+        const filtered = data.find(item=>item['Group']==group);
+        const result = [filtered['From'],filtered['To']]
+        return result;
+    }
+    static company = new Collection('ChartOfAccounts').load();
+    static group = new Collection('GroupChartOfAccounts').load();
+    static allData = [...this.company,...this.group];
+    static listCompanyCoA = ListItems(this.company,'Code');
+    static listGroupCoA = ListItems(this.group,'Code');
+    static listAllCoA = [...this.listCompanyCoA,...this.listGroupCoA];
+    static type(CoA){
+        if (this.listCompanyCoA.includes(CoA)){
+            return "Company";
+        } else if (this.listGroupCoA.includes(CoA)){
+            return "Group";
+        } else {
+            return "NA"
+        }
+    }
+}
+
 class GeneralLedger extends CompanyCollection{
     constructor(code,company,name="BankAccount"){
         super(company,name)
@@ -3165,104 +3275,7 @@ function View({title,editable,output,schema,defaults,setdata,errors,navigation,t
     )
 }
 
-class Company{
-    constructor(Code){
-        this.code = Code;
-        this.data = new Collection('Company').getData({"Code":this.code});
-        this.BusinessPlaces = ListItems(this.data['Places of Business'],"Place");
-    }
-    collection(collectionname){
-        const data = new Collection(collectionname).filtered({'Company Code':this.code});
-        return data
-    }
-    listCollection(collectionname,key){
-        const data = this.collection(collectionname);
-        return ListItems(data,key)
-    }
-    filteredCollection(collectionname,data){
-        const collection = this.collection(collectionname);
-        const fields = Object.keys(data);
-        let filtered = collection;
-            for (let i = 0; i<fields.length;i++){
-                filtered = singleFilter(filtered,fields[i],data[fields[i]]);
-            }
-        return filtered;
-    }
-    filteredList(collectionname,data,key){
-        const filtered = this.filteredCollection(collectionname,data);
-        return ListItems(filtered,key);
-    }
-    AccountSettings(){
-        return new Collection('FinancialAccountsSettings').getData({"Company Code":this.code});
-    }
-    CollectionRange(collection){
-        const settings = this.AccountSettings();
-        const range = settings['Code Range'].filter(item=>item['Collection']===collection)[0];
-        const result = [range['From'],range['To']];
-        return result;
-    }
-    TimeControl(){
-        const data = new Collection('TimeControl').getData({'Company Code':this.code});
-        const timeControlData = data['Open Periods'];
-        return timeControlData;
-    }
-    IsPostingOpen(date){
-        let result = false;
-        this.TimeControl().map(time=>(new Date(date)<=new Date(time['To']) && new Date(date)>=new Date(time['From']))?result = true:()=>{})
-        return result
-    }
-    PostingYear(PostingDate){
-        const pdate = new Date(PostingDate);
-        const reference = `${pdate.getFullYear()}-${this.data['Financial Year Beginning']}-01`;
-        const result = (new Date(reference)>pdate)?pdate.getFullYear()-1:pdate.getFullYear();
-        return result
-    }
-    static timeMaintained = ('timecontrol' in localStorage);
-    static timeControls = JSON.parse(localStorage.getItem('timecontrol'));
-    static isPostingDateOpen(date){
-        const firstPeriod = [this.timeControls['First']['From'],this.timeControls['First']['To']];
-        const secondPeriod = [this.timeControls['Second']['From'],this.timeControls['Second']['To']]
-        const result = (valueInRange(new Date(date),[new Date(firstPeriod[0]),new Date(firstPeriod[1])]) || valueInRange(new Date(date),[new Date(secondPeriod[0]),new Date(secondPeriod[1])]))
-        return result;
-    }
-    static setTimeControl(periods){
-        localStorage.setItem('timecontrol',JSON.stringify(periods))
-    }
-    static removeTimeControl(){
-        localStorage.removeItem('timecontrol');
-    }
-    static data = new Collection('Company').load();
-    static listAll = ListItems(this.data,"Code");
-    
-}
 
-class ChartOfAccounts{
-    constructor(code){
-        this.code = code;
-        this.data = ChartOfAccounts.allData.find(item=>item['Code']==this.code);
-    }
-    range(group){
-        const data = this.data['General Ledger Range'];
-        const filtered = data.find(item=>item['Group']==group);
-        const result = [filtered['From'],filtered['To']]
-        return result;
-    }
-    static company = new Collection('ChartOfAccounts').load();
-    static group = new Collection('GroupChartOfAccounts').load();
-    static allData = [...this.company,...this.group];
-    static listCompanyCoA = ListItems(this.company,'Code');
-    static listGroupCoA = ListItems(this.group,'Code');
-    static listAllCoA = [...this.listCompanyCoA,...this.listGroupCoA];
-    static type(CoA){
-        if (this.listCompanyCoA.includes(CoA)){
-            return "Company";
-        } else if (this.listGroupCoA.includes(CoA)){
-            return "Group";
-        } else {
-            return "NA"
-        }
-    }
-}
 
 const buildTree = (data,parentId=null)=>{
     const list = [];
@@ -3370,7 +3383,7 @@ function Scratch(){
     
     return(
         <>
-            {JSON.stringify(new IncomeTaxCode('115BAC').yearExists(2024))}        
+            {JSON.stringify(new Company('FACT').BusinessPlaces)}        
         </>
     )
 }
