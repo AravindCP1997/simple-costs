@@ -32,7 +32,7 @@
   padding: 10px;
   transition:0.5s;
   overflow: auto;
-  box-shadow: 0px 3px 10px 0px lightgray;
+  box-shadow: 0px 3px 10px 2px lightgray;
 }
 
 .searchBarButton{
@@ -78,21 +78,19 @@
   transition: 0.5s;
   box-shadow: 0px 1px 10px 0px var(--gray);
   border-radius: 25px;
-  border: 4px solid var(--whitet);
+  backdrop-filter: blur(2px);
+  border:5px solid var(--whitet);
 }
 
 
 .title{
   text-align: center;
-  color:var(--blue);
-  box-shadow: 0px 0.5px 2px 0px var(--gray);
-  border:3px solid var(--whitet);
+  color:white;
   cursor: pointer;
   margin: 0;
-  background: none;
+  background: var(--bluet);
   padding: 10px;
   border-radius: 15px;
-  backdrop-filter: blur(2px);
 
   .reg{
     opacity:0;
@@ -114,9 +112,7 @@
   gap:20px;
   padding:20px;
   border-radius: 15px;
-  border:3px solid white;
-  box-shadow: 0px 0.5px 2px 0px var(--gray);
-  backdrop-filter: blur(2px);
+  background: var(--whitet);
 }
 
 .menu{
@@ -132,7 +128,7 @@
   padding:5px;
 }
 
-.menu:nth-child(1){
+.menu:nth-child(2){
   border-radius: 20px;
 }
 
@@ -160,20 +156,21 @@
   text-align: center;
   transition: 0.5s;
   cursor: pointer;
-  color:var(--blue);
+  background: var(--bluet);
   box-shadow: 0px 0.5px 2px 0px var(--gray);
-  border:3px solid var(--whitet);
+  color:white;
 }
 
+.menuContainerTitle:hover{
+  transform: translate(5px);
+}
 
 .menuList{
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding:5%;
-  border-radius: 15px;
-  box-shadow: 0px 0.5px 2px 0px var(--gray);
-  border:2px solid var(--whitet);
+  padding:3%;
+  transition: 0.5s;
 }
 
 .menuItems{
@@ -231,7 +228,7 @@
 
 .menuTitle{
   color:var(--blue);
-  border-bottom:2px solid white;
+  border-bottom:1.5px solid var(--bluet);
   padding:10px;
   width:min(100%,450px);
   h4{
@@ -240,7 +237,6 @@
 }
 
 .display{
-  background: none;
   box-shadow: 0px 3px 10px 0px var(--gray);
   border-radius: 20px;
   padding:5%;
@@ -255,16 +251,16 @@
 }
 
 .displayTitle{
-  color:white;
+  color:var(--bluet);
   text-align: center;
-  padding:15px;
+  padding:10px;
+  padding-left: 20px;
   border-radius: 15px;
   margin:0;
   cursor: pointer;
-  color:var(--blue);
-  box-shadow: 0px 0.5px 2px 0px var(--gray);
-  border:3px solid var(--whitet);
   transition: 0.5s;
+  box-shadow: 0px 0.5px 2px 0px var(--gray);
+  border: 2px solid var(--whitet);
 
   h2{
     margin:0;
@@ -280,7 +276,7 @@
   border-radius: 15px;
   padding: 10px;
   backdrop-filter: blur(2px);
-  border: 2px solid var(--whitet);
+  border: 2px solid var(--lightbluet);
   box-shadow: 0px 0.5px 2px 0px var(--gray);
 }
 
@@ -340,9 +336,8 @@
   padding: 20px;
   border-radius: 15px;
   color:var(--blue);
-  border: 2px solid var(--lightgray);
   backdrop-filter: blur(2px);
-  border: 2px solid var(--whitet);
+  border: 2px solid var(--lightredt);
   box-shadow: 0px 0.5px 2px 0px var(--gray);
 }
 
@@ -543,8 +538,8 @@
   }
 
   .searchBar{
-  box-shadow: 0px 0.5px 3px 0px var(--gray);
-    background: white;
+    box-shadow: 0px 0.5px 3px 0px var(--gray);
+    border:2px solid var(--whitet);
   }
 
   .homeOuter{ 
@@ -586,18 +581,14 @@
  .menuContainer{
   box-shadow: none;
   box-shadow: 0px 0.5px 3px 0px var(--gray);
-  background: var(--lightbluet);
-  backdrop-filter: blur(1px);
+  backdrop-filter: blur(2px);
  }
 
- .menuList{
-  border:2px solid white;
- }
  .display{
   box-shadow: 0px 0.5px 3px 0px var(--gray);
-  background: var(--lightbluet);
-  border: none;
+  border: 2px solid var(--whitet);
   backdrop-filter: blur(1px);
+  padding: 10px;
  }
 }
 

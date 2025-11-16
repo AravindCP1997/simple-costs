@@ -14,6 +14,25 @@ function saveData(data,collection){
   localStorage.setItem(collection,JSON.stringify(data));
 }
 
+const FieldsInCollection = (collection) =>{
+    const fields = [];
+    collection.map(item=>fields.push(...Object.keys(item)));
+    const result = [...new Set(fields)];
+    return result
+}
+
+const TrimCollection=(collection,fields)=>{
+    const trimmed = [];
+    collection.forEach(item=>{
+        const data = {};
+        fields.forEach(field=>{
+            data[field]=item[field];
+        });
+        trimmed.push(data);
+    })
+    return trimmed;
+}
+
 const ListItems = (collection,key)=>{
     const list = [];
     collection.map(item=>list.push(item[key]));
@@ -227,15 +246,15 @@ class Navigator{
         {'code':'org50c','name':'Create Revenue Center','url':'/interface','state':{'type':'CollectionQuery','collection':'RevenueCenter','method':'Create'},'type':'Control','group':'Organisational Units'},
         {'code':'org50u','name':'Update Revenue Center','url':'/interface','state':{'type':'CollectionQuery','collection':'RevenueCenter','method':'Update'},'type':'Control','group':'Organisational Units'},
         {'code':'org50d','name':'Display Revenue Center','url':'/interface','state':{'type':'CollectionQuery','collection':'RevenueCenter','method':'Display'},'type':'Control','group':'Organisational Units'},
-        {'code':'a10c','name':'Create Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Create'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'a10u','name':'Update Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Update'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'a10d','name':'Display Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Display'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'a20c','name':'Create Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Create'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'a20u','name':'Update Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Update'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'a20d','name':'Display Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Display'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'a30c','name':'Create Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Create'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'a30u','name':'Update Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Update'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'a30d','name':'Display Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Display'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'a10c','name':'Create Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Create'},'type':'Control','group':'Asset'},
+        {'code':'a10u','name':'Update Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Update'},'type':'Control','group':'Asset'},
+        {'code':'a10d','name':'Display Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Display'},'type':'Control','group':'Asset'},
+        {'code':'a20c','name':'Create Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Create'},'type':'Control','group':'Asset'},
+        {'code':'a20u','name':'Update Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Update'},'type':'Control','group':'Asset'},
+        {'code':'a20d','name':'Display Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Display'},'type':'Control','group':'Asset'},
+        {'code':'a30c','name':'Create Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Create'},'type':'Control','group':'Asset'},
+        {'code':'a30u','name':'Update Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Update'},'type':'Control','group':'Asset'},
+        {'code':'a30d','name':'Display Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Display'},'type':'Control','group':'Asset'},
         {'code':'acc10c','name':'Create General Ledger','url':'/interface','state':{'type':'CollectionQuery','collection':'GeneralLedger','method':'Create'},'type':'Control','group':'Costs and Accounting'},
         {'code':'acc10d','name':'Display General Ledger','url':'/interface','state':{'type':'CollectionQuery','collection':'GeneralLedger','method':'Display'},'type':'Control','group':'Costs and Accounting'},
         {'code':'acc10u','name':'Update General Ledger','url':'/interface','state':{'type':'CollectionQuery','collection':'GeneralLedger','method':'Update'},'type':'Control','group':'Costs and Accounting'},
@@ -266,19 +285,20 @@ class Navigator{
         {'code':'p30c','name':'Create Vendor','url':'/interface','state':{'type':'CollectionQuery','collection':'Vendor','method':'Create'},'type':'Control','group':'Payables and Receivables'},
         {'code':'p30u','name':'Update Vendor','url':'/interface','state':{'type':'CollectionQuery','collection':'Vendor','method':'Update'},'type':'Control','group':'Payables and Receivables'},
         {'code':'p30d','name':'Display Vendor','url':'/interface','state':{'type':'CollectionQuery','collection':'Vendor','method':'Display'},'type':'Control','group':'Payables and Receivables'},
-        {'code':'stlaco','name':'ACO Settlement','url':'/interface','state':{'type':'Transaction','transaction':'ACOSettlement','data':{}},'type':'Record','group':'Asset Lifecycle'},
-        {'code':'dpct','name':'Depreciation','url':'/interface','state':{'type':'Transaction','transaction':'Depreciation','data':{}},'type':'Record','group':'Asset Lifecycle'},
-        {'code':'rvltas','name':'Asset Revaluation','url':'/interface','state':{'type':'Transaction','transaction':'AssetRevaluation','data':{}},'type':'Record','group':'Asset Lifecycle'},
-        {'code':'scrapas','name':'Asset Scrap','url':'/interface','state':{'type':'Transaction','transaction':'AssetScrap','data':{}},'type':'Record','group':'Asset Lifecycle'},
+        {'code':'stlaco','name':'ACO Settlement','url':'/interface','state':{'type':'Transaction','transaction':'ACOSettlement','data':{}},'type':'Record','group':'Asset'},
+        {'code':'rundpct','name':'Depreciation','url':'/interface','state':{'type':'Transaction','transaction':'Depreciation','data':{}},'type':'Record','group':'Asset'},
+        {'code':'rvltas','name':'Asset Revaluation','url':'/interface','state':{'type':'Transaction','transaction':'AssetRevaluation','data':{}},'type':'Record','group':'Asset'},
+        {'code':'scrapas','name':'Asset Scrap','url':'/interface','state':{'type':'Transaction','transaction':'AssetScrap','data':{}},'type':'Record','group':'Asset'},
         {'code':'accgen','name':'General Accounting','url':'/interface','state':{'type':'Transaction','transaction':'GeneralAccounting','data':{}},'type':'Record','group':'Cost and Accounting'},
+        {'code':'clrgen','name':'General Ledger Clearing','url':'/interface','state':{'type':'Transaction','transaction':'GeneralLegderClearing','data':{}},'type':'Record','group':'Cost and Accounting'},
         {'code':'amsprepaid','name':'Prepaid Amortisation','url':'/interface','state':{'type':'Transaction','transaction':'PrepaidAmortisation','data':{}},'type':'Record','group':'Cost and Accounting'},
         {'code':'consprepaid','name':'Prepaid Consumption','url':'/interface','state':{'type':'Transaction','transaction':'PrepaidConsumption','data':{}},'type':'Record','group':'Cost and Accounting'},
-        {'code':'runcos','name':'Costing Run','url':'/interface','state':{'type':'Transaction','transaction':'GeneralAccounting','data':{}},'type':'Record','group':'Cost and Accounting'},
-        {'code':'runsal','name':'Salary Run','url':'/interface','state':{'type':'Transaction','transaction':'SalaryRun','data':{}},'type':'Record','group':'Human Resources'},
-        {'code':'postsal','name':'Salary Posting','url':'/interface','state':{'type':'Transaction','transaction':'SalaryPosting','data':{}},'type':'Record','group':'Human Resources'},
-        {'code':'paysal','name':'Salary Payment','url':'/interface','state':{'type':'Transaction','transaction':'SalaryPayment','data':{}},'type':'Record','group':'Human Resources'},
+        {'code':'runcost','name':'Costing Run','url':'/interface','state':{'type':'Transaction','transaction':'CostingRun','data':{}},'type':'Record','group':'Cost and Accounting'},
+        {'code':'runrem','name':'Remuneration Run','url':'/interface','state':{'type':'Transaction','transaction':'RemunerationRun','data':{}},'type':'Record','group':'Human Resources'},
+        {'code':'postrem','name':'Remuneration Posting','url':'/interface','state':{'type':'Transaction','transaction':'RemunerationPosting','data':{}},'type':'Record','group':'Human Resources'},
+        {'code':'payrem','name':'Remuneration Payment','url':'/interface','state':{'type':'Transaction','transaction':'RemunerationPayment','data':{}},'type':'Record','group':'Human Resources'},
         {'code':'rcvmat','name':'Material Receipt','url':'/interface','state':{'type':'Transaction','transaction':'MaterialReceipt','data':{}},'type':'Record','group':'Material'},
-        {'code':'inspmat','name':'Material Inspection','url':'/interface','state':{'type':'Transaction','transaction':'MaterialInspection','data':{}},'type':'Record','group':'Material'},
+        {'code':'acptmat','name':'Material Acceptance','url':'/interface','state':{'type':'Transaction','transaction':'MaterialAcceptance','data':{}},'type':'Record','group':'Material'},
         {'code':'rtnmat','name':'Material Return','url':'/interface','state':{'type':'Transaction','transaction':'MaterialReturn','data':{}},'type':'Record','group':'Material'},
         {'code':'issmat','name':'Material Issue','url':'/interface','state':{'type':'Transaction','transaction':'MaterialIssue','data':{}},'type':'Record','group':'Material'},
         {'code':'scrapmat','name':'Material Scrap','url':'/interface','state':{'type':'Transaction','transaction':'MaterialScrap','data':{}},'type':'Record','group':'Material'},
@@ -295,10 +315,37 @@ class Navigator{
         {'code':'paycus','name':'Customer Payment','url':'/interface','state':{'type':'Transaction','transaction':'CustomerPayment','data':{}},'type':'Record','group':'Payables and Receivables'},
         {'code':'clrcus','name':'Customer Clearing','url':'/interface','state':{'type':'Transaction','transaction':'CustomerClearing','data':{}},'type':'Record','group':'Payables and Receivables'},
         {'code':'payven','name':'Vendor Payment','url':'/interface','state':{'type':'Transaction','transaction':'VendorPayment','data':{}},'type':'Record','group':'Payables and Receivables'},
-        {'code':'paybatch','name':'Batch Payments','url':'/interface','state':{'type':'Transaction','transaction':'VANReceipts','data':{}},'type':'Record','group':'Hybrid'},
-        {'code':'rcvvan','name':'VAN Receipts','url':'/interface','state':{'type':'Transaction','transaction':'VANReceipts','data':{}},'type':'Record','group':'Hybrid'},
-        {'code':'accdoc','name':'Accounting Document','url':'/interface','state':{'type':'ReportQuery','report':'AccountingDocument'},'type':'Reports','group':'Financial Accounting'},
-        {'code':'itsimulate','name':'Income Tax Simulator', 'url':'/interface', 'state':{'type':'Report','report':'IncomeTaxSimulator','data':{}},'type':'Reports','group':'Intelligence'}
+        {'code':'paybatch','name':'Batch Payments','url':'/interface','state':{'type':'Transaction','transaction':'VANReceipts','data':{}},'type':'Record','group':'Payables and Receivables'},
+        {'code':'rcvvan','name':'VAN Receipts','url':'/interface','state':{'type':'Transaction','transaction':'VANReceipts','data':{}},'type':'Record','group':'Payables and Receivables'},
+        {'code':'runint','name':'Interest Run','url':'/interface','state':{'type':'Transaction','transaction':'InterestRun','data':{}},'type':'Record','group':'Payables and Receivables'},
+        {'code':'runforex','name':'Foreign Exchange Run','url':'/interface','state':{'type':'Transaction','transaction':'ForeignExchangeRun','data':{}},'type':'Record','group':'Payables and Receivables'},
+        {'code':'regas','name':'Asset Register','url':'/interface','state':{'type':'ReportQuery','report':'AssetRegister'},'type':'Reports','group':'Asset'},
+        {'code':'lgras','name':'Asset Ledger','url':'/interface','state':{'type':'ReportQuery','report':'AssetLedger'},'type':'Reports','group':'Asset'},
+        {'code':'balas','name':'Asset Ledger Balance','url':'/interface','state':{'type':'ReportQuery','report':'AssetLedgerBalance'},'type':'Reports','group':'Asset'},
+        {'code':'schas','name':'Asset Schedule','url':'/interface','state':{'type':'ReportQuery','report':'AssetSchedule'},'type':'Reports','group':'Asset'},
+        {'code':'fordpct','name':'Forecast Depreciation','url':'/interface','state':{'type':'ReportQuery','report':'ForecastDepreciation'},'type':'Reports','group':'Asset'},
+        {'code':'fs','name':'Financial Statements','url':'/interface','state':{'type':'ReportQuery','report':'FinancialStatements'},'type':'Reports','group':'Cost and Accounting'},
+        {'code':'lgrgen','name':'General Ledger','url':'/interface','state':{'type':'ReportQuery','report':'GeneralLedger'},'type':'Reports','group':'Cost and Accounting'},
+        {'code':'balgen','name':'General Ledger Balance','url':'/interface','state':{'type':'ReportQuery','report':'GeneralLedgerBalance'},'type':'Reports','group':'Cost and Accounting'},
+        {'code':'lgrcost','name':'Cost Ledger','url':'/interface','state':{'type':'ReportQuery','report':'CostLedger'},'type':'Reports','group':'Cost and Accounting'},
+        {'code':'balcost','name':'Cost Ledger Balance','url':'/interface','state':{'type':'ReportQuery','report':'CostLedgerBalance'},'type':'Reports','group':'Cost and Accounting'},
+        {'code':'forcost','name':'Forecast Cost','url':'/interface','state':{'type':'ReportQuery','report':'ForecastCost'},'type':'Reports','group':'Cost and Accounting'},
+        {'code':'docacc','name':'Accounting Document','url':'/interface','state':{'type':'ReportQuery','report':'AccountingDocument'},'type':'Reports','group':'Cost and Accounting'},
+        {'code':'smtrem','name':'Remuneration Statement','url':'/interface','state':{'type':'ReportQuery','report':'RemunerationStatement'},'type':'Reports','group':'Human Resources'},
+        {'code':'forrem','name':'Forecast Remuneration','url':'/interface','state':{'type':'ReportQuery','report':'RemunerationStatement'},'type':'Reports','group':'Human Resources'},
+        {'code':'regemp','name':'Employee Register','url':'/interface','state':{'type':'ReportQuery','report':'EmployeeRegister'},'type':'Reports','group':'Human Resources'},
+        {'code':'lgremp','name':'Employee Ledger','url':'/interface','state':{'type':'ReportQuery','report':'RemunerationStatement'},'type':'Reports','group':'Human Resources'},
+        {'code':'regmat','name':'Material Register','url':'/interface','state':{'type':'ReportQuery','report':'MaterialRegister'},'type':'Reports','group':'Material'},
+        {'code':'lgrmat','name':'Material Ledger','url':'/interface','state':{'type':'ReportQuery','report':'MaterialLedger'},'type':'Reports','group':'Material'},
+        {'code':'balmat','name':'Material Ledger Balance','url':'/interface','state':{'type':'ReportQuery','report':'MaterialLedgerBalance'},'type':'Reports','group':'Material'},
+        {'code':'schmat','name':'Material Schedule','url':'/interface','state':{'type':'ReportQuery','report':'MaterialSchedule'},'type':'Reports','group':'Material'},
+        {'code':'regven','name':'Vendor Register','url':'/interface','state':{'type':'ReportQuery','report':'VendorRegister'},'type':'Reports','group':'Payables and Receivables'},
+        {'code':'lgrven','name':'Vendor Ledger','url':'/interface','state':{'type':'ReportQuery','report':'VendorLedger'},'type':'Reports','group':'Payables and Receivables'},
+        {'code':'balven','name':'Vendor Ledger Balance','url':'/interface','state':{'type':'ReportQuery','report':'VendorLedgerBalance'},'type':'Reports','group':'Payables and Receivables'},
+        {'code':'regcus','name':'Customer Register','url':'/interface','state':{'type':'ReportQuery','report':'CustomerRegister'},'type':'Reports','group':'Payables and Receivables'},
+        {'code':'lgrcus','name':'Customer Ledger','url':'/interface','state':{'type':'ReportQuery','report':'CustomerLedger'},'type':'Reports','group':'Payables and Receivables'},
+        {'code':'balcus','name':'Customer Ledger Balance','url':'/interface','state':{'type':'ReportQuery','report':'CustomerLedgerBalance'},'type':'Reports','group':'Payables and Receivables'},
+        {'code':'simtax','name':'Income Tax Simulator', 'url':'/interface', 'state':{'type':'Report','report':'IncomeTaxSimulator','data':{}},'type':'Reports','group':'Business Intelligence'}
 
     ]
     static getRoute(code){
@@ -386,10 +433,11 @@ function Home(){
     <div className='homeOuter'>
         <div className='home'>
             <h1 className='title'>Simple Costs<sup className='reg'>&reg;</sup></h1>
-            <div className='actions'>
-                <div className='menu red' onClick={()=>navigate(`/control`)}><h2>Control</h2></div>
+            <div className='actions'>                
                 <div className='menu green' onClick={()=>navigate(`/record`)}><h2>Record</h2></div>
+                <div className='menu red' onClick={()=>navigate(`/control`)}><h2>Control</h2></div>
                 <div className='menu blue'  onClick={()=>navigate(`/reports`)}><h2>Report</h2></div>
+                
             </div>
         </div>
     </div>
@@ -456,16 +504,19 @@ class Report{
                 defaults = {'Income Tax Code':'115BAC','Financial Year':2024,'Total Income':0,'Tax on Total Income':0,'Marginal Relief':0,'Net Tax on Total Income':0};
                 break
         }
+        if (['AssetRegister','MaterialRegister','CustomerRegister','VendorRegister','EmployeeRegister'].includes(this.report)){
+            defaults = {...data};
+        }
         return defaults;
     }
     interface(data){
-        let schema = {};
+        let schema = [];
         let errors = [];
         let navigation = [];
         let result = {...data};
         
         //Introducing Back Button
-        if (['AccountingDocument'].includes(this.report)){  
+        if (['AccountingDocument','AssetRegister','MaterialRegister','CustomerRegister','VendorRegister','EmployeeRegister'].includes(this.report)){  
             navigation = [
                 {"name":"Back","type":"navigate","url":"/interface","state":{"type":"ReportQuery","report":this.report}}
             ]
@@ -512,12 +563,31 @@ class Report{
                 ];
                 break
         }
+        if (['AssetRegister','MaterialRegister','CustomerRegister','VendorRegister','EmployeeRegister'].includes(this.report)){
+            const collectionname = {
+                "AssetRegister":"Asset",
+                "CustomerRegister":"Customer",
+                "EmployeeRegister":"Employee",
+                "MaterialRegister":"Material",
+                "VendorRegister":"Vendor"
+            }
+            result['Register'] = new CompanyCollection(result['Company Code'],collectionname[this.report]).register();
+            schema = [
+                {"name":"Company Code","datatype":"single","noteditable":true},
+                {"name":"Register","datatype":"table"}
+            ]
+        }
         return {'schema':schema,'output':result,'errors':errors,'navigation':navigation}
     }
     title(){
         const titles = {
             "AccountingDocument":"View Accounting Document",
-            "IncomeTaxSimulator":"Income Tax Simulate"
+            "IncomeTaxSimulator":"Income Tax Simulate",
+            "AssetRegister":"Asset Register",
+            "CustomerRegister":"Customer Register",
+            "EmployeeRegister":"Employee Register",
+            "MaterialRegister":"Material Register",
+            "VendorRegister":"Vendor Register",
         }
         return (titles[this.report]);
     }
@@ -700,6 +770,12 @@ class Transaction{
                 {"name":"POST","type":"action","onClick":()=>alert(this.postAccountingEntries(data['Company Code'],data['Year'],[data]))}
             ]
         }
+        if (Transaction.MaterialTransactions.includes(this.type)){
+            schema.push(...[
+                {"name":"Value Date","datatype":"single","input":"input","type":"date"},
+                {"name":"Plant/ Location","datatype":"single","input":"option","options":[""]},
+            ])
+        }
     }
 
         return {'schema':schema,'output':result,'errors':errors,'navigation':navigation}
@@ -734,7 +810,8 @@ class Transaction{
         return start;
     }
     static AccountingTypes = ['CustomerInvoice','CustomerCreditNote','GeneralAccounting','VendorInvoice','VendorCreditNote'];
-    static IntraCompanyTransactions = ['CustomerInvoice','CustomerCreditNote','CustomerClearing','CustomerPayment',"Depreciation","GeneralAccounting",'Salary','VendorInvoice','VendorCreditNote','VendorClearing','VendorPayment',]
+    static MaterialTransactions = ['MaterialReceipt','MaterialIssue','MaterialAcceptance','MaterialScrap','MaterialLossInTransit','MaterialReturn']
+    static IntraCompanyTransactions = [...this.MaterialTransactions,'CustomerInvoice','CustomerCreditNote','CustomerClearing','CustomerPayment',"Depreciation","GeneralAccounting",'Salary','VendorInvoice','VendorCreditNote','VendorClearing','VendorPayment',]
     static titles = {
         "CustomerClearing":"Customer Clearing",
         "CustomerCreditNote":"Customer Credit Note",
@@ -742,6 +819,12 @@ class Transaction{
         "CustomerPayment":"Customer Payment",
         "Depreciation":"Depreciation",
         "GeneralAccounting":"General Accounting",
+        "MaterialAcceptance":"Material Acceptance",
+        "MaterialIssue":"Material Issue",
+        "MaterialLossInTransit":"Material Loss in Transit",
+        "MaterialReceipt":"Material Receipt",
+        "MaterialReturn":"Material Return",
+        "MaterialScrap":"Material Scrap",
         "Salary":"Salary",
         "VendorClearing":"Vendor Clearing",
         "VendorCreditNote":"Vendor Credit Note",
@@ -1161,11 +1244,13 @@ function DisplayAsTable({collection}){
         Operations.downloadCSV(collection,'Table')
     }
     return (
-        <div className='displayAsTable'>
-            <table className='displayTable'>
-                <thead><tr>{fields.map(field=><th className='displayTableCell'>{field}</th>)}</tr></thead>
-                <tbody>{collection.map(data=><tr>{fields.map(field=><td className='displayTableCell'>{data[field]}</td>)}</tr>)}</tbody>
-            </table>
+        <div className='displayField'>
+            <div className='displayTable'>
+                <table>
+                    <thead><tr>{fields.map(field=><th className='displayTableCell'>{field}</th>)}</tr></thead>
+                    <tbody>{collection.map(data=><tr>{fields.map(field=><td className='displayTableCell'>{data[field]}</td>)}</tr>)}</tbody>
+                </table>
+            </div>
             <div className='left'><button onClick={()=>CSV()}>&darr; CSV</button></div>
         </div>
     )
@@ -1235,6 +1320,13 @@ class Collection{
     load(){
         const data = loadData(this.collectionname);
         return data;
+    }
+    register(){
+        const data = this.load();
+        let fields = FieldsInCollection(data);
+        data.map(item=>fields.map(field=>typeof(item[field])==='object'?fields=fields.filter(f=>f!==field):()=>{}))
+        const trimmedData = TrimCollection(data,fields);
+        return trimmedData;
     }
     listAll(key){
         return ListItems(this.load(),key)
@@ -3712,6 +3804,9 @@ class ReportQuery{
                 defaults = {"Company Code":"","Year":"","Document Number":""};
             break
         }
+        if (['AssetRegister','MaterialRegister','EmployeeRegister','VendorRegister','CustomerRegister'].includes(this.report)){
+            defaults['Company Code'] = '';
+        }
         return defaults;
     }
     interface(data){
@@ -3719,7 +3814,7 @@ class ReportQuery{
         let result = {...data};
         let navigation = [
             {"name":"Back","type":"navigate","url":"/reports","state":{}},
-            {"name":"Get","type":"navigate","url":"/interface","state":{'type':'Report','report':this.report,'data':data}}
+            {"name":"Get","type":"navigate","url":"/interface","state":{'type':'Report','report':this.report,'data':result}}
         ];
         let errors = [];
 
@@ -3732,6 +3827,14 @@ class ReportQuery{
                 ]
                 !Transaction.Accountingdoc(data['Company Code'],data['Year'],data['Document Number']).result?errors.push(`Document does not exist!`):()=>{};
             break
+        }
+        if (['AssetRegister','MaterialRegister','EmployeeRegister','VendorRegister','CustomerRegister'].includes(this.report)){
+            schema = [
+                {"name":"Company Code","datatype":"single","input":"option","options":["",...new Collection('Company').listAll('Code')]},
+            ]
+            if (data['Company Code']===""){
+                errors.push(`Company Code necessary.`)
+            }
         }
         return {'schema':schema,'output':result,'errors':errors,'navigation':navigation}
     }
@@ -3952,9 +4055,10 @@ const Node = ({node,schema,setdata})=>{
 function Scratch(){
     
     return(
-        <>
-            {JSON.stringify(Transaction.Accountingdoc('FACT',2025,2).document)}
-        </>
+        <div>
+            <DisplayAsTable collection={new Collection('Employee').register()}/>
+            <DisplayAsTable collection={new CompanyCollection('FACT','Employee').register()}/>
+        </div>
     )
 }
 
