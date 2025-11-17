@@ -10,6 +10,7 @@
   display: flex;
   flex-direction: column;
   padding:min(2%,20px);
+  padding-bottom: 0;
   color:var(--bluet);
   font-family: Lex, Helvet,'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -55,9 +56,11 @@
   flex-direction: row;
   justify-content: center;
   padding: 20px;
+  padding-bottom: 0;
   height: 100%;
   overflow: auto;
 }
+
 
 .homeOuter{
   display: flex;
@@ -79,7 +82,7 @@
   box-shadow: 0px 1px 10px 0px var(--gray);
   border-radius: 25px;
   backdrop-filter: blur(2px);
-  border:5px solid var(--whitet);
+  border:10px solid var(--whitet);
 }
 
 
@@ -145,8 +148,8 @@
   height: fit-content;
   border-radius: 25px;
   box-shadow: 0px 3px 10px 0px var(--gray);
+  border: 10px solid var(--whitet);
   backdrop-filter: blur(2px);
-  border: 3px solid var(--whitet);
 }
 
 .menuContainerTitle{
@@ -156,9 +159,9 @@
   text-align: center;
   transition: 0.5s;
   cursor: pointer;
-  background: var(--bluet);
+  color:var(--bluet);
   box-shadow: 0px 0.5px 2px 0px var(--gray);
-  color:white;
+  border: 5px solid var(--whitet);
 }
 
 .menuContainerTitle:hover{
@@ -200,7 +203,7 @@
   transition: 0.5s;
   box-shadow: 0px 1px 5px 0px var(--gray);
   color:var(--blue);
-  border:2px solid var(--whitet);
+  border:5px solid var(--whitet);
   
   h4{
     width:120px;
@@ -247,7 +250,8 @@
   height:fit-content;
   color:var(--bluet);
   backdrop-filter: blur(2px);
-  border: 3px solid var(--whitet);
+  border: 10px solid var(--whitet);
+  margin-bottom: 20px;
 }
 
 .displayTitle{
@@ -260,9 +264,9 @@
   cursor: pointer;
   transition: 0.5s;
   box-shadow: 0px 0.5px 2px 0px var(--gray);
-  border: 2px solid var(--whitet);
+  border: 5px solid var(--whitet);
 
-  h2{
+  h3{
     margin:0;
   }
 }
@@ -276,7 +280,7 @@
   border-radius: 15px;
   padding: 10px;
   backdrop-filter: blur(2px);
-  border: 2px solid var(--lightbluet);
+  border: 5px solid var(--lightbluet);
   box-shadow: 0px 0.5px 2px 0px var(--gray);
 }
 
@@ -337,7 +341,7 @@
   border-radius: 15px;
   color:var(--blue);
   backdrop-filter: blur(2px);
-  border: 2px solid var(--lightredt);
+  border: 5px solid var(--lightredt);
   box-shadow: 0px 0.5px 2px 0px var(--gray);
 }
 
@@ -537,9 +541,12 @@
     background-size: 50%;
   }
 
+  .innerContainer{
+    padding:0;
+  }
+
   .searchBar{
-    box-shadow: 0px 0.5px 3px 0px var(--gray);
-    border:2px solid var(--whitet);
+    background: var(--whitet);
   }
 
   .homeOuter{ 
@@ -547,23 +554,52 @@
     padding: 0;
   }
 
+
+  .searchBar, .home, .display, .displayTitle, .displayInputFields, .error, .menuContainer, .menuContainerTitle, .menuItem{
+    box-shadow: none;
+    border: none;
+  }
+
+  .menuItem{
+    p{
+      background: var(--bluet);
+      color:white;
+      font-weight: bold;
+      border:none
+    }
+  }
+
+  .home, .menuContainer, .display{
+    background: var(--whitet);
+  }
+
+  .actions, .displayTitle, .menuContainerTitle, .menuItem{
+    border:2px solid var(--bluet);
+  }
+
+  .displayInputFields{
+    border:2px solid var(--lightbluet);
+  }
+
+  .error{
+    border:2px solid var(--lightredt);
+  }
+
+
  .home{
   gap:30px;
   min-height: unset;
   padding: 20px;
   gap:25px;
   width:100%;
-  box-shadow: 0px 0.5px 3px 0px var(--gray);
-  backdrop-filter: blur(2px);
  }
 
  .menu{
   width:unset;
-  border-radius: 15px;
  }
 
- .menu:hover{
-  transform: unset;
+ .menu:nth-child(1):hover{
+  transform: translate(2%);
  }
 
  .menu:nth-child(1){
@@ -577,17 +613,9 @@
   grid-template-columns: 50% 50%;
   padding: 10%;
   font-size: 80%;
- } 
- .menuContainer{
-  box-shadow: none;
-  box-shadow: 0px 0.5px 3px 0px var(--gray);
-  backdrop-filter: blur(2px);
  }
 
  .display{
-  box-shadow: 0px 0.5px 3px 0px var(--gray);
-  border: 2px solid var(--whitet);
-  backdrop-filter: blur(1px);
   padding: 10px;
  }
 }

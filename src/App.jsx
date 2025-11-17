@@ -246,15 +246,15 @@ class Navigator{
         {'code':'org50c','name':'Create Revenue Center','url':'/interface','state':{'type':'CollectionQuery','collection':'RevenueCenter','method':'Create'},'type':'Control','group':'Organisational Units'},
         {'code':'org50u','name':'Update Revenue Center','url':'/interface','state':{'type':'CollectionQuery','collection':'RevenueCenter','method':'Update'},'type':'Control','group':'Organisational Units'},
         {'code':'org50d','name':'Display Revenue Center','url':'/interface','state':{'type':'CollectionQuery','collection':'RevenueCenter','method':'Display'},'type':'Control','group':'Organisational Units'},
-        {'code':'a10c','name':'Create Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Create'},'type':'Control','group':'Asset'},
-        {'code':'a10u','name':'Update Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Update'},'type':'Control','group':'Asset'},
-        {'code':'a10d','name':'Display Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Display'},'type':'Control','group':'Asset'},
-        {'code':'a20c','name':'Create Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Create'},'type':'Control','group':'Asset'},
-        {'code':'a20u','name':'Update Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Update'},'type':'Control','group':'Asset'},
-        {'code':'a20d','name':'Display Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Display'},'type':'Control','group':'Asset'},
-        {'code':'a30c','name':'Create Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Create'},'type':'Control','group':'Asset'},
-        {'code':'a30u','name':'Update Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Update'},'type':'Control','group':'Asset'},
-        {'code':'a30d','name':'Display Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Display'},'type':'Control','group':'Asset'},
+        {'code':'a10c','name':'Create Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Create'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'a10u','name':'Update Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Update'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'a10d','name':'Display Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Display'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'a20c','name':'Create Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Create'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'a20u','name':'Update Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Update'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'a20d','name':'Display Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Display'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'a30c','name':'Create Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Create'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'a30u','name':'Update Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Update'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'a30d','name':'Display Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Display'},'type':'Control','group':'Asset Lifecycle'},
         {'code':'acc10c','name':'Create General Ledger','url':'/interface','state':{'type':'CollectionQuery','collection':'GeneralLedger','method':'Create'},'type':'Control','group':'Costs and Accounting'},
         {'code':'acc10d','name':'Display General Ledger','url':'/interface','state':{'type':'CollectionQuery','collection':'GeneralLedger','method':'Display'},'type':'Control','group':'Costs and Accounting'},
         {'code':'acc10u','name':'Update General Ledger','url':'/interface','state':{'type':'CollectionQuery','collection':'GeneralLedger','method':'Update'},'type':'Control','group':'Costs and Accounting'},
@@ -285,10 +285,10 @@ class Navigator{
         {'code':'p30c','name':'Create Vendor','url':'/interface','state':{'type':'CollectionQuery','collection':'Vendor','method':'Create'},'type':'Control','group':'Payables and Receivables'},
         {'code':'p30u','name':'Update Vendor','url':'/interface','state':{'type':'CollectionQuery','collection':'Vendor','method':'Update'},'type':'Control','group':'Payables and Receivables'},
         {'code':'p30d','name':'Display Vendor','url':'/interface','state':{'type':'CollectionQuery','collection':'Vendor','method':'Display'},'type':'Control','group':'Payables and Receivables'},
-        {'code':'stlaco','name':'ACO Settlement','url':'/interface','state':{'type':'Transaction','transaction':'ACOSettlement','data':{}},'type':'Record','group':'Asset'},
-        {'code':'rundpct','name':'Depreciation','url':'/interface','state':{'type':'Transaction','transaction':'Depreciation','data':{}},'type':'Record','group':'Asset'},
-        {'code':'rvltas','name':'Asset Revaluation','url':'/interface','state':{'type':'Transaction','transaction':'AssetRevaluation','data':{}},'type':'Record','group':'Asset'},
-        {'code':'scrapas','name':'Asset Scrap','url':'/interface','state':{'type':'Transaction','transaction':'AssetScrap','data':{}},'type':'Record','group':'Asset'},
+        {'code':'stlaco','name':'ACO Settlement','url':'/interface','state':{'type':'Transaction','transaction':'ACOSettlement','data':{}},'type':'Record','group':'Asset Lifecycle'},
+        {'code':'rundpct','name':'Depreciation','url':'/interface','state':{'type':'Transaction','transaction':'Depreciation','data':{}},'type':'Record','group':'Asset Lifecycle'},
+        {'code':'rvltas','name':'Asset Revaluation','url':'/interface','state':{'type':'Transaction','transaction':'AssetRevaluation','data':{}},'type':'Record','group':'Asset Lifecycle'},
+        {'code':'scrapas','name':'Asset Scrap','url':'/interface','state':{'type':'Transaction','transaction':'AssetScrap','data':{}},'type':'Record','group':'Asset Lifecycle'},
         {'code':'accgen','name':'General Accounting','url':'/interface','state':{'type':'Transaction','transaction':'GeneralAccounting','data':{}},'type':'Record','group':'Cost and Accounting'},
         {'code':'clrgen','name':'General Ledger Clearing','url':'/interface','state':{'type':'Transaction','transaction':'GeneralLegderClearing','data':{}},'type':'Record','group':'Cost and Accounting'},
         {'code':'amsprepaid','name':'Prepaid Amortisation','url':'/interface','state':{'type':'Transaction','transaction':'PrepaidAmortisation','data':{}},'type':'Record','group':'Cost and Accounting'},
@@ -319,11 +319,11 @@ class Navigator{
         {'code':'rcvvan','name':'VAN Receipts','url':'/interface','state':{'type':'Transaction','transaction':'VANReceipts','data':{}},'type':'Record','group':'Payables and Receivables'},
         {'code':'runint','name':'Interest Run','url':'/interface','state':{'type':'Transaction','transaction':'InterestRun','data':{}},'type':'Record','group':'Payables and Receivables'},
         {'code':'runforex','name':'Foreign Exchange Run','url':'/interface','state':{'type':'Transaction','transaction':'ForeignExchangeRun','data':{}},'type':'Record','group':'Payables and Receivables'},
-        {'code':'regas','name':'Asset Register','url':'/interface','state':{'type':'ReportQuery','report':'AssetRegister'},'type':'Reports','group':'Asset'},
-        {'code':'lgras','name':'Asset Ledger','url':'/interface','state':{'type':'ReportQuery','report':'AssetLedger'},'type':'Reports','group':'Asset'},
-        {'code':'balas','name':'Asset Ledger Balance','url':'/interface','state':{'type':'ReportQuery','report':'AssetLedgerBalance'},'type':'Reports','group':'Asset'},
-        {'code':'schas','name':'Asset Schedule','url':'/interface','state':{'type':'ReportQuery','report':'AssetSchedule'},'type':'Reports','group':'Asset'},
-        {'code':'fordpct','name':'Forecast Depreciation','url':'/interface','state':{'type':'ReportQuery','report':'ForecastDepreciation'},'type':'Reports','group':'Asset'},
+        {'code':'regas','name':'Asset Register','url':'/interface','state':{'type':'ReportQuery','report':'AssetRegister'},'type':'Reports','group':'Asset Lifecycle'},
+        {'code':'lgras','name':'Asset Ledger','url':'/interface','state':{'type':'ReportQuery','report':'AssetLedger'},'type':'Reports','group':'Asset Lifecycle'},
+        {'code':'balas','name':'Asset Ledger Balance','url':'/interface','state':{'type':'ReportQuery','report':'AssetLedgerBalance'},'type':'Reports','group':'Asset Lifecycle'},
+        {'code':'schas','name':'Asset Schedule','url':'/interface','state':{'type':'ReportQuery','report':'AssetSchedule'},'type':'Reports','group':'Asset Lifecycle'},
+        {'code':'fordpct','name':'Forecast Depreciation','url':'/interface','state':{'type':'ReportQuery','report':'ForecastDepreciation'},'type':'Reports','group':'Asset Lifecycle'},
         {'code':'fs','name':'Financial Statements','url':'/interface','state':{'type':'ReportQuery','report':'FinancialStatements'},'type':'Reports','group':'Cost and Accounting'},
         {'code':'lgrgen','name':'General Ledger','url':'/interface','state':{'type':'ReportQuery','report':'GeneralLedger'},'type':'Reports','group':'Cost and Accounting'},
         {'code':'balgen','name':'General Ledger Balance','url':'/interface','state':{'type':'ReportQuery','report':'GeneralLedgerBalance'},'type':'Reports','group':'Cost and Accounting'},
@@ -648,7 +648,7 @@ class Transaction{
             const company = data['Company Code'];
             const accType = itemData['Account Type'];
             const account = itemData['Account'];
-            let noteditables = [];
+            let noteditables = ['Transaction'];
             let blankfields = [];
             const result = {...itemData};
             const errors = [];
@@ -694,7 +694,7 @@ class Transaction{
                 noteditables.push(...["Location","Quantity","Value Date"]);
             };
             if (!['Asset','Material'].includes(accType)){
-                noteditables.push(...["Transaction"]);
+                blankfields.push(...["Transaction"]);
             };
             if (!(accType==="General Ledger" && new CompanyCollection(company,'GeneralLedger').filteredList({'Ledger Type':'Cost Element'},'Code').includes(account))){
                 noteditables.push(...["Cost Center","Revenue Center","Plant","Asset Construction Order","Maintenance Order","Process Order","Production Order","Purchase Order","Sale Order","Transport Order"])
@@ -705,6 +705,9 @@ class Transaction{
             if (!['Customer','Vendor'].includes(accType)){
                 noteditables.push(...['Presentation']);
                 blankfields.push(...['Presentation']);
+            }
+            if (accType==="Asset","Material"){
+                result['Transaction']="Cost";
             }
             schema = schema.map(field=>noteditables.includes(field['name'])?{...field,['noteditable']:true}:field);
             blankfields.map(field=>result[field]="");
@@ -3913,7 +3916,7 @@ function View({title,editable,output,schema,defaults,setdata,errors,navigation,t
     return(
         <div className='display'>
             <div className='displayTitle'>
-                <h2>{title}</h2>
+                <h3>{title}</h3>
             </div>
             <div className='displayInputFields'>
                 {!table && schema.map(field=>
