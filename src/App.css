@@ -2,6 +2,22 @@
   box-sizing: border-box;
 }
 
+.background{
+  position: fixed;
+  width: 100%;
+  top:0;
+  left:0;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  background: var(--lightgray);
+  padding:10px;
+  padding-top:5%;
+  background-size: 20%;
+  color:var(--blue);
+}
+
 .container{
   position: fixed;
   top:0;
@@ -11,8 +27,7 @@
   flex-direction: column;
   padding:min(2%,20px);
   padding-bottom: 0;
-  color:var(--bluet);
-  font-family: Lex, Helvet,'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color:inherit;
 }
 
 .searchBarOuter{
@@ -30,10 +45,11 @@
   width:fit-content ;
   border-radius: 25px;
   gap:10px;
-  padding: 10px;
+  padding: 5px;
   transition:0.5s;
   overflow: auto;
-  box-shadow: 0px 3px 10px 2px lightgray;
+  box-shadow: 0px 2px 10px 0px var(--gray);
+  border: 5px solid var(--whitet);
 }
 
 .searchBarButton{
@@ -81,7 +97,6 @@
   transition: 0.5s;
   box-shadow: 0px 1px 10px 0px var(--gray);
   border-radius: 25px;
-  backdrop-filter: blur(2px);
   border:10px solid var(--whitet);
 }
 
@@ -94,19 +109,10 @@
   background: var(--bluet);
   padding: 10px;
   border-radius: 15px;
-
-  .reg{
-    opacity:0;
-    transition: 0.5s;
-  }
+  backdrop-filter: blur(2px);
+  transition: 0.5s;
 }
 
-.title:hover{
-
-  .reg{
-    opacity:1
-  }
-}
 
 .actions{
   display: flex;
@@ -116,6 +122,8 @@
   padding:20px;
   border-radius: 15px;
   background: var(--whitet);
+  backdrop-filter: blur(2px);
+  border: 5px solid white;
 }
 
 .menu{
@@ -149,7 +157,10 @@
   border-radius: 25px;
   box-shadow: 0px 3px 10px 0px var(--gray);
   border: 10px solid var(--whitet);
-  backdrop-filter: blur(2px);
+}
+
+.menuContainer, .display{
+  margin-bottom: 20px;
 }
 
 .menuContainerTitle{
@@ -159,13 +170,14 @@
   text-align: center;
   transition: 0.5s;
   cursor: pointer;
-  color:var(--bluet);
+  color:inherit;
   box-shadow: 0px 0.5px 2px 0px var(--gray);
   border: 5px solid var(--whitet);
 }
 
 .menuContainerTitle:hover{
   transform: translate(5px);
+  background: var(--goldt);
 }
 
 .menuList{
@@ -196,14 +208,15 @@
   border-radius: 15px;
   display: flex;
   flex-direction: column;
-  gap:2px;
+  gap:5px;
   justify-content: center;
   aspect-ratio: 1/1;
   padding: 10px;
   transition: 0.5s;
   box-shadow: 0px 1px 5px 0px var(--gray);
-  color:var(--blue);
+  color:inherit;
   border:5px solid var(--whitet);
+  backdrop-filter: blur(1px);
   
   h4{
     width:120px;
@@ -215,9 +228,9 @@
     opacity:0.1;
     font-size: 80%;
     transition: 0.5s;
-    border:1px solid var(--gold);
     padding: 5px;
     border-radius: 5px;
+    background: var(--whitet);
   }
 }
 
@@ -230,7 +243,7 @@
 }
 
 .menuTitle{
-  color:var(--blue);
+  color:inherit;
   border-bottom:1.5px solid var(--bluet);
   padding:10px;
   width:min(100%,450px);
@@ -246,16 +259,14 @@
   width:100%;
   display: flex;
   flex-direction: column;
-  gap:20px;
+  gap:15px;
   height:fit-content;
-  color:var(--bluet);
-  backdrop-filter: blur(2px);
+  color:inherit;
   border: 10px solid var(--whitet);
-  margin-bottom: 20px;
 }
 
 .displayTitle{
-  color:var(--bluet);
+  color:inherit;
   text-align: center;
   padding:10px;
   padding-left: 20px;
@@ -275,13 +286,13 @@
   display:flex;
   flex-direction: column;
   gap:10px;
-  color:var(--blue);
   background: var(--lightbluet);
   border-radius: 15px;
   padding: 10px;
   backdrop-filter: blur(2px);
   border: 5px solid var(--lightbluet);
   box-shadow: 0px 0.5px 2px 0px var(--gray);
+  backdrop-filter: blur(2px);
 }
 
 .displayField{
@@ -290,6 +301,7 @@
   background: var(--lightbluet);
   transition: 0.5s;
   border: 2px solid var(--whitet);
+  backdrop-filter: brightness(150%);
   input,select{
     border-radius: 10px;
   }
@@ -297,7 +309,8 @@
 
 .displayRow{
   display: grid;
-  grid-template-columns: 50% 50%;
+  gap:2px;
+  grid-template-columns: calc(50% - 1px) calc(50% - 1px);
 }
 
 .displayObject{
@@ -333,13 +346,15 @@
     width:max(100%,128px);
     font-size: 100%;
   }
+  button{
+    border-radius: 0;
+  }
 }
 
 .error{
   background: var(--lightredt);
-  padding: 20px;
+  padding: 10px;
   border-radius: 15px;
-  color:var(--blue);
   backdrop-filter: blur(2px);
   border: 5px solid var(--lightredt);
   box-shadow: 0px 0.5px 2px 0px var(--gray);
@@ -350,190 +365,52 @@
   flex-direction: row;
   justify-content: right;
   gap:5px;
-  padding: 2px;
 
   button{
     border-radius:10px;
   }
 }
 
-.transaction{
-  border-radius: 20px;
-  padding:5%;
-  width:100%;
+.dropDown{
   display: flex;
   flex-direction: column;
-  gap:20px;
-  height:fit-content;
-  box-shadow: 0px 3px 10px 0px lightgray;
+  border: 2px solid var(--whitet);
+  align-items: center;
+  background: white;
+  cursor: pointer;
+  padding: 5px;
 }
 
-.transactionTitle{
-  padding: 10px;
-  background: var(--lightbluet);
-  border-radius: 15px;
-  text-align: center;
-  border: 2px solid var(--lightgray);
-}
-
-.header{
-  display: grid;
-  grid-template-columns: 50% 50%;
-  row-gap: 5px;
-  background: var(--lightbluet);
-  padding: 10px;
-  border-radius: 15px;
-  border: 2px solid var(--lightgray);
-}
-
-.headerField{
-  display: grid;
-  grid-template-columns: 50% 50%;
-}
-
-.lineItems{
-  overflow: auto;
-  padding: 10px;
-  background: var(--lightbluet);
-  border-radius: 15px;
-  border: 2px solid var(--lightgray);
-}
-
-.lineItemCell{
-    border:1px solid var(--blue);
-    width:fit-content;
-    padding: 2px;
-  input,select{
-    border-radius: 0;
-    width:100%;
-    max-width: 200px;
-    font-size: 100%;
-    height:100%;
+.dropDown:hover{
+  .dropArrow{
+    opacity:1
   }
 }
 
-.lineItemsButtons{
+.dropArrow{
+  opacity:0.1;
+  transition: 0.5s;
+}
+
+.dropDownHead, .dropDownList{
+  text-align: left;
+  width:100%;
+}
+
+.dropDownHead{
   display: flex;
   flex-direction: row;
-  justify-content: center;
-  padding:2px;
+  justify-content: space-around;
 }
 
-
-.ledgers{
-  display:flex;
-  flex-direction: column;
-  gap:20px;
-  width:100%;
-  color:var(--blue);
-  border-radius: 25px;
-  background: var(--lightgreent);
-  backdrop-filter: blur(3px);
-  padding:5%;
-  height:fit-content;
-}
-
-.ledger{
-  border-radius:15px;
-  backdrop-filter: blur(20px);
-  padding:5px;
-  border:2px solid var(--lightgray);
-}
-
-.displayAsTable{
-  padding: 5px;
+.dropDownList{
   display: flex;
   flex-direction: column;
-  width:100%;
-  height:fit-content;
-  overflow: auto;
+  label{
+    border-bottom: 1px solid var(--gray);
+    padding: 5px;
+  }
 }
-
-
-.tableButtons{
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  padding: 5px;
-}
-
-.assets{
-  width:100%;
-}
-.reportQuery{
-  border-radius: 25px;
-  padding:5%;
-  width:100%;
-  display: grid;
-  grid-template-columns: 50% 50%;
-  gap:20px;
-  height: fit-content;
-  box-shadow: 0px 3px 10px 0px lightgray;
-}
-
-.reportQueryTitle{
-  background: var(--lightbluet);
-  border-radius: 15px;
-  padding: 10px;
-  grid-column: 1/ span 2;
-  border: 2px solid var(--lightgray);
-  text-align: center;
-  margin:0;
-}
-
-.reportQueryField{
-  background: var(--lightbluet);
-  border-radius: 15px;
-  border:2px solid var(--lightgray);
-  padding: 10px;
-}
-
-.reportQuerySubfield{
-  display: flex;
-  flex-direction: row;
-  padding: 10px;
-}
-
-.reportQueryColumn{
-  display: flex;
-  flex-direction: column;
-  gap:5px;
-}
-
-.reportQueryRow{
-  display: flex;
-  flex-direction: row;
-  gap:5px;
-}
-
-.reportQueryCell{
-  border-radius: 15px;
-}
-
-.reportQueryButtons{
-  grid-column: 1/ span 2;
-  display: flex;
-  flex-direction: row;
-  justify-content: right;
-  padding: 10px;
-  gap:5px;
-}
-
-.reportDisplay{
-  box-shadow: 0px 3px 10px 0px lightgray;
-  height: fit-content;
-  border-radius: 25px;
-  padding: 5%;
-  width: 100%;
-}
-
-.reportDisplayButtons{
-  display: flex;
-  flex-direction: row;
-  justify-content: right;
-  padding: 10px;
-}
-
 
 @media screen and (max-width: 600px){
   
@@ -545,9 +422,6 @@
     padding:0;
   }
 
-  .searchBar{
-    background: var(--whitet);
-  }
 
   .homeOuter{ 
     width: 100%;
@@ -557,35 +431,9 @@
 
   .searchBar, .home, .display, .displayTitle, .displayInputFields, .error, .menuContainer, .menuContainerTitle, .menuItem{
     box-shadow: none;
-    border: none;
   }
 
-  .menuItem{
-    p{
-      background: var(--bluet);
-      color:white;
-      font-weight: bold;
-      border:none
-    }
-  }
-
-  .home, .menuContainer, .display{
-    background: var(--whitet);
-  }
-
-  .actions, .displayTitle, .menuContainerTitle, .menuItem{
-    border:2px solid var(--bluet);
-  }
-
-  .displayInputFields{
-    border:2px solid var(--lightbluet);
-  }
-
-  .error{
-    border:2px solid var(--lightredt);
-  }
-
-
+ 
  .home{
   gap:30px;
   min-height: unset;
@@ -621,9 +469,6 @@
 }
 
 @media print {
-  html{
-      background-image: none;
-  }
 
   .searchBarOuter{
     display: none;

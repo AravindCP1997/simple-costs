@@ -1,7 +1,8 @@
 import './App.css'
 import { useEffect, useState, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Link, useParams, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { FaPlus, FaHome, FaArrowRight, FaArrowLeft, FaCopy } from 'react-icons/fa';
+import { FaDesktop,FaPlus, FaHome, FaArrowRight, FaArrowLeft, FaCopy, FaChevronUp, FaChevronDown } from 'react-icons/fa';
+import {MdComputer} from 'react-icons/md';
 import exportFromJSON from 'export-from-json';
 import { PiTreeView } from 'react-icons/pi';
 
@@ -132,6 +133,14 @@ function valueInRange(value,range){
     return result
 }
 
+function rangeOverlap(range1,range2){
+    let result = true;
+    if ((range1[0]<range2[0] && range1[1]<range2[0]) || (range1[0]>range2[1] && range1[1]>range2[1])){
+        result = false;
+    }
+    return result;
+}
+
 function moveDate(date,years,months,days){
     const olddate = new Date(date);
     const newdate = new Date(olddate.getFullYear()+years,olddate.getMonth()+months,olddate.getDate()+days)
@@ -200,6 +209,66 @@ function daysInMonth(year,month){
     return interval
 }
 
+function monthStructure(year,month){
+    const start = new Date(`${year}-${month.toString().padStart(2,0)}-01`);
+    const end = new Date(start.getFullYear(),start.getMonth()+1,0);
+    const days = daysInPeriod([`${start.getFullYear()}-${start.getMonth()+1}-01`,`${end.getFullYear()}-${end.getMonth()+1}-${end.getDate()}`]);
+    const dates = datesInPeriod([`${start.getFullYear()}-${start.getMonth()+1}-01`,`${end.getFullYear()}-${end.getMonth()+1}-${end.getDate()}`]);
+    const startDate = numberDay(dayNumber(start));
+    const endDate = numberDay(dayNumber(end));
+    return {'start':startDate,'end':endDate,'days':days,'dates':dates}
+}
+
+function negativeError(data,fields){
+    const list = [];
+    fields.forEach(field=>{
+        if (data[field]<0){
+            list.push(`${field} cannot be negative.`);
+        }
+    })
+    return list;
+};
+
+function blankError(data,fields){
+   const list = [];
+    fields.forEach(field=>{
+        if (data[field]===""){
+            list.push(`${field} cannot be blank.`);
+        }
+    }) 
+    return list;
+}
+
+function futureDateError(data,fields){
+    const list = [];
+    fields.forEach(field=>{
+        if (new Date(data[field])>new Date()){
+            list.push(`${field} cannot be future date.`);
+        }
+    }) 
+    return list;
+};
+
+function timeSeriesError(Name,Collection,Fromfield,Tofield,LastDate="9999-12-31",FirstDate="9999-12-31"){
+    const list = [];
+    const ToDateStrings = ListUniqueItems(Collection,Tofield);
+    const ToDateNumbers = ToDateStrings.map(date=>dayNumber(date));
+    const maxToDateNumber = Math.max(...ToDateNumbers);
+    const maxToDateString = numberDay(maxToDateNumber);
+    const FromDateStrings = ListUniqueItems(Collection,Fromfield);
+    const FromDateNumbers = FromDateStrings.map(date=>dayNumber(date));
+    const minToDateNumber = Math.min(...FromDateNumbers);
+    const minToDateString = numberDay(minToDateNumber);
+    if (new Date(LastDate)>new Date(maxToDateString)){list.push(`At least one ${Name} should have period up to ${LastDate}.`)}
+    if (new Date(FirstDate)<new Date(minToDateString)){list.push(`At least one ${Name} should have period from ${FirstDate}.`)}
+    Collection.forEach((item,i)=>{
+        if (item[Fromfield]>item[Tofield]){
+            list.push(`At ${Name} ${i+1}, 'From' is greater than 'To'.`);
+        }
+    })
+    return list
+}
+
 class Navigator{
     static codes = [
         {'code':'','url':'/','state':{},'type':'home'},
@@ -211,17 +280,19 @@ class Navigator{
         {'code':'gb10d','name':'Display Chart of Accounts','url':'/interface','state':{'type':'CollectionQuery','collection':'ChartOfAccounts','method':'Display'},'type':'Control','group':'Global'},
         {'code':'gb30c','name':'Create Group Chart of Accounts','url':'/interface','state':{'type':'Collection','collection':'GroupChartOfAccounts','method':'Create'},'type':'Control','group':'Global'},
         {'code':'gb30d','name':'Display Group Chart of Accounts','url':'/interface','state':{'type':'CollectionQuery','collection':'GroupChartOfAccounts','method':'Display'},'type':'Control','group':'Global'},
-        {'code':'gb40c','name':'Create Income Tax Code','url':'/interface','state':{'type':'Collection','collection':'IncomeTaxCode','method':'Create'},'type':'Control','group':'Global'},
-        {'code':'gb40u','name':'Update Income Tax Code','url':'/interface','state':{'type':'CollectionQuery','collection':'IncomeTaxCode','method':'Update'},'type':'Control','group':'Global'},
-        {'code':'gb40d','name':'Display Income Tax Code','url':'/interface','state':{'type':'CollectionQuery','collection':'IncomeTaxCode','method':'Display'},'type':'Control','group':'Global'},
+        {'code':'gb40c','name':'Create Group General Ledger','url':'/interface','state':{'type':'CollectionQuery','collection':'GroupGeneralLedger','method':'Create'},'type':'Control','group':'Global'},
+        {'code':'gb40d','name':'Display Group General Ledger','url':'/interface','state':{'type':'CollectionQuery','collection':'GroupGeneralLedger','method':'Display'},'type':'Control','group':'Global'},
+        {'code':'gb50c','name':'Create Income Tax Code','url':'/interface','state':{'type':'Collection','collection':'IncomeTaxCode','method':'Create'},'type':'Control','group':'Global'},
+        {'code':'gb50u','name':'Update Income Tax Code','url':'/interface','state':{'type':'CollectionQuery','collection':'IncomeTaxCode','method':'Update'},'type':'Control','group':'Global'},
+        {'code':'gb50d','name':'Display Income Tax Code','url':'/interface','state':{'type':'CollectionQuery','collection':'IncomeTaxCode','method':'Display'},'type':'Control','group':'Global'},
         {'code':'gb60c','name':'Create Wage Type','url':'/interface','state':{'type':'Collection','collection':'WageType','method':'Create'},'type':'Control','group':'Global'},
         {'code':'gb60u','name':'Update Wage Type','url':'/interface','state':{'type':'CollectionQuery','collection':'WageType','method':'Update'},'type':'Control','group':'Global'},
         {'code':'gb60d','name':'Display Wage Type','url':'/interface','state':{'type':'CollectionQuery','collection':'WageType','method':'Display'},'type':'Control','group':'Global'},
-        {'code':'tab10', 'name':'Currencies', 'url':'/interface','state':{'type':'Table','table':'Currencies','method':'Display'},'type':'Control','group':'Tables'},
-        {'code':'tab20', 'name':'HSN', 'url':'/interface','state':{'type':'Table','table':'HSN','method':'Display'},'type':'Control','group':'Tables'},
-        {'code':'tab30', 'name':'Segments', 'url':'/interface','state':{'type':'Table','table':'Segments','method':'Display'},'type':'Control','group':'Tables'},
-        {'code':'tab40', 'name':'Units', 'url':'/interface','state':{'type':'Table','table':'Units','method':'Display'},'type':'Control','group':'Tables'},
-        {'code':'tab50', 'name':'Wage Types', 'url':'/interface','state':{'type':'Table','table':'WageTypes','method':'Display'},'type':'Control','group':'Tables'},
+        {'code':'tab10', 'name':'Currencies', 'url':'/interface','state':{'type':'Table','table':'Currencies','method':'Display'},'type':'Control','group':'Global'},
+        {'code':'tab20', 'name':'HSN', 'url':'/interface','state':{'type':'Table','table':'HSN','method':'Display'},'type':'Control','group':'Global'},
+        {'code':'tab30', 'name':'Segments', 'url':'/interface','state':{'type':'Table','table':'Segments','method':'Display'},'type':'Control','group':'Global'},
+        {'code':'tab40', 'name':'Units', 'url':'/interface','state':{'type':'Table','table':'Units','method':'Display'},'type':'Control','group':'Global'},
+        {'code':'tab50', 'name':'Wage Types', 'url':'/interface','state':{'type':'Table','table':'WageTypes','method':'Display'},'type':'Control','group':'Global'},
         {'code':'com10c','name':'Create Company','url':'/interface','state':{'type':'Collection','collection':'Company','method':'Create'},'type':'Control','group':'Company'},
         {'code':'com10u','name':'Update Company','url':'/interface','state':{'type':'CollectionQuery','collection':'Company','method':'Update'},'type':'Control','group':'Company'},
         {'code':'com10d','name':'Display Company','url':'/interface','state':{'type':'CollectionQuery','collection':'Company','method':'Display'},'type':'Control','group':'Company'},
@@ -231,30 +302,33 @@ class Navigator{
         {'code':'com30c','name':'Create Time Control','url':'/interface','state':{'type':'CollectionQuery','collection':'TimeControl','method':'Create'},'type':'Control','group':'Company'},
         {'code':'com30u','name':'Update Time Control','url':'/interface','state':{'type':'CollectionQuery','collection':'TimeControl','method':'Update'},'type':'Control','group':'Company'},
         {'code':'com30d','name':'Display Time Control','url':'/interface','state':{'type':'CollectionQuery','collection':'TimeControl','method':'Display'},'type':'Control','group':'Company'},
-        {'code':'org10c','name':'Create Cost Center','url':'/interface','state':{'type':'CollectionQuery','collection':'CostCenter','method':'Create'},'type':'Control','group':'Organisational Units'},
-        {'code':'org10d','name':'Display Cost Center','url':'/interface','state':{'type':'CollectionQuery','collection':'CostCenter','method':'Display'},'type':'Control','group':'Organisational Units'},
-        {'code':'org10u','name':'Update Cost Center','url':'/interface','state':{'type':'CollectionQuery','collection':'CostCenter','method':'Update'},'type':'Control','group':'Organisational Units'},
-        {'code':'org20c','name':'Create Location','url':'/interface','state':{'type':'CollectionQuery','collection':'Location','method':'Create'},'type':'Control','group':'Organisational Units'},
-        {'code':'org20u','name':'Update Location','url':'/interface','state':{'type':'CollectionQuery','collection':'Location','method':'Update'},'type':'Control','group':'Organisational Units'},
-        {'code':'org20d','name':'Display Location','url':'/interface','state':{'type':'CollectionQuery','collection':'Location','method':'Display'},'type':'Control','group':'Organisational Units'},
-        {'code':'org30c','name':'Create Plant','url':'/interface','state':{'type':'CollectionQuery','collection':'Plant','method':'Create'},'type':'Control','group':'Organisational Units'},
-        {'code':'org30u','name':'Update Plant','url':'/interface','state':{'type':'CollectionQuery','collection':'Plant','method':'Update'},'type':'Control','group':'Organisational Units'},
-        {'code':'org30d','name':'Display Plant','url':'/interface','state':{'type':'CollectionQuery','collection':'Plant','method':'Display'},'type':'Control','group':'Organisational Units'},
-        {'code':'org40c','name':'Create Profit Center','url':'/interface','state':{'type':'CollectionQuery','collection':'ProfitCenter','method':'Create'},'type':'Control','group':'Organisational Units'},
-        {'code':'org40u','name':'Update Profit Center','url':'/interface','state':{'type':'CollectionQuery','collection':'ProfitCenter','method':'Update'},'type':'Control','group':'Organisational Units'},
-        {'code':'org40d','name':'Display Profit Center','url':'/interface','state':{'type':'CollectionQuery','collection':'ProfitCenter','method':'Display'},'type':'Control','group':'Organisational Units'},
-        {'code':'org50c','name':'Create Revenue Center','url':'/interface','state':{'type':'CollectionQuery','collection':'RevenueCenter','method':'Create'},'type':'Control','group':'Organisational Units'},
-        {'code':'org50u','name':'Update Revenue Center','url':'/interface','state':{'type':'CollectionQuery','collection':'RevenueCenter','method':'Update'},'type':'Control','group':'Organisational Units'},
-        {'code':'org50d','name':'Display Revenue Center','url':'/interface','state':{'type':'CollectionQuery','collection':'RevenueCenter','method':'Display'},'type':'Control','group':'Organisational Units'},
-        {'code':'a10c','name':'Create Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Create'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'a10u','name':'Update Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Update'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'a10d','name':'Display Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Display'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'a20c','name':'Create Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Create'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'a20u','name':'Update Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Update'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'a20d','name':'Display Asset Class','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetClass','method':'Display'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'a30c','name':'Create Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Create'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'a30u','name':'Update Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Update'},'type':'Control','group':'Asset Lifecycle'},
-        {'code':'a30d','name':'Display Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Display'},'type':'Control','group':'Asset Lifecycle'},
+        {'code':'org10c','name':'Create Cost Center','url':'/interface','state':{'type':'CollectionQuery','collection':'CostCenter','method':'Create'},'type':'Control','group':'Controlling'},
+        {'code':'org10d','name':'Display Cost Center','url':'/interface','state':{'type':'CollectionQuery','collection':'CostCenter','method':'Display'},'type':'Control','group':'Controlling'},
+        {'code':'org10u','name':'Update Cost Center','url':'/interface','state':{'type':'CollectionQuery','collection':'CostCenter','method':'Update'},'type':'Control','group':'Controlling'},
+        {'code':'org20c','name':'Create Location','url':'/interface','state':{'type':'CollectionQuery','collection':'Location','method':'Create'},'type':'Control','group':'Controlling'},
+        {'code':'org20u','name':'Update Location','url':'/interface','state':{'type':'CollectionQuery','collection':'Location','method':'Update'},'type':'Control','group':'Controlling'},
+        {'code':'org20d','name':'Display Location','url':'/interface','state':{'type':'CollectionQuery','collection':'Location','method':'Display'},'type':'Control','group':'Controlling'},
+        {'code':'org30c','name':'Create Plant','url':'/interface','state':{'type':'CollectionQuery','collection':'Plant','method':'Create'},'type':'Control','group':'Controlling'},
+        {'code':'org30u','name':'Update Plant','url':'/interface','state':{'type':'CollectionQuery','collection':'Plant','method':'Update'},'type':'Control','group':'Controlling'},
+        {'code':'org30d','name':'Display Plant','url':'/interface','state':{'type':'CollectionQuery','collection':'Plant','method':'Display'},'type':'Control','group':'Controlling'},
+        {'code':'org40c','name':'Create Profit Center','url':'/interface','state':{'type':'CollectionQuery','collection':'ProfitCenter','method':'Create'},'type':'Control','group':'Controlling'},
+        {'code':'org40u','name':'Update Profit Center','url':'/interface','state':{'type':'CollectionQuery','collection':'ProfitCenter','method':'Update'},'type':'Control','group':'Controlling'},
+        {'code':'org40d','name':'Display Profit Center','url':'/interface','state':{'type':'CollectionQuery','collection':'ProfitCenter','method':'Display'},'type':'Control','group':'Controlling'},
+        {'code':'org50c','name':'Create Revenue Center','url':'/interface','state':{'type':'CollectionQuery','collection':'RevenueCenter','method':'Create'},'type':'Control','group':'Controlling'},
+        {'code':'org50u','name':'Update Revenue Center','url':'/interface','state':{'type':'CollectionQuery','collection':'RevenueCenter','method':'Update'},'type':'Control','group':'Controlling'},
+        {'code':'org50d','name':'Display Revenue Center','url':'/interface','state':{'type':'CollectionQuery','collection':'RevenueCenter','method':'Display'},'type':'Control','group':'Controlling'},
+        {'code':'op10c','name':'Create Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Create'},'type':'Control','group':'Controlling'},
+        {'code':'op10u','name':'Update Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Update'},'type':'Control','group':'Controlling'},
+        {'code':'op10d','name':'Display Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Display'},'type':'Control','group':'Controlling'},
+        {'code':'asc10','name':'Create Asset','url':'/interface','state':{'type':'Collection','collection':'Asset','method':'Create'},'type':'Control','group':'Asset'},
+        {'code':'asu10','name':'Update Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Update'},'type':'Control','group':'Asset'},
+        {'code':'asd10','name':'Display Asset','url':'/interface','state':{'type':'CollectionQuery','collection':'Asset','method':'Display'},'type':'Control','group':'Asset'},
+        {'code':'asc20','name':'Create Asset Group','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetGroup','method':'Create'},'type':'Control','group':'Asset'},
+        {'code':'asu20','name':'Update Asset Group','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetGroup','method':'Update'},'type':'Control','group':'Asset'},
+        {'code':'asd20','name':'Display Asset Group','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetGroup','method':'Display'},'type':'Control','group':'Asset'},
+        {'code':'asc30','name':'Create Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Create'},'type':'Control','group':'Asset'},
+        {'code':'asu30','name':'Update Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Update'},'type':'Control','group':'Asset'},
+        {'code':'asd30','name':'Display Asset Construction Order','url':'/interface','state':{'type':'CollectionQuery','collection':'AssetConstructionOrder','method':'Display'},'type':'Control','group':'Asset'},
         {'code':'acc10c','name':'Create General Ledger','url':'/interface','state':{'type':'CollectionQuery','collection':'GeneralLedger','method':'Create'},'type':'Control','group':'Costs and Accounting'},
         {'code':'acc10d','name':'Display General Ledger','url':'/interface','state':{'type':'CollectionQuery','collection':'GeneralLedger','method':'Display'},'type':'Control','group':'Costs and Accounting'},
         {'code':'acc10u','name':'Update General Ledger','url':'/interface','state':{'type':'CollectionQuery','collection':'GeneralLedger','method':'Update'},'type':'Control','group':'Costs and Accounting'},
@@ -273,9 +347,6 @@ class Navigator{
         {'code':'mat10c','name':'Create Material Group','url':'/interface','state':{'type':'CollectionQuery','collection':'MaterialGroup','method':'Create'},'type':'Control','group':'Material'},
         {'code':'mat10u','name':'Update Material Group','url':'/interface','state':{'type':'CollectionQuery','collection':'MaterialGroup','method':'Update'},'type':'Control','group':'Material'},
         {'code':'mat10d','name':'Display Material Group','url':'/interface','state':{'type':'CollectionQuery','collection':'MaterialGroup','method':'Display'},'type':'Control','group':'Material'},
-        {'code':'op10c','name':'Create Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Create'},'type':'Control','group':'Operations'},
-        {'code':'op10u','name':'Update Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Update'},'type':'Control','group':'Operations'},
-        {'code':'op10d','name':'Display Maintenance Order','url':'/interface','state':{'type':'CollectionQuery','collection':'MaintenanceOrder','method':'Display'},'type':'Control','group':'Operations'},
         {'code':'p10c','name':'Create Bank Account','url':'/interface','state':{'type':'CollectionQuery','collection':'BankAccount','method':'Create'},'type':'Control','group':'Payables and Receivables'},
         {'code':'p10u','name':'Update Bank Account','url':'/interface','state':{'type':'CollectionQuery','collection':'BankAccount','method':'Update'},'type':'Control','group':'Payables and Receivables'},
         {'code':'p10d','name':'Display Bank Account','url':'/interface','state':{'type':'CollectionQuery','collection':'BankAccount','method':'Display'},'type':'Control','group':'Payables and Receivables'},
@@ -285,10 +356,11 @@ class Navigator{
         {'code':'p30c','name':'Create Vendor','url':'/interface','state':{'type':'CollectionQuery','collection':'Vendor','method':'Create'},'type':'Control','group':'Payables and Receivables'},
         {'code':'p30u','name':'Update Vendor','url':'/interface','state':{'type':'CollectionQuery','collection':'Vendor','method':'Update'},'type':'Control','group':'Payables and Receivables'},
         {'code':'p30d','name':'Display Vendor','url':'/interface','state':{'type':'CollectionQuery','collection':'Vendor','method':'Display'},'type':'Control','group':'Payables and Receivables'},
-        {'code':'stlaco','name':'ACO Settlement','url':'/interface','state':{'type':'Transaction','transaction':'ACOSettlement','data':{}},'type':'Record','group':'Asset Lifecycle'},
-        {'code':'rundpct','name':'Depreciation','url':'/interface','state':{'type':'Transaction','transaction':'Depreciation','data':{}},'type':'Record','group':'Asset Lifecycle'},
-        {'code':'rvltas','name':'Asset Revaluation','url':'/interface','state':{'type':'Transaction','transaction':'AssetRevaluation','data':{}},'type':'Record','group':'Asset Lifecycle'},
-        {'code':'scrapas','name':'Asset Scrap','url':'/interface','state':{'type':'Transaction','transaction':'AssetScrap','data':{}},'type':'Record','group':'Asset Lifecycle'},
+        {'code':'stlaco','name':'ACO Settlement','url':'/interface','state':{'type':'Transaction','transaction':'ACOSettlement','data':{}},'type':'Record','group':'Asset'},
+        {'code':'rundpct','name':'Depreciation','url':'/interface','state':{'type':'Transaction','transaction':'Depreciation','data':{}},'type':'Record','group':'Asset'},
+        {'code':'rvltas','name':'Asset Revaluation','url':'/interface','state':{'type':'Transaction','transaction':'AssetRevaluation','data':{}},'type':'Record','group':'Asset'},
+        {'code':'scrapas','name':'Asset Scrap','url':'/interface','state':{'type':'Transaction','transaction':'AssetScrap','data':{}},'type':'Record','group':'Asset'},
+        {'code':'dispas','name':'Asset Disposal','url':'/interface','state':{'type':'Transaction','transaction':'AssetDisposal','data':{}},'type':'Record','group':'Asset'},
         {'code':'accgen','name':'General Accounting','url':'/interface','state':{'type':'Transaction','transaction':'GeneralAccounting','data':{}},'type':'Record','group':'Cost and Accounting'},
         {'code':'clrgen','name':'General Ledger Clearing','url':'/interface','state':{'type':'Transaction','transaction':'GeneralLegderClearing','data':{}},'type':'Record','group':'Cost and Accounting'},
         {'code':'amsprepaid','name':'Prepaid Amortisation','url':'/interface','state':{'type':'Transaction','transaction':'PrepaidAmortisation','data':{}},'type':'Record','group':'Cost and Accounting'},
@@ -303,9 +375,6 @@ class Navigator{
         {'code':'issmat','name':'Material Issue','url':'/interface','state':{'type':'Transaction','transaction':'MaterialIssue','data':{}},'type':'Record','group':'Material'},
         {'code':'scrapmat','name':'Material Scrap','url':'/interface','state':{'type':'Transaction','transaction':'MaterialScrap','data':{}},'type':'Record','group':'Material'},
         {'code':'lossitmat','name':'Material Loss in Transit','url':'/interface','state':{'type':'Transaction','transaction':'MaterialLossInTransit','data':{}},'type':'Record','group':'Material'},
-        {'code':'mntc','name':'Maintenance','url':'/interface','state':{'type':'Transaction','transaction':'Maintenance','data':{}},'type':'Record','group':'Operations'},
-        {'code':'prdn','name':'Production','url':'/interface','state':{'type':'Transaction','transaction':'Production','data':{}},'type':'Record','group':'Operations'},
-        {'code':'prcs','name':'Process','url':'/interface','state':{'type':'Transaction','transaction':'Process','data':{}},'type':'Record','group':'Operations'},
         {'code':'invven','name':'Vendor Invoice','url':'/interface','state':{'type':'Transaction','transaction':'VendorInvoice','data':{}},'type':'Record','group':'Payables and Receivables'},
         {'code':'cnoteven','name':'Vendor Credit Note','url':'/interface','state':{'type':'Transaction','transaction':'VendorCreditNote','data':{}},'type':'Record','group':'Payables and Receivables'},
         {'code':'payven','name':'Vendor Payment','url':'/interface','state':{'type':'Transaction','transaction':'VendorPayment','data':{}},'type':'Record','group':'Payables and Receivables'},
@@ -319,11 +388,11 @@ class Navigator{
         {'code':'rcvvan','name':'VAN Receipts','url':'/interface','state':{'type':'Transaction','transaction':'VANReceipts','data':{}},'type':'Record','group':'Payables and Receivables'},
         {'code':'runint','name':'Interest Run','url':'/interface','state':{'type':'Transaction','transaction':'InterestRun','data':{}},'type':'Record','group':'Payables and Receivables'},
         {'code':'runforex','name':'Foreign Exchange Run','url':'/interface','state':{'type':'Transaction','transaction':'ForeignExchangeRun','data':{}},'type':'Record','group':'Payables and Receivables'},
-        {'code':'regas','name':'Asset Register','url':'/interface','state':{'type':'ReportQuery','report':'AssetRegister'},'type':'Reports','group':'Asset Lifecycle'},
-        {'code':'lgras','name':'Asset Ledger','url':'/interface','state':{'type':'ReportQuery','report':'AssetLedger'},'type':'Reports','group':'Asset Lifecycle'},
-        {'code':'balas','name':'Asset Ledger Balance','url':'/interface','state':{'type':'ReportQuery','report':'AssetLedgerBalance'},'type':'Reports','group':'Asset Lifecycle'},
-        {'code':'schas','name':'Asset Schedule','url':'/interface','state':{'type':'ReportQuery','report':'AssetSchedule'},'type':'Reports','group':'Asset Lifecycle'},
-        {'code':'fordpct','name':'Forecast Depreciation','url':'/interface','state':{'type':'ReportQuery','report':'ForecastDepreciation'},'type':'Reports','group':'Asset Lifecycle'},
+        {'code':'regas','name':'Asset Register','url':'/interface','state':{'type':'ReportQuery','report':'AssetRegister'},'type':'Reports','group':'Asset'},
+        {'code':'lgras','name':'Asset Ledger','url':'/interface','state':{'type':'ReportQuery','report':'AssetLedger'},'type':'Reports','group':'Asset'},
+        {'code':'balas','name':'Asset Ledger Balance','url':'/interface','state':{'type':'ReportQuery','report':'AssetLedgerBalance'},'type':'Reports','group':'Asset'},
+        {'code':'schas','name':'Asset Schedule','url':'/interface','state':{'type':'ReportQuery','report':'AssetSchedule'},'type':'Reports','group':'Asset'},
+        {'code':'fordpct','name':'Forecast Depreciation','url':'/interface','state':{'type':'ReportQuery','report':'ForecastDepreciation'},'type':'Reports','group':'Asset'},
         {'code':'fs','name':'Financial Statements','url':'/interface','state':{'type':'ReportQuery','report':'FinancialStatements'},'type':'Reports','group':'Cost and Accounting'},
         {'code':'lgrgen','name':'General Ledger','url':'/interface','state':{'type':'ReportQuery','report':'GeneralLedger'},'type':'Reports','group':'Cost and Accounting'},
         {'code':'balgen','name':'General Ledger Balance','url':'/interface','state':{'type':'ReportQuery','report':'GeneralLedgerBalance'},'type':'Reports','group':'Cost and Accounting'},
@@ -345,6 +414,7 @@ class Navigator{
         {'code':'regcus','name':'Customer Register','url':'/interface','state':{'type':'ReportQuery','report':'CustomerRegister'},'type':'Reports','group':'Payables and Receivables'},
         {'code':'lgrcus','name':'Customer Ledger','url':'/interface','state':{'type':'ReportQuery','report':'CustomerLedger'},'type':'Reports','group':'Payables and Receivables'},
         {'code':'balcus','name':'Customer Ledger Balance','url':'/interface','state':{'type':'ReportQuery','report':'CustomerLedgerBalance'},'type':'Reports','group':'Payables and Receivables'},
+        {'code':'master','name':'Master Collection', 'url':'/interface', 'state':{'type':'Report','report':'MasterCollection','data':{}},'type':'Reports','group':'Business Intelligence'},
         {'code':'simtax','name':'Income Tax Simulator', 'url':'/interface', 'state':{'type':'Report','report':'IncomeTaxSimulator','data':{}},'type':'Reports','group':'Business Intelligence'}
 
     ]
@@ -421,9 +491,15 @@ function SearchBar(){
                 <input type="text" value={code} ref={inputRef} onChange={changeCode} placeholder="Go to . . ."/>
             </div>
             <button className="searchBarButton" onClick={search}><FaArrowRight/></button>
-            <button className="searchBarButton" onClick={()=>window.open(window.location.href,'_blank')}><FaPlus/></button>
+            <button className="searchBarButton" onClick={()=>{navigate('/interface',{state:{'type':'DeviceUI','data':{}}});window.location.reload()}}><FaDesktop/></button>
         </div>
         </div>
+    )
+}
+
+function TitleCard(){
+    return (
+    <h1 className='title'>Simple Costs</h1>
     )
 }
 
@@ -432,12 +508,11 @@ function Home(){
   return(
     <div className='homeOuter'>
         <div className='home'>
-            <h1 className='title'>Simple Costs<sup className='reg'>&reg;</sup></h1>
+            <TitleCard/>
             <div className='actions'>                
                 <div className='menu green' onClick={()=>navigate(`/record`)}><h2>Record</h2></div>
                 <div className='menu red' onClick={()=>navigate(`/control`)}><h2>Control</h2></div>
-                <div className='menu blue'  onClick={()=>navigate(`/reports`)}><h2>Report</h2></div>
-                
+                <div className='menu blue'  onClick={()=>navigate(`/reports`)}><h2>Report</h2></div>  
             </div>
         </div>
     </div>
@@ -503,6 +578,9 @@ class Report{
             case 'IncomeTaxSimulator':
                 defaults = {'Income Tax Code':'115BAC','Financial Year':2024,'Total Income':0,'Tax on Total Income':0,'Marginal Relief':0,'Net Tax on Total Income':0};
                 break
+            case 'MasterCollection':
+                defaults = {'Collection':'Asset'}
+                break
         }
         if (['AssetRegister','MaterialRegister','CustomerRegister','VendorRegister','EmployeeRegister'].includes(this.report)){
             defaults = {...data};
@@ -562,6 +640,13 @@ class Report{
                 {"name":"Line Items","datatype":"table"}
                 ];
                 break
+            case 'MasterCollection':
+                schema = [
+                    {"name":"Collection","datatype":"single","input":"option","options":[...Collection.list],"noteditable":false},
+                    {"name":"Data","datatype":"table"}
+                ]
+                result['Data']=new Collection(result['Collection']).register();
+                break
         }
         if (['AssetRegister','MaterialRegister','CustomerRegister','VendorRegister','EmployeeRegister'].includes(this.report)){
             const collectionname = {
@@ -588,6 +673,7 @@ class Report{
             "EmployeeRegister":"Employee Register",
             "MaterialRegister":"Material Register",
             "VendorRegister":"Vendor Register",
+            "MasterCollection":"Master Collection"
         }
         return (titles[this.report]);
     }
@@ -618,7 +704,11 @@ class Transaction{
     defaults(data){
         let defaults = {};
         if (Transaction.IntraCompanyTransactions.includes(this.type)){
-            defaults = {'Company Code':'','Line Items':[]};
+            defaults = {'Company Code':''};
+            if (this.type==='ACOSettlement'){
+                defaults = {...defaults,...{'Asset Construction Order':'','Posting Date':'','Asset Value Date':''}}
+
+            }
             if (Transaction.AccountingTypes.includes(this.type)){
                 defaults = {
                     'Company Code':'',
@@ -644,6 +734,7 @@ class Transaction{
         let result = {...data};
         let errors = [];
         let navigation = [];
+        let necessary = [];
         const lineItemProcess =(data,itemData,i)=>{
             const company = data['Company Code'];
             const accType = itemData['Account Type'];
@@ -658,7 +749,7 @@ class Transaction{
                 {"name":"Account Type","datatype":"single","input":"option","options":["","Asset","Bank Account","Customer","General Ledger","Material","Vendor"]},
                 {"name":"Account","datatype":"single","input":"option","options":[""]},
                 {"name":"Presentation","datatype":"single","input":"option","options":[""]},
-                {"name":"Transaction","datatype":"single","input":"option","options":[""]},
+                {"name":"TransactionType","datatype":"single","input":"option","options":[""]},
                 {"name":"Amount","datatype":"single","input":"input","type":"number"},
                 {"name":"Quantity","datatype":"single","input":"input","type":"number"},
                 {"name":"Text","datatype":"single","input":"input","type":"text"},
@@ -676,6 +767,7 @@ class Transaction{
                 {"name":"Sale Order","datatype":"single","input":"option","options":["",...new CompanyCollection(company,'SaleOrder').listAll('Code')]},
                 {"name":"Transport Order","datatype":"single","input":"option","options":["",...new CompanyCollection(company,'TransportOrder').listAll('Code')]},
                 {"name":"Value Date","datatype":"single","input":"input","type":"date"},
+                {"name":"Asset Value Date","datatype":"single","input":"input","type":"date"},
             ];
             if (['VendorInvoice','CustomerInvoice','VendorCreditNote','CustomerCreditNote'].includes(this.type)){
                 schema = schema.map(item=>item['name']==="Account Type"?{...item,['options']:["","Asset","Material","General Ledger"]}:item);
@@ -696,7 +788,7 @@ class Transaction{
             if (!['Asset','Material'].includes(accType)){
                 blankfields.push(...["Transaction"]);
             };
-            if (!(accType==="General Ledger" && new CompanyCollection(company,'GeneralLedger').filteredList({'Ledger Type':'Cost Element'},'Code').includes(account))){
+            if (!(accType==="General Ledger")){
                 noteditables.push(...["Cost Center","Revenue Center","Plant","Asset Construction Order","Maintenance Order","Process Order","Production Order","Purchase Order","Sale Order","Transport Order"])
             }
             if (!["Customer","Vendor","General Ledger"].includes(accType) || new CompanyCollection(company,'GeneralLedger').filteredList({'Ledger Type':'Cost Element'},'Code').includes(account)){
@@ -706,8 +798,9 @@ class Transaction{
                 noteditables.push(...['Presentation']);
                 blankfields.push(...['Presentation']);
             }
-            if (accType==="Asset","Material"){
+            if (accType==="Asset"){
                 result['Transaction']="Cost";
+                
             }
             schema = schema.map(field=>noteditables.includes(field['name'])?{...field,['noteditable']:true}:field);
             blankfields.map(field=>result[field]="");
@@ -718,67 +811,78 @@ class Transaction{
         if (Transaction.IntraCompanyTransactions.includes(this.type)){
             const company = data['Company Code'];
             schema = [
-                {"name":"Company","datatype":"single","input":"option","options":["",...new Collection('Company').listAll('Code')]}
-            ]
-        if (Transaction.AccountingTypes.includes(this.type)){
-            schema = [
-                {"name":"Company Code","datatype":"single","input":"option","options":["",...new Collection('Company').listAll('Code')]},
-                {"name":"Posting Date","datatype":"single","input":"input","type":"date"},
-                {"name":"Year","datatype":"single","input":"input","type":"text","noteditable":true},
-                {"name":"Document Date","datatype":"single","input":"input","type":"date"},
-                {"name":"Reference","datatype":"single","input":"input","type":"text"},
-                {"name":"Text","datatype":"single","input":"input","type":"text"},
-                {"name":"Balance","datatype":"single","input":"input","type":"number","noteditable":true},
-            ]
-            if (data['Company Code']!==""){
-                !new Company(company).IsPostingOpen(data['Posting Date'])?errors.push(`Posting Period not Open.`):()=>{};
-                if (['VendorInvoice','VendorCreditNote'].includes(this.type)){
-                    schema.push({
-                        "name":"Vendor Info","datatype":"object","schema":[
-                            {"name":"Vendor","datatype":"single","input":"option","options":["",...new CompanyCollection(company,'Vendor').listAll('Code')]},
-                            {"name":"Presentation","datatype":"single","input":"option","options":["",...new CompanyCollection(company,'GeneralLedger').filteredList({'Ledger Type':'Vendor'},'Code')]},
-                            {"name":"Amount","datatype":"single","input":"input","type":"number"},
-                        ]
-                    });
-
-                    const necessary = ["Vendor","Presentation","Amount"];
-                    necessary.map(field=>data['Vendor Info'][field]===""?errors.push(`Vendor ${field} necessary`):()=>{})
-
-                }
-                if (['CustomerInvoice','CustomerCreditNote'].includes(this.type)){
-                    schema.push({
-                        "name":"Customer Info","datatype":"object","schema":[
-                            {"name":"Customer","datatype":"single","input":"option","options":["",...new CompanyCollection(company,'Customer').listAll('Code')]},
-                            {"name":"Presentation","datatype":"single","input":"option","options":["",...new CompanyCollection(company,'GeneralLedger').filteredList({'Ledger Type':'Customer'},'Code')]},
-                            {"name":"Amount","datatype":"single","input":"input","type":"number"},
-                        ]
-                    })
-                    const necessary = ["Customer","Presentation","Amount"];
-                    necessary.map(field=>data['Customer Info'][field]===""?errors.push(`Cusomer Info ${field} necessary`):()=>{})   
-                }
-                schema.push(    
-                {"name":"Line Items","datatype":"collection","schema":data['Line Items'].map((item,i)=>lineItemProcess(data,item,i).schema)}
-                )
+                {"name":"Company Code","datatype":"single","input":"option","options":["",...new Collection('Company').listAll('Code')]}
+            ];
+            necessary.push('Company Code');
+            if (this.type==="ACOSettlement" && company !== ""){
+                schema.push(...[
+                    {"name":"Asset Construction Order", "datatype":"single","input":"option","options":["",...new CompanyCollection(company,'AssetConstructionOrder').listAll('Code')]},
+                    {"name":"Posting Date", "datatype":"single","input":"input","type":"date"},
+                    {"name":"Asset Value Date", "datatype":"single","input":"input","type":"date"},
+                    {"name":"Text", "datatype":"single","input":"input","type":"text"},
+                ]);
+                necessary.push(...['Asset Construction Order', 'Posting Date','Asset Value Date']);
             }
-            if (company!=="" && data['Posting Date']!==""){
-                result['Year'] = new Company(company).PostingYear(data['Posting Date']);
+            if (Transaction.AccountingTypes.includes(this.type)){
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"option","options":["",...new Collection('Company').listAll('Code')]},
+                    {"name":"Posting Date","datatype":"single","input":"input","type":"date"},
+                    {"name":"Year","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Document Date","datatype":"single","input":"input","type":"date"},
+                    {"name":"Reference","datatype":"single","input":"input","type":"text"},
+                    {"name":"Text","datatype":"single","input":"input","type":"text"},
+                    {"name":"Balance","datatype":"single","input":"input","type":"number","noteditable":true},
+                ]
+                    if (data['Company Code']!==""){
+                        !new Company(company).IsPostingOpen(data['Posting Date'])?errors.push(`Posting Period not Open.`):()=>{};
+                        if (['VendorInvoice','VendorCreditNote'].includes(this.type)){
+                            schema.push({
+                                "name":"Vendor Info","datatype":"object","schema":[
+                                    {"name":"Vendor","datatype":"single","input":"option","options":["",...new CompanyCollection(company,'Vendor').listAll('Code')]},
+                                    {"name":"Presentation","datatype":"single","input":"option","options":["",...new CompanyCollection(company,'GeneralLedger').filteredList({'Ledger Type':'Vendor'},'Code')]},
+                                    {"name":"Amount","datatype":"single","input":"input","type":"number"},
+                                ]
+                            });
+
+                            necessary = ["Vendor","Presentation","Amount"];
+                            necessary.map(field=>data['Vendor Info'][field]===""?errors.push(`Vendor ${field} necessary`):()=>{})
+
+                        }
+                        if (['CustomerInvoice','CustomerCreditNote'].includes(this.type)){
+                            schema.push({
+                                "name":"Customer Info","datatype":"object","schema":[
+                                    {"name":"Customer","datatype":"single","input":"option","options":["",...new CompanyCollection(company,'Customer').listAll('Code')]},
+                                    {"name":"Presentation","datatype":"single","input":"option","options":["",...new CompanyCollection(company,'GeneralLedger').filteredList({'Ledger Type':'Customer'},'Code')]},
+                                    {"name":"Amount","datatype":"single","input":"input","type":"number"},
+                                ]
+                            })
+                            necessary = ["Customer","Presentation","Amount"];
+                            necessary.map(field=>data['Customer Info'][field]===""?errors.push(`Cusomer Info ${field} necessary`):()=>{})   
+                        }
+                        schema.push(    
+                        {"name":"Line Items","datatype":"collection","schema":data['Line Items'].map((item,i)=>lineItemProcess(data,item,i).schema)}
+                        )
+                    }
+                    if (company!=="" && data['Posting Date']!==""){
+                        result['Year'] = new Company(company).PostingYear(data['Posting Date']);
+                    }
+                result['Balance']=SumFieldIfs(result['Line Items'],'Amount',['Debit/ Credit'],['Debit'])-SumFieldIfs(result['Line Items'],'Amount',['Debit/ Credit'],['Credit']);
+                result['Line Items'] = result['Line Items'].map((item,i)=>lineItemProcess(data,item,i).output);
+                necessary = ['Company Code','Posting Date','Document Date'];
+                necessary.map(field=>data[field]===""?errors.push(`${field} necessary`):()=>{});
+                (data['Balance']!==0?errors.push(`Balance not zero`):()=>{});
+                data['Line Items'].map((item,i)=>errors.push(...lineItemProcess(data,item,i).errors));
+                navigation = [
+                    {"name":"POST","type":"action","onClick":()=>alert(new AccountingDocument(data['Company Code'],data['Year']).postDocument(data))}
+                ]
             }
-            result['Balance']=SumFieldIfs(result['Line Items'],'Amount',['Debit/ Credit'],['Debit'])-SumFieldIfs(result['Line Items'],'Amount',['Debit/ Credit'],['Credit']);
-            result['Line Items'] = result['Line Items'].map((item,i)=>lineItemProcess(data,item,i).output);
-            const necessary = ['Company Code','Posting Date','Document Date'];
-            necessary.map(field=>data[field]===""?errors.push(`${field} necessary`):()=>{});
-            (data['Balance']!==0?errors.push(`Balance not zero`):()=>{});
-            data['Line Items'].map((item,i)=>errors.push(...lineItemProcess(data,item,i).errors));
-            navigation = [
-                {"name":"POST","type":"action","onClick":()=>alert(this.postAccountingEntries(data['Company Code'],data['Year'],[data]))}
-            ]
-        }
         if (Transaction.MaterialTransactions.includes(this.type)){
             schema.push(...[
                 {"name":"Value Date","datatype":"single","input":"input","type":"date"},
                 {"name":"Plant/ Location","datatype":"single","input":"option","options":[""]},
             ])
         }
+        necessary.map(field=>data[field]===""?errors.push(`${field} necessary`):()=>{});
     }
 
         return {'schema':schema,'output':result,'errors':errors,'navigation':navigation}
@@ -814,13 +918,18 @@ class Transaction{
     }
     static AccountingTypes = ['CustomerInvoice','CustomerCreditNote','GeneralAccounting','VendorInvoice','VendorCreditNote'];
     static MaterialTransactions = ['MaterialReceipt','MaterialIssue','MaterialAcceptance','MaterialScrap','MaterialLossInTransit','MaterialReturn']
-    static IntraCompanyTransactions = [...this.MaterialTransactions,'CustomerInvoice','CustomerCreditNote','CustomerClearing','CustomerPayment',"Depreciation","GeneralAccounting",'Salary','VendorInvoice','VendorCreditNote','VendorClearing','VendorPayment',]
+    static AssetTransactions = ["ACOSettlement","AssetScrap","AssetDisposal","Depreciation","AssetRevaluation"];
+    static IntraCompanyTransactions = [...this.MaterialTransactions,...this.AssetTransactions,'CustomerInvoice','CustomerCreditNote','CustomerClearing','CustomerPayment',"Depreciation","GeneralAccounting",'Salary','VendorInvoice','VendorCreditNote','VendorClearing','VendorPayment',];
     static titles = {
+        "ACOSettlement":"ACO Settlement",
+        "AssetRevaluation":"Asset Revaluation",
+        "Depreciation":"Depreciation",
+        "AssetScrap":"Asset Scrap",
+        "AssetDisposal":"Asset Disposal",
         "CustomerClearing":"Customer Clearing",
         "CustomerCreditNote":"Customer Credit Note",
         "CustomerInvoice":"Customer Invoice",
         "CustomerPayment":"Customer Payment",
-        "Depreciation":"Depreciation",
         "GeneralAccounting":"General Accounting",
         "MaterialAcceptance":"Material Acceptance",
         "MaterialIssue":"Material Issue",
@@ -850,7 +959,7 @@ function SingleInput({field,output,setdata}){
                 <label>{field['name']}</label>
                 {field['noteditable'] && <p>{output[field['name']]}</p>}
                 {(field['input'] == "input" && !field['noteditable'] )&& 
-                    <input type={field['type']} maxLength={field['maxLength']} placeholder={field['placeholder']} onChange={(e)=>handleChange(e)} value={output[field['name']]}/>}
+                    <input type={field['type']} maxLength={field['maxLength']} placeholder={field['placeholder']} onChange={(e)=>handleChange(e)} value={output[field['name']]} max={field['max']} min={field['min']} step={field['step']}/>}
                 {(field['input']=="option" && !field['noteditable']) && 
                     <select onChange={(e)=>handleChange(e)} value={output[field['name']]}>{field['options'].map(option=><option value={option}>{option}</option>)}</select>}
             </div>
@@ -1217,6 +1326,35 @@ const TableInput = ({schema,data,setdata,defaults,editable})=>{
     )
 }
 
+const DropDown = ({options,onSelect})=>{
+    const [isOpen,setIsOpen] = useState(false);
+    const [selectedOption,setselectedOption] = useState(null);
+    const toggleDropDown = ()=>{
+        setIsOpen(!isOpen);
+    }
+    const handleOptionClick = (option) =>{
+        setselectedOption(option);
+        onSelect(option);
+        setIsOpen(false);
+    }
+
+    return (
+        <div className='dropDown'>
+            <div className='dropDownHead' onClick={()=>toggleDropDown()}>
+                {selectedOption? selectedOption.value : 'Select'}
+                {isOpen? <FaChevronUp />: <FaChevronDown className='dropArrow'/>}
+            </div>
+            {isOpen && (
+                <div className='dropDownList'>
+                    {options.map(option=>(
+                        <label key={option.value} onClick={()=>handleOptionClick(option)}>{option.label}</label>
+                    ))}
+                </div>
+            )}
+        </div>
+    )
+}
+
 const Collapsible = ({ children, title }) => {
       const [isOpen, setIsOpen] = useState(false);
       const contentRef = useRef(null);
@@ -1226,13 +1364,13 @@ const Collapsible = ({ children, title }) => {
       };
 
       return (
-        <div> 
+        <div>
+            <div className="left">
+                <button onClick={toggleCollapse} aria-expanded={isOpen}>{isOpen && <>{`${title} `}<FaChevronUp/></>}{!isOpen && <>{`${title} `}<FaChevronDown/></>}</button>
+            </div>  
             <div ref={contentRef} style={{maxHeight: isOpen ? `${contentRef.current.scrollHeight}px` : '0',overflow: 'hidden',transition: 'max-height 0.3s ease-in-out',}}>
             {children}
             </div>
-            <div className="left">
-                <button onClick={toggleCollapse} aria-expanded={isOpen}>{isOpen && `Hide`}{!isOpen && `${title}`}</button>
-            </div> 
         </div>
       );
 };
@@ -1266,6 +1404,49 @@ function DisplayAsTable({collection}){
 }
 }
 
+function JsonFileReader(){
+    const [jsonData,setJsonData] = useState(null);
+    const [error,setError] = useState(null);
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) =>{
+                try {
+                    const content = e.target.result;
+                    const parsedData = JSON.parse(content);
+                    setJsonData(parsedData);
+                    setError(null);
+                } catch (err){
+                    setError('Error parsing JSON file. Please ensure it is a valid JSON format');
+                    setJsonData(null);
+                }
+            }
+            reader.onerror=()=>{
+                setError('Error reading the File');
+                setJsonData(null);
+            }
+            reader.readAsText(file);
+        } else {
+            setJsonData(null);
+            setError("No file selected.");
+        }
+    }
+
+    return (
+        <div>
+            <input type="file" accept=".json" onChange={handleFileChange}/>
+            {error && <p style={{color:'red'}}>{error}</p>}
+            {jsonData && (
+                <div>
+                    <h3>JSON Data: </h3>
+                    <pre>{JSON.stringify(jsonData,null,2)}</pre>
+                </div>
+            )}
+        </div>
+    )
+}
+
 class KB{
     constructor(){
     }
@@ -1283,7 +1464,7 @@ class KB{
         {"Name":"Australian Dollar", "Code":"AUD"},
         {"Name":"Qatari Rial", "Code":"QAR"},
     ]
-    static AccountTypes = ["Asset","Asset Class","Asset Development","Bank Account","Cost Center","Cost Object","Customer","Employee","Location","Material","Organisational Unit","Profit Center","Purchase Order","Sale Order","Service","Vendor",];
+    static AccountTypes = ["Asset","Asset Group","Asset Development","Bank Account","Cost Center","Cost Object","Customer","Employee","Location","Material","Organisational Unit","Profit Center","Purchase Order","Sale Order","Service","Vendor",];
     static PostingAccounts = ["Asset","Asset Development","Bank Account","Customer","General Ledger","Material","Service","Vendor"];
     static GeneralLedgerGroups = ["Asset","Liability","Equity","Income","Expense"];
     static LedgerTypes = ["Asset","Bank Account","Cost Element","Customer","General","Depreciation","Material","Vendor"];
@@ -1375,29 +1556,34 @@ class Collection{
             switch (this.name){
                 case 'Asset':
                     defaults = {
+                        "Company Code":"",
                         "Code":"",
-                        "Company Code":data['Company Code'],
                         "Description":"",
-                        "Asset Class":"",
-                        "Organisational Unit Type":"",
-                        "Organisational Unit":"",
+                        "Asset Group":"",
+                        "Asset Group Description":"",
+                        "Organisational Assignment":[
+                            {"From":'',"To":'',"Type":"CostCenter","Assignment":''}
+                        ],
                         "Date of Capitalisation":"",
-                        "Date of Retirement":"",
-                        "Depreciation Method":"",
+                        "Depreciation Method":"Straight Line",
                         "Depreciation Rate":"",
                         "Useful Life":0,
                         "Salvage Value":0,
                         "Status":"Draft"
                     }
                     break
-                case 'AssetClass':
+                case 'AssetGroup':
                     defaults = {
                         "Code":"",
                         "Company Code":data['Company Code'],
                         "Description":"",
                         "Depreciable":"Yes",
-                        "General Ledger - Depreciation":"",
                         "General Ledger - Asset":"",
+                        "General Ledger - Depreciation":"",
+                        "General Ledger - Accumulated Depreciation":"",
+                        "General Ledger - Gain on Disposal":"",
+                        "General Ledger - Loss on Disposal":"",
+                        "General Ledger - Loss on Retirement":"",
                         "Status":"Draft"
                     }
                     break
@@ -1406,9 +1592,8 @@ class Collection{
                         "Company Code":data['Company Code'],
                         "Code":"",
                         "Description":"",
-                        "Profit Center":"",
-                        "Settlement Ratio":[
-                            {"Asset":"","Ratio":""}
+                        "Settlement":[
+                            {"Receiver":"","Percentage":""}
                         ],
                         "Status":"Draft"
                     }
@@ -1419,30 +1604,39 @@ class Collection{
                         "Year":data['Year'],
                         "Month":data['Month'],
                         "Employee":data['Employee'],
-                        "Attendance":datesInMonth(data['Year'],data['Month']).map(item=>({'Date':item,'Status':'','Remarks':''}))
+                        "Attendance":datesInMonth(data['Year'],data['Month']).map(item=>({'Date':item,'Status':'Present','Remarks':''}))
                     }
                     break
                 case 'BankAccount':
                     defaults = {
                         "Code":"",
                         "Company Code":data['Company Code'],
-                        "Business Place":"",
-                        "Name":"",
+                        "Description":"",
                         "Bank Name":"",
                         "Address":"",
+                        "Postal Code":"",
+                        "State":"",
                         "Account":"",
                         "SWIFT Code":"",
                         "General Ledger":"",
+                        "Business Place":"",
                         "Profit Center":"",
+                        "Currency":"",
+                        "Post Forex":"Yes",
+                        "Interest Code":"",
+                        "Interest Calculation":"Account Balance",
+                        "Post Interest":"",
+                        "Interest Rate":[{"From":"","To":"","Rate":"","Debit":"Yes","Credit":"Yes"}],
                         "Virtual Accounts":[{"Virtual Account Number":"","Customer":"","Presentation":"","Profit Center":""}],
-                        "Group Keys":[],
+                        "Groups":[],
                         "Status":"Draft"
                     }
                     break
                 case 'ChartOfAccounts':
                     defaults = {
                         "Code":"",
-                        "General Ledger Range":KB.GeneralLedgerGroups.map(item=>({"Group":item,"From":"","To":""})),
+                        "Description":"",
+                        "General Ledger Numbering":['Equity','Liability','Asset','Income','Expense'].map(item=>({"Group":item,"From":"","To":""})),
                         "Status":"Draft"
                     }
                     break
@@ -1450,10 +1644,11 @@ class Collection{
                     defaults = {
                         "Code":"",
                         "Name":"",
-                        "Address":"",
-                        "PIN":"",
-                        "PAN":"",
-                        "Places of Business":[{"Place":"","State":""}],
+                        "Registered Address":"",
+                        "Postal Code":"",
+                        "Permanent Account Number":"",
+                        "Corporate Identification Number":"",
+                        "Places of Business":[{"Place":"","Address":"","Postal Code":"","State":"Kerala", "GSTIN":"","Phone":"","Email":""}],
                         "Functional Currency":"",
                         "Year Zero":"",
                         "Financial Year Beginning":"",
@@ -1550,8 +1745,13 @@ class Collection{
                         "Company Code":data['Company Code'],
                         "Chart of Accounts":new Company(data['Company Code']).data['Chart of Accounts'],
                         "Description":"",
-                        "Ledger Type":"",
-                        "Group":"",
+                        "Ledger Type":"General Ledger",
+                        "Group":"Expense",
+                        "Cost Element":"No",
+                        "Allow Manual Entry":"Yes",
+                        "Currency":"",
+                        "Post Forex":"Yes",
+                        "Post Interest":"Yes",
                         "Group Chart of Accounts":new Company(data['Company Code']).data['Group Chart of Accounts'],
                         "Group General Ledger":"",
                     }
@@ -1559,8 +1759,16 @@ class Collection{
                 case 'GroupChartOfAccounts':
                     defaults = {
                         "Code":"",
-                        "General Ledger Range":KB.GeneralLedgerGroups.map(item=>({"Group":item,"From":"","To":""})),
+                        "General Ledger Numbering":KB.GeneralLedgerGroups.map(item=>({"Group":item,"From":"","To":""})),
                     }
+                    break
+                case 'GroupGeneralLedger':
+                    defaults = {
+                        "Code":"",
+                        "Description":"",
+                        "Chart of Accounts":data['Chart of Accounts'],
+                        "Group":"Expense"
+                    };
                     break
                 case 'Holidays':
                     defaults = {
@@ -1761,47 +1969,100 @@ class Collection{
     interface(data){
         let schema = [];
         let defaults = {};
+        let result = {...data};
+        const list = [];
+        let mandatory = Collection.mandatory[this.name];
+        const nonNegatives = [];
         switch (this.name){
             case 'Asset':
-                schema = [
+                if (result['Company Code']!=="" && result['Asset Group']!==""){
+                    const assetgroup = new AssetGroup(result['Asset Group'],result['Company Code']);
+                    const depreciable = assetgroup.data['Depreciable']==="Yes";
+                    if (!depreciable){result['Depreciation Method']=""}
+                    result['Asset Group Description'] = assetgroup.data['Description'];
+                    
+                    schema = [
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Asset Class","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'AssetClass').listAll('Code')],"noteditable":!(this.method=="Create")},
-                    {"name":"Organisational Unit Type","datatype":"single","input":"option","options":["","CostCenter","Location","Plant","RevenueCenter"],"noteditable":!(this.method=="Create")},
-                    {"name":"Organisational Unit","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],data['Organisational Unit Type']).listAll('Code')],"noteditable":!(this.method=="Create")},
+                    {"name":"Asset Group","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'AssetGroup').listAll('Code')],"noteditable":!this.editable},
+                    {"name":"Asset Group Description","datatype":"single","noteditable":true},
                     {"name":"Date of Capitalisation","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
-                    {"name":"Date of Retirement","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
-                    {"name":"Depreciation Method","datatype":"single","input":"option","options":["","Straight Line","Reducing Balance"],"noteditable":!this.editable},
-                    {"name":"Depreciation Rate","datatype":"single","input":"input","type":"number","noteditable":(!this.editable || data['Depreciation Method']!="Reducing Balance")},
-                    {"name":"Useful Life","datatype":"single","input":"input","type":"number","noteditable":(!this.editable || data['Depreciation Method']!="Straight Line")},
-                    {"name":"Salvage Value","datatype":"single","input":"input","type":"number","noteditable":(!this.editable || data['Depreciation Method']!="Straight Line")},
+                    {"name":"Organisational Assignment", "datatype":"collection","noteditable":!this.editable, "schema":data['Organisational Assignment'].map(item=>[
+                        {"name":"From","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                        {"name":"To","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                        {'name':'Type','datatype':'single','input':'option','options':["CostCenter","Location","Plant","RevenueCenter"],'noteditable':!this.editable},
+                        {'name':'Assignment','datatype':'single','input':'option','options':["",...new CompanyCollection(data['Company Code'],item['Type']).listAll('Code')],'noteditable':!this.editable}
+                    ])},
+                    {"name":"Depreciation Method","datatype":"single","input":"option","options":["","Straight Line","Reducing Balance"],"noteditable":(!this.editable || !depreciable)},
+                    {"name":"Depreciation Rate","datatype":"single","input":"input","type":"number","noteditable":(!this.editable || data['Depreciation Method']!="Reducing Balance" || !depreciable)},
+                    {"name":"Useful Life","datatype":"single","input":"input","type":"number","noteditable":(!this.editable || data['Depreciation Method']!="Straight Line" || !depreciable)},
+                    {"name":"Salvage Value","datatype":"single","input":"input","type":"number","noteditable":(!this.editable || data['Depreciation Method']!="Straight Line" || !depreciable)},
                     {"name":"Status","datatype":"single","input":"option","options":["Draft","Ready","Blocked"]}
-                ]
+                ];
+                } else {
+                    schema = [
+                        {"name":"Company Code","datatype":"single","input":"option","options":["",...new Collection('Company').listAll('Code')],"noteditable":false},
+                        {"name":"Asset Group","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'AssetGroup').listAll('Code')],"noteditable":false},
+                    ]
+                }
+                
+                //errors:
+                (data['Depreciation Rate']>100)?list.push(`Depreciation Rate cannot exceed 100%`):()=>{};
+                list.push(...negativeError(result,['Useful Life','Salvage Value','Depreciation Rate']));
+                if (data['Depreciation Method']==="Straight Line"){
+                    list.push(...blankError(result,['Useful Life','Salvage Value']));
+                } else if (data['Depreciation Method']==="Reducing Balance") {
+                    list.push(...blankError(result,['Depreciation Rate']));
+                };
+                list.push(...timeSeriesError('Organisational Assignment',data['Organisational Assignment'],'From','To'));
+                //processing
+
                 break
-            case 'AssetClass':
+            case 'AssetGroup':
                 schema = [
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!(this.editable)},
                     {"name":"Depreciable","datatype":"single","input":"option","options":["Yes","No"],"noteditable":!(this.method=="Create")},
-                    {"name":"General Ledger - Asset","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'GeneralLedger').filteredList({'Ledger Type':'Asset'},'Code')],"noteditable":(data['Depreciable']!="Yes" || this.method!="Create")},
-                    {"name":"General Ledger - Depreciation","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'GeneralLedger').filteredList({'Ledger Type':'Depreciation'},'Code')],"noteditable":!(this.method=="Create")},
+                    {"name":"General Ledger - Asset","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'GeneralLedger').filteredList({'Ledger Type':'Asset'},'Code')],"noteditable":(this.method!="Create")},
+                    {"name":"General Ledger - Depreciation","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'GeneralLedger').filteredList({'Ledger Type':'Depreciation'},'Code')],"noteditable":!(data['Depreciable']==="Yes" && this.method==="Create")},
+                    {"name":"General Ledger - Accumulated Depreciation","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'GeneralLedger').filteredList({'Ledger Type':'General'},'Code')],"noteditable":!(data['Depreciable']==="Yes" && this.method==="Create")},
+                    {"name":"General Ledger - Gain on Disposal","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'GeneralLedger').filteredList({'Ledger Type':'General'},'Code')],"noteditable":!(this.method=="Create")},
+                    {"name":"General Ledger - Loss on Disposal","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'GeneralLedger').filteredList({'Ledger Type':'General'},'Code')],"noteditable":!(this.method=="Create")},
+                    {"name":"General Ledger - Loss on Retirement","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'GeneralLedger').filteredList({'Ledger Type':'General'},'Code')],"noteditable":!(this.method=="Create")},
                     {"name":"Status","datatype":"single","input":"option","options":["Draft","Ready","Blocked"],"noteditable":!(this.editable)}
-                ]
+                ];
+                //errors:
+                if (data['Depreciable']=="Yes"){
+                    mandatory = [...Collection.mandatory[this.name],"General Ledger - Depreciation", "General Ledger - Accumulated Depreciation"];
+                };
                 break
             case 'AssetConstructionOrder':
                 schema = [
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!(this.editable)},
-                    {"name":"Profit Center","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'ProfitCenter').listAll('Code')],"noteditable":!(this.method=="Create")},
-                    {"name":"Settlement Ratio","datatype":"collection","noteditable":!this.editable,"schema":data['Settlement Ratio'].map(item=>[
+                    {"name":"Settlement","datatype":"collection","noteditable":!this.editable,"schema":data['Settlement'].map(item=>[
                         {'name':'Asset','datatype':'single','input':'option','options':['',...new CompanyCollection(data['Company Code'],'Asset').listAll('Code')],'noteditable':!this.editable},
-                        {"name":"Ratio","datatype":"single","input":"input","type":"number","noteditable":!(this.editable)},
+                        {'name':'Description','datatype':'single','noteditable':true},
+                        {"name":"Percentage","datatype":"single","input":"input","type":"number","noteditable":!(this.editable)},
                     ])},
                     {"name":"Status","datatype":"single","input":"option","options":["Draft","Ready","Completed"],"noteditable":!this.editable},
-                ]
+                ];
+                //errors:
+                (SumField(data['Settlement'],'Percentage')>100?list.push(`Total of settlement percentage cannot be more than 100`):()=>{});
+                data['Settlement'].forEach((ratio,i)=>{
+                    const errorText = `At settlement receiver ${i+1},`
+                    if (ratio['Percentage']<0){
+                        list.push(`${errorText} percentage is negative.`)
+                    }
+                    if (ratio['Asset']===""){
+                        list.push(`${errorText} receiver asset necessary.`)
+                    }
+                });
+                //processing
+                result['Settlement'] = result['Settlement'].map(item=>(item['Asset']!==""&& result['Company Code']!=="")?{...item,['Description']:new Asset(item['Asset'],result['Company Code']).data['Description']}:item);
                 break
             case 'Attendance':
                 schema = [
@@ -1811,7 +2072,7 @@ class Collection{
                     {"name":"Month","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Attendance","datatype":"collection","noteditable":true,"schema":data['Attendance'].map(item=>[
                         {"name":"Date","datatype":"single","input":"input","type":"date","noteditable":true},
-                        {"name":"Status","datatype":"single","input":"option","options":["","Present","Leave","Absent"],"noteditable":!this.editable},
+                        {"name":"Status","datatype":"single","input":"option","options":["Present","Leave","Absent"],"noteditable":!this.editable},
                         {"name":"Remarks","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     ])}
                 ]
@@ -1820,14 +2081,27 @@ class Collection{
                 schema = [
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!this.method=="Create"},
-                    {"name":"Business Place","datatype":"single","input":"option","options":["",...new Company(data['Company Code']).BusinessPlaces],"noteditable":!this.editable},
                     {"name":"Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Bank Name","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Address","datatype":"single","input":"input","type":"textarea","noteditable":!this.editable},
+                    {"name":"Postal Code","datatype":"single","input":"input","type":"textarea","noteditable":!this.editable},
+                    {"name":"State","datatype":"single","input":"option","options":["",...KB.States,...KB.UTs],"noteditable":!this.editable},
                     {"name":"SWIFT Code","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"Account","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                     {"name":"General Ledger","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'GeneralLedger').filteredList({'Ledger Type':'Bank Account'},'Code')],"noteditable":(!this.method=="Create")},
+                    {"name":"Business Place","datatype":"single","input":"option","options":["",...new Company(data['Company Code']).BusinessPlaces],"noteditable":!this.editable},
                     {"name":"Profit Center","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'ProfitCenter').listAll('Code')],"noteditable":(!this.method=="Create")},
+                    {"name":"Currency","datatype":"single","input":"option","options":["",...new Table('Currencies').list],"noteditable":!this.editable},
+                    {"name":"Post Forex","datatype":"single","input":"option","options":["Yes","No"],"noteditable":!this.editable},
+                    {"name":"Post Interest","datatype":"single","input":"option","options":["Yes","No"],"noteditable":!this.editable},
+                    {"name":"Interest Code","datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
+                    {"name":"Interest Rate","datatype":"collection","noteditable":!this.editable, "schema":data['Interest Rate'].map(item=>[
+                        {"name":"From","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                        {"name":"To","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                        {"name":"Rate","datatype":"single","input":"input","type":"number","noteditable":!this.editable},
+                        {"name":"Debit","datatype":"single","input":"option","options":["Yes","No"],"noteditable":!this.editable},
+                        {"name":"Credit","datatype":"single","input":"option","options":["Yes","No"],"noteditable":!this.editable},
+                    ])},
                     {"name":"Virtual Accounts","datatype":"collection","noteditable":!this.editable,"schema":data['Virtual Accounts'].map(item=>[
                         {"name":"Virtual Account Number","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
                         {"name":"Customer","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'Customer').listAll('Code')],"noteditable":!this.editable},
@@ -1840,7 +2114,7 @@ class Collection{
             case 'ChartOfAccounts':
                 schema = [
                     {"name":"Code","datatype":"single","input":"input","maxLength":4,"type":"text","noteditable":!(this.method=="Create")},
-                    {"name":"General Ledger Range","datatype":"collection","noteditable":true,"schema":data['General Ledger Range'].map(item=>[
+                    {"name":"General Ledger Numbering","datatype":"collection","noteditable":true,"schema":data['General Ledger Numbering'].map(item=>[
                         {"name":"Group","datatype":"single","input":"input","type":"text","noteditable":true},
                         {"name":"From","input":"input","datatype":"single","type":"number","noteditable":!(this.method=="Create")},
                         {"name":"To","input":"input","datatype":"single","type":"number","noteditable":!(this.method=="Create")},        
@@ -1993,16 +2267,23 @@ class Collection{
                     {"name":"Chart of Accounts","datatype":"single","input":"option","options":[""],"noteditable":true},
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Group","datatype":"single","input":"option","options":["",...KB.GeneralLedgerGroups],"noteditable":!this.editable},
-                    {"name":"Ledger Type","datatype":"single","input":"option","options":["",...KB.LedgerTypes],"noteditable":!this.editable},
+                    {"name":"Group","datatype":"single","input":"option","options":["Asset","Liability","Equity","Income","Expense"],"noteditable":!this.editable},
+                    {"name":"Ledger Type","datatype":"single","input":"option","options":["Asset","Bank Account","Customer","Material","General Ledger","Vendor"],"noteditable":!this.editable},
+                    {"name":"Cost Element","datatype":"single","input":"option","options":["Yes","No"], "noteditable":(this.method!=='Create' || data['Ledger Type']!=="General Ledger")},
+                    {"name":"Allow Manual Entry","datatype":"single","input":"option","options":["Yes","No"], "noteditable":(this.method!=='Create' || ["Asset","Material","Customer","Vendor","Bank Account"].includes(data['Ledger Type']))},
+                    {"name":"Currency","datatype":"single","input":"option","options":["",...new Table('Currencies').list], "noteditable":(this.method!=='Create')},
+                    {"name":"Post Forex","datatype":"single","input":"option","options":["Yes","No"], "noteditable":(!this.editable)},
+                    {"name":"Post Interest","datatype":"single","input":"option","options":["Yes","No"], "noteditable":(!this.editable)},
                     {"name":"Group Chart of Accounts","datatype":"single","input":"option","options":[""],"noteditable":true},
                     {"name":"Group General Ledger", "datatype":"single","input":"option","options":[""],"noteditable":!this.editable},
-                ]
+                ];
+                // Errors
+                (data['Code']!="" && data["Group"]!="" && !valueInRange(data['Code'],new ChartOfAccounts(data['Company Code']).range(data['Group'])))?list.push(`General Ledger code ${data['Code']} not in range for ${data['Group']} ${JSON.stringify(new ChartOfAccounts(data['Company Code']).range(data['Group']))}`):()=>{};
                 break
             case 'GroupChartOfAccounts':
                 schema = [
                     {"name":"Code","datatype":"single","input":"input","maxLength":5,"type":"text","noteditable":!(this.method=="Create")},
-                    {"name":"General Ledger Range","datatype":"collection","noteditable":true,"schema":data['General Ledger Range'].map(item=>[
+                    {"name":"General Ledger Numbering","datatype":"collection","noteditable":true,"schema":data['General Ledger Numbering'].map(item=>[
                         {"name":"Group","datatype":"single","input":"input","type":"text","noteditable":true},
                         {"name":"From","input":"input","datatype":"single","type":"number","noteditable":!(this.method=="Create")},
                         {"name":"To","input":"input","datatype":"single","type":"number","noteditable":!(this.method=="Create")},        
@@ -2013,8 +2294,8 @@ class Collection{
                 schema = [
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Group","datatype":"single","input":"option","options":["",...KB.GeneralLedgerGroups],"noteditable":!this.editable},
-                    {"name":"Group Chart of Accounts","datatype":"single","input":"option","options":[""],"noteditable":true},
+                    {"name":"Chart of Accounts","datatype":"single","input":"input","type":"text","noteditable":true},
+                    {"name":"Group","datatype":"single","input":"option","options":["Asset","Liability","Equity","Income","Expense"],"noteditable":!this.editable},
                 ]
                 break
             case 'Holidays':
@@ -2241,394 +2522,10 @@ class Collection{
                 ]
                 break
         }
-        if (this.method==="Create"){
-            switch (this.name){
-                case 'Asset':
-                    defaults = {
-                        "Code":"",
-                        "Company Code":data['Company Code'],
-                        "Description":"",
-                        "Asset Class":"",
-                        "Organisational Unit Type":"",
-                        "Organisational Unit":"",
-                        "Date of Capitalisation":"",
-                        "Date of Retirement":"",
-                        "Depreciation Method":"",
-                        "Depreciation Rate":"",
-                        "Useful Life":0,
-                        "Salvage Value":0,
-                        "Status":"Draft"
-                    }
-                    break
-                case 'AssetClass':
-                    defaults = {
-                        "Code":"",
-                        "Company Code":data['Company Code'],
-                        "Description":"",
-                        "Depreciable":"Yes",
-                        "General Ledger - Depreciation":"",
-                        "General Ledger - Asset":"",
-                        "Status":"Draft"
-                    }
-                    break
-                case 'AssetConstructionOrder':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Code":"",
-                        "Description":"",
-                        "Profit Center":"",
-                        "Settlement Ratio":[
-                            {"Asset":"","Ratio":""}
-                        ],
-                        "Status":"Draft"
-                    }
-                    break
-                case 'Attendance':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Year":data['Year'],
-                        "Month":data['Month'],
-                        "Employee":data['Employee'],
-                        "Attendance":datesInMonth(data['Year'],data['Month']).map(item=>({'Date':item,'Status':'','Remarks':''}))
-                    }
-                    break
-                case 'BankAccount':
-                    defaults = {
-                        "Code":"",
-                        "Company Code":data['Company Code'],
-                        "Business Place":"",
-                        "Name":"",
-                        "Bank Name":"",
-                        "Address":"",
-                        "Account":"",
-                        "SWIFT Code":"",
-                        "General Ledger":"",
-                        "Profit Center":"",
-                        "Virtual Accounts":[{"Virtual Account Number":"","Customer":"","Presentation":"","Profit Center":""}],
-                        "Group Keys":[],
-                        "Status":"Draft"
-                    }
-                    break
-                case 'ChartOfAccounts':
-                    defaults = {
-                        "Code":"",
-                        "General Ledger Range":KB.GeneralLedgerGroups.map(item=>({"Group":item,"From":"","To":""})),
-                        "Status":"Draft"
-                    }
-                    break
-                case 'Company':
-                    defaults = {
-                        "Code":"",
-                        "Name":"",
-                        "Address":"",
-                        "PIN":"",
-                        "PAN":"",
-                        "Places of Business":[{"Place":"","State":""}],
-                        "Functional Currency":"",
-                        "Year Zero":"",
-                        "Financial Year Beginning":"",
-                        "Chart of Accounts":"",
-                        "Group Chart of Accounts":"", 
-                        "Status":"Draft"                       
-                    }
-                    break
-                case 'CostCenter':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Code":"",
-                        "Description":"",
-                        "Profit Center":"",
-                        "Business Place":"",
-                        "Allocation Ratio":[
-                            {"From":"","To":"","Ratio":[
-                                {"Type":"","To":"","Percentage":0}
-                            ]}
-                        ],
-                        "Status":"Draft"
-                    }
-                    break
-                case 'Customer':
-                    defaults = {
-                        "Code":"",
-                        "Company Code":data['Company Code'],
-                        "Name":"",
-                        "PAN":"",
-                        "GSTIN":"",
-                        "Address":"",
-                        "Postal Code":"",
-                        "State":"",
-                        "Phone":"",
-                        "Email":"",
-                        "Payment Terms":"",
-                        "Bank Accounts":[{"Ref Id":"","Bank Name":"","IFSC":"","Account":"","Confirm Account":""}],
-                        "Groups":[""],
-                        "Status":"Draft"
-                    }
-                    break
-                case 'Customisation':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Numbering":KB.Numbering.map(item=>({"Item":item,"From":"","To":""}))
-                    };
-                    break
-                case 'Employee':
-                    defaults = {
-                        "Code":"",
-                        "Company Code":data['Company Code'],
-                        "Name":"",
-                        "Address":"",
-                        "PIN":"",
-                        "State":"",
-                        "Phone":"",
-                        "Email":"",
-                        "Tax Identification Number":"",
-                        "Date of Birth":"",
-                        "Date of Joining":"",
-                        "Date of Seperation":"",
-                        "Bank Accounts":[
-                            {"Account Number":"","Confirm Account Number":"","Bank Name":"","IFSC Code":""}
-                        ],
-                        "Employment Details":[
-                            {"Organisational Unit":"","From":"","To":"","Position":""}
-                        ],
-                        "Variable Wages":[
-                            {"Wage Type":"","Amount":"","From":"","To":""}
-                        ],
-                        "Fixed Wages":[
-                            {"Wage Type":"","Amount":"","From Year":"","From Month":"","To Year":"","To Month":""}
-                        ],
-                        "One Time Wages":[
-                            {"Wage Type":"","Amount":"","Date":""}
-                        ],
-                        "Income Tax Code":"",
-                        "Additional Income and Deductions":[
-                            {"Tax Year":"","Description":"","Type":"","Amount":""}
-                        ]
-                    }
-                    break
-                case 'FinancialStatement':
-                    defaults = {
-                        "Code":"",
-                        "Chart of Accounts":"",
-                        "Type":"",
-                        "Hierarchy":[{"Presentation":"","Hierarchy":""}],
-                    }
-                    break
-                case 'GeneralLedger':
-                    defaults = {
-                        "Code":"",
-                        "Company Code":data['Company Code'],
-                        "Chart of Accounts":new Company(data['Company Code']).data['Chart of Accounts'],
-                        "Description":"",
-                        "Ledger Type":"",
-                        "Group":"",
-                        "Group Chart of Accounts":new Company(data['Company Code']).data['Group Chart of Accounts'],
-                        "Group General Ledger":"",
-                    }
-                    break
-                case 'GroupChartOfAccounts':
-                    defaults = {
-                        "Code":"",
-                        "General Ledger Range":KB.GeneralLedgerGroups.map(item=>({"Group":item,"From":"","To":""})),
-                    }
-                    break
-                case 'Holidays':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Year":new Date().getFullYear(),
-                        "Holidays":[
-                            {"Date":"","Description":""}
-                        ],
-                    }
-                    break
-                case 'IncomeTaxCode':
-                    defaults = {
-                        "Code":"",
-                        "Taxation":[
-                            {
-                                "From Year":0,
-                                "To Year":0,
-                                "Exemption Limit":0,
-                                "Marginal Relief":"Yes",
-                                "Standard Deduction - Salary":0,
-                                "Cess":0,
-                                "Slab":[
-                                    {"From":0,"To":0,"Rate":0}
-                                ]
-                            }
-                        ]
-                    }
-                    break
-                case 'Location':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Code":"",
-                        "Description":"",
-                        "Profit Center":"",
-                        "Business Place":"",
-                        "Cost Distribution":[
-                            {"From":"","To":"","Ratio":[
-                                {"Material":"","Multiplier":"","Remarks":""}
-                            ]}
-                        ],
-                        "Status":""
-                    }
-                    break
-                case 'MaintenanceOrder':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Code":"",
-                        "Organisational Unit":"",
-                        "Status":"",
-                        "Type of Activity":"",
-                        "Date of Maintenance":"",
-                        "Period From":"",
-                        "Period To":""
-                    }
-                    break
-                case 'Material':
-                    defaults = {
-                        "Code":"",
-                        "Company Code": data['Company Code'],
-                        "Description":"",
-                        "Unit":"",
-                        "Material Group":"",
-                        "Price":[
-                            {"Location":"","From":"","To":"","Price":""}
-                        ],
-                    }
-                    break
-                case 'MaterialGroup':
-                    defaults = {
-                        "Code":"",
-                        "Company Code": data['Company Code'],
-                        "Description":"",
-                        "General Ledger - Material":"",
-                        "General Ledger - Revenue":"",
-                        "General Ledger - Cost of Sales":"",
-                    }
-                    break
-                case 'PaymentTerms':
-                    defaults = {
-                        "Code":"",
-                        "Description":"",
-                        "Due Within Days":0,
-                        "Discount Criteria":[
-                            {"Days":0,"Rate":0}
-                        ],
-                        "Interest Criteria":[
-                            {"Days":0,"Rate":0}
-                        ],
-                    }
-                    break
-                case 'Plant':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Code":"",
-                        "Description":"",
-                        "Profit Center":"",
-                        "Business Place":"",
-                        "Allocation Ratio":[
-                            {"From":"","To":"","Ratio":[
-                                {"To":"","Percentage":""}
-                            ]}
-                        ],
-                        "Status":"Draft",
-                    };
-                    break
-                case 'ProfitCenter':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Code":"",
-                        "Segment":"",
-                        "Description":"",
-                    }
-                    break
-                case 'PurchaseOrder':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Order Number":"",
-                        "Date":"",
-                        "Vendor":"",
-                        "Items":[
-                            {"Material":"","Description":"","Quantity":0,"Unit Price":0,"Total Price":0}
-                        ],
-                        "Total Amount":0,
-                    }
-                    break
-                case 'RevenueCenter':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Code":"",
-                        "Description":"",
-                        "Profit Center":"",
-                        "Business Place":"",
-                        "Allocation Ratio":[
-                            {"From":"","To":"","Ratio":[
-                                {"Type":"","To":"","Percentage":0}
-                            ]}
-                        ],
-                        "Status":"Draft"
-                    }
-                    break
-                case 'SaleOrder':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Order Number":"",
-                        "Date":"",
-                        "Customer":"",
-                        "Items":[
-                            {"Material":"","Description":"","Quantity":0,"Unit Price":0,"Total Price":0}
-                        ],
-                        "Total Amount":0,
-                    }
-                    break
-                case 'Service':
-                    defaults = {
-                        "Code":"",
-                        "Company Code": "",
-                        "Name":"",
-                        "Price":[
-                            {"Business Place":"","From":"","To":"","Price":""}
-                        ],
-                        "General Ledger - Expense":"",
-                        "General Ledger - Revenue":""
-                    }
-                    break
-                case 'TimeControl':
-                    defaults = {
-                        "Company Code":data['Company Code'],
-                        "Open Periods":[
-                            {"From":"","To":""}
-                        ],
-                    }
-                    break
-                case 'Vendor':
-                    defaults = {
-                        "Code":"",
-                        "Company Code":data['Company Code'],
-                        "Name":"",
-                        "PAN":"",
-                        "GSTIN":"",
-                        "Address":"",
-                        "Postal Code":"",
-                        "State":"",
-                        "Phone":"",
-                        "Email":"",
-                        "Payment Terms":"",
-                        "Bank Accounts":[{"Ref Id":"","Bank Name":"","IFSC":"","Account":"","Confirm Account":""}],
-                        "Groups":[""],
-                        "Status":"Draft"
-                    }
-                    break
-                
-            }
-        } else if (this.method=="Update" || this.method =="Display") {
-            defaults = this.getData(data);
-        }
         let navigation = [
-            {"name":"Back","type":"navigate","url":'/control','state':{},'onClick':()=>alert('Hi')},
-            {"name":"Save","type":"action","onClick":()=>alert(this.save(data))},
+            {"name":"Export","type":"action","onClick":()=>Operations.downloadJSON(result,'Collection'),'refresh':false},
+            {"name":"Back","type":"navigate","url":'/control','state':{},'refresh':true},
+            {"name":"Save","type":"action","onClick":()=>alert(this.save(data)), 'refresh':list.length===0},
         ];
         if (this.method!="Create"){
             navigation.push({"name":"Export JSON","type":"action","onClick":()=>Operations.downloadJSON(data,this.name)})
@@ -2636,40 +2533,9 @@ class Collection{
         if (this.method==="Display"){
             navigation = navigation.filter(item=>item['name']!=="Save");
         }
-        const list = [];
-        let mandatory = Collection.mandatory[this.name];
-        const nonNegatives = [];
         (this.method=="Create" && this.exists(data))?list.push(`Record of ${this.title} with same identfiers ${JSON.stringify(this.identifiers)} already exists`):()=>{};
         (KB.AccountTypes.includes(this.title) && data['Code']!="" && !valueInRange(data['Code'],new Company(data['Company Code']).CollectionRange(this.title)))?list.push(`${this.title} code ${data['Code']} not in range for Company ${data['Company Code']} (${JSON.stringify(new Company(data['Company Code']).CollectionRange(this.title))})`):()=>{};
         switch (this.name){
-            case 'Asset':
-                data['Date of Retirement']!="" && (new Date(data['Date of Retirement']) < new Date(data['Date of Capitalisation']))?list.push("Date of Retirement cannot be before Date of Capitalisation"):()=>{};
-                data['Date of Capitalisation']!="" && (new Date(data['Date of Capitalisation']) > new Date())?list.push("Date of Capitalisation cannot be in future"):()=>{};
-                (data['Depreciation Rate']>100)?list.push(`Depreciation Rate cannot exceed 100%`):()=>{};
-                nonNegatives.push(...["Useful Life","Salvage Value","Depreciation Rate"]);
-                if (data['Depreciation Method']==="Straight Line"){
-                    mandatory = [...Collection.mandatory[this.name],"Useful Life","Salvage Value"];
-                } else if (data['Depreciation Method']==="Reducing Balance") {
-                    mandatory = [...Collection.mandatory[this.name],"Depreciation Rate"];
-                }
-                break
-            case 'AssetClass':
-                if (data['Depreciable']=="Yes"){
-                    mandatory = [...Collection.mandatory[this.name],"General Ledger - Depreciation"];
-                }
-                break
-            case 'AssetConstructionOrder':
-                (SumField(data['Settlement Ratio'],'Ratio')>100?list.push(`Total of ratio cannot be more than 100`):()=>{});
-                for (let i=0; i<data['Settlement Ratio'].length;i++){
-                    let ratio = data['Settlement Ratio'][i];
-                    if (ratio['Ratio']<0){
-                        list.push(`Ratio ${i+1} is negative.`)
-                    }
-                    if (ratio['Asset']===""){
-                        list.push(`Ratio ${i+1} requires an Asset Code.`)
-                    }
-                }
-                break
             case 'Attendance':
                 data['Attendance'].map(item=>(item['Status']=="")?list.push(`Attendance missing for ${item['Date']}`):()=>{});
                 break
@@ -2686,10 +2552,10 @@ class Collection{
                 break
             case 'ChartOfAccounts':
                 (this.method=="Create" && new Collection("GroupChartOfAccounts").exists(data))?list.push(`Group Chart of Accounts with same identifier(s) already exists`):()=>{};
-                data['General Ledger Range'].map((item,i)=>(item['From']=="" || item['To']=="")?list.push(`Group ${item['Group']} requires range`):()=>{})
-                data['General Ledger Range'].map((item,i)=>(Number(item['From'])>=Number(item['To']))?list.push(`${item['Group']}: 'To' range needs to be greater than 'from' range`):()=>{})
-                for (let i=1;i<data['General Ledger Range'].length;i++){
-                    (Number(data['General Ledger Range'][i]['From']) <= Number(data['General Ledger Range'][i-1]['To']))?list.push(`'From' range of ${data['General Ledger Range'][i]['Group']} to be greater than 'To' range of ${data['General Ledger Range'][i-1]['Group']}`):()=>{};
+                data['General Ledger Numbering'].map((item,i)=>(item['From']=="" || item['To']=="")?list.push(`Group ${item['Group']} requires range`):()=>{})
+                data['General Ledger Numbering'].map((item,i)=>(Number(item['From'])>=Number(item['To']))?list.push(`${item['Group']}: 'To' range needs to be greater than 'from' range`):()=>{})
+                for (let i=1;i<data['General Ledger Numbering'].length;i++){
+                    (Number(data['General Ledger Numbering'][i]['From']) <= Number(data['General Ledger Numbering'][i-1]['To']))?list.push(`'From' range of ${data['General Ledger Numbering'][i]['Group']} to be greater than 'To' range of ${data['General Ledger Numbering'][i-1]['Group']}`):()=>{};
                 }
                 break
             case 'Company':
@@ -2759,14 +2625,13 @@ class Collection{
                 this.exists(data)?list.push(`${this.title} with same identifier(s) already exists`):()=>{};
                 break
             case 'GeneralLedger':
-                (data['Code']!="" && data["Group"]!="" && !valueInRange(data['Code'],new ChartOfAccounts(data['Company Code']).range(data['Group'])))?list.push(`General Ledger code ${data['Code']} not in range for ${data['Group']} ${JSON.stringify(new ChartOfAccounts(data['Company Code']).range(data['Group']))}`):()=>{};
                 break
             case 'GroupChartOfAccounts':
                 (this.method=="Create" && new Collection("ChartOfAccounts").exists(data))?list.push(`Chart of Accounts with same identifier(s) already exists`):()=>{};
-                data['General Ledger Range'].map((item,i)=>(item['From']=="" || item['To']=="")?list.push(`Group ${item['Group']} requires range`):()=>{})
-                data['General Ledger Range'].map((item,i)=>(Number(item['From'])>=Number(item['To']))?list.push(`${item['Group']}: 'To' range needs to be greater than 'from' range`):()=>{})
-                for (let i=1;i<data['General Ledger Range'].length;i++){
-                    (Number(data['General Ledger Range'][i]['From']) <= Number(data['General Ledger Range'][i-1]['To']))?list.push(`'From' range of ${data['General Ledger Range'][i]['Group']} to be greater than 'To' range of ${data['General Ledger Range'][i-1]['Group']}`):()=>{};
+                data['General Ledger Numbering'].map((item,i)=>(item['From']=="" || item['To']=="")?list.push(`Group ${item['Group']} requires range`):()=>{})
+                data['General Ledger Numbering'].map((item,i)=>(Number(item['From'])>=Number(item['To']))?list.push(`${item['Group']}: 'To' range needs to be greater than 'from' range`):()=>{})
+                for (let i=1;i<data['General Ledger Numbering'].length;i++){
+                    (Number(data['General Ledger Numbering'][i]['From']) <= Number(data['General Ledger Numbering'][i-1]['To']))?list.push(`'From' range of ${data['General Ledger Numbering'][i]['Group']} to be greater than 'To' range of ${data['General Ledger Numbering'][i-1]['Group']}`):()=>{};
                 }
                 break
             case 'Holidays':
@@ -2935,11 +2800,10 @@ class Collection{
                 break
         }
         const missed = [];
-        mandatory.map(field=>data[field]==""?missed.push(field):()=>{});
+        mandatory.map(field=>data[field]===""?missed.push(field):()=>{});
         (missed.length>0)?list.push(`${missed.join(", ")} necessary`):()=>{};
         nonNegatives.map(field=>data[field]<0?list.push(`${field} cannot be negative.`):()=>{});
         const uniquelist = [...new Set(list)];
-        let result = {...data};
         switch (this.name){
             case 'Asset':
                 result['Depreciation Rate'] = (result['Depreciation Method']!="Reducing Balance")?"":result['Depreciation Rate'];
@@ -2997,15 +2861,15 @@ class Collection{
     save(data){
         const errors = this.interface(data).errors;
         if (errors.length>0) {
-            return ("Validation Unsuccessful!")
+            return 'Errors remaining unresolved. Could not process request';
         } else {
             saveData(this.updatedCollection(data),this.collectionname);
-            return ('Success');
+            return 'Successfully saved';
         }
     }
     static collectionname = {
         "Asset":"assets",
-        "AssetClass":"assetclasses",
+        "AssetGroup":"assetgroups",
         "AssetConstructionOrder":"assetconstructionorders",
         "Attendance":"attendances",
         "BankAccount":"bankaccounts",
@@ -3038,10 +2902,11 @@ class Collection{
         "UserSettings":"usersettings",
         "Vendor":"vendors",
     }
+    static list = Object.keys(this.collectionname);
     static mandatory = {
-        "Asset":["Company Code","Code","Description","Asset Class","Organisational Unit Type","Organisational Unit","Date of Capitalisation","Depreciation Method"],
-        "AssetClass":["Code","Company Code","Description","Depreciable","General Ledger - Asset"],
-        "AssetConstructionOrder":["Company Code","Code","Description","Profit Center"],
+        "Asset":["Company Code","Code","Description","Asset Group","Organisational Unit Type","Organisational Unit","Date of Capitalisation","Depreciation Method"],
+        "AssetGroup":["Code","Company Code","Description","Depreciable","General Ledger - Asset","General Ledger - Gain on Revaluation","General Ledger - Gain on Disposal","General Ledger - Loss on Disposal","General Ledger - Loss on Retirement"],
+        "AssetConstructionOrder":["Company Code","Code","Description"],
         "Attendance":["Company Code","Employee","Year","Month"],
         "BankAccount":["Code","Company Code","Name","Business Place","General Ledger","Profit Center"],
         "ChartOfAccounts":["Code"],
@@ -3052,8 +2917,9 @@ class Collection{
         "Employee":["Code","Company Code","Name","State","Income Tax Code"],
         "FinancialAccountsSettings":["Company Code","General Ledger for Profit and Loss Account","General Ledger for Cash Discount","General Ledger for Salary TDS"],
         "FinancialStatementVersion":["Code"],
-        "GeneralLedger":["Code","Company Code","Chart of Accounts","Description","Ledger Type","Group"],
+        "GeneralLedger":["Code","Company Code","Chart of Accounts","Description","Ledger Type","Group","Currency"],
         "GroupChartOfAccounts":["Code"],
+        "GroupGeneralLedger":["Code","Chart of Accounts","Description"],
         "Holidays":["Company Code","Year"],
         "IncomeTaxCode":["Code"],
         "Location":["Code","Company Code","Name","Cost Center","Business Place","Profit Center"],
@@ -3074,7 +2940,7 @@ class Collection{
     }
     static identifiers = {
         "Asset":["Company Code","Code"],
-        "AssetClass":["Code","Company Code"],
+        "AssetGroup":["Code","Company Code"],
         "AssetConstructionOrder":["Company Code","Code"],
         "Attendance":["Company Code","Employee","Year","Month"],
         "BankAccount":["Code","Company Code"],
@@ -3088,6 +2954,7 @@ class Collection{
         "FinancialStatementVersion":["Code"],
         "GeneralLedger":["Code","Company Code"],
         "GroupChartOfAccounts":["Code"],
+        "GroupGeneralLedger":["Code","Chart of Accounts"],
         "Holidays":["Company Code","Year"],
         "IncomeTaxCode":["Code"],
         "Location":["Code","Company Code"],
@@ -3108,7 +2975,7 @@ class Collection{
     }
     static titles = {
         "Asset":"Asset",
-        "AssetClass":"Asset Class",
+        "AssetGroup":"Asset Group",
         "AssetConstructionOrder":"Asset Construction Order",
         "Attendance":"Attendance",
         "BankAccount":"Bank Account",
@@ -3122,6 +2989,7 @@ class Collection{
         "FinancialStatementVersion":"Financial Statement Version",
         "GeneralLedger":"General Ledger",
         'GroupChartOfAccounts':'Group Chart of Accounts',
+        "GroupGeneralLedger":"Group General Ledger",
         "Holidays":"Holidays",
         "IncomeTaxCode":"Income Tax Code",
         "Location":"Location",
@@ -3159,7 +3027,7 @@ class CollectionQuery{
                     {'name':'Company Code', 'datatype':'single','input':'option', 'options':["", ...new Collection('Company').listAll('Code')]}
                 ]
                 break
-            case 'AssetClass':
+            case 'AssetGroup':
                 schema = [
                     {'name':'Code', 'datatype':'single','input':'input', 'type':'text'},
                     {'name':'Company Code', 'datatype':'single','input':'option', 'options':["", ...new Collection('Company').listAll('Code')]}
@@ -3239,6 +3107,12 @@ class CollectionQuery{
                 schema = [
                     {'name':'Code', 'datatype':'single','input':'input', 'type':'text', 'maxLength':6},
                 ]
+                break
+            case 'GroupGeneralLedger':
+                schema = [
+                    {'name':'Code', 'datatype':'single','input':'input', 'type':'text'},
+                    {'name':'Chart of Accounts','datatype':'single','input':'option','options':["",...new Collection('GroupChartOfAccounts').listAll('Code')]}
+                ];
                 break
             case 'Holidays':
                 schema = [
@@ -3381,8 +3255,8 @@ class CollectionQuery{
         (missing.length>0)?errors.push(`${missing.join(", ")} required.`):()=>{};
         let result = {...data};
         let navigation = [
-            {"name":"Back","type":"navigate","url":"/control","state":{}},
-            {"name":this.method,"type":"navigate","url":"/interface","state":{'type':'Collection','collection':this.collection,'method':this.method,'data':data}}
+            {"name":"Back","type":"navigate","url":"/control","state":{}, "refresh":true},
+            {"name":this.method,"type":"navigate","url":"/interface","state":{'type':'Collection','collection':this.collection,'method':this.method,'data':data},"refresh":true}
         ];
 
         return {'schema':schema,'output':result,'navigation':navigation, 'errors':errors}
@@ -3394,7 +3268,7 @@ class CollectionQuery{
     }
     static createRequirements = {
         "Asset":["Company Code"],
-        "AssetClass":["Company Code"],
+        "AssetGroup":["Company Code"],
         "AssetConstructionOrder":["Company Code"],
         "Attendance":["Company Code","Year","Month","Employee"],
         "BankAccount":["Company Code"],
@@ -3408,6 +3282,7 @@ class CollectionQuery{
         "FinancialStatement":[],
         "GeneralLedger":["Company Code"],
         "GroupChartOfAccounts":[],
+        "GroupGeneralLedger":["Chart of Accounts"],
         "Holidays":["Company Code","Year"],
         "IncomeTaxCode":[],
         "Location":["Company Code"],
@@ -3430,7 +3305,7 @@ class CollectionQuery{
     }
     static defaults = {
         "Asset":{"Code":"","Company Code":''},
-        "AssetClass":{"Code":"","Company Code":''},
+        "AssetGroup":{"Code":"","Company Code":''},
         "AssetConstructionOrder":{"Code":"","Company Code":''},
         "Attendance":{"Company Code":'',"Year":"","Month":"","Employee":""},
         "BankAccount":{"Code":"","Company Code":''},
@@ -3443,6 +3318,7 @@ class CollectionQuery{
         "FinancialStatement":{"Code":""},
         "GeneralLedger":{"Code":"","Company Code":''},
         "GroupChartOfAccounts":{"Code":""},
+        "GroupGeneralLedger":{"Code":"","Chart of Accounts":""},
         "Holidays":{"Company Code":'',"Year":""},
         "IncomeTaxCode":{"Code":""},
         "Location":{"Code":"","Company Code":''},
@@ -3489,11 +3365,160 @@ class CompanyCollection extends Collection{
     }
 }
 
+class AccountingDocument{
+    constructor(company,year){
+        this.company = company;
+        this.year = year;
+    }
+    load(){
+        const data = AccountingDocument.database;
+        const result = data.filter(item=>item['Company Code']===this.company && item['Year']===this.year);
+        return result;
+    }
+    getDocument(docNo){
+        const data = this.load();
+        const document = data.find(item=>item['Document Number']===docNo);
+        const result = (document!==undefined);
+        return {'result':result,'document':document}
+    }
+    newDocumentNumber(){
+        let start = 0;
+        do {
+            start ++;
+        } while (this.getDocument(start).result)
+        return start
+    }
+    postDocument(data){
+        let result = {...data};
+        result['Document Number'] = this.newDocumentNumber();
+        const updatedDB = [...AccountingDocument.database,result];
+        const status = AccountingDocument.updatedatabase(updatedDB);
+        if (status){
+            return `Success, Document ${result['Document Number']} created!`;
+        } else {
+            return `Could not process the request`;
+        }
+    }
+    tabular(){
+        const data = this.load();
+        const list = [];
+        data.forEach(item=>{
+            const fields = Object.keys(item).filter(field=>field!=='Line Items');
+            const datapack = {};
+            fields.map(field=>datapack[field]=item[field]);
+            item['Line Items'].map(line=>list.push({...datapack,...line}))
+        });
+        return list;
+    }
+    lineItemProcess(data){
+        let result = {...data};
+        const accType = data['Account Type'];
+        if (accType ==='Asset'){
+            const asset = new Asset(data['Account'],this.company);
+            result['Account Description']= asset.data['Description'];
+            result['General Ledger'] = asset.assetgroup.data['General Ledger  - Asset'];
+            result['General Ledger Description'] = asset.assetgroup.GLData('General Ledger - Asset').data['Description'];
+            result['Profit Center']= asset.orgassignment(data['Asset Value Date']).assignment.profitcenter.code;
+        }
+    }
+    static collectionname = 'accountingdocuments';
+    static database = loadData(this.collectionname);
+    static updatedatabase(data){
+        saveData(data,this.collectionname);
+        return true;
+    }
+}
+
+class MaterialDocument{
+    constructor(company,year){
+        this.company = company;
+        this.year = year;
+    }
+    static collectionname = 'materialdocuments';
+    static database = loadData(this.collectionname);
+    static updatedatabase(data){
+        saveData(data,this.collectionname);
+        return true;
+    }
+}
+
+class CostDocument{
+    constructor(company,year){
+        this.company = company;
+        this.year = year;
+    }
+    static collectionname = 'costdocuments';
+    static database = loadData(this.collectionname);
+    static updatedatabase(data){
+        saveData(data,this.collectionname);
+        return true;
+    }
+}
+
+class AssetGroup extends CompanyCollection{
+    constructor(code,company,name="AssetGroup"){
+        super(company,name);
+        this.code = code;
+        this.data = super.getData({'Code':this.code});
+    }
+    GLData(type){
+        const GL = new GeneralLedger(this.data[type],this.company);
+        return GL;
+    }
+}
+
 class Asset extends CompanyCollection{
     constructor(code,company,name="Asset"){
         super(company,name)
         this.code = code;
-        this.data = super.getData({'Code':this.code})
+        this.data = super.getData({'Code':this.code});
+        this.assetgroup = new AssetGroup(this.data['Asset Group'],this.company);
+    }
+    orgassignment(date){
+        const assignments = this.data['Organisational Assignment'];
+        const result = assignments.find(item=>valueInRange(new Date(date),[new Date(item['From']),new Date(item['To'])]));
+        if (result){
+            const type = result['Assignment Type'];
+            let assignment = {};
+            switch (type){
+                case 'CostCenter':
+                    assignment = new CostCenter(result['Assignment'],this.company);
+                    break
+                case 'Location':
+                    assignment = new Location(result['Assignment'],this.company);
+                break
+                case 'Plant':
+                    assignment = new Plant(result['Assignment'],this.company);
+                    break
+                case 'RevenueCenter':
+                    assignment = new RevenueCenter(result['Assignment'],this.company);
+                    break
+            }
+            return {'result':true, 'type':type, 'assignment':assignment}
+        } else {
+            return {'result':false}
+        }
+    }
+    depreciationUpTo(date){
+        if (this.data['Date of Capitalisation']<=date && this.assetgroup.data['Depreciable']==='Yes'){
+            if (this.data['Depreciation Method']==="Straight Line"){
+                
+            } else if (this.data['Depreciation Method']==="Reducing Balance"){
+                return 'Reducing Balance'
+            }
+        } else {
+            return 0
+        }
+    }
+    SLMDepreciation(date,Opening){
+        const year = new Company(this.company).PostingYear(date);
+        const costdata = new AccountingDocument(this.company,year).tabular().filter(item=>item['Account']===this.code && item['Transaction']==='Cost' && new Date(item['Asset Value Date'])<=new Date(date));
+        const cost = SumFieldIfs(costdata,'Amount',['Debit/ Credit'],['Debit']) - SumFieldIfs(costdata,'Amount',['Debit/ Credit'],['Credit']);
+        const sv = this.data['Salvage Value'];
+        return sv;
+    }
+    RBDepreciationUpto(date){
+
     }
 }
 
@@ -3502,6 +3527,24 @@ class AssetConstructionOrder extends CompanyCollection{
         super(company,name)
         this.code = code;
         this.data = super.getData({'Code':this.code})
+    }
+    accumulatedCost(date){
+        const year = new Company(this.company).PostingYear(date);
+        const data = new AccountingDocument(this.company, year).load();
+        const result = data.filter(item=>item['Asset Construction Order']===this.code && item['Posting Date']<=date);
+        const cost = SumFieldIfs(result,'Amount',['Debit/ Credit'],['Debit'])-SumFieldIfs(result,'Amount',['Debit/ Credit'],['Credit'])
+        return {'data':result,'cost':cost}
+    }
+    settlement(date){
+        const ratio = this.data['Settlement Ratio'];
+        const cost = this.accumulatedCost(date).cost;
+        const list = [];
+        ratio.map(item=>list.push({
+            'Asset':item['Asset'],
+            'Percentage':item['Percentage'],
+            'Amount':cost * item['Percentage']/100,
+        }));
+        return list;
     }
 }
 
@@ -3597,7 +3640,7 @@ class ChartOfAccounts{
         this.data = ChartOfAccounts.allData.find(item=>item['Code']==this.code);
     }
     range(group){
-        const data = this.data['General Ledger Range'];
+        const data = this.data['General Ledger Numbering'];
         const filtered = data.find(item=>item['Group']==group);
         const result = [filtered['From'],filtered['To']]
         return result;
@@ -3619,8 +3662,31 @@ class ChartOfAccounts{
     }
 }
 
+class CostCenter extends CompanyCollection{
+    constructor(code,company,name="CostCenter"){
+        super(company,name);
+        this.code = code;
+        this.data = super.getData({'Code':this.code});
+        this.profitcenter = new ProfitCenter(this.data['Profit Center'],this.company);
+    }
+}
+
+class Employee extends CompanyCollection{
+    constructor(code, company, name="Employee"){
+        super(company, name);
+        this.code = code;
+        this.data = super.getData({'Code':this.code});
+    }
+    wage(date){
+        const vwages = this.data['Variable Wages'].filter(item=>valueInRange(new Date(date),[new Date(item['From']),new Date(item['To'])]));
+        const fwages = this.data['Fixed Wages'].filter(item=>valueInRange(new Date(date),[new Date(monthStructure(item['From Year'],item['From Month']).start),new Date(monthStructure(item['To Year'],item['To Month']).end)]));
+        const owages = this.data['One Time Wages'].filter(item=>item['Date']===date);
+        return owages
+    }
+}
+
 class GeneralLedger extends CompanyCollection{
-    constructor(code,company,name="BankAccount"){
+    constructor(code,company,name="GeneralLedger"){
         super(company,name)
         this.code = code;
         this.data = super.getData({'Code':this.code})
@@ -3684,6 +3750,41 @@ class IncomeTaxCode extends Collection{
         const marginalRelief = this.marginalRelief(year,income);
         const netTax = tax-marginalRelief;
         return netTax
+    }
+}
+
+class Location extends CompanyCollection{
+    constructor(code,company,name="Location"){
+        super(company,name);
+        this.code = code;
+        this.data = super.getData({'Code':this.code});
+        this.profitcenter = new ProfitCenter(this.data['Profit Center'],this.company);
+    }
+}
+
+class Plant extends CompanyCollection{
+    constructor(code,company,name="Plant"){
+        super(company,name);
+        this.code = code;
+        this.data = super.getData({'Code':this.code});
+        this.profitcenter = new ProfitCenter(this.data['Profit Center'],this.company);
+    }
+}
+
+class ProfitCenter extends CompanyCollection{
+    constructor(code,company,name="ProfitCenter"){
+        super(company,name);
+        this.code = code;
+        this.data = super.getData({'Code':this.code});
+    }
+}
+
+class RevenueCenter extends CompanyCollection{
+    constructor(code,company,name="RevenueCenter"){
+        super(company,name);
+        this.code = code;
+        this.data = super.getData({'Code':this.code});
+        this.profitcenter = new ProfitCenter(this.data['Profit Center'],this.company);
     }
 }
 
@@ -3796,6 +3897,28 @@ class Table{
     }
 }
 
+class DeviceUI{
+    static defaults = {"Background":"Tech","Font":"Lexend"};
+    static data = 'DeviceUI' in localStorage? JSON.parse(localStorage.getItem('DeviceUI')):this.defaults;
+    static interface(data,method){
+        let errors = [];
+        let result = {...data};
+        const schema = [
+            {"name":"Background", "datatype":"single","input":"option","options":["Tech", "Fabric","Intersect"], "noteditable":method==="Display"},
+            {"name":"Font", "datatype":"single","input":"option","options":["Helvetica","Lexend","Times New Roman","Trebuchet MS"], "noteditable":method==="Display"},
+        ];
+        const save = ()=>{
+            saveData(result,'DeviceUI');
+            return ('Saved');
+        }
+        const navigation = [            
+            {"name":"Save","type":"action",'onClick':()=>alert(save()), 'refresh':true},
+            {"name":"Cancel","type":"navigate","url":"/home","state":{}, 'refresh':true},
+        ]
+        return {'output':result,'schema':schema,'errors':errors,'navigation':navigation};
+    }
+}
+
 class ReportQuery{
     constructor(report){
         this.report = report;
@@ -3852,11 +3975,13 @@ function Interface(){
     let editable = false;
     let title = "";
     let isTable = false;
+    let viewJSON = true;
     if (type=="CollectionQuery"){
         const {collection,method} = inputData;
         Display = new CollectionQuery(collection,method);
         defaults = Display.defaults;
         editable = true;
+        viewJSON = false;
         title = `${method} ${new Collection(collection).title}`;
     } else if (type=="Collection"){
         const {collection,method,data} = inputData;
@@ -3895,23 +4020,37 @@ function Interface(){
         defaults = Display.defaults(data);
         editable = true;
         title = Display.title();
+    } else if (type==="DeviceUI"){
+        Display = DeviceUI;
+        defaults = Display.data;
+        editable = true;
+        title = 'Device UI Settings';
+        viewJSON = false;
     }
     
     const [data,setdata] = useState(defaults);
     const {schema,output,errors,navigation} = Display.interface(data);
 
     return(<>
-        <View table={isTable} title={title} editable={editable} output={output} schema={schema} defaults={defaults} setdata={setdata} errors={errors} navigation={navigation}/>
+        <View table={isTable} title={title} editable={editable} output={output} schema={schema} defaults={defaults} setdata={setdata} errors={errors} navigation={navigation} viewJSON={viewJSON}/>
         </>
     )
 }
 
-function View({title,editable,output,schema,defaults,setdata,errors,navigation,table}){
+function View({title,editable,output,schema,defaults,setdata,errors,navigation,table, viewJSON}){
     const navigate = useNavigate();
-    const goto = (url,data)=>{
-        navigate(url,{state:data});
-        window.location.reload();
+    
+    const runFunction=(func)=>{
+        if (func['type']==="navigate"){
+            navigate(func['url'],{state:func['state']});
+        } else if (func['type']==="action"){
+            func['onClick']();
+        }
+        if (func['refresh']){
+            window.location.reload();
+        }
     }
+
 
     return(
         <div className='display'>
@@ -3942,14 +4081,15 @@ function View({title,editable,output,schema,defaults,setdata,errors,navigation,t
             </div>}
             {navigation.length>0 && <div className='navigation'>
                 {navigation.map(item=><>
-                    {item['type']=="navigate" && <button onClick={()=>goto(item['url'],item['state'])}>{item['name']}</button>}
-                    {item['type']=="action" && <button onClick={item['onClick']}>{item['name']}</button>}
+                    <button onClick={()=>runFunction(item)}>{item['name']}</button>
                     </>
                 )}
             </div>}
         </div>
     )
 }
+
+
 
 
 
@@ -4056,11 +4196,10 @@ const Node = ({node,schema,setdata})=>{
 }
 
 function Scratch(){
-    
+    const collection = [{"To":"9999-12-31"},{"To":"2026-02-28"}]
     return(
         <div>
-            <DisplayAsTable collection={new Collection('Employee').register()}/>
-            <DisplayAsTable collection={new CompanyCollection('FACT','Employee').register()}/>
+            {JSON.stringify(timeSeriesError('A',collection,'From','To'))}
         </div>
     )
 }
@@ -4151,22 +4290,30 @@ function JSONArray(array,parentId=null){
 }
 
 function App(){
+
+    const {Background,Font,BackgroundColor,FontColor} = DeviceUI.data;
+    const backgroundStyle = {
+        'backgroundImage':`url('../${Background}.png')`,
+        'fontFamily':`${Font},'Segoe UI', Tahoma, Geneva, Verdana, sans-serif`,
+    }
     return(
-        <div className='container'>
-        <BrowserRouter>
-        <SearchBar/>
-        <div className="innerContainer">
-        <Routes>
-            <Route path='/' element={<Home/>}/>
-            <Route path='/record' element={<Record/>}/>
-            <Route path='/control' element={<Control/>}/>
-            <Route path='/reports' element={<Reports/>}/>
-            <Route path="/interface" element={<Interface/>}/>
-            <Route path="*" element={<Home/>}/>
-            <Route path="/scratch/" element={<Scratch/>}/>
-        </Routes>
-        </div>
-        </BrowserRouter>
+        <div className='background' style={backgroundStyle}>
+            <div className='container'>
+                <BrowserRouter>
+                <SearchBar/>
+                    <div className="innerContainer">
+                        <Routes>
+                            <Route path='/' element={<Home/>}/>
+                            <Route path='/record' element={<Record/>}/>
+                            <Route path='/control' element={<Control/>}/>
+                            <Route path='/reports' element={<Reports/>}/>
+                            <Route path="/interface" element={<Interface/>}/>
+                            <Route path="*" element={<Home/>}/>
+                            <Route path="/scratch/" element={<Scratch/>}/>
+                        </Routes>
+                    </div>
+                </BrowserRouter>
+            </div>
         </div>
     )
     
