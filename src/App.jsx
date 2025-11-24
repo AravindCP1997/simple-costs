@@ -269,6 +269,42 @@ function timeSeriesError(Name,Collection,Fromfield,Tofield,LastDate="9999-12-31"
     return list
 }
 
+function collectionError(Name,Collection,nonBlanks,Fromfield="",Tofield=""){
+    const list = [];
+    Collection.forEach((item,i)=>{
+        if (item[Fromfield]!=="" && item[Tofield]!=="" && item[Fromfield]>item[Tofield]){
+            list.push(`At ${Name} ${i+1} ${Fromfield} is greater than ${Tofield}`);
+        }
+        if (nonBlanks.length!==0){
+            nonBlanks.forEach(field=>{
+                if (item[field]===""){
+                    list.push(`At ${Name} ${i+1}, ${field} is necessary`);
+                }
+            })
+        }
+    });
+    return list;
+}
+
+function totalError(Name,Collection,Field,Maximum){
+    if (SumField(Collection,Field)>Maximum){
+        return `Total of ${Name} ${Field} cannot be more than ${Maximum}`;
+    }
+}
+
+function maxError(Name,Value,Maximum){
+    let list = [];
+    if (Value>Maximum){
+        list.push(`${Name} cannot be more than ${Maximum}.`);
+    }
+    return list;
+}
+
+function setBlank(data,fields){
+    fields.map(item=>data[item]="");
+    return data;
+}
+
 class Navigator{
     static codes = [
         {'code':'','url':'/','state':{},'type':'home'},
@@ -1966,63 +2002,58 @@ class Collection{
         }
         return defaults
     }
-    interface(data){
-        let schema = [];
-        let defaults = {};
+    process(data){
         let result = {...data};
-        const list = [];
-        let mandatory = Collection.mandatory[this.name];
-        const nonNegatives = [];
-        switch (this.name){
-            case 'Asset':
-                if (result['Company Code']!=="" && result['Asset Group']!==""){
-                    const assetgroup = new AssetGroup(result['Asset Group'],result['Company Code']);
-                    const depreciable = assetgroup.data['Depreciable']==="Yes";
-                    if (!depreciable){result['Depreciation Method']=""}
-                    result['Asset Group Description'] = assetgroup.data['Description'];
-                    
-                    schema = [
-                    {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
-                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
-                    {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
-                    {"name":"Asset Group","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'AssetGroup').listAll('Code')],"noteditable":!this.editable},
-                    {"name":"Asset Group Description","datatype":"single","noteditable":true},
-                    {"name":"Date of Capitalisation","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
-                    {"name":"Organisational Assignment", "datatype":"collection","noteditable":!this.editable, "schema":data['Organisational Assignment'].map(item=>[
-                        {"name":"From","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
-                        {"name":"To","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
-                        {'name':'Type','datatype':'single','input':'option','options':["CostCenter","Location","Plant","RevenueCenter"],'noteditable':!this.editable},
-                        {'name':'Assignment','datatype':'single','input':'option','options':["",...new CompanyCollection(data['Company Code'],item['Type']).listAll('Code')],'noteditable':!this.editable}
-                    ])},
-                    {"name":"Depreciation Method","datatype":"single","input":"option","options":["","Straight Line","Reducing Balance"],"noteditable":(!this.editable || !depreciable)},
-                    {"name":"Depreciation Rate","datatype":"single","input":"input","type":"number","noteditable":(!this.editable || data['Depreciation Method']!="Reducing Balance" || !depreciable)},
-                    {"name":"Useful Life","datatype":"single","input":"input","type":"number","noteditable":(!this.editable || data['Depreciation Method']!="Straight Line" || !depreciable)},
-                    {"name":"Salvage Value","datatype":"single","input":"input","type":"number","noteditable":(!this.editable || data['Depreciation Method']!="Straight Line" || !depreciable)},
-                    {"name":"Status","datatype":"single","input":"option","options":["Draft","Ready","Blocked"]}
-                ];
-                } else {
-                    schema = [
-                        {"name":"Company Code","datatype":"single","input":"option","options":["",...new Collection('Company').listAll('Code')],"noteditable":false},
-                        {"name":"Asset Group","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'AssetGroup').listAll('Code')],"noteditable":false},
-                    ]
-                }
-                
-                //errors:
-                (data['Depreciation Rate']>100)?list.push(`Depreciation Rate cannot exceed 100%`):()=>{};
-                list.push(...negativeError(result,['Useful Life','Salvage Value','Depreciation Rate']));
-                if (data['Depreciation Method']==="Straight Line"){
-                    list.push(...blankError(result,['Useful Life','Salvage Value']));
-                } else if (data['Depreciation Method']==="Reducing Balance") {
-                    list.push(...blankError(result,['Depreciation Rate']));
-                };
-                list.push(...timeSeriesError('Organisational Assignment',data['Organisational Assignment'],'From','To'));
-                //processing
-
-                break
-            case 'AssetGroup':
+        if (this.name==="Asset"){
+            if (result['Company Code']!=="" && result['Asset Group']!==""){
+                const assetgroup = new AssetGroup(result['Asset Group'],result['Company Code']);
+                const depreciable = assetgroup.data['Depreciable']==="Yes";
+                result['Depreciable'] = assetgroup.data['Depreciable'];
+                if (!depreciable){result['Depreciation Method']=""}
+                result['Asset Group Description'] = assetgroup.data['Description'];
+        }
+    } else if (this.name==="AssetGroup"){
+        if (result['Depreciable']==="No"){
+            result ===setBlank(result,['General Ledger - Depreciation', 'General Ledger - Accumulated Depreciation'])
+        }
+    }
+        return result;
+    }
+    schema(data){
+        let schema = [];
+        if (this.name==="Asset"){
+            if (data['Company Code']!=="" && data['Asset Group']!==""){
+                const depreciable = data['Depreciable']==="Yes";
                 schema = [
+                {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
+                {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!this.editable},
+                {"name":"Asset Group","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'AssetGroup').listAll('Code')],"noteditable":!this.editable},
+                {"name":"Asset Group Description","datatype":"single","noteditable":true},
+                {"name":"Depreciable","datatype":"single","noteditable":true},
+                {"name":"Date of Capitalisation","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                {"name":"Organisational Assignment", "datatype":"collection","noteditable":!this.editable, "schema":data['Organisational Assignment'].map(item=>[
+                    {"name":"From","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                    {"name":"To","datatype":"single","input":"input","type":"date","noteditable":!this.editable},
+                    {'name':'Type','datatype':'single','input':'option','options':["CostCenter","Location","Plant","RevenueCenter"],'noteditable':!this.editable},
+                    {'name':'Assignment','datatype':'single','input':'option','options':["",...new CompanyCollection(data['Company Code'],item['Type']).listAll('Code')],'noteditable':!this.editable}
+                ])},
+                {"name":"Depreciation Method","datatype":"single","input":"option","options":["","Straight Line","Reducing Balance"],"noteditable":(!this.editable || !depreciable)},
+                {"name":"Depreciation Rate","datatype":"single","input":"input","type":"number","noteditable":(!this.editable || data['Depreciation Method']!="Reducing Balance" || !depreciable)},
+                {"name":"Useful Life","datatype":"single","input":"input","type":"number","noteditable":(!this.editable || data['Depreciation Method']!="Straight Line" || !depreciable)},
+                {"name":"Salvage Value","datatype":"single","input":"input","type":"number","noteditable":(!this.editable || data['Depreciation Method']!="Straight Line" || !depreciable)},
+                {"name":"Status","datatype":"single","input":"option","options":["Draft","Ready","Blocked"]}
+            ];
+            } else {
+                schema = [
+                    {"name":"Company Code","datatype":"single","input":"option","options":["",...new Collection('Company').listAll('Code')],"noteditable":false},
+                    {"name":"Asset Group","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'AssetGroup').listAll('Code')],"noteditable":false},
+                ]
+            }
+        } else if (this.name==="AssetGroup"){
+            schema = [
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
-                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
+                    {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create"), 'maxLength':6},
                     {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!(this.editable)},
                     {"name":"Depreciable","datatype":"single","input":"option","options":["Yes","No"],"noteditable":!(this.method=="Create")},
                     {"name":"General Ledger - Asset","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'GeneralLedger').filteredList({'Ledger Type':'Asset'},'Code')],"noteditable":(this.method!="Create")},
@@ -2033,13 +2064,8 @@ class Collection{
                     {"name":"General Ledger - Loss on Retirement","datatype":"single","input":"option","options":["",...new CompanyCollection(data['Company Code'],'GeneralLedger').filteredList({'Ledger Type':'General'},'Code')],"noteditable":!(this.method=="Create")},
                     {"name":"Status","datatype":"single","input":"option","options":["Draft","Ready","Blocked"],"noteditable":!(this.editable)}
                 ];
-                //errors:
-                if (data['Depreciable']=="Yes"){
-                    mandatory = [...Collection.mandatory[this.name],"General Ledger - Depreciation", "General Ledger - Accumulated Depreciation"];
-                };
-                break
-            case 'AssetConstructionOrder':
-                schema = [
+        } else if (this.name==="AssetConstructionOrder"){
+            schema = [
                     {"name":"Company Code","datatype":"single","input":"input","type":"text","noteditable":true},
                     {"name":"Code","datatype":"single","input":"input","type":"text","noteditable":!(this.method=="Create")},
                     {"name":"Description","datatype":"single","input":"input","type":"text","noteditable":!(this.editable)},
@@ -2050,6 +2076,58 @@ class Collection{
                     ])},
                     {"name":"Status","datatype":"single","input":"option","options":["Draft","Ready","Completed"],"noteditable":!this.editable},
                 ];
+        }
+        return schema;
+    }
+    errors(data){
+        let errors = [];
+        if (this.name==="Asset"){
+            errors.push(
+                ...blankError(data,['Asset Group','Date of Capitalisation','Description','Code',]),
+                ...maxError('Depreciation Rate',data['Depreciation Rate'],100),
+                ...negativeError(data,['Useful Life','Salvage Value','Depreciation Rate']),
+                ...timeSeriesError('Organisational Assignment',data['Organisational Assignment'],'From','To'),
+                ...collectionError('Organisational Assignment',data['Organisational Assignment'],['Assignment'])
+            );
+            if (data['Depreciation Method']==="Straight Line"){
+                errors.push(...blankError(data,['Useful Life','Salvage Value']));
+            } else if (data['Depreciation Method']==="Reducing Balance") {
+                errors.push(...blankError(data,['Depreciation Rate']));
+            };
+        } else if (this.name==="AssetGroup"){
+            errors.push(
+                ...blankError(data,['Code','Description','General Ledger - Asset','General Ledger - Gain on Disposal','General Ledger - Loss on Disposal', 'General Ledger - Loss on Retirement'])
+            );
+            if (data['Depreciable']==='Yes'){
+                errors.push(
+                    ...blankError(data,['General Ledger - Depreciation', 'General Ledger - Accumulated Depreciation'])
+                );
+            }
+        }
+        return errors;
+    }
+    navigation(data){
+        const errors = this.errors(data).length;
+        let navigation = [
+            {"name":"Export","type":"action","onClick":()=>Operations.downloadJSON(result,'Collection'),'refresh':false},
+            {"name":"Back","type":"navigate","url":'/control','state':{},'refresh':true},
+            {"name":"Save","type":"action","onClick":()=>alert(this.save(data)), 'refresh':errors.length===0},
+        ];
+        if (this.method==="Display"){
+            navigation = navigation.filter(item=>item['name']!=="Save");
+        }
+        return navigation;
+    }
+    interface(data){
+        let result = this.process(data);
+        let schema= this.schema(result);
+        let errors = this.errors(result);
+        let navigation = this.navigation(data);
+        const list = [];
+        let mandatory = Collection.mandatory[this.name];
+        const nonNegatives = [];
+        switch (this.name){
+            case 'AssetConstructionOrder':
                 //errors:
                 (SumField(data['Settlement'],'Percentage')>100?list.push(`Total of settlement percentage cannot be more than 100`):()=>{});
                 data['Settlement'].forEach((ratio,i)=>{
@@ -2522,17 +2600,6 @@ class Collection{
                 ]
                 break
         }
-        let navigation = [
-            {"name":"Export","type":"action","onClick":()=>Operations.downloadJSON(result,'Collection'),'refresh':false},
-            {"name":"Back","type":"navigate","url":'/control','state':{},'refresh':true},
-            {"name":"Save","type":"action","onClick":()=>alert(this.save(data)), 'refresh':list.length===0},
-        ];
-        if (this.method!="Create"){
-            navigation.push({"name":"Export JSON","type":"action","onClick":()=>Operations.downloadJSON(data,this.name)})
-        }
-        if (this.method==="Display"){
-            navigation = navigation.filter(item=>item['name']!=="Save");
-        }
         (this.method=="Create" && this.exists(data))?list.push(`Record of ${this.title} with same identfiers ${JSON.stringify(this.identifiers)} already exists`):()=>{};
         (KB.AccountTypes.includes(this.title) && data['Code']!="" && !valueInRange(data['Code'],new Company(data['Company Code']).CollectionRange(this.title)))?list.push(`${this.title} code ${data['Code']} not in range for Company ${data['Company Code']} (${JSON.stringify(new Company(data['Company Code']).CollectionRange(this.title))})`):()=>{};
         switch (this.name){
@@ -2803,7 +2870,7 @@ class Collection{
         mandatory.map(field=>data[field]===""?missed.push(field):()=>{});
         (missed.length>0)?list.push(`${missed.join(", ")} necessary`):()=>{};
         nonNegatives.map(field=>data[field]<0?list.push(`${field} cannot be negative.`):()=>{});
-        const uniquelist = [...new Set(list)];
+        const uniquelist = [...new Set(errors)];
         switch (this.name){
             case 'Asset':
                 result['Depreciation Rate'] = (result['Depreciation Method']!="Reducing Balance")?"":result['Depreciation Rate'];
