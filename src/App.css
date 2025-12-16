@@ -1,73 +1,89 @@
-*{
+* {
   box-sizing: border-box;
 }
 
-.background{
+.container {
   position: fixed;
-  width: 100%;
-  top:0;
-  left:0;
-  height: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  background: var(--lightgray);
-  padding:10px;
-  padding-top:5%;
-  background-size: 20%;
-  color:var(--blue);
-}
-
-.container{
-  position: fixed;
-  top:0;
-  width:100%;
-  height: 100%;
   display: flex;
   flex-direction: column;
-  padding:min(2%,20px);
+  padding: min(2%, 20px);
   padding-bottom: 0;
-  color:inherit;
+  color: inherit;
+  top: 0;
+  height: 100%;
+  left: 0;
+  width: 100%;
+  background-size: 20%;
+  background-color: var(--lightgray);
 }
 
-.searchBarOuter{
-  padding:10px;
-  padding-top:0;
+.searchbarOverlay {
+  padding: 10px;
+  padding-top: 0;
   display: flex;
   flex-direction: row;
   justify-content: center;
 }
 
-.searchBar{
+.searchbar {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  width:fit-content ;
+  width: fit-content;
   border-radius: 25px;
-  gap:10px;
+  gap: 10px;
   padding: 5px;
-  transition:0.5s;
+  transition: 0.5s;
   overflow: auto;
   box-shadow: 0px 2px 10px 0px var(--gray);
   border: 5px solid var(--whitet);
+
+  button {
+    border-radius: 50%;
+    aspect-ratio: 1/1;
+    width: 30px;
+    padding: 5px;
+  }
 }
 
-.searchBarButton{
-  border-radius: 50%;
-  aspect-ratio: 1/1;
-  width: 30px;
-  padding: 5px;
-}
-
-.search{
+.searchArea {
   background: white;
   border-radius: 15px;
-  input{
+  input {
     background: none;
   }
 }
 
-.innerContainer{
+.clock {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  bottom: 0;
+  height: 20%;
+  color: var(--redt);
+  padding: 1%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  z-index: -1;
+  opacity: 0.2;
+  transition: 0.5s ease-in-out;
+
+  h4,
+  h5 {
+    margin: 0;
+  }
+}
+
+.clock:hover,
+.clock:focus {
+  opacity: 1;
+  backdrop-filter: blur(5px);
+}
+
+.innerContainer {
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -77,33 +93,32 @@
   overflow: auto;
 }
 
-
-.homeOuter{
+.homeOuter {
   display: flex;
   flex-direction: column;
   border-radius: 25px;
-  padding:10px;
+  padding: 10px;
 }
 
-.home{
+.home {
   padding: 50px;
-  width:fit-content;
-  display:flex;
+  width: fit-content;
+  display: flex;
   flex-direction: column;
-  gap:30px;
-  height:fit-content;
+  gap: 30px;
+  height: fit-content;
   justify-content: center;
   height: fit-content;
   transition: 0.5s;
   box-shadow: 0px 1px 10px 0px var(--gray);
   border-radius: 25px;
-  border:10px solid var(--whitet);
+  border: 10px solid var(--whitet);
+  margin-top: 20px;
 }
 
-
-.title{
+.title {
   text-align: center;
-  color:white;
+  color: white;
   cursor: pointer;
   margin: 0;
   background: var(--bluet);
@@ -113,20 +128,19 @@
   transition: 0.5s;
 }
 
-
-.actions{
+.actions {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  gap:20px;
-  padding:20px;
+  gap: 20px;
+  padding: 20px;
   border-radius: 15px;
   background: var(--whitet);
   backdrop-filter: blur(2px);
   border: 5px solid white;
 }
 
-.menu{
+.menu {
   aspect-ratio: 1/1;
   border-radius: 50%;
   display: flex;
@@ -135,160 +149,195 @@
   text-align: center;
   cursor: pointer;
   transition: 0.5s;
-  width:150px;
-  padding:5px;
+  width: 150px;
+  padding: 5px;
 }
 
-.menu:nth-child(2){
+.menu:nth-child(2) {
   border-radius: 20px;
 }
 
-.menu:hover, .menu:focus{
+.menu:hover,
+.menu:focus {
   transform: rotate(10deg);
 }
 
-.menuContainer{
-  display:flex;
+.menuContainer {
+  display: flex;
   flex-direction: column;
-  gap:10px;
-  padding:5%;
-  width:100%;
+  gap: 10px;
+  padding: 5%;
+  width: 100%;
   height: fit-content;
   border-radius: 25px;
   box-shadow: 0px 3px 10px 0px var(--gray);
   border: 10px solid var(--whitet);
 }
 
-.menuContainer, .display{
+.menuContainer,
+.display {
   margin-bottom: 20px;
 }
 
-.menuContainerTitle{
+.menuContainerTitle {
   border-radius: 15px;
   background: none;
-  padding:10px;
+  padding: 10px;
   text-align: center;
   transition: 0.5s;
   cursor: pointer;
-  color:inherit;
+  color: inherit;
   box-shadow: 0px 0.5px 2px 0px var(--gray);
   border: 5px solid var(--whitet);
 }
 
-.menuContainerTitle:hover{
+.menuContainerTitle:hover {
   transform: translate(5px);
   background: var(--goldt);
 }
 
-.menuList{
+.menuList {
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding:3%;
+  padding: 3%;
   transition: 0.5s;
 }
 
-.menuItems{
-  display:flex;
+.menuItems {
+  display: flex;
   flex-direction: row;
-  gap:2%;
+  gap: 2%;
   row-gap: 10px;
   width: 100%;
-  padding:15px;
+  padding: 15px;
   border-radius: 15px;
-  height:fit-content;
+  height: fit-content;
   overflow: auto;
   transition: 0.5s;
   cursor: pointer;
 }
 
-.menuItem{
+.menuItem {
   text-align: center;
   cursor: pointer;
   border-radius: 15px;
   display: flex;
   flex-direction: column;
-  gap:5px;
+  gap: 5px;
   justify-content: center;
   aspect-ratio: 1/1;
   padding: 10px;
   transition: 0.5s;
   box-shadow: 0px 1px 5px 0px var(--gray);
-  color:inherit;
-  border:5px solid var(--whitet);
+  color: inherit;
+  border: 5px solid var(--whitet);
   backdrop-filter: blur(1px);
-  
-  h4{
-    width:120px;
+
+  h4 {
+    width: 120px;
     margin: 0;
   }
 
-  p{
-    margin:0;
-    opacity:0.1;
+  p {
+    margin: 0;
+    opacity: 0.1;
     font-size: 80%;
     transition: 0.5s;
     padding: 5px;
     border-radius: 5px;
-    background: var(--whitet);
+    border: 1px solid var(--gold);
   }
 }
 
-.menuItem:hover, .menuItem:focus{
+.menuItem:hover,
+.menuItem:focus {
   transform: rotate(10deg);
 
-  p{
+  p {
     opacity: 1;
   }
 }
 
-.menuTitle{
-  color:inherit;
-  border-bottom:1.5px solid var(--bluet);
-  padding:10px;
-  width:min(100%,450px);
-  h4{
-    margin:0;
-  } 
+.menuTitle {
+  color: inherit;
+  border-bottom: 1.5px solid var(--bluet);
+  padding: 10px;
+  width: min(100%, 450px);
+  h4 {
+    margin: 0;
+  }
 }
 
-.display{
-  box-shadow: 0px 3px 10px 0px var(--gray);
+.transactionTypes {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  border-radius: 15px;
+  background: none;
+  padding: 10px;
+  text-align: center;
+  transition: 0.5s;
+  cursor: pointer;
+  color: inherit;
+  box-shadow: 0px 0.5px 2px 0px var(--gray);
+  border: 5px solid var(--whitet);
+}
+
+.transactionType {
+  background: none;
+  color: var(--bluet);
+  border: none;
+  box-shadow: none;
+  font-size: 100%;
+}
+.transactionTypeSelected {
+  border: none;
+  font-size: 100%;
+}
+.transactionType:hover,
+.transactionType:focus {
+  background: var(--goldt);
+}
+.window {
   border-radius: 20px;
-  padding:5%;
-  width:min(100%,960px);
+  padding: 5%;
+  width: min(100%, 960px);
   display: flex;
   flex-direction: column;
-  gap:15px;
-  height:fit-content;
-  color:inherit;
+  gap: 15px;
+  height: fit-content;
+  color: inherit;
   border: 10px solid var(--whitet);
+  backdrop-filter: blur(10px);
+  margin-bottom: 20px;
 }
 
-.displayTitle{
-  color:inherit;
+.displayTitle {
+  color: inherit;
   text-align: center;
-  padding:10px;
+  padding: 10px;
   padding-left: 20px;
   border-radius: 15px;
-  margin:0;
+  margin: 0;
   cursor: pointer;
   transition: 0.5s;
   box-shadow: 0px 0.5px 2px 0px var(--gray);
   border: 5px solid var(--whitet);
 
-  h3{
-    margin:0;
+  h3 {
+    margin: 0;
   }
 }
 
-.displayInputFields{
-  display:flex;
-  flex-direction: row;
+.displayInputFields {
+  display: grid;
+  grid-template-columns: calc(50% - 5px) calc(50% - 5px);
   flex-wrap: wrap;
-  align-items:center;
+  align-items: center;
   justify-content: left;
-  gap:10px;
+  gap: 10px;
   background: var(--lightbluet);
   border-radius: 15px;
   padding: 10px;
@@ -298,7 +347,7 @@
   backdrop-filter: blur(2px);
 }
 
-.displayField{
+.displayField {
   padding: 5px;
   border-radius: 15px;
   background: var(--lightbluet);
@@ -306,58 +355,60 @@
   border: 2px solid var(--whitet);
   backdrop-filter: brightness(150%);
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: start;
   justify-content: left;
-  input,select{
+  input,
+  select {
     border-radius: 10px;
+    width: 100%;
   }
 }
 
-.displayRow{
-  display: flex;
-  flex-direction: column;
+.displayRow {
+  display: grid;
+  grid-template-columns: calc(50% - 5px) calc(50% - 5px);
 }
 
-.displayObject{
-  display:flex;
+.displayObject {
+  display: flex;
   flex-direction: column;
-  gap:2px;
+  gap: 2px;
   padding: 5px;
 }
 
-.displayObjectHead{
+.displayObjectHead {
   display: flex;
   flex-direction: row;
 }
 
-.displayObjectButtons{
+.displayObjectButtons {
   display: flex;
   flex-direction: row;
   justify-content: right;
-  padding:2px;
+  padding: 2px;
 }
 
-
-.displayTable{
+.displayTable {
   overflow: auto;
   font-size: 80%;
-  padding:5px;
+  padding: 5px;
 }
 
-.displayTableCell{
-  border:1px solid var(--blue);
-  input,select{
+.displayTableCell {
+  border: 1px solid var(--blue);
+  input,
+  select {
     border-radius: 0;
-    width:max(100%,128px);
+    width: max(100%, 128px);
     font-size: 100%;
   }
-  button{
+  button {
     border-radius: 0;
   }
 }
 
-.error{
+.error {
   background: var(--lightredt);
   padding: 10px;
   border-radius: 15px;
@@ -366,18 +417,18 @@
   box-shadow: 0px 0.5px 2px 0px var(--gray);
 }
 
-.navigation{
-  display:flex;
+.navigation {
+  display: flex;
   flex-direction: row;
   justify-content: right;
-  gap:5px;
+  gap: 5px;
 
-  button{
-    border-radius:10px;
+  button {
+    border-radius: 10px;
   }
 }
 
-.dropDown{
+.dropDown {
   display: flex;
   flex-direction: column;
   border: 2px solid var(--whitet);
@@ -387,43 +438,45 @@
   padding: 5px;
 }
 
-.dropDown:hover{
-  .dropArrow{
-    opacity:1
+.dropDown:hover {
+  .dropArrow {
+    opacity: 1;
   }
 }
 
-.dropArrow{
-  opacity:0.1;
+.dropArrow {
+  opacity: 0.1;
   transition: 0.5s;
 }
 
-.dropDownHead, .dropDownList{
+.dropDownHead,
+.dropDownList {
   text-align: left;
-  width:100%;
+  width: 100%;
 }
 
-.dropDownHead{
+.dropDownHead {
   display: flex;
   flex-direction: row;
   justify-content: space-around;
 }
 
-.dropDownList{
+.dropDownList {
   display: flex;
   flex-direction: column;
-  label{
+  label {
     border-bottom: 1px solid var(--gray);
     padding: 5px;
   }
 }
 
-.popup-overlay{
+.popupOverlay,
+.alertOverlay {
   position: fixed;
-  top:0;
-  left:0;
+  top: 0;
+  left: 0;
   width: 100%;
-  height:100%;
+  height: 100%;
   backdrop-filter: blur(10px);
   display: flex;
   flex-direction: column;
@@ -432,110 +485,121 @@
   z-index: 1000;
   background: var(--lightgrayt);
   transition: 1s ease-in-out;
-  background: var(--lightgrayt);
 }
 
-.popup-content{
+.popupContent,
+.alertContent,
+.floatingWindow {
   position: fixed;
   z-index: 1000;
   border-radius: 15px;
+  top: 10%;
+  height: fit-content;
+  max-height: 80%;
+  overflow: auto;
   padding: 10px;
   display: flex;
   flex-direction: column;
-  align-items: end;
   justify-content: center;
-  gap:5px;
-  border: 10px solid var(--whitet);
-  background: var(--lightgrayt);
+  gap: 5px;
+  background: var(--bluet);
+  border: 10px solid var(--bluet);
   backdrop-filter: blur(15px);
-  box-shadow: 0px 0px 10px 3px var(--bluet);
+  color: white;
 }
 
-.popupDisplay{
-  padding:5%;
-  width:100%;
+.floatingWindow {
+  max-width: 50%;
+}
+
+.popupDisplay {
+  padding: 5%;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap:15px;
-  height:fit-content;
-  color:inherit;
+  gap: 15px;
+  height: fit-content;
+  color: inherit;
 }
 
-.popupClose{
+.popupClose {
   background: unset;
   border: unset;
   box-shadow: none;
-  color:var(--blue);
   aspect-ratio: 1/1;
   border-radius: 50%;
   font-size: 1.5em;
   padding: 5px;
 }
 
-.popupClose:hover, .popupClose:focus{
+.popupClose:hover,
+.popupClose:focus {
   color: var(--blue);
   background: white;
 }
 
-@media screen and (max-width: 600px){
-  
-  html{
+@media screen and (max-width: 600px) {
+  html {
     background-size: 50%;
   }
 
-  .innerContainer{
-    padding:0;
+  .innerContainer {
+    padding: 0;
   }
 
-
-  .homeOuter{ 
+  .homeOuter {
     width: 100%;
     padding: 0;
   }
 
-
-  .searchBar, .home, .display, .displayTitle, .displayInputFields, .error, .menuContainer, .menuContainerTitle, .menuItem{
+  .searchbar,
+  .home,
+  .display,
+  .displayTitle,
+  .displayInputFields,
+  .error,
+  .menuContainer,
+  .menuContainerTitle,
+  .menuItem {
     box-shadow: none;
   }
 
- 
- .home{
-  gap:30px;
-  min-height: unset;
-  padding: 20px;
-  gap:25px;
-  width:100%;
- }
+  .home {
+    gap: 30px;
+    min-height: unset;
+    padding: 20px;
+    gap: 25px;
+    width: 100%;
+  }
 
- .menu{
-  width:unset;
- }
+  .menu {
+    width: unset;
+  }
 
- .menu:nth-child(1):hover{
-  transform: translate(2%);
- }
+  .menu:nth-child(1):hover {
+    transform: translate(2%);
+  }
 
- .menu:nth-child(1){
-  grid-column: 1/ span 2;
-  aspect-ratio: 2.2 / 1;
-  border-radius: 15px;
- }
- 
-  .actions{
-  display:grid;
-  grid-template-columns: 50% 50%;
-  padding: 10%;
-  font-size: 80%;
- }
+  .menu:nth-child(1) {
+    grid-column: 1 / span 2;
+    aspect-ratio: 2.2 / 1;
+    border-radius: 15px;
+  }
 
- .display{
-  padding: 10px;
- }
+  .actions {
+    display: grid;
+    grid-template-columns: 50% 50%;
+    padding: 10%;
+    font-size: 80%;
+  }
+
+  .display {
+    padding: 10px;
+  }
 }
 
 @media print {
-
-  .searchBarOuter{
+  .searchBarOuter {
     display: none;
   }
 }
