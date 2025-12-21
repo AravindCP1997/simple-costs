@@ -2293,70 +2293,7 @@ class Transaction {
   };
 }
 
-class Collection {
-  constructor(name, method = "Display") {
-    this.name = name;
-    this.collectionname = Collection.collectionname[this.name];
-    this.method = method;
-    this.editable = method == "Create" || method == "Update";
-    this.identifiers = Collection.identifiers[this.name];
-    this.title = Collection.titles[this.name];
-  }
-  load() {
-    const data = loadData(this.collectionname);
-    return data;
-  }
-  register() {
-    const data = this.load();
-    let fields = FieldsInCollection(data);
-    data.map((item) =>
-      fields.map((field) =>
-        typeof item[field] === "object"
-          ? (fields = fields.filter((f) => f !== field))
-          : () => {}
-      )
-    );
-    const trimmedData = TrimCollection(data, fields);
-    return trimmedData;
-  }
-  listAll(key) {
-    return ListItems(this.load(), key);
-  }
-  filtered(data) {
-    const collection = this.load();
-    const fields = Object.keys(data);
-    let filtered = collection;
-    for (let i = 0; i < fields.length; i++) {
-      filtered = singleFilter(filtered, fields[i], data[fields[i]]);
-    }
-    return filtered;
-  }
-  filteredList(data, key) {
-    const filtered = this.filtered(data);
-    return ListItems(filtered, key);
-  }
-  exists(data) {
-    const collection = this.load();
-    const identifiers = this.identifiers;
-    const values = identifiers.map((item) => data[item]);
-    const filteredCount = CountFieldIfs(collection, identifiers, values);
-    return filteredCount > 0 ? true : false;
-  }
-  getData(data) {
-    const collection = this.load();
-    const identifiers = this.identifiers;
-    const values = identifiers.map((item) => data[item]);
-    let result = {};
-    if (this.exists(data)) {
-      let filtered = collection;
-      for (let i = 0; i < identifiers.length; i++) {
-        filtered = filtered.filter((item) => item[identifiers[i]] == values[i]);
-      }
-      result = filtered[0];
-    }
-    return result;
-  }
-}
+
 
 class CollectionQuery {
   constructor(collection, method) {

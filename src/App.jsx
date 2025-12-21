@@ -7,6 +7,17 @@ import {
   createContext,
   useMemo,
 } from "react";
+import { createPortal } from "react-dom";
+import useData from "./useData";
+import {
+  ScreenContext,
+  WindowContext,
+  FloatingWindowContext,
+  PopupContext,
+  AlertContext,
+  AccessibilityContext,
+} from "./context";
+import { CheckBox } from "./Components";
 import {
   BrowserRouter,
   Routes,
@@ -42,179 +53,277 @@ import {
   PDFDownloadLink,
 } from "@react-pdf/renderer";
 import Draggable from "react-draggable";
+import { clickButton, objectChange, singleChange } from "./uiscript";
+import { ListUniqueItems, updateIndexValue, updateKeyValue } from "./functions";
+import {
+  addToArray,
+  addToObject,
+  removeFromArray,
+  removeFromObject,
+  updateObject,
+} from "./objects";
+import { CreateAsset, CreateIncomeTaxCode } from "./Transactions";
+import { LocalStorage, Dictionary, Collection } from "./Database";
 
-class LocalStorage {
-  constructor(name) {
-    this.name = name;
-  }
-  load() {
-    const result =
-      this.name in localStorage
-        ? JSON.parse(localStorage.getItem(this.name))
-        : null;
-    return result;
-  }
-  save(data) {
-    localStorage.setItem(this.name, JSON.stringify(data));
-    return "Saved";
-  }
-}
-
-class Dictionary extends LocalStorage {
-  constructor(name) {
-    super(name);
-  }
-  getValue(key) {
-    const data = super.load();
-    const result = data[key];
-    return result;
-  }
-}
-
-const Option = ({ output, name, options, setdata }) => {
-  const handleChange = (e) => {
-    const { value } = e.target;
-    setdata((prevdata) => ({
-      ...prevdata,
-      [name]: value,
-    }));
-  };
-
+export const Option = ({ value, options, process }) => {
   return (
-    <div className="displayField">
-      <label>{name}</label>
-      <select onChange={(e) => handleChange(e)} value={output[name]}>
-        {options.map((option) => (
-          <option value={option}>{option}</option>
-        ))}
-      </select>
-    </div>
+    <select onChange={(e) => process(e.target.value)} value={value}>
+      {options.map((option) => (
+        <option value={option}>{option}</option>
+      ))}
+    </select>
   );
 };
 
-const Input = ({ output, name, type, maxLength, setdata }) => {
-  const handleChange = (e) => {
-    const { value } = e.target;
-    setdata((prevdata) => ({
-      ...prevdata,
-      [name]: value,
-    }));
-  };
-
+export const Input = ({ value, type, maxLength, process }) => {
   return (
-    <div className="displayField">
-      <label>{name}</label>
-      <input
-        onChange={(e) => handleChange(e)}
-        value={output[name]}
-        type={type}
-        maxLength={maxLength}
-      />
-    </div>
+    <input
+      className="input"
+      onChange={(e) => process(e.target.value)}
+      value={value}
+      type={type}
+      maxLength={maxLength}
+    />
   );
 };
 
-const Label = ({ output, name }) => {
-  const handleChange = (e) => {
-    const { value } = e.target;
-    setdata((prevdata) => ({
-      ...prevdata,
-      [name]: value,
-    }));
-  };
-
+export const Radio = ({ value, options, process }) => {
   return (
-    <div className="displayField">
-      <label>{name}</label>
-      <label>{output[name]}</label>
-    </div>
-  );
-};
-
-function SingleInput({ field, output, setdata }) {
-  const handleChange = (e) => {
-    const { value } = e.target;
-    setdata((prevdata) => ({
-      ...prevdata,
-      [field["name"]]: value,
-    }));
-  };
-
-  return (
-    <div className="displayField">
-      <div className="displayRow">
-        <label>{field["name"]}</label>
-        {field["noteditable"] && <p>{output[field["name"]]}</p>}
-        {field["input"] == "input" && !field["noteditable"] && (
+    <div className="radios">
+      {options.map((option, i) => (
+        <div
+          key={`radio${i}`}
+          className="radio"
+          onClick={() => process(option)}
+        >
           <input
-            type={field["type"]}
-            maxLength={field["maxLength"]}
-            placeholder={field["placeholder"]}
-            onChange={(e) => handleChange(e)}
-            value={output[field["name"]]}
-            max={field["max"]}
-            min={field["min"]}
-            step={field["step"]}
+            type="radio"
+            value={option}
+            checked={value === option}
+            onChange={(e) => process(e.target.value)}
           />
-        )}
-        {field["input"] == "option" && !field["noteditable"] && (
-          <select
-            onChange={(e) => handleChange(e)}
-            value={output[field["name"]]}
-          >
-            {field["options"].map((option) => (
-              <option value={option}>{option}</option>
-            ))}
-          </select>
-        )}
-      </div>
+          <label>{option}</label>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export const CustomInput = ({
+  value,
+  process,
+  inputType,
+  valueOptions,
+  valueType,
+  valueMaxLength,
+}) => {
+  return (
+    <>
+      {inputType === "Radio" && (
+        <Radio value={value} process={process} options={valueOptions} />
+      )}
+      {inputType === "Option" && (
+        <Option value={value} process={process} options={valueOptions} />
+      )}
+      {inputType === "Input" && (
+        <Input
+          value={value}
+          process={process}
+          type={valueType}
+          maxLength={valueMaxLength}
+        />
+      )}
+    </>
+  );
+};
+
+export const HidingInput = ({ children }) => {
+  const [isOpen, setOpen] = useState(false);
+  const {
+    accessibility: { Font },
+  } = useContext(AccessibilityContext);
+
+  return (
+    <div>
+      <Button name="Edit" functionsArray={[() => setOpen(true)]} />
+      {isOpen && (
+        <>
+          {createPortal(
+            <div style={{ fontFamily: Font }} className="hidingInputsOverlay">
+              <div className="hidingInputs">{children}</div>
+              <Button name="Close" functionsArray={[() => setOpen(false)]} />
+            </div>,
+            document.body
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+export const Table = ({ columns, children }) => {
+  return (
+    <table className="table">
+      <thead>
+        <tr>
+          {columns.map((column) => (
+            <th className="tableCell">
+              <h4>{column}</h4>
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>{children}</tbody>
+    </table>
+  );
+};
+
+export const TableRow = ({ cells }) => {
+  return (
+    <tr>
+      {cells.map((cell, i) => (
+        <td className="tableCell" key={`cell${i}`}>
+          {cell}
+        </td>
+      ))}
+    </tr>
+  );
+};
+
+export function WindowTitle({ title }) {
+  return (
+    <div className="windowTitle">
+      <h3>{title}</h3>
     </div>
   );
 }
+export function DisplayRow({ children }) {
+  return <div className="displayRow">{children}</div>;
+}
 
-function ObjectInput({ field, setdata, output }) {
-  const handleChange = (subfield, e) => {
-    const { value } = e.target;
-    setdata((prevdata) => ({
-      ...prevdata,
-      [field["name"]]: { ...prevdata[field["name"]], [subfield]: value },
-    }));
+export function DisplayBox({ children }) {
+  return <div className="displayBox">{children}</div>;
+}
+
+export function DisplayFieldLabel({ label }) {
+  return <label className="displayFieldLabel">{label}</label>;
+}
+
+export function NavigationRow({ children }) {
+  return <div className="navigationRow">{children}</div>;
+}
+
+export function LabelledInput({ label, children }) {
+  return (
+    <DisplayRow>
+      <DisplayFieldLabel label={label} />
+      {children}
+    </DisplayRow>
+  );
+}
+
+export function SingleInput({
+  label,
+  name,
+  value,
+  process,
+  type,
+  inputType,
+  inputMaxLength,
+  options,
+}) {
+  return (
+    <>
+      {type !== "Radio" && (
+        <DisplayRow>
+          <DisplayFieldLabel label={label} />
+          {type === "Input" && (
+            <Input
+              value={value}
+              maxLength={inputMaxLength}
+              process={(value) => process(name, value)}
+              type={inputType}
+            />
+          )}
+          {type === "Option" && (
+            <Option
+              value={value}
+              process={(value) => process(name, value)}
+              options={options}
+            />
+          )}
+        </DisplayRow>
+      )}
+      {type === "Radio" && (
+        <DisplayBox>
+          <DisplayFieldLabel label={label} />
+          <Radio
+            value={value}
+            process={(value) => process(name, value)}
+            options={options}
+          />
+        </DisplayBox>
+      )}
+    </>
+  );
+}
+
+export function ObjectInput({ data, process, fields, children }) {
+  const content = (field) => {
+    return (
+      <>
+        <DisplayFieldLabel label={field.label} />
+        <CustomInput
+          inputType={field.inputType}
+          value={data[field.name]}
+          process={(value) => process(field.name, value)}
+          valueType={field.valueType}
+          valueOptions={field.valueOptions}
+          valueMaxLength={field.maxLength}
+        />
+      </>
+    );
   };
   return (
-    <div className="displayField">
-      <div className="displayObject">
-        <label>{field["name"]}</label>
-        {field["schema"].map((subfield) => (
-          <>
-            {subfield["datatype"] == "single" && (
-              <div className="displayRow">
-                <label>{subfield["name"]}</label>
-                {!field["noteditable"] && subfield["input"] == "input" && (
-                  <input
-                    type={subfield["type"]}
-                    onChange={(e) => handleChange(subfield["name"], e)}
-                    value={output[field["name"]][subfield["name"]]}
-                  />
-                )}
-                {!field["noteditable"] && subfield["input"] == "option" && (
-                  <select
-                    onChange={(e) => handleChange(subfield["name"], e)}
-                    value={output[field["name"]][subfield["name"]]}
-                  >
-                    {subfield["options"].map((option) => (
-                      <option value={option}>{option}</option>
-                    ))}
-                  </select>
-                )}
-                {field["noteditable"] && (
-                  <p>{output[field["name"]][subfield["name"]]}</p>
-                )}
-              </div>
-            )}
-          </>
-        ))}
-      </div>
-    </div>
+    <DisplayBox>
+      {fields.map((field) => (
+        <>
+          {field.inputType === "Radio" && (
+            <DisplayBox>{content(field)}</DisplayBox>
+          )}
+          {field.inputType !== "Radio" && (
+            <DisplayRow>{content(field)}</DisplayRow>
+          )}
+        </>
+      ))}
+      {children}
+    </DisplayBox>
+  );
+}
+
+export function ArrayInput({
+  data,
+  process,
+  inputType,
+  valueType,
+  valueOptions,
+  valueMaxLength,
+  children,
+}) {
+  return (
+    <DisplayBox>
+      {data.map((item, i) => (
+        <CustomInput
+          value={data[i]}
+          inputType={inputType}
+          valueType={valueType}
+          valueMaxLength={valueMaxLength}
+          valueOptions={valueOptions}
+          process={(value) => process(i, value)}
+        />
+      ))}
+      {children}
+    </DisplayBox>
   );
 }
 
@@ -1086,7 +1195,7 @@ class Operations {
   }
 }
 
-const Button = ({ name, functionsArray }) => {
+export const Button = ({ name, functionsArray }) => {
   const perform = () => {
     functionsArray.forEach((func) => {
       func();
@@ -1296,29 +1405,6 @@ function Title({ title }) {
   );
 }
 
-function CreateAsset() {
-  const [data, setdata] = useState({ Code: "", Description: "" });
-  return (
-    <Window>
-      <Title title={"Create Asset"} />
-      <Button
-        name={"Create Asset Class"}
-        functionsArray={[() => alert("Coming Soon")]}
-      />
-      <SingleInput
-        output={data}
-        setdata={setdata}
-        field={{ name: "Code", input: "input", type: "text", maxLength: 6 }}
-      />
-      <SingleInput
-        output={data}
-        setdata={setdata}
-        field={{ name: "Description", input: "input", type: "textarea" }}
-      />
-    </Window>
-  );
-}
-
 const Section = ({ children }) => {
   return <div className="displayInputFields">{children}</div>;
 };
@@ -1328,19 +1414,96 @@ function Random() {
 }
 
 function Scratch() {
-  const [window, setWindow] = useState("home");
+  const { data, changeData } = useData({ done: false });
   return (
     <>
-      <UserInterface />
+      <CheckBox
+        value={data.done}
+        process={(value) => changeData("done", value)}
+      />
+      {JSON.stringify(data)}
     </>
   );
 }
 
 const codes = [
   { code: "home", screen: <Home />, window: null },
-  { coee: "sc", screen: <Window />, window: <Scratch /> },
+  {
+    code: "sc",
+    screen: <Window />,
+    window: <Scratch />,
+    name: "Scratch",
+    group: "Record",
+    subgroup: "Scratch",
+  },
+  {
+    code: "casset",
+    screen: <Window />,
+    window: <CreateAsset />,
+    name: "Create Asset",
+    group: "Control",
+    subgroup: "Asset",
+  },
+  {
+    code: "citc",
+    screen: <Window />,
+    window: <CreateIncomeTaxCode />,
+    name: "Create Income Tax Code",
+    group: "Control",
+    subgroup: "Global",
+  },
 ];
 
+function Drawer({ group = "Record" }) {
+  const { setScreen } = useContext(ScreenContext);
+  const transactions = codes.filter((item) => item.group === group);
+  const subgroups = ListUniqueItems(transactions, "subgroup");
+  const groups = ["Record", "Control", "Report", "Intelligence"];
+
+  return (
+    <div className="drawer">
+      <div className="drawerNavigation">
+        {groups.map((groupName) => (
+          <div
+            key={groupName}
+            className={
+              groupName === group ? "drawerSelected" : "drawerNavigationButton"
+            }
+            onClick={() => setScreen(<Drawer group={groupName} />)}
+            tabIndex={0}
+            onKeyDown={(e) => clickButton(e)}
+          >
+            <h4>{groupName}</h4>
+          </div>
+        ))}
+      </div>
+      {subgroups.map((subgroup) => {
+        const subtransactions = transactions.filter(
+          (item) => item.subgroup === subgroup
+        );
+        if (subgroups.length === 0);
+        return (
+          <div className="drawerSubgroup">
+            <div className="drawerSubgroupTitle">
+              <h4>{subgroup}</h4>
+            </div>
+            {subtransactions.length > 0 && (
+              <div className="drawerIcons">
+                {subtransactions.map((subtransaction) => (
+                  <Icon
+                    name={subtransaction.name}
+                    window={subtransaction.window}
+                    code={subtransaction.code}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 function isPlainObject(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -1467,14 +1630,6 @@ function JSONArray(array, parentId = null) {
   return result;
 }
 
-const AccessibilityContext = createContext();
-const FloatingWindowContext = createContext();
-const WindowContext = createContext();
-const PopupContext = createContext();
-const AlertContext = createContext();
-const PromptFormContext = createContext();
-const ScreenContext = createContext();
-
 const accessibilityData = {
   object: new Dictionary("Accessibility"),
   read: function () {
@@ -1548,15 +1703,21 @@ function Window() {
   const { window, setWindow } = useContext(WindowContext);
   const { screen, setScreen } = useContext(ScreenContext);
   const onClose = () => {
-    setScreen(<TransactionsMenu initial={"Control"} />);
+    setScreen(<Drawer />);
     setWindow(null);
   };
   return (
     <div className="window">
-      <Button name={`&times;`} functionsArray={[() => onClose()]} />
+      <div className="windowTopBar">
+        <Button name={`&times;`} functionsArray={[() => onClose()]} />
+      </div>
       {window}
     </div>
   );
+}
+
+export function WindowContent({ children }) {
+  return <div className="windowContent">{children}</div>;
 }
 
 function Clock() {
@@ -1668,8 +1829,19 @@ function SearchBar() {
             onChange={(e) => setcode(e.target.value)}
             onKeyDown={(e) => inputKeyDownHandler(e)}
           />
+          <button
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--bluet)",
+              boxShadow: "none",
+            }}
+            onClick={() => go()}
+          >
+            <FaArrowRight />
+          </button>
         </div>
-        <Button name={<FaArrowRight />} functionsArray={[() => go()]} />
+
         <Button
           name={<FaDesktop />}
           functionsArray={[
@@ -1690,13 +1862,7 @@ function TitleCard({ title }) {
 }
 
 function Home() {
-  const { setWindow } = useContext(WindowContext);
-  const keyDownHandler = (e, path) => {
-    if (e.key === " " || e.key === "Enter") {
-      e.preventDefault();
-      setWindow(path);
-    }
-  };
+  const { setScreen } = useContext(ScreenContext);
 
   return (
     <div className="homeOuter">
@@ -1705,27 +1871,27 @@ function Home() {
         <div className="actions">
           <div
             tabIndex={0}
-            onKeyDown={(e) => keyDownHandler(e, "record")}
+            onKeyDown={(e) => clickButton(e)}
             className="menu green"
-            onClick={() => setWindow("Record")}
+            onClick={() => setScreen(<Drawer group={"Record"} />)}
           >
             <h2>Record</h2>
           </div>
           <div
             tabIndex={0}
-            onKeyDown={(e) => keyDownHandler(e, "control")}
+            onKeyDown={(e) => clickButton(e)}
             className="menu red"
-            onClick={() => setWindow("Control")}
+            onClick={() => setScreen(<Drawer group={"Control"} />)}
           >
             <h2>Control</h2>
           </div>
           <div
             tabIndex={0}
-            onKeyDown={(e) => keyDownHandler(e, "reports")}
+            onKeyDown={(e) => clickButton(e)}
             className="menu blue"
-            onClick={() => setWindow("Report")}
+            onClick={() => setScreen(<Drawer group={"Report"} />)}
           >
-            <h2>Reports</h2>
+            <h2>Report</h2>
           </div>
         </div>
       </div>
@@ -1733,125 +1899,52 @@ function Home() {
   );
 }
 
-const Icon = ({ name, code }) => {
-  const { setWindow } = useContext(WindowContext);
-  const keyDownHandler = (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      setWindow(code);
-    }
-  };
+function Icon({ name, window, code }) {
+  const { openWindow } = useContext(WindowContext);
   return (
     <div
-      className="menuItem"
+      className="icon"
       tabIndex={0}
-      onKeyDown={(e) => keyDownHandler(e)}
-      onClick={() => setWindow(code)}
+      onKeyDown={(e) => clickButton(e)}
+      onClick={() => openWindow(window)}
     >
       <h4>{name}</h4>
       <p>{code.toUpperCase()}</p>
     </div>
   );
-};
-
-const TransactionsMenu = ({ initial }) => {
-  const [type, settype] = useState(initial);
-  const filteredTransactions = transactions.filter(
-    (item) => item["type"] === type
-  );
-  const groups = ListUniqueItems(filteredTransactions, "group");
-  const groupTransactions = (group) => {
-    const grouped = filteredTransactions.filter(
-      (item) => item["group"] === group
-    );
-    return ListItems(grouped, "icon");
-  };
-  const MenuList = ({ group, transactions }) => {
-    return (
-      <div className="menuList">
-        <div className="menuTitle">
-          <h4>{group}</h4>
-        </div>
-        <div className="menuItems">{transactions}</div>
-      </div>
-    );
-  };
-  return (
-    <Window>
-      <div className="transactionTypes">
-        <button
-          className={
-            type === "Record" ? "transactionTypeSelected" : "transactionType"
-          }
-          onClick={() => settype("Record")}
-        >
-          Record
-        </button>
-        <button
-          className={
-            type === "Control" ? "transactionTypeSelected" : "transactionType"
-          }
-          onClick={() => settype("Control")}
-        >
-          Control
-        </button>
-        <button
-          className={
-            type === "Report" ? "transactionTypeSelected" : "transactionType"
-          }
-          onClick={() => settype("Report")}
-        >
-          Report
-        </button>
-        <button
-          className={
-            type === "Intelligence"
-              ? "transactionTypeSelected"
-              : "transactionType"
-          }
-          onClick={() => settype("Intelligence")}
-        >
-          Intelligence
-        </button>
-      </div>
-      {groups.length > 0 &&
-        groups.map((group) => (
-          <MenuList group={group} transactions={groupTransactions(group)} />
-        ))}
-    </Window>
-  );
-};
+}
 
 const Accessibility = () => {
   const {
-    accessibility,
-    setAccessibility,
+    accessibility: { Background, Font },
+    changeAccessibility,
     resetAccessibility,
     saveAccessibility,
   } = useContext(AccessibilityContext);
   const { closeFloatingWindow } = useContext(FloatingWindowContext);
   return (
-    <div className="accessibility">
+    <WindowContent>
+      <WindowTitle title={"Accessibility"} />
       <div className="displayInputFields">
-        <Option
-          output={accessibility}
-          name="Background"
-          options={["Tech", "Fabric", "Intersect"]}
-          setdata={setAccessibility}
-        />
-        <Option
-          output={accessibility}
-          name="Font"
-          options={["Helvetica", "Lexend", "Times New Roman", "Trebuchet MS"]}
-          setdata={setAccessibility}
-        />
+        <DisplayBox>
+          <DisplayFieldLabel label={"Background"} />
+          <Radio
+            value={Background}
+            process={(value) => changeAccessibility("Background", value)}
+            options={["Fabric", "Intersect", "Tech", "No Background"]}
+          />
+        </DisplayBox>
+        <DisplayBox>
+          <DisplayFieldLabel label={"Font"} />
+          <Radio
+            value={Font}
+            process={(value) => changeAccessibility("Font", value)}
+            options={["Helvetica", "Lexend", "Times New Roman", "Trebuchet MS"]}
+          />
+        </DisplayBox>
       </div>
       <div className="navigation">
         <Button name={"Reset"} functionsArray={[() => resetAccessibility()]} />
-        <Button
-          name={"Cancel"}
-          functionsArray={[() => closeFloatingWindow()]}
-        />
         <Button
           name={"Save"}
           functionsArray={[
@@ -1860,7 +1953,7 @@ const Accessibility = () => {
           ]}
         />
       </div>
-    </div>
+    </WindowContent>
   );
 };
 
@@ -1887,12 +1980,45 @@ const FloatingWindow = () => {
         className="floatingWindow"
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="floatingWindowClose" onClick={() => onClose()}>
-          &times;
-        </button>
+        <div className="windowTopBar">
+          <button className="floatingWindowClose" onClick={() => onClose()}>
+            &times;
+          </button>
+        </div>
         <div onClick={(e) => e.stopPropagation()}>{floatingWindow.window}</div>
       </div>
     </Draggable>
+  );
+};
+
+const PromptForm = () => {
+  const {
+    setPromptData,
+    promptForm: { visible, fields, defaults, onSubmit },
+    closePromptForm,
+  } = useContext(PromptFormContext);
+
+  const reset = () => {
+    setPromptData(defaults);
+  };
+
+  const performSubmit = () => {
+    onSubmit.forEach((func) => {
+      func();
+    });
+  };
+
+  if (!visible) return null;
+
+  return (
+    <div className="promptFormOverlay">
+      <div className="promptForm">{fields}</div>
+      <div className="promptFormButtons">
+        <Button name="Reset" functionsArray={[() => reset()]} />
+        <Button name="Cancel" functionsArray={[() => closePromptForm()]} />
+        <Button name="Submit" functionsArray={[() => performSubmit()]} />
+      </div>
+    </div>
   );
 };
 
@@ -1903,6 +2029,10 @@ const UserInterface = () => {
     backgroundImage: `url('../${Background}.png')`,
     fontFamily: `${Font},'Segoe UI', Tahoma, Geneva, Verdana, sans-serif`,
   };
+
+  const changeAccessibility = (field, value) => {
+    setAccessibility((prevdata) => updateObject(prevdata, field, value));
+  };
   const resetAccessibility = () => {
     setAccessibility(accessibilityData.read());
   };
@@ -1912,15 +2042,22 @@ const UserInterface = () => {
   const AccessibilityContextValue = {
     accessibility,
     setAccessibility,
+    changeAccessibility,
     resetAccessibility,
     saveAccessibility,
   };
 
-  const [window, setWindow] = useState(null);
-  const WindowContextValue = { window, setWindow };
-
   const [screen, setScreen] = useState(<Home />);
   const ScreenContextValue = { screen, setScreen };
+
+  const [window, setWindow] = useState(null);
+
+  const openWindow = (window) => {
+    setScreen(<Window />);
+    setWindow(window);
+  };
+
+  const WindowContextValue = { window, setWindow, openWindow };
 
   const [floatingWindow, setFloatingWindow] = useState({
     visible: false,
@@ -1948,20 +2085,11 @@ const UserInterface = () => {
     message: null,
     onClose: [],
   });
-  const AlertContextValue = { alert, setAlert };
 
-  const [promptForm, setPromptForm] = useState({
-    visible: false,
-    defaults: null,
-    fields: null,
-  });
-  const [promptData, setPromptData] = useState(null);
-  const PromptContextValue = {
-    promptForm,
-    setPromptForm,
-    promptData,
-    setPromptData,
+  const showAlert = (message, onClose = []) => {
+    setAlert({ visible: true, message, onClose });
   };
+  const AlertContextValue = { alert, setAlert, showAlert };
 
   useEffect(() => {
     resetAccessibility();
@@ -1972,23 +2100,19 @@ const UserInterface = () => {
       <ScreenContext.Provider value={ScreenContextValue}>
         <PopupContext.Provider value={PopupContextValue}>
           <AlertContext.Provider value={AlertContextValue}>
-            <PromptFormContext.Provider value={PromptContextValue}>
-              <FloatingWindowContext.Provider
-                value={FloatingWindowContextValue}
-              >
-                <WindowContext.Provider value={WindowContextValue}>
-                  <div className="container" style={style}>
-                    <SearchBar />
-                    <div className="screen innerContainer">
-                      <PopupBox />
-                      <AlertBox />
-                      <FloatingWindow />
-                      {screen}
-                    </div>
+            <FloatingWindowContext.Provider value={FloatingWindowContextValue}>
+              <WindowContext.Provider value={WindowContextValue}>
+                <div className="container" style={style}>
+                  <SearchBar />
+                  <div className="screen innerContainer">
+                    <PopupBox />
+                    <AlertBox />
+                    <FloatingWindow />
+                    {screen}
                   </div>
-                </WindowContext.Provider>
-              </FloatingWindowContext.Provider>
-            </PromptFormContext.Provider>
+                </div>
+              </WindowContext.Provider>
+            </FloatingWindowContext.Provider>
           </AlertContext.Provider>
         </PopupContext.Provider>
       </ScreenContext.Provider>
