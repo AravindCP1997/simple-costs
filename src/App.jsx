@@ -17,7 +17,6 @@ import {
   AlertContext,
   AccessibilityContext,
 } from "./context";
-import { CheckBox } from "./Components";
 import {
   BrowserRouter,
   Routes,
@@ -62,8 +61,20 @@ import {
   removeFromObject,
   updateObject,
 } from "./objects";
-import { CreateAsset, CreateIncomeTaxCode } from "./Transactions";
+import {
+  CreateAsset,
+  CreateIncomeTaxCode,
+  CreateChartofAccounts,
+} from "./Transactions";
 import { LocalStorage, Dictionary, Collection } from "./Database";
+import {
+  Button,
+  CheckBox,
+  HidingDisplay,
+  ConditionalButton,
+  Table,
+  TableRow,
+} from "./Components";
 
 export const Option = ({ value, options, process }) => {
   return (
@@ -158,35 +169,6 @@ export const HidingInput = ({ children }) => {
         </>
       )}
     </div>
-  );
-};
-
-export const Table = ({ columns, children }) => {
-  return (
-    <table className="table">
-      <thead>
-        <tr>
-          {columns.map((column) => (
-            <th className="tableCell">
-              <h4>{column}</h4>
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>{children}</tbody>
-    </table>
-  );
-};
-
-export const TableRow = ({ cells }) => {
-  return (
-    <tr>
-      {cells.map((cell, i) => (
-        <td className="tableCell" key={`cell${i}`}>
-          {cell}
-        </td>
-      ))}
-    </tr>
   );
 };
 
@@ -1195,16 +1177,6 @@ class Operations {
   }
 }
 
-export const Button = ({ name, functionsArray }) => {
-  const perform = () => {
-    functionsArray.forEach((func) => {
-      func();
-    });
-  };
-
-  return <button onClick={perform}>{name}</button>;
-};
-
 const buildTree = (data, parentId = null) => {
   const list = [];
   const keys = data.filter(
@@ -1443,6 +1415,14 @@ const codes = [
     name: "Create Asset",
     group: "Control",
     subgroup: "Asset",
+  },
+  {
+    code: "ccoa",
+    screen: <Window />,
+    window: <CreateChartofAccounts />,
+    name: "Create Chart of Accounts",
+    group: "Control",
+    subgroup: "Global",
   },
   {
     code: "citc",
@@ -1973,7 +1953,7 @@ const FloatingWindow = () => {
   }
 
   return (
-    <Draggable nodeRef={nodeRef}>
+    <Draggable cancel=".no-drag" nodeRef={nodeRef}>
       <div
         tabIndex={0}
         ref={nodeRef}
@@ -1981,11 +1961,16 @@ const FloatingWindow = () => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="windowTopBar">
-          <button className="floatingWindowClose" onClick={() => onClose()}>
+          <button
+            className="floatingWindowClose no-drag"
+            onClick={() => onClose()}
+          >
             &times;
           </button>
         </div>
-        <div onClick={(e) => e.stopPropagation()}>{floatingWindow.window}</div>
+        <div className="no-drag" onClick={(e) => e.stopPropagation()}>
+          {floatingWindow.window}
+        </div>
       </div>
     </Draggable>
   );

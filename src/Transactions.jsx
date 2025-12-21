@@ -3,20 +3,25 @@ import {
   Input,
   Option,
   Radio,
-  Button,
   DisplayRow,
   DisplayBox,
   DisplayFieldLabel,
   WindowContent,
   WindowTitle,
-  Table,
   HidingInput,
   LabelledInput,
-  TableRow,
   NavigationRow,
 } from "./App";
 
-import { CheckBox } from "./Components";
+import {
+  Button,
+  CheckBox,
+  DisplayArea,
+  HidingDisplay,
+  ConditionalButton,
+  Table,
+  TableRow,
+} from "./Components";
 
 import { updateIndexValue, updateKeyValue } from "./functions";
 import { collectionChange, singleChange } from "./uiscript";
@@ -24,6 +29,12 @@ import { updateObject, addToArray, addToObject } from "./objects";
 import useData from "./useData";
 import { LocalStorage, Dictionary, Collection } from "./Database";
 import { AlertContext } from "./context";
+import {
+  validateSubmit,
+  overlappingError,
+  blankError,
+  invalidRangeError,
+} from "./errors";
 
 export function CreateAsset() {
   const [data, setdata] = useState({ Code: "", Description: "" });
@@ -80,7 +91,15 @@ export const CreateIncomeTaxCode = () => {
   const { showAlert } = useContext(AlertContext);
 
   const { Code, Taxation } = data;
-  const TaxationFields = Object.keys(Taxation[0]);
+  const TaxationFields = [
+    "Year From",
+    "Year To",
+    "Exemption Limit",
+    "Calculate Marginal Relief",
+    "Standard Deduction",
+    "Slab Rate",
+    "Surcharge",
+  ];
 
   const slabCells = (taxationIndex, slabIndex) => {
     return [
@@ -185,11 +204,12 @@ export const CreateIncomeTaxCode = () => {
       />,
       <HidingInput>
         <h3>Slab Rate</h3>
-        <Table columns={["From", "To", "Rate"]}>
-          {Taxation[taxationIndex]["Slab Rate"].map((slab, s) => (
-            <TableRow cells={slabCells(taxationIndex, s)} />
-          ))}
-        </Table>
+        <Table
+          columns={["From", "To", "Rate"]}
+          rows={Taxation[taxationIndex]["Slab Rate"].map((slab, s) =>
+            slabCells(taxationIndex, s)
+          )}
+        />
         <button
           onClick={() =>
             addItemtoArray(
@@ -203,11 +223,12 @@ export const CreateIncomeTaxCode = () => {
       </HidingInput>,
       <HidingInput>
         <h3>Surcharge</h3>
-        <Table columns={["Threshold", "Rate"]}>
-          {Taxation[taxationIndex]["Surcharge"].map((slab, s) => (
-            <TableRow cells={surchargeCells(taxationIndex, s)} />
-          ))}
-        </Table>
+        <Table
+          columns={["Threshold", "Rate"]}
+          rows={Taxation[taxationIndex].Surcharge.map((slab, s) =>
+            surchargeCells(taxationIndex, s)
+          )}
+        />
         <NavigationRow>
           <button
             onClick={() =>
@@ -231,34 +252,119 @@ export const CreateIncomeTaxCode = () => {
   return (
     <WindowContent>
       <WindowTitle title={"Create Income Tax Code"} />
-      <LabelledInput label="Code">
-        <Input
-          value={Code}
-          process={(value) => changeData("Code", value)}
-          maxLength={4}
-          type={"text"}
-        />
-      </LabelledInput>
-      <DisplayBox>
-        <DisplayFieldLabel label={"Taxation"} />
-        <Table columns={[...TaxationFields, ""]}>
-          {Taxation.map((item, i) => (
-            <TableRow cells={rowCells(i)} />
-          ))}
-        </Table>
-      </DisplayBox>
-      <NavigationRow>
-        <button
-          onClick={() => addItemtoArray("Taxation", defaults.Taxation[0])}
-        >
-          Add
-        </button>
-      </NavigationRow>
+      <DisplayArea>
+        <LabelledInput label="Code">
+          <Input
+            value={Code}
+            process={(value) => changeData("Code", value)}
+            maxLength={4}
+            type={"text"}
+          />
+        </LabelledInput>
+        <DisplayBox>
+          <DisplayFieldLabel label={"Taxation"} />
+          <Table
+            columns={[...TaxationFields, ""]}
+            rows={Taxation.map((item, i) => rowCells(i))}
+          />
+        </DisplayBox>
+        <NavigationRow>
+          <button
+            onClick={() => addItemtoArray("Taxation", defaults.Taxation[0])}
+          >
+            Add
+          </button>
+        </NavigationRow>
+      </DisplayArea>
       <NavigationRow>
         <Button
           name={"Save"}
           functionsArray={[
             () => showAlert(new Collection("IncomeTaxCode").add(data)),
+          ]}
+        />
+      </NavigationRow>
+    </WindowContent>
+  );
+};
+
+export const CreateChartofAccounts = () => {
+  const { showAlert } = useContext(AlertContext);
+  const defaults = {
+    Code: "",
+    GLNumbering: [
+      { LedgerType: "Asset", From: "", To: "" },
+      { LedgerType: "Liability", From: "", To: "" },
+      { LedgerType: "Equity", From: "", To: "" },
+      { LedgerType: "Income", From: "", To: "" },
+      { LedgerType: "Expense", From: "", To: "" },
+    ],
+  };
+  const GLs = ["Asset", "Liability", "Equity", "Income", "Expense"];
+  const { data, changeData } = useData(defaults);
+  const { Code, GLNumbering } = data;
+  const GLNumberingCells = (index) => {
+    return [
+      <label>{GLs[index]}</label>,
+      <Input
+        value={GLNumbering[index]["From"]}
+        process={(value) => changeData(`GLNumbering/${index}/From`, value)}
+        type="number"
+      />,
+      <Input
+        value={GLNumbering[index]["To"]}
+        process={(value) => changeData(`GLNumbering/${index}/To`, value)}
+        type="number"
+      />,
+    ];
+  };
+  const errors = () => {
+    const errors = [];
+    errors.push(...blankError(data, ["Code"]));
+    GLNumbering.forEach((item) => {
+      errors.push(invalidRangeError(item.From, item.To));
+    });
+    errors.push(...overlappingError(GLNumbering, "LedgerType", "From", "To"));
+    return errors;
+  };
+
+  return (
+    <WindowContent>
+      <WindowTitle title={"Create Chart of Accounts"} />
+      <DisplayArea>
+        <LabelledInput label={"Code"}>
+          <Input
+            value={Code}
+            process={(value) => changeData("Code", value)}
+            type={"text"}
+            maxLength={4}
+          />
+        </LabelledInput>
+        <DisplayBox>
+          <DisplayFieldLabel label={"General Ledger Numbering"} />
+          <Table
+            columns={["Ledger", "From", "To"]}
+            rows={GLNumbering.map((item, i) => GLNumberingCells(i))}
+          />
+        </DisplayBox>
+      </DisplayArea>
+      <NavigationRow>
+        <HidingDisplay title={`Errors ${errors().length}`}>
+          <ul>
+            {errors().map((error) => (
+              <li>{error}</li>
+            ))}
+          </ul>
+        </HidingDisplay>
+        <Button
+          name="Save"
+          functionsArray={[
+            () =>
+              validateSubmit(
+                errors(),
+                [() => showAlert(new Collection("ChartofAccounts").add())],
+                [() => showAlert("Errors persist!")]
+              ),
           ]}
         />
       </NavigationRow>
