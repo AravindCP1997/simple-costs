@@ -663,9 +663,10 @@
 
 .tableCell {
   border: 1px solid var(--bluet);
+  text-align: center;
   h4 {
     margin: 0;
-    min-width: 50px;
+    min-width: 100px;
   }
   button {
     width: 100%;
@@ -674,6 +675,7 @@
   input,
   select {
     width: 100%;
+    height: 100%;
   }
 }
 @media screen and (max-width: 600px) {

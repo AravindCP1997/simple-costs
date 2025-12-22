@@ -1,6 +1,7 @@
-import { AccessibilityContext } from "./context";
+import { AccessibilityContext, WindowContext } from "./context";
 import { useState, useContext } from "react";
 import { createPortal } from "react-dom";
+import { WindowTitle } from "./App";
 
 export const Button = ({ name, functionsArray }) => {
   const perform = () => {
@@ -31,8 +32,11 @@ export const HidingDisplay = ({ title, children }) => {
         <>
           {createPortal(
             <div style={{ fontFamily: Font }} className="hidingDisplayOverlay">
-              <div className="hidingDisplay">{children}</div>
-              <Button name="Close" functionsArray={[() => setOpen(false)]} />
+              <div className="hidingDisplay">
+                <WindowTitle title={title} />
+                {children}
+                <Button name="Close" functionsArray={[() => setOpen(false)]} />
+              </div>
             </div>,
             document.body
           )}

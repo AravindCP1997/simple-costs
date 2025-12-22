@@ -36,4 +36,21 @@ export class Collection extends LocalStorage {
     this.save(newdata);
     return "Success";
   }
+  getData(criteria) {
+    const data = super.load();
+    const keys = Object.keys(criteria);
+    let result = data;
+    keys.forEach((key) => {
+      result = result.filter((item) => item[key] === criteria[key]);
+    });
+    return result[0];
+  }
+  delete(criteria) {
+    const data = super.load();
+    const itemForDeletion = this.getData(criteria);
+    const newData = data.filter(
+      (item) => JSON.stringify(item) !== JSON.stringify(itemForDeletion)
+    );
+    super.save(newData);
+  }
 }

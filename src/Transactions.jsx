@@ -28,7 +28,12 @@ import { collectionChange, singleChange } from "./uiscript";
 import { updateObject, addToArray, addToObject } from "./objects";
 import useData from "./useData";
 import { LocalStorage, Dictionary, Collection } from "./Database";
-import { AlertContext } from "./context";
+import {
+  AlertContext,
+  PopupContext,
+  ScreenContext,
+  WindowContext,
+} from "./context";
 import {
   validateSubmit,
   overlappingError,
@@ -281,6 +286,104 @@ export const CreateIncomeTaxCode = () => {
           name={"Save"}
           functionsArray={[
             () => showAlert(new Collection("IncomeTaxCode").add(data)),
+          ]}
+        />
+      </NavigationRow>
+    </WindowContent>
+  );
+};
+
+export const ViewIncomeTaxCode = ({ Code }) => {
+  const data = new Collection("IncomeTaxCode").getData({ Code: Code });
+  const { Taxation } = data;
+  const { setWindow } = useContext(WindowContext);
+  return (
+    <WindowContent>
+      <WindowTitle title={"View Income Tax Code"} />
+      <DisplayArea>
+        <LabelledInput label={"Code"}>
+          <label>{Code}</label>
+        </LabelledInput>
+        <DisplayBox>
+          <DisplayFieldLabel label="Taxation" />
+          <Table
+            columns={[
+              "Year From",
+              "Year To",
+              "Exemption Limit",
+              "Calculate Marginal Relief",
+              "Standard Deduction Salary",
+              "Slab Rate",
+              "Surcharge",
+            ]}
+            rows={Taxation.map((item) => [
+              item["Year From"],
+              item["Year To"],
+              item["Exemption Limit"],
+              <CheckBox value={item["Calculate Marginal Relief"]} />,
+              item["Standard Deduction Salary"],
+              <HidingDisplay title={"Slab Rate"}>
+                <Table
+                  columns={["From", "To", "Rate"]}
+                  rows={item["Slab Rate"].map((slabitem) => [
+                    slabitem["From"],
+                    slabitem["To"],
+                    slabitem["Rate"],
+                  ])}
+                />
+              </HidingDisplay>,
+              <HidingDisplay title={"Surcharge"}>
+                <Table
+                  columns={["Threshold", "Rate"]}
+                  rows={item["Surcharge"].map((surchargeitem) => [
+                    surchargeitem["Threshold"],
+                    surchargeitem["Rate"],
+                  ])}
+                />
+              </HidingDisplay>,
+            ])}
+          />
+        </DisplayBox>
+      </DisplayArea>
+      <NavigationRow>
+        <Button
+          name="Back"
+          functionsArray={[() => setWindow(<ManageIncomeTaxCode />)]}
+        />
+        <Button
+          name="Create"
+          functionsArray={[() => setWindow(<CreateIncomeTaxCode />)]}
+        />
+      </NavigationRow>
+    </WindowContent>
+  );
+};
+
+export const ManageIncomeTaxCode = () => {
+  const { showAlert } = useContext(AlertContext);
+  const { showPopup } = useContext(PopupContext);
+  const { setWindow } = useContext(WindowContext);
+  const defaults = { Code: "" };
+  const { data, changeData } = useData(defaults);
+
+  return (
+    <WindowContent>
+      <WindowTitle title={"Manage Income Tax Code"} />
+      <DisplayArea>
+        <LabelledInput label="Code">
+          <Input
+            value={data.Code}
+            process={(value) => changeData("Code", value)}
+            type="text"
+            maxLength={4}
+          />
+        </LabelledInput>
+      </DisplayArea>
+      <NavigationRow>
+        <Button
+          name="View"
+          functionsArray={[
+            () => setWindow(<ViewIncomeTaxCode Code={data.Code} />),
           ]}
         />
       </NavigationRow>

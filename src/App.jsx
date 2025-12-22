@@ -64,6 +64,7 @@ import {
 import {
   CreateAsset,
   CreateIncomeTaxCode,
+  ManageIncomeTaxCode,
   CreateChartofAccounts,
 } from "./Transactions";
 import { LocalStorage, Dictionary, Collection } from "./Database";
@@ -1386,16 +1387,7 @@ function Random() {
 }
 
 function Scratch() {
-  const { data, changeData } = useData({ done: false });
-  return (
-    <>
-      <CheckBox
-        value={data.done}
-        process={(value) => changeData("done", value)}
-      />
-      {JSON.stringify(data)}
-    </>
-  );
+  return <></>;
 }
 
 const codes = [
@@ -1429,6 +1421,14 @@ const codes = [
     screen: <Window />,
     window: <CreateIncomeTaxCode />,
     name: "Create Income Tax Code",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "mitc",
+    screen: <Window />,
+    window: <ManageIncomeTaxCode />,
+    name: "Manage Income Tax Code",
     group: "Control",
     subgroup: "Global",
   },
@@ -1847,7 +1847,7 @@ function Home() {
   return (
     <div className="homeOuter">
       <div className="home">
-        <TitleCard title={"Simple Costs"} />
+        <TitleCard title={"Compounds &reg;"} />
         <div className="actions">
           <div
             tabIndex={0}
@@ -2063,7 +2063,10 @@ const UserInterface = () => {
     cancel: [],
     confirm: [],
   });
-  const PopupContextValue = { popup, setPopup };
+  const showPopup = (message, cancel = [], confirm = []) => {
+    setPopup({ visible: true, message, cancel, confirm });
+  };
+  const PopupContextValue = { popup, setPopup, showPopup };
 
   const [alert, setAlert] = useState({
     visible: false,
