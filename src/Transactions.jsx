@@ -40,6 +40,8 @@ import {
   blankError,
   invalidRangeError,
 } from "./errors";
+import { IncomeTaxCode } from "./classes";
+import { FaInfoCircle } from "react-icons/fa";
 
 export function CreateAsset() {
   const [data, setdata] = useState({ Code: "", Description: "" });
@@ -64,34 +66,21 @@ export const CreateIncomeTaxCode = () => {
     Code: "",
     Taxation: [
       {
-        "Year From": "",
-        "Year To": "",
-        "Exemption Limit": "",
-        "Calculate Marginal Relief": true,
-        "Standard Deduction Salary": "",
-        "Slab Rate": [{ From: "", To: "", Rate: "" }],
+        YearFrom: "",
+        YearTo: "",
+        ExemptionLimit: "",
+        StandardDeductionSalary: "",
+        Cess: "",
+        SlabRate: [{ From: "", To: "", Rate: "" }],
         Surcharge: [{ Threshold: "", Rate: "" }],
-      },
-      {
-        "Year From": "",
-        "Year To": "",
-        "Exemption Limit": "",
-        "Marginal Relief": "",
-        "Standard Deduction Salary": "",
-        "Slab Rate": [{ From: "", To: "", Rate: "" }],
-        Surcharge: [{ Threshold: "", Rate: "" }],
+        CalculateMarginalReliefOnExemption: true,
+        CalculateMarginalReliefOnSurcharge: true,
       },
     ],
   };
 
-  const {
-    data,
-    setdata,
-    changeData,
-    addItemtoArray,
-    addItemtoObject,
-    deleteItemfromArray,
-  } = useData(defaults);
+  const { data, changeData, addItemtoArray, deleteItemfromArray } =
+    useData(defaults);
 
   const { showAlert } = useContext(AlertContext);
 
@@ -100,39 +89,42 @@ export const CreateIncomeTaxCode = () => {
     "Year From",
     "Year To",
     "Exemption Limit",
-    "Calculate Marginal Relief",
-    "Standard Deduction",
+    "Standard Deduction on Salary",
+    "Cess",
     "Slab Rate",
     "Surcharge",
+    "Calculate Marginal Relief on Exemption Limit",
+    "Calculate Marginal Relief on Surcharge",
+    "",
   ];
 
   const slabCells = (taxationIndex, slabIndex) => {
     return [
       <Input
-        value={Taxation[taxationIndex]["Slab Rate"][slabIndex]["From"]}
+        value={Taxation[taxationIndex]["SlabRate"][slabIndex]["From"]}
         process={(value) =>
           changeData(
-            `Taxation/${taxationIndex}/Slab Rate/${slabIndex}/From`,
+            `Taxation/${taxationIndex}/SlabRate/${slabIndex}/From`,
             value
           )
         }
         type="number"
       />,
       <Input
-        value={Taxation[taxationIndex]["Slab Rate"][slabIndex]["To"]}
+        value={Taxation[taxationIndex]["SlabRate"][slabIndex]["To"]}
         process={(value) =>
           changeData(
-            `Taxation/${taxationIndex}/Slab Rate/${slabIndex}/To`,
+            `Taxation/${taxationIndex}/SlabRate/${slabIndex}/To`,
             value
           )
         }
         type="number"
       />,
       <Input
-        value={Taxation[taxationIndex]["Slab Rate"][slabIndex]["Rate"]}
+        value={Taxation[taxationIndex]["SlabRate"][slabIndex]["Rate"]}
         process={(value) =>
           changeData(
-            `Taxation/${taxationIndex}/Slab Rate/${slabIndex}/Rate`,
+            `Taxation/${taxationIndex}/SlabRate/${slabIndex}/Rate`,
             value
           )
         }
@@ -168,66 +160,57 @@ export const CreateIncomeTaxCode = () => {
   const rowCells = (taxationIndex) => {
     return [
       <Input
-        value={Taxation[taxationIndex]["Year From"]}
+        value={Taxation[taxationIndex]["YearFrom"]}
         process={(value) =>
-          changeData(`Taxation/${taxationIndex}/Year From`, value)
+          changeData(`Taxation/${taxationIndex}/YearFrom`, value)
         }
         type="number"
       />,
       <Input
-        value={Taxation[taxationIndex]["Year To"]}
+        value={Taxation[taxationIndex]["YearTo"]}
         process={(value) =>
-          changeData(`Taxation/${taxationIndex}/Year To`, value)
+          changeData(`Taxation/${taxationIndex}/YearTo`, value)
         }
         type="number"
       />,
       <Input
-        value={Taxation[taxationIndex]["Exemption Limit"]}
+        value={Taxation[taxationIndex]["ExemptionLimit"]}
         process={(value) =>
-          changeData(`Taxation/${taxationIndex}/Exemption Limit`, value)
+          changeData(`Taxation/${taxationIndex}/ExemptionLimit`, value)
         }
         type="number"
-      />,
-      <CheckBox
-        value={Taxation[taxationIndex][" Calculate Marginal Relief"]}
-        process={(value) =>
-          changeData(
-            `Taxation/${taxationIndex}/Calculate Marginal Relief`,
-            value
-          )
-        }
       />,
       <Input
-        value={Taxation[taxationIndex]["Standard Deduction Salary"]}
+        value={Taxation[taxationIndex]["StandardDeductionSalary"]}
         process={(value) =>
-          changeData(
-            `Taxation/${taxationIndex}/Standard Deduction Salary`,
-            value
-          )
+          changeData(`Taxation/${taxationIndex}/StandardDeductionSalary`, value)
         }
         type="number"
       />,
-      <HidingInput>
-        <h3>Slab Rate</h3>
+      <Input
+        value={Taxation[taxationIndex]["Cess"]}
+        process={(value) => changeData(`Taxation/${taxationIndex}/Cess`, value)}
+        type="number"
+      />,
+      <HidingDisplay title={"Slab Rate"}>
         <Table
           columns={["From", "To", "Rate"]}
-          rows={Taxation[taxationIndex]["Slab Rate"].map((slab, s) =>
+          rows={Taxation[taxationIndex]["SlabRate"].map((slab, s) =>
             slabCells(taxationIndex, s)
           )}
         />
         <button
           onClick={() =>
             addItemtoArray(
-              `Taxation/${taxationIndex}/Slab Rate`,
-              Taxation[0]["Slab Rate"][0]
+              `Taxation/${taxationIndex}/SlabRate`,
+              Taxation[0]["SlabRate"][0]
             )
           }
         >
           Add slab
         </button>
-      </HidingInput>,
-      <HidingInput>
-        <h3>Surcharge</h3>
+      </HidingDisplay>,
+      <HidingDisplay title={"Surcharge"}>
         <Table
           columns={["Threshold", "Rate"]}
           rows={Taxation[taxationIndex].Surcharge.map((slab, s) =>
@@ -246,7 +229,25 @@ export const CreateIncomeTaxCode = () => {
             Add
           </button>
         </NavigationRow>
-      </HidingInput>,
+      </HidingDisplay>,
+      <CheckBox
+        value={Taxation[taxationIndex]["CalculateMarginalReliefOnExemption"]}
+        process={(value) =>
+          changeData(
+            `Taxation/${taxationIndex}/CalculateMarginalReliefOnExemption`,
+            value
+          )
+        }
+      />,
+      <CheckBox
+        value={Taxation[taxationIndex]["CalculateMarginalReliefOnSurcharge"]}
+        process={(value) =>
+          changeData(
+            `Taxation/${taxationIndex}/CalculateMarginalReliefOnSurcharge`,
+            value
+          )
+        }
+      />,
       <Button
         name="-"
         functionsArray={[() => deleteItemfromArray(`Taxation`, taxationIndex)]}
@@ -262,14 +263,14 @@ export const CreateIncomeTaxCode = () => {
           <Input
             value={Code}
             process={(value) => changeData("Code", value)}
-            maxLength={4}
+            maxLength={8}
             type={"text"}
           />
         </LabelledInput>
         <DisplayBox>
           <DisplayFieldLabel label={"Taxation"} />
           <Table
-            columns={[...TaxationFields, ""]}
+            columns={[...TaxationFields]}
             rows={Taxation.map((item, i) => rowCells(i))}
           />
         </DisplayBox>
@@ -280,6 +281,13 @@ export const CreateIncomeTaxCode = () => {
             Add
           </button>
         </NavigationRow>
+      </DisplayArea>
+      <DisplayArea>
+        <p>
+          `<FaInfoCircle /> Income tax code is necessary for calculating and
+          deducting tax at source on remuneration payable to personnel of a
+          company.`
+        </p>
       </DisplayArea>
       <NavigationRow>
         <Button
@@ -311,21 +319,23 @@ export const ViewIncomeTaxCode = ({ Code }) => {
               "Year From",
               "Year To",
               "Exemption Limit",
-              "Calculate Marginal Relief",
-              "Standard Deduction Salary",
+              "Standard Deduction on Salary",
+              "Cess",
               "Slab Rate",
               "Surcharge",
+              "Calculate Marginal Relief on Exemption Limit",
+              "Calculate Marginal Relief on Surcharge",
             ]}
             rows={Taxation.map((item) => [
-              item["Year From"],
-              item["Year To"],
-              item["Exemption Limit"],
-              <CheckBox value={item["Calculate Marginal Relief"]} />,
-              item["Standard Deduction Salary"],
+              item["YearFrom"],
+              item["YearTo"],
+              item["ExemptionLimit"],
+              item["StandardDeductionSalary"],
+              item["Cess"],
               <HidingDisplay title={"Slab Rate"}>
                 <Table
                   columns={["From", "To", "Rate"]}
-                  rows={item["Slab Rate"].map((slabitem) => [
+                  rows={item["SlabRate"].map((slabitem) => [
                     slabitem["From"],
                     slabitem["To"],
                     slabitem["Rate"],
@@ -341,6 +351,8 @@ export const ViewIncomeTaxCode = ({ Code }) => {
                   ])}
                 />
               </HidingDisplay>,
+              <CheckBox value={item["CalculateMarginalReliefOnExemption"]} />,
+              <CheckBox value={item["CalculateMarginalReliefOnSurcharge"]} />,
             ])}
           />
         </DisplayBox>
@@ -375,7 +387,7 @@ export const ManageIncomeTaxCode = () => {
             value={data.Code}
             process={(value) => changeData("Code", value)}
             type="text"
-            maxLength={4}
+            maxLength={8}
           />
         </LabelledInput>
       </DisplayArea>
@@ -387,6 +399,106 @@ export const ManageIncomeTaxCode = () => {
           ]}
         />
       </NavigationRow>
+    </WindowContent>
+  );
+};
+
+export const IncomeTaxSimulate = ({ initialCode = "" }) => {
+  const { data, changeData } = useData({
+    Code: initialCode,
+    Year: "",
+    Income: "",
+  });
+  const { Code, Year, Income } = data;
+  const TaxCode = new IncomeTaxCode(Code);
+  const result = () => {
+    if (
+      Code !== "" &&
+      Year !== "" &&
+      Income !== "" &&
+      TaxCode.yearExists(Year)
+    ) {
+      return TaxCode.taxComputation(Year, Income);
+    } else {
+      return false;
+    }
+  };
+
+  return (
+    <WindowContent>
+      <WindowTitle title={"Income Tax Simulate"} />
+      <DisplayArea>
+        <LabelledInput label={"Code"}>
+          <Option
+            value={Code}
+            process={(value) => changeData("Code", value)}
+            options={["", ...new IncomeTaxCode().list("Code")]}
+          />
+        </LabelledInput>
+        <LabelledInput label={"Year"}>
+          <Input
+            value={Year}
+            process={(value) => changeData("Year", value)}
+            type={"number"}
+          />
+          {Code !== "" && Year !== "" && !TaxCode.yearExists(Year) && (
+            <p>Year does not exist in the tax code.</p>
+          )}
+        </LabelledInput>
+        <LabelledInput label={"Income"}>
+          <Input
+            value={Income}
+            process={(value) => changeData("Income", value)}
+            type={"number"}
+          />
+        </LabelledInput>
+      </DisplayArea>
+      {result() && (
+        <DisplayArea>
+          <DisplayRow>
+            <DisplayFieldLabel label={"Tax on Total Income (A)"} />
+            <p>{result().tax.toFixed(2)}</p>
+          </DisplayRow>
+          <DisplayRow>
+            <DisplayFieldLabel label={"Tax Exemption (B)"} />
+            <p>{result().taxExemption.toFixed(2)}</p>
+          </DisplayRow>
+          <DisplayRow>
+            <DisplayFieldLabel label={"Marginal Relief (C)"} />
+            <p>{result().marginalReliefOnExemption.toFixed(2)}</p>
+          </DisplayRow>
+          <DisplayRow>
+            <DisplayFieldLabel label={"Gross Exemption (D) = (B) + (C)"} />
+            <p>{result().grossExemption.toFixed(2)}</p>
+          </DisplayRow>
+          <DisplayRow>
+            <DisplayFieldLabel label={"Surcharge (E)"} />
+            <p>{result().surcharge.toFixed(2)}</p>
+          </DisplayRow>
+          <DisplayRow>
+            <DisplayFieldLabel label={"Marginal Relief from Surcharge (F)"} />
+            <p>{result().marginalReliefOnSurcharge.toFixed(2)}</p>
+          </DisplayRow>
+          <DisplayRow>
+            <DisplayFieldLabel label={"Net Surcharge (G) = (E) - (F)"} />
+            <p>{result().netSurcharge.toFixed(2)}</p>
+          </DisplayRow>
+          <DisplayRow>
+            <DisplayFieldLabel
+              label={"Tax Before Cess (H) = (A) - (D) + (G)"}
+            />
+            <p>{result().taxBeforeCess.toFixed(2)}</p>
+          </DisplayRow>
+          <DisplayRow>
+            <DisplayFieldLabel label={"Cess (I)"} />
+            <p>{result().cess.toFixed(2)}</p>
+          </DisplayRow>
+          <DisplayRow>
+            <DisplayFieldLabel label={"Total Tax (J) = (H) + (I)"} />
+            <p>{result().totalTax.toFixed(2)}</p>
+          </DisplayRow>
+        </DisplayArea>
+      )}
     </WindowContent>
   );
 };

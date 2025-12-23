@@ -37,6 +37,7 @@ import {
   FaChevronUp,
   FaChevronDown,
   FaAccessibleIcon,
+  FaInfoCircle,
 } from "react-icons/fa";
 import { MdComputer } from "react-icons/md";
 import exportFromJSON from "export-from-json";
@@ -66,6 +67,7 @@ import {
   CreateIncomeTaxCode,
   ManageIncomeTaxCode,
   CreateChartofAccounts,
+  IncomeTaxSimulate,
 } from "./Transactions";
 import { LocalStorage, Dictionary, Collection } from "./Database";
 import {
@@ -76,6 +78,7 @@ import {
   Table,
   TableRow,
 } from "./Components";
+import { IncomeTaxCode } from "./classes";
 
 export const Option = ({ value, options, process }) => {
   return (
@@ -1387,7 +1390,13 @@ function Random() {
 }
 
 function Scratch() {
-  return <></>;
+  return (
+    <>
+      {JSON.stringify(
+        new IncomeTaxCode("115BAC").taxComputationOnSalary(2025, 1345000)
+      )}
+    </>
+  );
 }
 
 const codes = [
@@ -1432,13 +1441,22 @@ const codes = [
     group: "Control",
     subgroup: "Global",
   },
+
+  {
+    code: "simtax",
+    screen: <Window />,
+    window: <IncomeTaxSimulate />,
+    name: "Simulate Income Tax",
+    group: "Application",
+    subgroup: "Application",
+  },
 ];
 
 function Drawer({ group = "Record" }) {
   const { setScreen } = useContext(ScreenContext);
   const transactions = codes.filter((item) => item.group === group);
   const subgroups = ListUniqueItems(transactions, "subgroup");
-  const groups = ["Record", "Control", "Report", "Intelligence"];
+  const groups = ["Record", "Control", "Report", "Application"];
 
   return (
     <div className="drawer">
@@ -1838,7 +1856,7 @@ function SearchBar() {
 }
 
 function TitleCard({ title }) {
-  return <h1 className="title">{title}</h1>;
+  return <h2 className="title">{title}</h2>;
 }
 
 function Home() {
@@ -1847,7 +1865,7 @@ function Home() {
   return (
     <div className="homeOuter">
       <div className="home">
-        <TitleCard title={"Compounds &reg;"} />
+        <TitleCard title={"C O M P O U N D S &reg;"} />
         <div className="actions">
           <div
             tabIndex={0}

@@ -17,7 +17,7 @@ const TrimCollection = (collection, fields) => {
   return trimmed;
 };
 
-const ListItems = (collection, key) => {
+export const ListItems = (collection, key) => {
   const list = [];
   collection.map((item) => list.push(item[key]));
   return list;
@@ -145,11 +145,11 @@ function exclRangeFilter(collection, field, list) {
   return filtered;
 }
 
-function valueInRange(value, range) {
+export const valueInRange = (value, range) => {
   const [from, to] = range;
   const result = value >= from && value <= to ? true : false;
   return result;
-}
+};
 
 function rangeOverlap(range1, range2) {
   let result = true;

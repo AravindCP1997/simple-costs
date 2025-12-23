@@ -64,7 +64,24 @@ export const TableRow = ({ cells }) => {
 };
 
 export function DisplayArea({ children }) {
-  return <div className="displayArea">{children}</div>;
+  const {
+    accessibility: { Background },
+  } = useContext(AccessibilityContext);
+
+  const style = {
+    display: "flex",
+    flexDirection: "column",
+    background: ["Tech", "No Background"].includes(Background)
+      ? "var(--lightbluet)"
+      : "var(--whitet)",
+    borderRadius: "15px",
+    padding: "10px",
+    border: ["Tech", "No Background"].includes(Background)
+      ? "5px solid var(--lightbluet)"
+      : "5px solid var(--whitet)",
+    boxShadow: "0px 0.5px 2px 0px var(--gray)",
+  };
+  return <div style={style}>{children}</div>;
 }
 
 export const Table = ({ columns, rows }) => {

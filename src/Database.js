@@ -1,3 +1,5 @@
+import { ListItems } from "./functions";
+
 export class LocalStorage {
   constructor(name) {
     this.name = name;
@@ -30,20 +32,34 @@ export class Collection extends LocalStorage {
   constructor(name) {
     super(name);
   }
-  add(data) {
-    const olddata = this.load();
-    const newdata = olddata === null ? [data] : [...olddata, data];
-    this.save(newdata);
-    return "Success";
-  }
-  getData(criteria) {
+  getAll(criteria) {
     const data = super.load();
     const keys = Object.keys(criteria);
     let result = data;
     keys.forEach((key) => {
       result = result.filter((item) => item[key] === criteria[key]);
     });
+    return result;
+  }
+  getData(criteria) {
+    const result = this.getAll(criteria);
     return result[0];
+  }
+  exists(criteria) {
+    const alldata = this.getAll(criteria);
+    const result = alldata.length > 0;
+    return result;
+  }
+  list(field) {
+    const items = super.load();
+    const list = ListItems(items, field);
+    return list;
+  }
+  add(data) {
+    const olddata = this.load();
+    const newdata = olddata === null ? [data] : [...olddata, data];
+    this.save(newdata);
+    return "Success";
   }
   delete(criteria) {
     const data = super.load();
