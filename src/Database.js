@@ -34,6 +34,9 @@ export class Collection extends LocalStorage {
   }
   getAll(criteria) {
     const data = super.load();
+    if (data === null) {
+      return [];
+    }
     const keys = Object.keys(criteria);
     let result = data;
     keys.forEach((key) => {
@@ -68,5 +71,11 @@ export class Collection extends LocalStorage {
       (item) => JSON.stringify(item) !== JSON.stringify(itemForDeletion)
     );
     super.save(newData);
+    return "Success";
+  }
+  update(criteria, data) {
+    this.delete(criteria);
+    super.add(data);
+    return "Success";
   }
 }

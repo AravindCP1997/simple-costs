@@ -9,6 +9,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import useData from "./useData";
+import { useError } from "./useError";
 import {
   ScreenContext,
   WindowContext,
@@ -39,9 +40,7 @@ import {
   FaAccessibleIcon,
   FaInfoCircle,
 } from "react-icons/fa";
-import { MdComputer } from "react-icons/md";
 import exportFromJSON from "export-from-json";
-import { PiTreeView } from "react-icons/pi";
 import {
   Page,
   Text,
@@ -54,20 +53,36 @@ import {
 } from "@react-pdf/renderer";
 import Draggable from "react-draggable";
 import { clickButton, objectChange, singleChange } from "./uiscript";
-import { ListUniqueItems, updateIndexValue, updateKeyValue } from "./functions";
+import {
+  ListItems,
+  ListUniqueItems,
+  updateIndexValue,
+  updateKeyValue,
+  newAutoNumber,
+  filterOutCollection,
+  noop,
+} from "./functions";
 import {
   addToArray,
   addToObject,
   removeFromArray,
   removeFromObject,
   updateObject,
+  updateKeyOfObject,
+  changeKey,
+  convertToObject,
 } from "./objects";
 import {
+  Accessibility,
   CreateAsset,
   CreateIncomeTaxCode,
   ManageIncomeTaxCode,
-  CreateChartofAccounts,
+  CreateChartOfAccounts,
   IncomeTaxSimulate,
+  JSONEditor,
+  ManageChartOfAccounts,
+  EditChartOfAccounts,
+  ManageFinancialStatementsCode,
 } from "./Transactions";
 import { LocalStorage, Dictionary, Collection } from "./Database";
 import {
@@ -77,6 +92,8 @@ import {
   ConditionalButton,
   Table,
   TableRow,
+  AutoSuggestInput,
+  FSGroupInput,
 } from "./Components";
 import { IncomeTaxCode } from "./classes";
 
@@ -90,7 +107,17 @@ export const Option = ({ value, options, process }) => {
   );
 };
 
-export const Input = ({ value, type, maxLength, process }) => {
+export const Input = ({
+  value,
+  type,
+  maxLength,
+  process,
+  keyDownHandler = noop,
+  placeholder = "",
+  setRef = noop,
+  blurHandler = noop,
+}) => {
+  const style = { position: "relative" };
   return (
     <input
       className="input"
@@ -98,6 +125,11 @@ export const Input = ({ value, type, maxLength, process }) => {
       value={value}
       type={type}
       maxLength={maxLength}
+      onKeyDown={(e) => keyDownHandler(e)}
+      placeholder={placeholder}
+      ref={(el) => setRef(el)}
+      style={style}
+      onBlur={(e) => blurHandler(e)}
     />
   );
 };
@@ -251,65 +283,6 @@ export function SingleInput({
         </DisplayBox>
       )}
     </>
-  );
-}
-
-export function ObjectInput({ data, process, fields, children }) {
-  const content = (field) => {
-    return (
-      <>
-        <DisplayFieldLabel label={field.label} />
-        <CustomInput
-          inputType={field.inputType}
-          value={data[field.name]}
-          process={(value) => process(field.name, value)}
-          valueType={field.valueType}
-          valueOptions={field.valueOptions}
-          valueMaxLength={field.maxLength}
-        />
-      </>
-    );
-  };
-  return (
-    <DisplayBox>
-      {fields.map((field) => (
-        <>
-          {field.inputType === "Radio" && (
-            <DisplayBox>{content(field)}</DisplayBox>
-          )}
-          {field.inputType !== "Radio" && (
-            <DisplayRow>{content(field)}</DisplayRow>
-          )}
-        </>
-      ))}
-      {children}
-    </DisplayBox>
-  );
-}
-
-export function ArrayInput({
-  data,
-  process,
-  inputType,
-  valueType,
-  valueOptions,
-  valueMaxLength,
-  children,
-}) {
-  return (
-    <DisplayBox>
-      {data.map((item, i) => (
-        <CustomInput
-          value={data[i]}
-          inputType={inputType}
-          valueType={valueType}
-          valueMaxLength={valueMaxLength}
-          valueOptions={valueOptions}
-          process={(value) => process(i, value)}
-        />
-      ))}
-      {children}
-    </DisplayBox>
   );
 }
 
@@ -1073,58 +1046,6 @@ function DisplayAsTable({ collection }) {
   }
 }
 
-const AutoCompleteInput = ({ options }) => {
-  const [inputValue, setInputValue] = useState("");
-  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
-  useEffect(() => {
-    if (inputValue.length > 0) {
-      const newSuggestions = options.filter((option) =>
-        option.toLowerCase().includes(inputValue.toLowerCase())
-      );
-      setFilteredSuggestions(newSuggestions);
-    } else {
-      setFilteredSuggestions([]);
-    }
-  }, [inputValue, options]);
-
-  const handleChange = (e) => {
-    setInputValue(e.target.value);
-    setShowSuggestions(true);
-  };
-
-  const handleSelectSuggestion = (suggestion) => {
-    setInputValue(suggestion);
-    setShowSuggestions(false);
-  };
-
-  return (
-    <div>
-      <input
-        type="text"
-        value={inputValue}
-        onChange={(e) => handleChange(e)}
-        onFocus={() => setShowSuggestions(true)}
-        onBlur={() =>
-          setTimeout(() => {
-            setShowSuggestions(false);
-          }, 100)
-        }
-      />
-      {showSuggestions && filteredSuggestions.length > 0 && (
-        <ul>
-          {filteredSuggestions.map((suggestion, i) => (
-            <li key={i} onClick={() => handleSelectSuggestion(suggestion)}>
-              {suggestion}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
-
 function JsonFileReader() {
   const [jsonData, setJsonData] = useState(null);
   const [error, setError] = useState(null);
@@ -1390,12 +1311,32 @@ function Random() {
 }
 
 function Scratch() {
+  const passtime = (time) => {
+    return new Promise((resolve) => setTimeout(resolve, time));
+  };
+
+  function save() {
+    new Collection("Sample").save([{ name: "Aravind" }]);
+  }
+
+  async function check() {
+    save();
+    await passtime(3000);
+    const result = new Collection("Sample").exists({ name: "Aravind" });
+    alert(JSON.stringify(result));
+  }
+
+  async function eight() {
+    await hello();
+    console.log("eight called");
+    await passtime(6000);
+    console.log("eight seconds passed");
+  }
+
   return (
-    <>
-      {JSON.stringify(
-        new IncomeTaxCode("115BAC").taxComputationOnSalary(2025, 1345000)
-      )}
-    </>
+    <div>
+      <Button name={"Async"} functionsArray={[() => check()]} />
+    </div>
   );
 }
 
@@ -1418,10 +1359,18 @@ const codes = [
     subgroup: "Asset",
   },
   {
-    code: "ccoa",
+    code: "coa",
     screen: <Window />,
-    window: <CreateChartofAccounts />,
-    name: "Create Chart of Accounts",
+    window: <ManageChartOfAccounts />,
+    name: "Chart of Accounts",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "fs",
+    screen: <Window />,
+    window: <ManageFinancialStatementsCode />,
+    name: "Financial Statements",
     group: "Control",
     subgroup: "Global",
   },
@@ -1446,7 +1395,15 @@ const codes = [
     code: "simtax",
     screen: <Window />,
     window: <IncomeTaxSimulate />,
-    name: "Simulate Income Tax",
+    name: "Remuneration Tax Simulator",
+    group: "Application",
+    subgroup: "Application",
+  },
+  {
+    code: "json",
+    screen: <Window />,
+    window: <JSONEditor initial={[["Aravind"]]} />,
+    name: "JSON Editor",
     group: "Application",
     subgroup: "Application",
   },
@@ -1748,84 +1705,50 @@ function Clock() {
 }
 
 function SearchBar() {
-  const { setAlert } = useContext(AlertContext);
-  const { setScreen } = useContext(ScreenContext);
-  const { setWindow } = useContext(WindowContext);
-  const { setFloatingWindow } = useContext(FloatingWindowContext);
+  const { showAlert } = useContext(AlertContext);
+  const { setScreen, keyRefs } = useContext(ScreenContext);
+  const { openWindow } = useContext(WindowContext);
+  const { setFloatingWindow, openFloatingWindow } = useContext(
+    FloatingWindowContext
+  );
   const [code, setcode] = useState("");
 
   const go = () => {
     const result = codes.find((item) => item.code === code.toLowerCase());
     if (result) {
-      setScreen(result.screen);
-      setWindow(result.window);
+      openWindow(result.window);
     } else {
-      setAlert({
-        visible: true,
-        message: "The code is not configured. Please retry!",
-        onClose: [],
-      });
+      showAlert("The code entered is not yet configured. Please retry!");
     }
     setcode("");
   };
 
-  const inputRef = useRef();
-  const buttonRef = useRef([]);
-
-  const keyDownHandler = (e) => {
-    if (e.altKey && e.key === "g") {
-      e.preventDefault();
-      inputRef.current.focus();
-    } else if (e.altKey && e.key === "h") {
-      e.preventDefault();
-      buttonRef.current[0].click();
-      window.location.reload();
-    } else if (e.altKey && e.key === "+") {
-      e.preventDefault();
-      window.open(window.location.href, "_blank");
-    } else if (e.altKey && e.key === "Backspace") {
-      e.preventDefault();
-      buttonRef.current[1].click();
-    } else if (e.altKey && e.key === "r") {
-      e.preventDefault();
-      navigate("/record");
-    } else if (e.altKey && e.key === "R") {
-      e.preventDefault();
-      navigate("/reports");
-    } else if (e.altKey && e.key === "c") {
-      e.preventDefault();
-      navigate("/control");
-    } else if (e.altKey && e.key === "d") {
-      e.preventDefault();
-      buttonRef.current[3].click();
-    }
+  const setKeyRef = (key, element) => {
+    keyRefs.current[key] = element;
   };
 
-  const inputKeyDownHandler = (e) => {
+  const keyDownHandler = (e) => {
     if (e.key === "Enter") {
       go();
     }
   };
-
-  useEffect(() => {
-    const handle = document.addEventListener("keydown", keyDownHandler);
-    return () => {
-      document.removeEventListener("keydown", handle);
-    };
-  }, []);
 
   return (
     <div className="searchbarOverlay">
       <div className="searchbar">
         <Button
           name={<FaHome />}
-          functionsArray={[() => setScreen(<Home />), () => setWindow(null)]}
+          functionsArray={[() => setScreen(<Home />)]}
+          setRef={(element) => setKeyRef("Home", element)}
         />
         <div className="searchArea">
-          <input
+          <AutoSuggestInput
+            suggestions={ListItems(codes, "code")}
             value={code}
-            onChange={(e) => setcode(e.target.value)}
-            onKeyDown={(e) => inputKeyDownHandler(e)}
+            process={(value) => setcode(value)}
+            placeholder="Go to . . ."
+            setRef={(element) => setKeyRef("SearchArea", element)}
+            keyDownHandler={keyDownHandler}
           />
           <button
             style={{
@@ -1849,6 +1772,7 @@ function SearchBar() {
                 window: <Accessibility />,
               }),
           ]}
+          setRef={(element) => setKeyRef("Accessibility", element)}
         />
       </div>
     </div>
@@ -1865,7 +1789,7 @@ function Home() {
   return (
     <div className="homeOuter">
       <div className="home">
-        <TitleCard title={"C O M P O U N D S &reg;"} />
+        <TitleCard title={"C O M P O U N D S"} />
         <div className="actions">
           <div
             tabIndex={0}
@@ -1912,53 +1836,12 @@ function Icon({ name, window, code }) {
   );
 }
 
-const Accessibility = () => {
-  const {
-    accessibility: { Background, Font },
-    changeAccessibility,
-    resetAccessibility,
-    saveAccessibility,
-  } = useContext(AccessibilityContext);
-  const { closeFloatingWindow } = useContext(FloatingWindowContext);
-  return (
-    <WindowContent>
-      <WindowTitle title={"Accessibility"} />
-      <div className="displayInputFields">
-        <DisplayBox>
-          <DisplayFieldLabel label={"Background"} />
-          <Radio
-            value={Background}
-            process={(value) => changeAccessibility("Background", value)}
-            options={["Fabric", "Intersect", "Tech", "No Background"]}
-          />
-        </DisplayBox>
-        <DisplayBox>
-          <DisplayFieldLabel label={"Font"} />
-          <Radio
-            value={Font}
-            process={(value) => changeAccessibility("Font", value)}
-            options={["Helvetica", "Lexend", "Times New Roman", "Trebuchet MS"]}
-          />
-        </DisplayBox>
-      </div>
-      <div className="navigation">
-        <Button name={"Reset"} functionsArray={[() => resetAccessibility()]} />
-        <Button
-          name={"Save"}
-          functionsArray={[
-            () => saveAccessibility(),
-            () => closeFloatingWindow(),
-          ]}
-        />
-      </div>
-    </WindowContent>
-  );
-};
-
 const FloatingWindow = () => {
   const { floatingWindow, closeFloatingWindow } = useContext(
     FloatingWindowContext
   );
+
+  const { keyRefs } = useContext(ScreenContext);
 
   const onClose = () => {
     closeFloatingWindow();
@@ -1982,6 +1865,7 @@ const FloatingWindow = () => {
           <button
             className="floatingWindowClose no-drag"
             onClick={() => onClose()}
+            ref={(el) => (keyRefs.current["CloseFloat"] = el)}
           >
             &times;
           </button>
@@ -2025,6 +1909,32 @@ const PromptForm = () => {
   );
 };
 
+function Screen() {
+  const { screen, setScreen, keyRefs, children } = useContext(ScreenContext);
+  const shortcuts = [
+    { key: "h", action: () => keyRefs.current["Home"].click() },
+    { key: "g", action: () => keyRefs.current["SearchArea"].focus() },
+    { key: "a", action: () => keyRefs.current["Accessibility"].click() },
+    { key: "f", action: () => keyRefs.current["CloseFloat"].click() },
+  ];
+  const keyDownHandler = (e) => {
+    if (e.altKey && ListItems(shortcuts, "key").includes(e.key)) {
+      e.preventDefault();
+      shortcuts.find((shortcut) => shortcut.key === e.key).action();
+    }
+  };
+  return (
+    <div
+      tabIndex={0}
+      onKeyDown={(e) => keyDownHandler(e)}
+      className="screen innerContainer"
+    >
+      {screen}
+      {children}
+    </div>
+  );
+}
+
 const UserInterface = () => {
   const [accessibility, setAccessibility] = useState(accessibilityData.read());
   const { Background, Font } = accessibility;
@@ -2034,7 +1944,7 @@ const UserInterface = () => {
   };
 
   const changeAccessibility = (field, value) => {
-    setAccessibility((prevdata) => updateObject(prevdata, field, value));
+    setAccessibility((prevdata) => updateObject(prevdata, "", field, value));
   };
   const resetAccessibility = () => {
     setAccessibility(accessibilityData.read());
@@ -2051,7 +1961,8 @@ const UserInterface = () => {
   };
 
   const [screen, setScreen] = useState(<Home />);
-  const ScreenContextValue = { screen, setScreen };
+  const keyRefs = useRef({});
+  const ScreenContextValue = { screen, setScreen, keyRefs };
 
   const [window, setWindow] = useState(null);
 
@@ -2066,12 +1977,16 @@ const UserInterface = () => {
     visible: false,
     window: null,
   });
+  const openFloatingWindow = (window) => {
+    setFloatingWindow({ visible: true, window });
+  };
   const closeFloatingWindow = () => {
     setFloatingWindow({ visible: false, window: null });
   };
   const FloatingWindowContextValue = {
     floatingWindow,
     setFloatingWindow,
+    openFloatingWindow,
     closeFloatingWindow,
   };
 
@@ -2094,6 +2009,10 @@ const UserInterface = () => {
 
   const showAlert = (message, onClose = []) => {
     setAlert({ visible: true, message, onClose });
+    setTimeout(
+      () => setAlert({ visible: false, message: null, onClose: [] }),
+      1000
+    );
   };
   const AlertContextValue = { alert, setAlert, showAlert };
 
@@ -2109,13 +2028,11 @@ const UserInterface = () => {
             <FloatingWindowContext.Provider value={FloatingWindowContextValue}>
               <WindowContext.Provider value={WindowContextValue}>
                 <div className="container" style={style}>
+                  <PopupBox />
+                  <AlertBox />
+                  <FloatingWindow />
                   <SearchBar />
-                  <div className="screen innerContainer">
-                    <PopupBox />
-                    <AlertBox />
-                    <FloatingWindow />
-                    {screen}
-                  </div>
+                  <Screen />
                 </div>
               </WindowContext.Provider>
             </FloatingWindowContext.Provider>

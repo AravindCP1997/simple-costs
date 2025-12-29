@@ -1,3 +1,5 @@
+export const noop = () => {};
+
 const FieldsInCollection = (collection) => {
   const fields = [];
   collection.map((item) => fields.push(...Object.keys(item)));
@@ -151,7 +153,7 @@ export const valueInRange = (value, range) => {
   return result;
 };
 
-function rangeOverlap(range1, range2) {
+export function rangeOverlap(range1, range2) {
   let result = true;
   if (
     (range1[0] < range2[0] && range1[1] < range2[0]) ||
@@ -390,4 +392,43 @@ function maxError(Name, Value, Maximum) {
 function setBlank(data, fields) {
   fields.map((item) => (data[item] = ""));
   return data;
+}
+
+export function isObject(value) {
+  return typeof value === "object" && !Array.isArray(value) && value !== null;
+}
+export function filterCollection(collection, criteria) {
+  const keys = Object.keys(criteria);
+  let result = collection;
+  keys.forEach((key) => {
+    result = result.filter((item) => item[key] === criteria[key]);
+  });
+  return result;
+}
+
+export function filterOutCollection(collection, criteria) {
+  let result = [];
+  const keys = Object.keys(criteria);
+  collection.forEach((item) => {
+    let status = true;
+    keys.forEach((key) => {
+      if (item[key] !== criteria[key]) {
+        status = false;
+      }
+    });
+    if (!status) result.push(item);
+  });
+  return result;
+}
+
+export function existsInCollection(collection, criteria) {
+  return filterCollection(collection, criteria).length > 0;
+}
+
+export function newAutoNumber(collection, criteria, field, startNumber) {
+  let start = startNumber;
+  do {
+    start++;
+  } while (existsInCollection(collection, { ...criteria, [field]: start }));
+  return start;
 }

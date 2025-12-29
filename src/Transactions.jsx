@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useMemo } from "react";
 import {
   Input,
   Option,
@@ -21,15 +21,27 @@ import {
   ConditionalButton,
   Table,
   TableRow,
+  ObjectInput,
+  ArrayInput,
+  FSGroupInput,
 } from "./Components";
 
-import { updateIndexValue, updateKeyValue } from "./functions";
+import {
+  updateIndexValue,
+  updateKeyValue,
+  isObject,
+  rangeOverlap,
+  ListItems,
+  ListUniqueItems,
+} from "./functions";
 import { collectionChange, singleChange } from "./uiscript";
-import { updateObject, addToArray, addToObject } from "./objects";
+import { updateObject, addToArray, addToObject, newKey } from "./objects";
 import useData from "./useData";
 import { LocalStorage, Dictionary, Collection } from "./Database";
 import {
   AlertContext,
+  AccessibilityContext,
+  FloatingWindowContext,
   PopupContext,
   ScreenContext,
   WindowContext,
@@ -42,6 +54,50 @@ import {
 } from "./errors";
 import { IncomeTaxCode } from "./classes";
 import { FaInfoCircle } from "react-icons/fa";
+import { useError } from "./useError";
+
+export const Accessibility = () => {
+  const {
+    accessibility: { Background, Font },
+    changeAccessibility,
+    resetAccessibility,
+    saveAccessibility,
+  } = useContext(AccessibilityContext);
+  const { closeFloatingWindow } = useContext(FloatingWindowContext);
+  return (
+    <WindowContent>
+      <WindowTitle title={"Accessibility"} />
+      <div className="displayInputFields">
+        <DisplayBox>
+          <DisplayFieldLabel label={"Background"} />
+          <Radio
+            value={Background}
+            process={(value) => changeAccessibility("Background", value)}
+            options={["Fabric", "Intersect", "Tech", "No Background"]}
+          />
+        </DisplayBox>
+        <DisplayBox>
+          <DisplayFieldLabel label={"Font"} />
+          <Radio
+            value={Font}
+            process={(value) => changeAccessibility("Font", value)}
+            options={["Helvetica", "Lexend", "Times New Roman", "Trebuchet MS"]}
+          />
+        </DisplayBox>
+      </div>
+      <div className="navigation">
+        <Button name={"Reset"} functionsArray={[() => resetAccessibility()]} />
+        <Button
+          name={"Save"}
+          functionsArray={[
+            () => saveAccessibility(),
+            () => closeFloatingWindow(),
+          ]}
+        />
+      </div>
+    </WindowContent>
+  );
+};
 
 export function CreateAsset() {
   const [data, setdata] = useState({ Code: "", Description: "" });
@@ -104,7 +160,8 @@ export const CreateIncomeTaxCode = () => {
         value={Taxation[taxationIndex]["SlabRate"][slabIndex]["From"]}
         process={(value) =>
           changeData(
-            `Taxation/${taxationIndex}/SlabRate/${slabIndex}/From`,
+            `Taxation/${taxationIndex}/SlabRate/${slabIndex}`,
+            "From",
             value
           )
         }
@@ -114,7 +171,8 @@ export const CreateIncomeTaxCode = () => {
         value={Taxation[taxationIndex]["SlabRate"][slabIndex]["To"]}
         process={(value) =>
           changeData(
-            `Taxation/${taxationIndex}/SlabRate/${slabIndex}/To`,
+            `Taxation/${taxationIndex}/SlabRate/${slabIndex}`,
+            "To",
             value
           )
         }
@@ -124,7 +182,8 @@ export const CreateIncomeTaxCode = () => {
         value={Taxation[taxationIndex]["SlabRate"][slabIndex]["Rate"]}
         process={(value) =>
           changeData(
-            `Taxation/${taxationIndex}/SlabRate/${slabIndex}/Rate`,
+            `Taxation/${taxationIndex}/SlabRate/${slabIndex}`,
+            "Rate",
             value
           )
         }
@@ -140,7 +199,8 @@ export const CreateIncomeTaxCode = () => {
         type="number"
         process={(value) =>
           changeData(
-            `Taxation/${taxationIndex}/Surcharge/${slabIndex}/Threshold`,
+            `Taxation/${taxationIndex}/Surcharge/${slabIndex}`,
+            "Threshold",
             value
           )
         }
@@ -150,7 +210,8 @@ export const CreateIncomeTaxCode = () => {
         type="number"
         process={(value) =>
           changeData(
-            `Taxation/${taxationIndex}/Surcharge/${slabIndex}/Rate`,
+            `Taxation/${taxationIndex}/Surcharge/${slabIndex}`,
+            "Rate",
             value
           )
         }
@@ -162,34 +223,40 @@ export const CreateIncomeTaxCode = () => {
       <Input
         value={Taxation[taxationIndex]["YearFrom"]}
         process={(value) =>
-          changeData(`Taxation/${taxationIndex}/YearFrom`, value)
+          changeData(`Taxation/${taxationIndex}`, "YearFrom", value)
         }
         type="number"
       />,
       <Input
         value={Taxation[taxationIndex]["YearTo"]}
         process={(value) =>
-          changeData(`Taxation/${taxationIndex}/YearTo`, value)
+          changeData(`Taxation/${taxationIndex}`, "YearTo", value)
         }
         type="number"
       />,
       <Input
         value={Taxation[taxationIndex]["ExemptionLimit"]}
         process={(value) =>
-          changeData(`Taxation/${taxationIndex}/ExemptionLimit`, value)
+          changeData(`Taxation/${taxationIndex}`, `ExemptionLimit`, value)
         }
         type="number"
       />,
       <Input
         value={Taxation[taxationIndex]["StandardDeductionSalary"]}
         process={(value) =>
-          changeData(`Taxation/${taxationIndex}/StandardDeductionSalary`, value)
+          changeData(
+            `Taxation/${taxationIndex}`,
+            `StandardDeductionSalary`,
+            value
+          )
         }
         type="number"
       />,
       <Input
         value={Taxation[taxationIndex]["Cess"]}
-        process={(value) => changeData(`Taxation/${taxationIndex}/Cess`, value)}
+        process={(value) =>
+          changeData(`Taxation/${taxationIndex}`, `Cess`, value)
+        }
         type="number"
       />,
       <HidingDisplay title={"Slab Rate"}>
@@ -234,7 +301,8 @@ export const CreateIncomeTaxCode = () => {
         value={Taxation[taxationIndex]["CalculateMarginalReliefOnExemption"]}
         process={(value) =>
           changeData(
-            `Taxation/${taxationIndex}/CalculateMarginalReliefOnExemption`,
+            `Taxation/${taxationIndex}`,
+            `CalculateMarginalReliefOnExemption`,
             value
           )
         }
@@ -243,7 +311,8 @@ export const CreateIncomeTaxCode = () => {
         value={Taxation[taxationIndex]["CalculateMarginalReliefOnSurcharge"]}
         process={(value) =>
           changeData(
-            `Taxation/${taxationIndex}/CalculateMarginalReliefOnSurcharge`,
+            `Taxation/${taxationIndex}`,
+            `CalculateMarginalReliefOnSurcharge`,
             value
           )
         }
@@ -262,7 +331,7 @@ export const CreateIncomeTaxCode = () => {
         <LabelledInput label="Code">
           <Input
             value={Code}
-            process={(value) => changeData("Code", value)}
+            process={(value) => changeData("", "Code", value)}
             maxLength={8}
             type={"text"}
           />
@@ -385,7 +454,7 @@ export const ManageIncomeTaxCode = () => {
         <LabelledInput label="Code">
           <Input
             value={data.Code}
-            process={(value) => changeData("Code", value)}
+            process={(value) => changeData("", "Code", value)}
             type="text"
             maxLength={8}
           />
@@ -404,6 +473,8 @@ export const ManageIncomeTaxCode = () => {
 };
 
 export const IncomeTaxSimulate = ({ initialCode = "" }) => {
+  const { setWindow } = useContext(WindowContext);
+  const { openFloatingWindow } = useContext(FloatingWindowContext);
   const { data, changeData } = useData({
     Code: initialCode,
     Year: "",
@@ -429,26 +500,43 @@ export const IncomeTaxSimulate = ({ initialCode = "" }) => {
       <WindowTitle title={"Income Tax Simulate"} />
       <DisplayArea>
         <LabelledInput label={"Code"}>
+          {Code === "" && (
+            <p>
+              Code cannot be blank. Or,{" "}
+              <Button
+                name="Create Code"
+                functionsArray={[() => setWindow(<CreateIncomeTaxCode />)]}
+              />
+            </p>
+          )}
+          {Code !== "" && (
+            <Button
+              name="View Code"
+              functionsArray={[
+                () => openFloatingWindow(<ViewIncomeTaxCode Code={Code} />),
+              ]}
+            />
+          )}
           <Option
             value={Code}
-            process={(value) => changeData("Code", value)}
+            process={(value) => changeData("", "Code", value)}
             options={["", ...new IncomeTaxCode().list("Code")]}
           />
         </LabelledInput>
         <LabelledInput label={"Year"}>
-          <Input
-            value={Year}
-            process={(value) => changeData("Year", value)}
-            type={"number"}
-          />
           {Code !== "" && Year !== "" && !TaxCode.yearExists(Year) && (
             <p>Year does not exist in the tax code.</p>
           )}
+          <Input
+            value={Year}
+            process={(value) => changeData("", "Year", value)}
+            type={"number"}
+          />
         </LabelledInput>
         <LabelledInput label={"Income"}>
           <Input
             value={Income}
-            process={(value) => changeData("Income", value)}
+            process={(value) => changeData("", "Income", value)}
             type={"number"}
           />
         </LabelledInput>
@@ -503,9 +591,84 @@ export const IncomeTaxSimulate = ({ initialCode = "" }) => {
   );
 };
 
-export const CreateChartofAccounts = () => {
+export function ManageChartOfAccounts() {
+  const [code, setcode] = useState("");
+  const { openWindow } = useContext(WindowContext);
   const { showAlert } = useContext(AlertContext);
-  const defaults = {
+  const { showPopup } = useContext(PopupContext);
+  return (
+    <WindowContent>
+      <WindowTitle title={"Manage Chart of Accounts"} />
+      <DisplayArea>
+        <Button
+          name="Create"
+          functionsArray={[() => openWindow(<CreateChartOfAccounts />)]}
+        />
+        <p>{` new Chart of Accounts.`}</p>
+      </DisplayArea>
+      <DisplayArea>
+        <LabelledInput label={"Code"}>
+          <Input
+            value={code}
+            process={(value) => setcode(value)}
+            type={"text"}
+            maxLength={6}
+          />
+        </LabelledInput>
+        <NavigationRow>
+          <ConditionalButton
+            name="View"
+            result={code !== ""}
+            whileTrue={[() => openWindow(<ViewChartOfAccounts code={code} />)]}
+            whileFalse={[() => showAlert("Code is blank. Please retry! ")]}
+          />
+          <ConditionalButton
+            name="Edit"
+            result={code !== ""}
+            whileTrue={[() => openWindow(<EditChartOfAccounts code={code} />)]}
+            whileFalse={[() => showAlert("Code is blank. Please retry! ")]}
+          />
+          <ConditionalButton
+            name="Delete"
+            result={code !== ""}
+            whileTrue={[
+              () =>
+                showPopup(
+                  "Are you sure want to delete this Chart of Accounts?",
+                  [],
+                  [
+                    () =>
+                      showAlert(
+                        new Collection("ChartOfAccounts").delete({ Code: code })
+                      ),
+                  ]
+                ),
+            ]}
+            whileFalse={[() => showAlert("Code is blank. Please retry! ")]}
+          />
+          <ConditionalButton
+            name="Copy"
+            result={code !== ""}
+            whileTrue={[
+              () =>
+                openWindow(
+                  <CreateChartOfAccounts
+                    initial={new Collection("ChartOfAccounts").getData({
+                      Code: code,
+                    })}
+                  />
+                ),
+            ]}
+            whileFalse={[() => showAlert("Code is blank. Please retry! ")]}
+          />
+        </NavigationRow>
+      </DisplayArea>
+    </WindowContent>
+  );
+}
+
+export const CreateChartOfAccounts = ({
+  initial = {
     Code: "",
     GLNumbering: [
       { LedgerType: "Asset", From: "", To: "" },
@@ -514,35 +677,67 @@ export const CreateChartofAccounts = () => {
       { LedgerType: "Income", From: "", To: "" },
       { LedgerType: "Expense", From: "", To: "" },
     ],
-  };
-  const GLs = ["Asset", "Liability", "Equity", "Income", "Expense"];
-  const { data, changeData } = useData(defaults);
+  },
+}) => {
+  const { data, changeData, reset } = useData(initial);
   const { Code, GLNumbering } = data;
-  const GLNumberingCells = (index) => {
-    return [
-      <label>{GLs[index]}</label>,
-      <Input
-        value={GLNumbering[index]["From"]}
-        process={(value) => changeData(`GLNumbering/${index}/From`, value)}
-        type="number"
-      />,
-      <Input
-        value={GLNumbering[index]["To"]}
-        process={(value) => changeData(`GLNumbering/${index}/To`, value)}
-        type="number"
-      />,
-    ];
-  };
+  const { showAlert } = useContext(AlertContext);
+  const { openWindow } = useContext(WindowContext);
   const errors = () => {
-    const errors = [];
-    errors.push(...blankError(data, ["Code"]));
-    GLNumbering.forEach((item) => {
-      errors.push(invalidRangeError(item.From, item.To));
+    const list = [];
+    const addError = (path, error) => {
+      list.push({ path: path, error: error });
+    };
+    if (Code === "") {
+      addError("Code", "Code cannot be blank.");
+    }
+    if (
+      Code !== "" &&
+      new Collection("ChartOfAccounts").exists({ Code: Code })
+    ) {
+      addError("Code", "Chart of Accounts with same code already exists.");
+    }
+    GLNumbering.forEach((numbering, n) => {
+      const path = "GLNumbering";
+      const { LedgerType, From, To } = numbering;
+      if (From > To) {
+        addError(path, `${LedgerType} has 'From' greater than 'To'.`);
+      }
+      if (From === "") {
+        addError(path, `'From' cannot be blank at ${LedgerType}.`);
+      }
+      if (To === "") {
+        addError(path, `'To' cannot be blank at ${LedgerType}.`);
+      }
+      GLNumbering.forEach((numbering2, n2) => {
+        const { From: From2, To: To2 } = numbering2;
+        if (n2 !== n) {
+          if (rangeOverlap([From, To], [From2, To2])) {
+            addError(
+              path,
+              `Numbering overlaps between ${
+                GLNumbering[Math.min(n, n2)].LedgerType
+              } and ${GLNumbering[Math.max(n, n2)].LedgerType}.`
+            );
+          }
+        }
+      });
     });
-    errors.push(...overlappingError(GLNumbering, "LedgerType", "From", "To"));
-    return errors;
+    return list;
   };
 
+  const ErrorList = (path) => {
+    const filteredError = errors().filter((err) => err.path === path);
+    const result = ListUniqueItems(filteredError, "error");
+    if (result.length === 0) return null;
+    return (
+      <ul>
+        {result.map((item) => (
+          <li>{item}</li>
+        ))}
+      </ul>
+    );
+  };
   return (
     <WindowContent>
       <WindowTitle title={"Create Chart of Accounts"} />
@@ -550,39 +745,412 @@ export const CreateChartofAccounts = () => {
         <LabelledInput label={"Code"}>
           <Input
             value={Code}
-            process={(value) => changeData("Code", value)}
+            process={(value) => changeData("", "Code", value)}
             type={"text"}
             maxLength={4}
           />
         </LabelledInput>
+        {ErrorList("Code")}
         <DisplayBox>
           <DisplayFieldLabel label={"General Ledger Numbering"} />
           <Table
             columns={["Ledger", "From", "To"]}
-            rows={GLNumbering.map((item, i) => GLNumberingCells(i))}
+            rows={GLNumbering.map((item, i) => [
+              <p>{item.LedgerType}</p>,
+              <Input
+                value={item.From}
+                process={(value) =>
+                  changeData(`GLNumbering/${i}`, "From", value)
+                }
+              />,
+              <Input
+                value={item.To}
+                process={(value) => changeData(`GLNumbering/${i}`, "To", value)}
+              />,
+            ])}
           />
         </DisplayBox>
+        {ErrorList("GLNumbering")}
       </DisplayArea>
       <NavigationRow>
-        <HidingDisplay title={`Errors ${errors().length}`}>
-          <ul>
-            {errors().map((error) => (
-              <li>{error}</li>
-            ))}
-          </ul>
-        </HidingDisplay>
         <Button
+          name="Manage Other"
+          functionsArray={[() => openWindow(<ManageChartOfAccounts />)]}
+        />
+        <Button name="Reset" functionsArray={[() => reset()]} />
+        <ConditionalButton
           name="Save"
-          functionsArray={[
-            () =>
-              validateSubmit(
-                errors(),
-                [() => showAlert(new Collection("ChartofAccounts").add())],
-                [() => showAlert("Errors persist!")]
-              ),
+          result={errors().length === 0}
+          whileTrue={[
+            () => showAlert(new Collection("ChartOfAccounts").add(data)),
+            () => reset(),
           ]}
+          whileFalse={[() => showAlert("Errors still persit. Please retry!")]}
         />
       </NavigationRow>
     </WindowContent>
   );
 };
+
+export const ViewChartOfAccounts = ({ code }) => {
+  const data = new Collection("ChartOfAccounts").getData({ Code: code });
+  const { Code, GLNumbering } = data;
+  const { openWindow } = useContext(WindowContext);
+
+  return (
+    <WindowContent>
+      <WindowTitle title={"View Chart of Accounts"} />
+      <DisplayArea>
+        <LabelledInput label={"Code"}>
+          <label>{Code}</label>
+        </LabelledInput>
+        <DisplayBox>
+          <DisplayFieldLabel label={"General Ledger Numbering"} />
+          <Table
+            columns={["Ledger", "From", "To"]}
+            rows={GLNumbering.map((item, i) => [
+              <p>{item.LedgerType}</p>,
+              <p>{item.From}</p>,
+              <p>{item.To}</p>,
+            ])}
+          />
+        </DisplayBox>
+      </DisplayArea>
+      <NavigationRow>
+        <Button
+          name="Manage Other"
+          functionsArray={[() => openWindow(<ManageChartOfAccounts />)]}
+        />
+      </NavigationRow>
+    </WindowContent>
+  );
+};
+
+export const EditChartOfAccounts = ({ code }) => {
+  const initial = new Collection("ChartOfAccounts").getData({ Code: code });
+  const { data, changeData, reset } = useData(initial);
+  const { Code, GLNumbering } = data;
+  const { showAlert } = useContext(AlertContext);
+  const { openWindow } = useContext(WindowContext);
+  const errors = () => {
+    const list = [];
+    const addError = (path, error) => {
+      list.push({ path: path, error: error });
+    };
+    if (Code === "") {
+      addError("Code", "Code cannot be blank.");
+    }
+    GLNumbering.forEach((numbering, n) => {
+      const path = "GLNumbering";
+      const { LedgerType, From, To } = numbering;
+      if (From > To) {
+        addError(path, `${LedgerType} has 'From' greater than 'To'.`);
+      }
+      if (From === "") {
+        addError(path, `'From' cannot be blank at ${LedgerType}.`);
+      }
+      if (To === "") {
+        addError(path, `'To' cannot be blank at ${LedgerType}.`);
+      }
+      GLNumbering.forEach((numbering2, n2) => {
+        const { From: From2, To: To2 } = numbering2;
+        if (n2 !== n) {
+          if (rangeOverlap([From, To], [From2, To2])) {
+            addError(
+              path,
+              `Numbering overlaps between ${
+                GLNumbering[Math.min(n, n2)].LedgerType
+              } and ${GLNumbering[Math.max(n, n2)].LedgerType}.`
+            );
+          }
+        }
+      });
+    });
+    return list;
+  };
+
+  const ErrorList = (path) => {
+    const filteredError = errors().filter((err) => err.path === path);
+    const result = ListItems(filteredError, "error");
+    if (result.length === 0) return null;
+    return (
+      <ul>
+        {result.map((item) => (
+          <li>{item}</li>
+        ))}
+      </ul>
+    );
+  };
+  return (
+    <WindowContent>
+      <WindowTitle title={"Edit Chart of Accounts"} />
+      <DisplayArea>
+        <LabelledInput label={"Code"}>
+          <label>{Code}</label>
+        </LabelledInput>
+        {ErrorList("Code")}
+        <DisplayBox>
+          <DisplayFieldLabel label={"General Ledger Numbering"} />
+          <Table
+            columns={["Ledger", "From", "To"]}
+            rows={GLNumbering.map((item, i) => [
+              <p>{item.LedgerType}</p>,
+              <Input
+                value={item.From}
+                process={(value) =>
+                  changeData(`GLNumbering/${i}`, "From", value)
+                }
+              />,
+              <Input
+                value={item.To}
+                process={(value) => changeData(`GLNumbering/${i}`, "To", value)}
+              />,
+            ])}
+          />
+        </DisplayBox>
+        {ErrorList("GLNumbering")}
+      </DisplayArea>
+      <NavigationRow>
+        <Button
+          name="Manage Other"
+          functionsArray={[() => openWindow(<ManageChartOfAccounts />)]}
+        />
+        <Button name="Reset" functionsArray={[() => reset()]} />
+        <ConditionalButton
+          name="Update"
+          result={errors().length === 0}
+          whileTrue={[
+            () =>
+              showAlert(
+                new Collection("ChartOfAccounts").update({ Code: code }, data)
+              ),
+            () => openWindow(<ManageChartOfAccounts />),
+          ]}
+          whileFalse={[() => showAlert("Errors still persit. Please retry!")]}
+        />
+      </NavigationRow>
+    </WindowContent>
+  );
+};
+
+export function ManageFinancialStatementsCode() {
+  const [code, setcode] = useState("");
+  const { openWindow } = useContext(WindowContext);
+  const { showAlert } = useContext(AlertContext);
+  const { showPopup } = useContext(PopupContext);
+
+  return (
+    <WindowContent>
+      <WindowTitle title={"Manage Financial Statement Code"} />
+      <DisplayArea>
+        <p>
+          <Button
+            name="Create"
+            functionsArray={[
+              () => openWindow(<CreateFinancialStatementsCode />),
+            ]}
+          />
+          {` new Financial Statements Code.`}
+        </p>
+      </DisplayArea>
+      <DisplayArea>
+        <LabelledInput label={"Code"}>
+          <Input
+            value={code}
+            process={(value) => setcode(value)}
+            type={"text"}
+            maxLength={4}
+          />
+        </LabelledInput>
+        <NavigationRow>
+          <ConditionalButton
+            name="View"
+            result={code !== ""}
+            whileTrue={[
+              () => openWindow(<ViewFinancialStatementsCode code={code} />),
+            ]}
+            whileFalse={[() => showAlert("Code is blank. Please retry!")]}
+          />
+          <ConditionalButton
+            name="Update"
+            result={code !== ""}
+            whileTrue={[
+              () => openWindow(<EditFinancialStatementsCode code={code} />),
+            ]}
+            whileFalse={[() => showAlert("Code is blank. Please retry!")]}
+          />
+          <ConditionalButton
+            name="Delete"
+            result={code !== ""}
+            whileTrue={[
+              () =>
+                showPopup(
+                  "Are you sure want to delete this Financial Statements Code?",
+                  [],
+                  [
+                    () =>
+                      new Collection("FinancialStatementsCode").delete({
+                        Code: code,
+                      }),
+                  ]
+                ),
+            ]}
+            whileFalse={[() => showAlert("Code is blank. Please retry!")]}
+          />
+          <ConditionalButton
+            name="Clone"
+            result={code !== ""}
+            whileTrue={[
+              () =>
+                openWindow(
+                  <CreateFinancialStatementsCode
+                    initial={new Collection("FinancialStatementsCode").getData({
+                      Code: code,
+                    })}
+                  />
+                ),
+            ]}
+            whileFalse={[() => showAlert("Code is blank. Please retry!")]}
+          />
+        </NavigationRow>
+      </DisplayArea>
+    </WindowContent>
+  );
+}
+
+function CreateFinancialStatementsCode({
+  initial = {
+    Code: "",
+    Hierarchy: [
+      { name: "Asset", presentations: [], subgroups: [] },
+      { name: "Equity", presentations: [], subgroups: [] },
+      { name: "Liability", presentations: [], subgroups: [] },
+      { name: "Income", presentations: [], subgroups: [] },
+      { name: "Expense", presentations: [], subgroups: [] },
+    ],
+  },
+}) {
+  const { openWindow } = useContext(WindowContext);
+  const { showAlert } = useContext(AlertContext);
+
+  const { data, changeData, reset, addItemtoArray, deleteItemfromArray } =
+    useData(initial);
+
+  const { Code, Hierarchy } = data;
+
+  const processErrors = () => {
+    const errors = [];
+    const [addError] = useError(errors);
+    if (Code === "") {
+      addError("Code", "Code cannot be blank.");
+    }
+    return errors;
+  };
+
+  const [, errorsByPath] = useError(processErrors());
+
+  return (
+    <WindowContent>
+      <WindowTitle title={"Create Financial Statements Code"} />
+      <DisplayArea>
+        <LabelledInput label={"Code"}>
+          <Input
+            value={Code}
+            process={(value) => changeData("", "Code", value)}
+            type={"text"}
+            maxLength={6}
+          />
+        </LabelledInput>
+        {errorsByPath("Code")}
+        {Hierarchy.map((level, l) => (
+          <FSGroupInput
+            data={level}
+            path={`Hierarchy/${l}`}
+            changeData={changeData}
+            addItemtoArray={addItemtoArray}
+            deleteItemfromArray={deleteItemfromArray}
+          />
+        ))}
+      </DisplayArea>
+      <NavigationRow>
+        <Button name="Reset" functionsArray={[() => reset()]} />
+        <Button
+          name={"Manage"}
+          functionsArray={[() => openWindow(<ManageFinancialStatementsCode />)]}
+        />
+        <ConditionalButton
+          name="Save"
+          result={processErrors().length === 0}
+          whileTrue={[
+            () => new Collection("FinancialStatementsCode").add(data),
+          ]}
+          whileFalse={[() => showAlert("Errors still persist. Please retry!")]}
+        />
+      </NavigationRow>
+    </WindowContent>
+  );
+}
+
+export function JSONEditor({ initial }) {
+  const {
+    data,
+    changeData,
+    addItemtoArray,
+    addItemtoObject,
+    deleteItemfromArray,
+    deleteItemfromObject,
+    updateKey,
+    convertAsArray,
+    convertAsValue,
+    convertAsObject,
+  } = useData(initial);
+
+  const editable = typeof data === "object";
+
+  return (
+    <WindowContent>
+      <WindowTitle title="JSON Editor" />
+      <DisplayArea>
+        {!editable && (
+          <LabelledInput label={"JSON Not Editable"}>
+            <p>The data isn't a valid JSON and therefore can't be edited.</p>
+          </LabelledInput>
+        )}
+        {editable && (
+          <>
+            {isObject(data) ? (
+              <ObjectInput
+                path={""}
+                value={data}
+                changeData={changeData}
+                updateKeyOfObject={updateKey}
+                addToArray={addItemtoArray}
+                addToObject={addItemtoObject}
+                deleteFromArray={deleteItemfromArray}
+                deleteFromObject={deleteItemfromObject}
+                convertAsArray={convertAsArray}
+                convertAsObject={convertAsObject}
+                convertAsValue={convertAsValue}
+              />
+            ) : (
+              <ArrayInput
+                path={""}
+                value={data}
+                changeData={changeData}
+                updateKeyOfObject={updateKey}
+                addToArray={addItemtoArray}
+                addToObject={addItemtoObject}
+                deleteFromArray={deleteItemfromArray}
+                deleteFromObject={deleteItemfromObject}
+                convertAsArray={convertAsArray}
+                convertAsObject={convertAsObject}
+                convertAsValue={convertAsValue}
+              />
+            )}
+          </>
+        )}
+      </DisplayArea>
+      {JSON.stringify(data)}
+    </WindowContent>
+  );
+}

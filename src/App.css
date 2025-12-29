@@ -34,7 +34,7 @@
   gap: 10px;
   padding: 5px;
   transition: 0.5s;
-  overflow: auto;
+  overflow: visible;
   box-shadow: 0px 2px 10px 0px var(--gray);
   border: 5px solid var(--whitet);
 
@@ -48,6 +48,8 @@
 
 .searchArea {
   background: white;
+  display: flex;
+  flex-direction: row;
   border-radius: 15px;
   input {
     background: none;
@@ -106,27 +108,26 @@
   width: fit-content;
   display: flex;
   flex-direction: column;
-  gap: 30px;
   height: fit-content;
-  justify-content: center;
+  gap: 15px;
+  justify-content: space-between;
   height: fit-content;
   transition: 0.5s;
   box-shadow: 0px 1px 10px 0px var(--gray);
-  border-radius: 25px;
   border: 10px solid var(--whitet);
+  border-radius: 25px;
   margin-top: 20px;
 }
 
 .title {
-  text-align: center;
-  color: white;
+  text-align: left;
+  color: var(--bluet);
   cursor: pointer;
   margin: 0;
-  background: var(--bluet);
-  padding: 10px;
-  border-radius: 15px;
-  backdrop-filter: blur(2px);
+  padding: 10px 5px;
+  border-bottom: 3px solid var(--bluet);
   transition: 0.5s;
+  width: min(100%, 360px);
 }
 
 .actions {
@@ -134,11 +135,8 @@
   flex-direction: row;
   justify-content: center;
   gap: 20px;
-  padding: 20px;
+  padding: 20px 5px;
   border-radius: 15px;
-  background: var(--whitet);
-  backdrop-filter: blur(2px);
-  border: 5px solid white;
 }
 
 .menu {
@@ -152,10 +150,6 @@
   transition: 0.5s;
   width: 150px;
   padding: 5px;
-}
-
-.menu:nth-child(2) {
-  border-radius: 20px;
 }
 
 .menu:hover,
@@ -179,6 +173,7 @@
 .drawerNavigation {
   display: flex;
   padding: 10px;
+  gap: 10px;
   flex-direction: row;
   justify-content: space-around;
   align-items: center;
@@ -189,8 +184,7 @@
   transition: 0.5s;
   cursor: pointer;
   color: inherit;
-  box-shadow: 0px 0.5px 2px 0px var(--gray);
-  border: 5px solid var(--whitet);
+  overflow: auto;
 }
 
 .drawerNavigationButton,
@@ -203,6 +197,7 @@
   transition: 0.5s;
   padding: 10px;
   border-radius: 10px;
+  border: 2px solid var(--bluet);
 
   h4 {
     margin: 0;
@@ -402,15 +397,16 @@
 }
 
 .displayRow {
-  display: grid;
-  grid-template-columns: calc(50% - 5px) calc(50% - 5px);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
   gap: 10px;
-  width: 100%;
   padding: 5px;
   border-bottom: 1px solid var(--bluet);
   .input,
   select {
-    width: max(100%, 100px);
+    min-width: 100px;
     border-radius: 5px;
   }
 }
@@ -581,6 +577,7 @@
   left: 0;
   width: 100%;
   height: 100%;
+  padding: 10px;
   backdrop-filter: blur(10px);
   display: flex;
   flex-direction: column;
@@ -600,7 +597,7 @@
   position: fixed;
   z-index: 1000;
   border-radius: 15px;
-  top: 10%;
+  bottom: 10%;
   height: fit-content;
   max-height: 80%;
   width: min(600px, 100%);
@@ -611,10 +608,9 @@
   justify-content: top;
   gap: 10px;
   background: var(--bluet);
-  border: 10px solid var(--bluet);
   backdrop-filter: blur(15px);
   color: white;
-  box-shadow: 0px 1px 10px 2px var(--gray);
+  box-shadow: 0px 0px 10px 0px black;
 }
 
 .floatingWindow {
@@ -676,65 +672,6 @@
   select {
     width: 100%;
     height: 100%;
-  }
-}
-@media screen and (max-width: 600px) {
-  html {
-    background-size: 50%;
-  }
-
-  .innerContainer {
-    padding: 0;
-  }
-
-  .homeOuter {
-    width: 100%;
-    padding: 0;
-  }
-
-  .searchbar,
-  .home,
-  .display,
-  .displayTitle,
-  .displayInputFields,
-  .error,
-  .menuContainer,
-  .menuContainerTitle,
-  .menuItem {
-    box-shadow: none;
-  }
-
-  .home {
-    gap: 30px;
-    min-height: unset;
-    padding: 20px;
-    gap: 25px;
-    width: 100%;
-  }
-
-  .menu {
-    width: unset;
-  }
-
-  .menu:nth-child(1):hover {
-    transform: translate(2%);
-  }
-
-  .menu:nth-child(1) {
-    grid-column: 1 / span 2;
-    aspect-ratio: 2.2 / 1;
-    border-radius: 15px;
-  }
-
-  .actions {
-    display: grid;
-    grid-template-columns: 50% 50%;
-    padding: 10%;
-    font-size: 80%;
-  }
-
-  .display {
-    padding: 10px;
   }
 }
 
