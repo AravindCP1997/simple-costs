@@ -34,7 +34,6 @@ import {
   ListItems,
   ListUniqueItems,
 } from "./functions";
-import { collectionChange, singleChange } from "./uiscript";
 import { updateObject, addToArray, addToObject, newKey } from "./objects";
 import useData from "./useData";
 import { LocalStorage, Dictionary, Collection } from "./Database";
@@ -55,6 +54,7 @@ import {
 import { IncomeTaxCode } from "./classes";
 import { FaInfoCircle } from "react-icons/fa";
 import { useError } from "./useError";
+import { useInterface } from "./useInterface";
 
 export const Accessibility = () => {
   const {
@@ -138,7 +138,7 @@ export const CreateIncomeTaxCode = () => {
   const { data, changeData, addItemtoArray, deleteItemfromArray } =
     useData(defaults);
 
-  const { showAlert } = useContext(AlertContext);
+  const { showAlert } = useInterface();
 
   const { Code, Taxation } = data;
   const TaxationFields = [
@@ -373,7 +373,7 @@ export const CreateIncomeTaxCode = () => {
 export const ViewIncomeTaxCode = ({ Code }) => {
   const data = new Collection("IncomeTaxCode").getData({ Code: Code });
   const { Taxation } = data;
-  const { setWindow } = useContext(WindowContext);
+  const { openwindow } = useInterface();
   return (
     <WindowContent>
       <WindowTitle title={"View Income Tax Code"} />
@@ -429,11 +429,11 @@ export const ViewIncomeTaxCode = ({ Code }) => {
       <NavigationRow>
         <Button
           name="Back"
-          functionsArray={[() => setWindow(<ManageIncomeTaxCode />)]}
+          functionsArray={[() => openwindow(<ManageIncomeTaxCode />)]}
         />
         <Button
           name="Create"
-          functionsArray={[() => setWindow(<CreateIncomeTaxCode />)]}
+          functionsArray={[() => openwindow(<CreateIncomeTaxCode />)]}
         />
       </NavigationRow>
     </WindowContent>
@@ -473,8 +473,7 @@ export const ManageIncomeTaxCode = () => {
 };
 
 export const IncomeTaxSimulate = ({ initialCode = "" }) => {
-  const { setWindow } = useContext(WindowContext);
-  const { openFloatingWindow } = useContext(FloatingWindowContext);
+  const { openWindow, openFloat } = useInterface();
   const { data, changeData } = useData({
     Code: initialCode,
     Year: "",
@@ -505,7 +504,7 @@ export const IncomeTaxSimulate = ({ initialCode = "" }) => {
               Code cannot be blank. Or,{" "}
               <Button
                 name="Create Code"
-                functionsArray={[() => setWindow(<CreateIncomeTaxCode />)]}
+                functionsArray={[() => openWindow(<CreateIncomeTaxCode />)]}
               />
             </p>
           )}
@@ -513,7 +512,7 @@ export const IncomeTaxSimulate = ({ initialCode = "" }) => {
             <Button
               name="View Code"
               functionsArray={[
-                () => openFloatingWindow(<ViewIncomeTaxCode Code={Code} />),
+                () => openFloat(<ViewIncomeTaxCode Code={Code} />),
               ]}
             />
           )}

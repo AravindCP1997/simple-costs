@@ -432,3 +432,9 @@ export function newAutoNumber(collection, criteria, field, startNumber) {
   } while (existsInCollection(collection, { ...criteria, [field]: start }));
   return start;
 }
+
+export const clickButton = (e) => {
+  if (e.key === "Enter" || e.key === " ") {
+    e.target.click();
+  }
+};

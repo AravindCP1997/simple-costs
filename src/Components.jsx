@@ -5,13 +5,40 @@ import {
   DisplayBox,
   DisplayFieldLabel,
   DisplayRow,
-  Input,
   LabelledInput,
   NavigationRow,
-  WindowContent,
-  WindowTitle,
 } from "./App";
 import { isObject, noop } from "./functions";
+import { useInterface } from "./useInterface";
+
+export const Flex = ({ children, justify = "left", direction = "row" }) => {
+  const style = {
+    display: "flex",
+    flexDirection: direction,
+    justifyContent: justify,
+  };
+  return <div style={style}>{children}</div>;
+};
+
+export const RightFlex = ({ children }) => {
+  return <Flex justify="right">{children}</Flex>;
+};
+
+export const CenterFlex = ({ children }) => {
+  return <Flex justify="center">{children}</Flex>;
+};
+
+export const DistributedRow = ({ children }) => {
+  return <Flex justify="space-around">{children}</Flex>;
+};
+
+export const TopFlex = ({ children }) => {
+  return (
+    <Flex justify="top" direction="column">
+      {children}
+    </Flex>
+  );
+};
 
 export const Button = ({ name, functionsArray, setRef = noop }) => {
   const perform = () => {
@@ -37,7 +64,7 @@ export const HidingDisplay = ({ title, children }) => {
   const [isOpen, setOpen] = useState(false);
   const {
     accessibility: { Font },
-  } = useContext(AccessibilityContext);
+  } = useInterface();
 
   return (
     <div>
@@ -71,10 +98,11 @@ export const AutoSuggestInput = ({
   setRef = noop,
   suggestions,
   placeholder,
-  keyDownHandler,
+  onSelect = noop,
 }) => {
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
   const [showSuggestion, setShowSuggestion] = useState(false);
+  const [selected, setselected] = useState(-1);
 
   const handleChange = (value) => {
     const newFilteredSuggestions = suggestions.filter(
@@ -85,15 +113,16 @@ export const AutoSuggestInput = ({
     setShowSuggestion(true);
   };
 
-  const handleClick = (e) => {
-    process(e.currentTarget.innerText);
-    setFilteredSuggestions([]);
-    setShowSuggestion(false);
-  };
-
   const cancel = () => {
     setFilteredSuggestions([]);
     setShowSuggestion(false);
+    setselected(-1);
+  };
+
+  const handleClick = (e) => {
+    process(e.currentTarget.innerText);
+    onSelect(value);
+    setTimeout(() => cancel(), 100);
   };
 
   const dropdownStyle = {
@@ -103,13 +132,52 @@ export const AutoSuggestInput = ({
     zIndex: "1550",
   };
 
+  const keyDownHandler = (e) => {
+    if (e.key === "ArrowUp" && selected > 0) {
+      e.preventDefault();
+      setselected((prev) => prev - 1);
+      console.log(filteredSuggestions[selected]);
+    }
+    if (e.key === "ArrowDown" && selected < filteredSuggestions.length - 1) {
+      e.preventDefault();
+      setselected((prev) => prev + 1);
+      console.log(filteredSuggestions[selected]);
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (selected === -1) {
+        onSelect(value);
+      } else {
+        onSelect(filteredSuggestions[selected]);
+      }
+      cancel();
+    }
+    if (e.key === "Tab" && selected !== -1) {
+      e.preventDefault();
+      process(filteredSuggestions[selected]);
+      cancel();
+    }
+  };
+
+  const onBlur = () => {
+    setTimeout(() => cancel(), 200);
+  };
+
   const renderSuggestion = () => {
     if (showSuggestion && value) {
       if (filteredSuggestions.length) {
         return (
           <div style={dropdownStyle}>
-            {filteredSuggestions.map((suggestion) => (
-              <p key={suggestion} onClick={(e) => handleClick(e)}>
+            {filteredSuggestions.map((suggestion, s) => (
+              <p
+                style={
+                  s === selected
+                    ? { fontWeight: "bold", background: "var(--gold)" }
+                    : {}
+                }
+                key={suggestion}
+                onClick={(e) => handleClick(e)}
+              >
                 {suggestion}
               </p>
             ))}
@@ -118,7 +186,7 @@ export const AutoSuggestInput = ({
       } else {
         return (
           <div style={dropdownStyle}>
-            <p>No Suggestion</p>
+            <p onClick={() => cancel()}>Not found!</p>
           </div>
         );
       }
@@ -136,6 +204,7 @@ export const AutoSuggestInput = ({
         placeholder={placeholder}
         setRef={setRef}
         keyDownHandler={keyDownHandler}
+        blurHandler={onBlur}
       />
       {renderSuggestion()}
     </div>
@@ -154,10 +223,18 @@ export const TableRow = ({ cells }) => {
   );
 };
 
+export function WindowTitle({ title }) {
+  return (
+    <div className="windowTitle">
+      <h3>{title}</h3>
+    </div>
+  );
+}
+
 export function DisplayArea({ children }) {
   const {
     accessibility: { Background },
-  } = useContext(AccessibilityContext);
+  } = useInterface();
 
   const style = {
     display: "flex",
@@ -526,5 +603,89 @@ export const FSGroupInput = ({
         </>
       ))}
     </DisplayBox>
+  );
+};
+
+export const Overlay = ({ children, onClick = noop }) => {
+  const style = {
+    position: "fixed",
+    top: "0",
+    left: "0",
+    height: "100%",
+    width: "100%",
+    background: "var(--bluet)",
+    opacity: "0.15",
+  };
+  return (
+    <div style={style} onClick={(e) => onClick(e)}>
+      {children}
+    </div>
+  );
+};
+
+export function WindowContent({ children }) {
+  return <div className="windowContent">{children}</div>;
+}
+
+export function Label({ label, align = "left" }) {
+  return <label style={{ textAlign: align }}>{label}</label>;
+}
+
+export const Option = ({ value, options, process }) => {
+  return (
+    <select onChange={(e) => process(e.target.value)} value={value}>
+      {options.map((option) => (
+        <option value={option}>{option}</option>
+      ))}
+    </select>
+  );
+};
+
+export const Input = ({
+  value,
+  type,
+  maxLength,
+  process,
+  keyDownHandler = noop,
+  placeholder = "",
+  setRef = noop,
+  blurHandler = noop,
+}) => {
+  const style = { position: "relative" };
+  return (
+    <input
+      className="input"
+      onChange={(e) => process(e.target.value)}
+      value={value}
+      type={type}
+      maxLength={maxLength}
+      onKeyDown={(e) => keyDownHandler(e)}
+      placeholder={placeholder}
+      ref={(el) => setRef(el)}
+      style={style}
+      onBlur={(e) => blurHandler(e)}
+    />
+  );
+};
+
+export const Radio = ({ value, options, process }) => {
+  return (
+    <div className="radios">
+      {options.map((option, i) => (
+        <div
+          key={`radio${i}`}
+          className="radio"
+          onClick={() => process(option)}
+        >
+          <input
+            type="radio"
+            value={option}
+            checked={value === option}
+            onChange={(e) => process(e.target.value)}
+          />
+          <label>{option}</label>
+        </div>
+      ))}
+    </div>
   );
 };

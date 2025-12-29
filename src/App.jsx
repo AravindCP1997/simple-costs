@@ -1,4 +1,5 @@
 import "./App.css";
+import { UserInterfaceProvider } from "./useInterface";
 import {
   useEffect,
   useState,
@@ -52,7 +53,6 @@ import {
   PDFDownloadLink,
 } from "@react-pdf/renderer";
 import Draggable from "react-draggable";
-import { clickButton, objectChange, singleChange } from "./uiscript";
 import {
   ListItems,
   ListUniqueItems,
@@ -96,6 +96,7 @@ import {
   FSGroupInput,
 } from "./Components";
 import { IncomeTaxCode } from "./classes";
+import UserInterface from "./UserInterface";
 
 export const Option = ({ value, options, process }) => {
   return (
@@ -1310,7 +1311,7 @@ function Random() {
   return <Window>This is a random window.</Window>;
 }
 
-function Scratch() {
+export function Scratch() {
   const passtime = (time) => {
     return new Promise((resolve) => setTimeout(resolve, time));
   };
@@ -1713,7 +1714,7 @@ function SearchBar() {
   );
   const [code, setcode] = useState("");
 
-  const go = () => {
+  const go = (code) => {
     const result = codes.find((item) => item.code === code.toLowerCase());
     if (result) {
       openWindow(result.window);
@@ -1749,6 +1750,7 @@ function SearchBar() {
             placeholder="Go to . . ."
             setRef={(element) => setKeyRef("SearchArea", element)}
             keyDownHandler={keyDownHandler}
+            onSelect={(value) => go(value)}
           />
           <button
             style={{
@@ -1757,7 +1759,7 @@ function SearchBar() {
               color: "var(--bluet)",
               boxShadow: "none",
             }}
-            onClick={() => go()}
+            onClick={() => go(code)}
           >
             <FaArrowRight />
           </button>
@@ -1935,7 +1937,7 @@ function Screen() {
   );
 }
 
-const UserInterface = () => {
+const UserInterfaceOld = () => {
   const [accessibility, setAccessibility] = useState(accessibilityData.read());
   const { Background, Font } = accessibility;
   const style = {
@@ -2044,7 +2046,11 @@ const UserInterface = () => {
 };
 
 function App() {
-  return <UserInterface />;
+  return (
+    <UserInterfaceProvider>
+      <UserInterface />
+    </UserInterfaceProvider>
+  );
 }
 
 export default App;

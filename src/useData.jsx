@@ -8,15 +8,6 @@ import {
   Radio,
 } from "./App.jsx";
 import {
-  singleChange,
-  objectChange,
-  collectionChange,
-  tableChange,
-  objectInCollectionChange,
-  objectInTableChange,
-  tableInCollectionChange,
-} from "./uiscript.js";
-import {
   addToArray,
   addToObject,
   updateObject,

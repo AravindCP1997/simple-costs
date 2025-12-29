@@ -29,7 +29,8 @@
   display: flex;
   flex-direction: row;
   justify-content: center;
-  width: fit-content;
+  align-items: center;
+  width: min(100%, 350px);
   border-radius: 25px;
   gap: 10px;
   padding: 5px;
@@ -41,8 +42,6 @@
   button {
     border-radius: 50%;
     aspect-ratio: 1/1;
-    width: 30px;
-    padding: 5px;
   }
 }
 
@@ -50,6 +49,7 @@
   background: white;
   display: flex;
   flex-direction: row;
+  align-items: center;
   border-radius: 15px;
   input {
     background: none;
@@ -90,7 +90,6 @@
   flex-direction: row;
   justify-content: center;
   padding: 20px;
-  padding-bottom: 0;
   height: 100%;
   overflow: auto;
   color: var(--blue);
@@ -104,8 +103,9 @@
 }
 
 .home {
-  padding: 50px;
-  width: fit-content;
+  padding: 30px;
+  padding-top: 50px;
+  width: min(100%, 650px);
   display: flex;
   flex-direction: column;
   height: fit-content;
@@ -130,9 +130,10 @@
   width: min(100%, 360px);
 }
 
-.actions {
+.home-menu {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 20px;
   padding: 20px 5px;
@@ -161,13 +162,10 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 5%;
   width: 100%;
   height: fit-content;
-  border-radius: 25px;
-  box-shadow: 0px 3px 10px 0px var(--gray);
-  border: 10px solid var(--whitet);
   max-width: 960px;
+  position: relative;
 }
 
 .drawerNavigation {
@@ -178,13 +176,17 @@
   justify-content: space-around;
   align-items: center;
   border-radius: 15px;
-  background: none;
-  padding: 10px;
+  border: 3px solid var(--whitet);
+  backdrop-filter: blur(3px);
+  box-shadow: 0px 1px 2px gray;
   text-align: center;
   transition: 0.5s;
   cursor: pointer;
   color: inherit;
   overflow: auto;
+  position: sticky;
+  top: 0px;
+  z-index: 850;
 }
 
 .drawerNavigationButton,
@@ -221,6 +223,10 @@
   width: 100%;
   padding: 3%;
   transition: 0.5s;
+  border-radius: 15px;
+  border: 3px solid var(--whitet);
+  backdrop-filter: blur(3px);
+  box-shadow: 0px 1px 2px gray;
 }
 
 .drawerSubgroupTitle {
@@ -270,7 +276,7 @@
 
   p {
     margin: 0;
-    opacity: 0.1;
+    opacity: 0.4;
     font-size: 80%;
     transition: 0.5s;
     padding: 5px;
@@ -333,8 +339,6 @@
   border: 10px solid var(--whitet);
   backdrop-filter: blur(3px);
   margin-bottom: 20px;
-  box-shadow: 0px 0px;
-  box-shadow: 0px 3px 10px 0px var(--gray);
 }
 
 .windowTopBar {
