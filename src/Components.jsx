@@ -17,6 +17,7 @@ export const Flex = ({ children, justify = "left", direction = "row" }) => {
     display: "flex",
     flexDirection: direction,
     justifyContent: justify,
+    gap: "5px",
   };
   return <div style={style}>{children}</div>;
 };
@@ -30,6 +31,10 @@ export const CenterFlex = ({ children }) => {
 };
 
 export const DistributedRow = ({ children }) => {
+  return <Flex justify="space-between">{children}</Flex>;
+};
+
+export const CoveredRow = ({ children }) => {
   return <Flex justify="space-around">{children}</Flex>;
 };
 
@@ -41,7 +46,7 @@ export const TopFlex = ({ children }) => {
   );
 };
 
-export const Button = ({ name, functionsArray, setRef = noop }) => {
+export const Button = ({ name, functionsArray, setRef = noop, style = {} }) => {
   const perform = () => {
     functionsArray.forEach((func) => {
       func();
@@ -49,7 +54,7 @@ export const Button = ({ name, functionsArray, setRef = noop }) => {
   };
 
   return (
-    <button ref={(el) => setRef(el)} onClick={perform}>
+    <button ref={(el) => setRef(el)} style={style} onClick={perform}>
       {name}
     </button>
   );
@@ -74,7 +79,12 @@ export const HidingDisplay = ({ title, children }) => {
         <>
           {createPortal(
             <Overlay>
-              <FocusTrap>
+              <FocusTrap
+                focusTrapOptions={{
+                  escapeDeactivates: false,
+                  clickOutsideDeactivates: false,
+                }}
+              >
                 <div style={{ fontFamily: Font }} className="hidingDisplay">
                   <WindowTitle title={title} />
                   {children}
@@ -136,6 +146,10 @@ export const AutoSuggestInput = ({
     background: "white",
     width: "100%",
     zIndex: "1550",
+    borderBottomLeftRadius: "10px",
+    borderBottomRightRadius: "10px",
+    overflow: "hidden",
+    boxShadow: "0px 2px 10px 0px var(--gray)",
   };
 
   const keyDownHandler = (e) => {
@@ -178,11 +192,19 @@ export const AutoSuggestInput = ({
               <p
                 style={
                   s === selected
-                    ? { fontWeight: "bold", background: "var(--gold)" }
-                    : {}
+                    ? {
+                        background: "var(--lightgray)",
+                        fontSize: "14px",
+                        borderTop: "2px solid var(--lightgray)",
+                      }
+                    : {
+                        borderTop: "2px solid var(--lightgray)",
+                        fontSize: "14px",
+                      }
                 }
                 key={suggestion}
                 onClick={(e) => handleClick(e)}
+                className="autoSuggestion"
               >
                 {suggestion}
               </p>

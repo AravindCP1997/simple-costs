@@ -16,6 +16,7 @@ import {
   Option,
   Radio,
   AutoSuggestInput,
+  CoveredRow,
 } from "./Components";
 import Draggable from "react-draggable";
 import { FocusTrap } from "focus-trap-react";
@@ -112,17 +113,34 @@ export function Window() {
   const {
     window: { visible, content },
     closeWindow,
+    addRef,
   } = useInterface();
 
   if (!visible) {
     return null;
   }
 
+  const style = {
+    borderRadius: "20px",
+    width: "min(100%, 960px)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "15px",
+    height: "fit-content",
+    color: "inherit",
+    backdropFilter: "blur(3px)",
+    marginBottom: "20px",
+  };
+
   return (
-    <div className="window">
-      <RightFlex>
-        <Button name={`&times;`} functionsArray={[() => closeWindow()]} />
-      </RightFlex>
+    <div style={style}>
+      <Flex>
+        <Button
+          setRef={(element) => addRef("CloseWindow", element)}
+          name={`Back`}
+          functionsArray={[() => closeWindow()]}
+        />
+      </Flex>
       {content}
     </div>
   );
@@ -144,8 +162,12 @@ function FloatingWindow() {
     <Draggable nodeRef={nodeRef} cancel=".no-drag">
       <div className="floatingWindow" style={style} ref={nodeRef}>
         <DistributedRow>
-          <FaArrowsAlt />
-          <Button name={`&times;`} functionsArray={[() => closeFloat()]} />
+          <button>
+            <FaArrowsAlt />
+          </button>
+          <button className="no-drag" onClick={() => closeFloat()}>
+            &times;
+          </button>
         </DistributedRow>
         <div className="floatingWindowContent no-drag">{window}</div>
       </div>
@@ -180,7 +202,12 @@ function Confirm() {
 
   return (
     <Overlay>
-      <FocusTrap>
+      <FocusTrap
+        focusTrapOptions={{
+          escapeDeactivates: false,
+          clickOutsideDeactivates: false,
+        }}
+      >
         <div className="confirm">
           <h2>Are your sure?</h2>
           <h4>{message}</h4>
@@ -215,7 +242,49 @@ function SearchBar() {
     setcode("");
   };
 
+  const overlayStyle = {
+    width: "100%",
+    padding: "10px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+  };
+
+  const style = {
+    padding: "5px",
+    borderRadius: "25px",
+    border: "5px solid var(--whitet)",
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    width: "min(100%,360px)",
+    gap: "10px",
+    overflow: "visible",
+    boxShadow: "0px 2px 10px 0px var(--gray)",
+  };
+
+  const searchAreaStyle = {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "0px 5px",
+    borderRadius: "15px",
+    gap: "5px",
+    background: "white",
+    height: "100%",
+  };
+
+  const buttonStyle = {
+    borderRadius: "50%",
+    aspectRatio: "1/1",
+  };
+
   const insideButtonStyle = {
+    borderRadius: "50%",
+    aspectRatio: "1/1",
     background: "none",
     border: "none",
     color: "var(--bluet)",
@@ -223,14 +292,15 @@ function SearchBar() {
   };
 
   return (
-    <div className="searchbarOverlay">
-      <div className="searchbar">
+    <div style={overlayStyle}>
+      <div style={style}>
         <Button
+          style={buttonStyle}
           name={<FaHome />}
           functionsArray={[() => setscreen(<Home />)]}
           setRef={(element) => addRef("Home", element)}
         />
-        <div className="searchArea" style={{ padding: "0px 5px" }}>
+        <div className="searchArea" style={searchAreaStyle}>
           <button tabIndex={-1} style={insideButtonStyle}>
             <FaSearch />
           </button>
@@ -249,6 +319,7 @@ function SearchBar() {
 
         <Button
           name={<FaDesktop />}
+          style={buttonStyle}
           functionsArray={[() => openFloat(<Accessibility />)]}
           setRef={(element) => addRef("Accessibility", element)}
         />
@@ -300,10 +371,62 @@ function Accessibility() {
 
 export function Home() {
   const { setscreen } = useInterface();
+
+  const style = {
+    borderRadius: "25px",
+    padding: "20px",
+    minHeight: "400px",
+    maxHeight: "100%",
+    overflow: "auto",
+    gap: "35px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+  };
+
+  const titleStyle = {
+    borderBottom: "2px solid var(--bluet)",
+    width: "min(100%,400px)",
+    textAlign: "left",
+    cursor: "pointer",
+    margin: "0",
+    padding: "10px 5px",
+    color: "var(--blue)",
+  };
+
+  const menusStyle = {
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "10px",
+  };
+
+  const menuStyle = {
+    aspectRatio: "1/1",
+    borderRadius: "50%",
+    width: "150px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    textAlign: "center",
+    cursor: "pointer",
+    transition: "0.5s",
+    padding: "5px",
+    color: "white",
+  };
+
   const Menu = ({ name, drawer, color }) => {
     return (
       <div
-        className={`menu ${color}`}
+        className={`menu`}
+        style={{
+          ...menuStyle,
+          ...{
+            background: `var(--${color}t)`,
+          },
+        }}
         tabIndex={0}
         onKeyDown={(e) => clickButton(e)}
         onClick={() => setscreen(<Drawer initial={drawer} />)}
@@ -313,11 +436,11 @@ export function Home() {
     );
   };
   return (
-    <div className="home">
-      <div className="home-title">
-        <h2 className="title">C O M P O U N D S</h2>
+    <div style={style}>
+      <div>
+        <h2 style={titleStyle}>C O M P O U N D S</h2>
       </div>
-      <div className="home-menu">
+      <div style={menusStyle}>
         <Menu name="Record" color="green" drawer="Record" />
         <Menu name="Control" color="red" drawer="Control" />
         <Menu name="Report" color="blue" drawer="Report" />
@@ -326,7 +449,7 @@ export function Home() {
   );
 }
 
-function Drawer({ initial = "Record" }) {
+export function Drawer({ initial = "Record" }) {
   const [group, setgroup] = useState(initial);
   const { openWindow, setscreen } = useInterface();
   const transactions = codes.filter((code) => code.group === group);
@@ -334,12 +457,88 @@ function Drawer({ initial = "Record" }) {
   const transactionsInSubgroup = (subgroup) => {
     return transactions.filter((code) => code.subgroup === subgroup);
   };
+
+  const style = {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "top",
+    gap: "10px",
+    padding: "10px",
+    width: "min(100%,960px)",
+    height: "fit-content",
+    color: "var(--blue)",
+  };
+
+  const buttonStyle = {
+    background: "none",
+    boxShadow: "none",
+    color: "var(--blue)",
+    border: "2px solid var(--bluet)",
+    transition: "0.5s",
+    padding: "10px",
+    borderRadius: "10px",
+    fontSize: "14px",
+  };
+
+  const selectedButtonStyle = {
+    ...buttonStyle,
+    ...{
+      background: "var(--bluet)",
+      color: "white",
+    },
+  };
+
+  const titleStyle = {
+    width: "min(100%,450px)",
+    borderBottom: "2px solid var(--bluet)",
+    textAlign: "left",
+    padding: "10px",
+  };
+
+  const subgroupsStyle = {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "top",
+    alignItems: "start",
+    gap: "10px",
+    padding: "20px 0px",
+    transition: "0.5s",
+    borderBottom: "2px solid var(--bluet)",
+    width: "100%",
+  };
+
+  const transactionsStyle = {
+    display: "flex",
+    flexDirection: "row",
+    overflow: "auto",
+    gap: "15px",
+    height: "fit-content",
+    padding: "15px",
+  };
+
+  const iconStyle = {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "10px",
+    backdropFilter: "blur(10x)",
+    borderRadius: "15px",
+    border: "5px solid var(--whitet)",
+    boxShadow: "0px 1px 5px 0px var(--gray)",
+    transition: "0.5s",
+    cursor: "pointer",
+    textAlign: "center",
+    aspectRatio: "1 / 1",
+    padding: "10px",
+  };
+
   const NavButton = ({ name }) => {
     return (
       <button
-        className="drawerNavButton"
+        className="drawerButton"
         onClick={() => setgroup(name)}
-        style={group === "name" ? { fontWeight: "bold" } : {}}
+        style={group === name ? selectedButtonStyle : buttonStyle}
       >
         {name}
       </button>
@@ -353,28 +552,39 @@ function Drawer({ initial = "Record" }) {
         tabIndex={0}
         onKeyDown={(e) => clickButton(e)}
         onClick={() => openWindow(window)}
+        style={iconStyle}
       >
-        <h4>{name}</h4>
-        <p>{code.toUpperCase()}</p>
+        <h4 style={{ width: "120px", margin: "0" }}>{name}</h4>
+        <p
+          style={{
+            background: "var(--goldt)",
+            margin: "0",
+            fontSize: "80%",
+            borderRadius: "5px",
+            padding: "5px",
+          }}
+        >
+          {code.toUpperCase()}
+        </p>
       </div>
     );
   };
 
   return (
-    <div className="drawer">
+    <div style={style}>
       <RightFlex>
         <Button name={`&times;`} functionsArray={[() => setscreen(<Home />)]} />
       </RightFlex>
-      <DistributedRow>
+      <CoveredRow>
         <NavButton name={"Record"} />
         <NavButton name={"Control"} />
         <NavButton name={"Report"} />
         <NavButton name={"Application"} />
-      </DistributedRow>
+      </CoveredRow>
       {subgroups.map((subgroup) => (
-        <div>
-          <h4>{subgroup}</h4>
-          <div>
+        <div style={subgroupsStyle}>
+          <h4 style={titleStyle}>{subgroup}</h4>
+          <div style={transactionsStyle}>
             {transactionsInSubgroup(subgroup).map((transaction) => (
               <Icon
                 name={transaction.name}
@@ -405,8 +615,30 @@ function UserInterface() {
   useEffect(() => resetAccessibility(), [window, floatingwindow]);
 
   const style = {
+    position: "fixed",
+    top: "0",
+    left: "0",
+    height: "100%",
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "top",
+    alignItems: "center",
+    backgroundSize: "20%",
+    backgroundColor: "var(--lightgray)",
     backgroundImage: `url('../${Background}.png')`,
     fontFamily: `${Font},'Arial', Tahoma, Geneva, Verdana, sans-serif`,
+  };
+
+  const screenStyle = {
+    position: "relative",
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+    padding: "20px",
+    alignItems: "center",
+    overflow: "auto",
+    width: "100%",
   };
 
   const shortcuts = [
@@ -433,7 +665,9 @@ function UserInterface() {
       <Confirm />
       <Alert />
       <SearchBar />
-      <div className="innerContainer">{screen}</div>
+      <div className="screen" style={screenStyle}>
+        {screen}
+      </div>
     </div>
   );
 }

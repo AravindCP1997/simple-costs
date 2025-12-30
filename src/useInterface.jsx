@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useRef } from "react";
 import accessibilityData from "./accessibility.js";
 import { updateObject } from "./objects.js";
-import { Home, Window } from "./UserInterface.jsx";
+import { Home, Window, Drawer } from "./UserInterface.jsx";
 
 const UserInterfaceContext = createContext({});
 
@@ -16,6 +16,7 @@ export const UserInterfaceProvider = ({ children }) => {
   };
   const closeWindow = () => {
     setwindow({ visible: true, content: null });
+    setscreen(<Drawer />);
   };
 
   const [alert, setalert] = useState({
