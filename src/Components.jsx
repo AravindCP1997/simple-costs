@@ -10,6 +10,7 @@ import {
 } from "./App";
 import { isObject, noop } from "./functions";
 import { useInterface } from "./useInterface";
+import { FocusTrap } from "focus-trap-react";
 
 export const Flex = ({ children, justify = "left", direction = "row" }) => {
   const style = {
@@ -72,13 +73,18 @@ export const HidingDisplay = ({ title, children }) => {
       {isOpen && (
         <>
           {createPortal(
-            <div style={{ fontFamily: Font }} className="hidingDisplayOverlay">
-              <div className="hidingDisplay">
-                <WindowTitle title={title} />
-                {children}
-                <Button name="Close" functionsArray={[() => setOpen(false)]} />
-              </div>
-            </div>,
+            <Overlay>
+              <FocusTrap>
+                <div style={{ fontFamily: Font }} className="hidingDisplay">
+                  <WindowTitle title={title} />
+                  {children}
+                  <Button
+                    name="Close"
+                    functionsArray={[() => setOpen(false)]}
+                  />
+                </div>
+              </FocusTrap>
+            </Overlay>,
             document.body
           )}
         </>
@@ -608,13 +614,18 @@ export const FSGroupInput = ({
 
 export const Overlay = ({ children, onClick = noop }) => {
   const style = {
+    zIndex: "1000",
     position: "fixed",
     top: "0",
     left: "0",
     height: "100%",
     width: "100%",
-    background: "var(--bluet)",
-    opacity: "0.15",
+    backdropFilter: "blur(2px)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "top",
+    alignItems: "center",
+    padding: "10px",
   };
   return (
     <div style={style} onClick={(e) => onClick(e)}>

@@ -441,9 +441,7 @@ export const ViewIncomeTaxCode = ({ Code }) => {
 };
 
 export const ManageIncomeTaxCode = () => {
-  const { showAlert } = useContext(AlertContext);
-  const { showPopup } = useContext(PopupContext);
-  const { setWindow } = useContext(WindowContext);
+  const { openConfirm, openWindow } = useInterface();
   const defaults = { Code: "" };
   const { data, changeData } = useData(defaults);
 
@@ -464,7 +462,13 @@ export const ManageIncomeTaxCode = () => {
         <Button
           name="View"
           functionsArray={[
-            () => setWindow(<ViewIncomeTaxCode Code={data.Code} />),
+            () => openWindow(<ViewIncomeTaxCode Code={data.Code} />),
+          ]}
+        />
+        <Button
+          name="Confirm"
+          functionsArray={[
+            () => openConfirm("The action will delete the Income tax Code"),
           ]}
         />
       </NavigationRow>

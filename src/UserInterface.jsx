@@ -18,6 +18,7 @@ import {
   AutoSuggestInput,
 } from "./Components";
 import Draggable from "react-draggable";
+import { FocusTrap } from "focus-trap-react";
 import {
   FaArrowsAlt,
   FaSearch,
@@ -135,11 +136,13 @@ function FloatingWindow() {
 
   const nodeRef = useRef(null);
 
+  const style = { position: "fixed", zIndex: 999 };
+
   if (!visible) return null;
 
   return (
     <Draggable nodeRef={nodeRef} cancel=".no-drag">
-      <div className="floatingWindow" ref={nodeRef}>
+      <div className="floatingWindow" style={style} ref={nodeRef}>
         <DistributedRow>
           <FaArrowsAlt />
           <Button name={`&times;`} functionsArray={[() => closeFloat()]} />
@@ -177,20 +180,22 @@ function Confirm() {
 
   return (
     <Overlay>
-      <div className="confirm">
-        <h2>Are your sure?</h2>
-        <h4>{message}</h4>
-        <CenterFlex>
-          <Button
-            name="Cancel"
-            functionsArray={[...onCancel, () => closeConfirm()]}
-          />
-          <Button
-            name="Confirm"
-            functionsArray={[...onConfirm, () => closeConfirm()]}
-          />
-        </CenterFlex>
-      </div>
+      <FocusTrap>
+        <div className="confirm">
+          <h2>Are your sure?</h2>
+          <h4>{message}</h4>
+          <CenterFlex>
+            <Button
+              name="Cancel"
+              functionsArray={[...onCancel, () => closeConfirm()]}
+            />
+            <Button
+              name="Confirm"
+              functionsArray={[...onConfirm, () => closeConfirm()]}
+            />
+          </CenterFlex>
+        </div>
+      </FocusTrap>
     </Overlay>
   );
 }
@@ -226,7 +231,7 @@ function SearchBar() {
           setRef={(element) => addRef("Home", element)}
         />
         <div className="searchArea" style={{ padding: "0px 5px" }}>
-          <button style={insideButtonStyle}>
+          <button tabIndex={-1} style={insideButtonStyle}>
             <FaSearch />
           </button>
           <AutoSuggestInput
