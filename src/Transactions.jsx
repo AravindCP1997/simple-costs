@@ -1,4 +1,5 @@
 import { useState, useContext, useMemo } from "react";
+
 import {
   Input,
   Option,
@@ -8,12 +9,8 @@ import {
   DisplayFieldLabel,
   WindowContent,
   WindowTitle,
-  HidingInput,
   LabelledInput,
   NavigationRow,
-} from "./App";
-
-import {
   Button,
   CheckBox,
   DisplayArea,
@@ -24,6 +21,7 @@ import {
   ObjectInput,
   ArrayInput,
   FSGroupInput,
+  AutoSuggestInput,
 } from "./Components";
 
 import {
@@ -33,18 +31,12 @@ import {
   rangeOverlap,
   ListItems,
   ListUniqueItems,
+  noop,
 } from "./functions";
 import { updateObject, addToArray, addToObject, newKey } from "./objects";
 import useData from "./useData";
 import { LocalStorage, Dictionary, Collection } from "./Database";
-import {
-  AlertContext,
-  AccessibilityContext,
-  FloatingWindowContext,
-  PopupContext,
-  ScreenContext,
-  WindowContext,
-} from "./context";
+
 import {
   validateSubmit,
   overlappingError,
@@ -55,49 +47,6 @@ import { IncomeTaxCode } from "./classes";
 import { FaInfoCircle } from "react-icons/fa";
 import { useError } from "./useError";
 import { useInterface } from "./useInterface";
-
-export const Accessibility = () => {
-  const {
-    accessibility: { Background, Font },
-    changeAccessibility,
-    resetAccessibility,
-    saveAccessibility,
-  } = useContext(AccessibilityContext);
-  const { closeFloatingWindow } = useContext(FloatingWindowContext);
-  return (
-    <WindowContent>
-      <WindowTitle title={"Accessibility"} />
-      <div className="displayInputFields">
-        <DisplayBox>
-          <DisplayFieldLabel label={"Background"} />
-          <Radio
-            value={Background}
-            process={(value) => changeAccessibility("Background", value)}
-            options={["Fabric", "Intersect", "Tech", "No Background"]}
-          />
-        </DisplayBox>
-        <DisplayBox>
-          <DisplayFieldLabel label={"Font"} />
-          <Radio
-            value={Font}
-            process={(value) => changeAccessibility("Font", value)}
-            options={["Helvetica", "Lexend", "Times New Roman", "Trebuchet MS"]}
-          />
-        </DisplayBox>
-      </div>
-      <div className="navigation">
-        <Button name={"Reset"} functionsArray={[() => resetAccessibility()]} />
-        <Button
-          name={"Save"}
-          functionsArray={[
-            () => saveAccessibility(),
-            () => closeFloatingWindow(),
-          ]}
-        />
-      </div>
-    </WindowContent>
-  );
-};
 
 export function CreateAsset() {
   const [data, setdata] = useState({ Code: "", Description: "" });
@@ -520,10 +469,12 @@ export const IncomeTaxSimulate = ({ initialCode = "" }) => {
               ]}
             />
           )}
-          <Option
+          <AutoSuggestInput
             value={Code}
             process={(value) => changeData("", "Code", value)}
-            options={["", ...new IncomeTaxCode().list("Code")]}
+            onSelect={(value) => changeData("", "Code", value)}
+            suggestions={[...new IncomeTaxCode().list("Code")]}
+            placeholder={"Enter Code"}
           />
         </LabelledInput>
         <LabelledInput label={"Year"}>

@@ -154,22 +154,43 @@ function FloatingWindow() {
 
   const nodeRef = useRef(null);
 
-  const style = { position: "fixed", zIndex: 999 };
+  const style = {
+    position: "fixed",
+    zIndex: 999,
+    top: "10%",
+    maxHeight: "80%",
+    padding: "10px",
+    background: "var(--bluet)",
+    boxShadow: "0px 2px 10px 0px black",
+    color: "white",
+    width: "min(100%,480px)",
+    borderRadius: "15px",
+    gap: "10px",
+    backdropFilter: "blur(30px)",
+    display: "flex",
+    flexDirection: "column",
+  };
+
+  const contentStyle = {
+    padding: "10px",
+    resize: "vertical",
+    overflow: "auto",
+  };
 
   if (!visible) return null;
 
   return (
-    <Draggable nodeRef={nodeRef} cancel=".no-drag">
-      <div className="floatingWindow" style={style} ref={nodeRef}>
+    <Draggable nodeRef={nodeRef} handle=".drag">
+      <div style={style} ref={nodeRef}>
         <DistributedRow>
-          <button>
+          <button className="drag">
             <FaArrowsAlt />
           </button>
-          <button className="no-drag" onClick={() => closeFloat()}>
-            &times;
-          </button>
+          <button onClick={() => closeFloat()}>&times;</button>
         </DistributedRow>
-        <div className="floatingWindowContent no-drag">{window}</div>
+        <div style={contentStyle} className="floatingWindowContent">
+          {window}
+        </div>
       </div>
     </Draggable>
   );
@@ -182,11 +203,28 @@ function Alert() {
 
   if (!visible) return null;
 
+  const style = {
+    position: "fixed",
+    zIndex: "1010",
+    top: "10%",
+    maxHeight: "80%",
+    padding: "20px",
+    background: "var(--blue)",
+    color: "white",
+    boxShadow: "0px 2px 10px 0px black",
+    width: "min(100%,480px)",
+    borderRadius: "15px",
+    gap: "20px",
+    backdropFilter: "blur(30px)",
+    display: "flex",
+    flexDirection: "column",
+  };
+
   return (
     <Overlay>
-      <div className="alert">
-        <h2>{type}</h2>
-        <h4>{message}</h4>
+      <div style={style}>
+        <h2 style={{ margin: "0" }}>{type}</h2>
+        <h4 style={{ margin: "0" }}>{message}</h4>
       </div>
     </Overlay>
   );
@@ -200,6 +238,23 @@ function Confirm() {
 
   if (!visible) return null;
 
+  const style = {
+    position: "fixed",
+    zIndex: "1010",
+    top: "10%",
+    maxHeight: "80%",
+    padding: "20px",
+    background: "var(--blue)",
+    color: "white",
+    boxShadow: "0px 2px 10px 0px black",
+    width: "min(100%,480px)",
+    borderRadius: "15px",
+    gap: "20px",
+    backdropFilter: "blur(30px)",
+    display: "flex",
+    flexDirection: "column",
+  };
+
   return (
     <Overlay>
       <FocusTrap
@@ -208,9 +263,9 @@ function Confirm() {
           clickOutsideDeactivates: false,
         }}
       >
-        <div className="confirm">
-          <h2>Are your sure?</h2>
-          <h4>{message}</h4>
+        <div style={style}>
+          <h2 style={{ margin: "0" }}>Are your sure?</h2>
+          <h4 style={{ margin: "0" }}>{message}</h4>
           <CenterFlex>
             <Button
               name="Cancel"
@@ -254,7 +309,6 @@ function SearchBar() {
   const style = {
     padding: "5px",
     borderRadius: "25px",
-    border: "5px solid var(--whitet)",
     display: "flex",
     flexDirection: "row",
     justifyContent: "center",
@@ -262,7 +316,6 @@ function SearchBar() {
     width: "min(100%,360px)",
     gap: "10px",
     overflow: "visible",
-    boxShadow: "0px 2px 10px 0px var(--gray)",
   };
 
   const searchAreaStyle = {
@@ -473,7 +526,7 @@ export function Drawer({ initial = "Record" }) {
     background: "none",
     boxShadow: "none",
     color: "var(--blue)",
-    border: "2px solid var(--bluet)",
+    border: "2px solid transparent",
     transition: "0.5s",
     padding: "10px",
     borderRadius: "10px",
@@ -485,6 +538,7 @@ export function Drawer({ initial = "Record" }) {
     ...{
       background: "var(--bluet)",
       color: "white",
+      border: "2px solid var(--bluet)",
     },
   };
 

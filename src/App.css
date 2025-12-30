@@ -21,20 +21,6 @@
   background: var(--goldt);
 }
 
-.drawerIcons {
-  display: flex;
-  flex-direction: row;
-  gap: 2%;
-  row-gap: 10px;
-  width: 100%;
-  padding: 15px;
-  border-radius: 15px;
-  height: fit-content;
-  overflow: auto;
-  transition: 0.5s;
-  cursor: pointer;
-}
-
 .icon:hover,
 .icon:focus {
   transform: rotate(10deg);
@@ -42,38 +28,6 @@
   p {
     opacity: 1;
   }
-}
-
-.transactionTypes {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-around;
-  align-items: center;
-  border-radius: 15px;
-  background: none;
-  padding: 10px;
-  text-align: center;
-  transition: 0.5s;
-  cursor: pointer;
-  color: inherit;
-  box-shadow: 0px 0.5px 2px 0px var(--gray);
-  border: 5px solid var(--whitet);
-}
-
-.transactionType {
-  background: none;
-  color: var(--bluet);
-  border: none;
-  box-shadow: none;
-  font-size: 100%;
-}
-.transactionTypeSelected {
-  border: none;
-  font-size: 100%;
-}
-.transactionType:hover,
-.transactionType:focus {
-  background: var(--goldt);
 }
 
 .windowContent {
@@ -109,23 +63,6 @@
   box-shadow: 0px 0.5px 2px 0px var(--gray);
 }
 
-.displayField {
-  padding: 5px;
-  border-radius: 15px;
-  background: var(--lightbluet);
-  transition: 0.5s;
-  border: 2px solid var(--whitet);
-  backdrop-filter: brightness(150%);
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-  justify-content: left;
-}
-
-.displayFieldLabel {
-  font-weight: bold;
-}
-
 .displayRow {
   display: flex;
   flex-direction: row;
@@ -151,21 +88,6 @@
   padding: 20px 10px;
 }
 
-.labelledInput {
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  align-items: start;
-  input,
-  select {
-    width: 100%;
-  }
-}
-
-.inputLabel {
-  font-size: 14px;
-}
-
 .radios {
   display: flex;
   flex-direction: column;
@@ -189,198 +111,6 @@
   background: var(--goldt);
 }
 
-.displayObject {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 5px;
-}
-
-.displayObjectHead {
-  display: flex;
-  flex-direction: row;
-}
-
-.displayObjectButtons {
-  display: flex;
-  flex-direction: row;
-  justify-content: right;
-  padding: 2px;
-}
-
-.displayTable {
-  overflow: auto;
-  font-size: 80%;
-  padding: 5px;
-}
-
-.displayTableCell {
-  border: 1px solid var(--blue);
-  input,
-  select {
-    border-radius: 0;
-    width: max(100%, 128px);
-    font-size: 100%;
-  }
-  button {
-    border-radius: 0;
-  }
-}
-
-.navigationRow {
-  display: flex;
-  flex-direction: row;
-  justify-content: left;
-  gap: 10px;
-  padding: 10px 0px;
-}
-
-.error {
-  background: var(--lightredt);
-  padding: 10px;
-  border-radius: 15px;
-  backdrop-filter: blur(2px);
-  border: 5px solid var(--lightredt);
-  box-shadow: 0px 0.5px 2px 0px var(--gray);
-}
-
-.navigation {
-  display: flex;
-  flex-direction: row;
-  justify-content: right;
-  gap: 5px;
-
-  button {
-    border-radius: 10px;
-  }
-}
-
-.dropDown {
-  display: flex;
-  flex-direction: column;
-  border: 2px solid var(--whitet);
-  align-items: center;
-  background: white;
-  cursor: pointer;
-  padding: 5px;
-}
-
-.dropDown:hover {
-  .dropArrow {
-    opacity: 1;
-  }
-}
-
-.dropArrow {
-  opacity: 0.1;
-  transition: 0.5s;
-}
-
-.dropDownHead,
-.dropDownList {
-  text-align: left;
-  width: 100%;
-}
-
-.dropDownHead {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-around;
-}
-
-.dropDownList {
-  display: flex;
-  flex-direction: column;
-  label {
-    border-bottom: 1px solid var(--gray);
-    padding: 5px;
-  }
-}
-
-.popupOverlay,
-.alertOverlay,
-.promptFormOverlay,
-.hidingInputsOverlay,
-.hidingDisplayOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  padding: 10px;
-  backdrop-filter: blur(10px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  background: var(--lightgrayt);
-  transition: 1s ease-in-out;
-}
-
-.popupContent,
-.alertContent,
-.floatingWindow,
-.promptForm,
-.hidingInputs,
-.hidingDisplay,
-.confirm {
-  border-radius: 15px;
-  bottom: 10%;
-  height: fit-content;
-  max-height: 80%;
-  width: min(600px, 100%);
-  overflow: auto;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: top;
-  gap: 10px;
-  backdrop-filter: blur(100px);
-  background: var(--bluet);
-  color: white;
-  box-shadow: 0px 0px 10px 0px black;
-}
-
-.floatingWindow {
-  width: min(100%, 500px);
-}
-
-.floatingWindowClose {
-  border: none;
-  background: var(--redt);
-  box-shadow: none;
-  width: 40px;
-  font-size: 20px;
-  aspect-ratio: 1/1;
-  border-radius: 50%;
-}
-
-.popupDisplay {
-  padding: 5%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  height: fit-content;
-  color: inherit;
-}
-
-.popupClose {
-  background: unset;
-  box-shadow: none;
-  aspect-ratio: 1/1;
-  border-radius: 50%;
-  font-size: 1.5em;
-  padding: 5px;
-}
-
-.popupClose:hover,
-.popupClose:focus {
-  color: var(--blue);
-  background: white;
-}
-
 .tableContainer {
   width: 100%;
   overflow: auto;
@@ -401,11 +131,5 @@
   select {
     width: 100%;
     height: 100%;
-  }
-}
-
-@media print {
-  .searchBarOuter {
-    display: none;
   }
 }

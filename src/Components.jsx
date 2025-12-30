@@ -1,13 +1,5 @@
-import { AccessibilityContext, WindowContext } from "./context";
 import { useState, useContext } from "react";
 import { createPortal } from "react-dom";
-import {
-  DisplayBox,
-  DisplayFieldLabel,
-  DisplayRow,
-  LabelledInput,
-  NavigationRow,
-} from "./App";
 import { isObject, noop } from "./functions";
 import { useInterface } from "./useInterface";
 import { FocusTrap } from "focus-trap-react";
@@ -135,9 +127,9 @@ export const AutoSuggestInput = ({
     setselected(-1);
   };
 
-  const handleClick = (e) => {
-    process(e.currentTarget.innerText);
-    onSelect(value);
+  const handleClick = (suggestion) => {
+    process(suggestion);
+    onSelect(suggestion);
     setTimeout(() => cancel(), 100);
   };
 
@@ -179,9 +171,7 @@ export const AutoSuggestInput = ({
     }
   };
 
-  const onBlur = () => {
-    setTimeout(() => cancel(), 200);
-  };
+  const onBlur = () => {};
 
   const renderSuggestion = () => {
     if (showSuggestion && value) {
@@ -193,9 +183,10 @@ export const AutoSuggestInput = ({
                 style={
                   s === selected
                     ? {
-                        background: "var(--lightgray)",
+                        background: "var(--redt)",
                         fontSize: "14px",
                         borderTop: "2px solid var(--lightgray)",
+                        color: "white",
                       }
                     : {
                         borderTop: "2px solid var(--lightgray)",
@@ -203,7 +194,7 @@ export const AutoSuggestInput = ({
                       }
                 }
                 key={suggestion}
-                onClick={(e) => handleClick(e)}
+                onClick={() => handleClick(suggestion)}
                 className="autoSuggestion"
               >
                 {suggestion}
@@ -664,7 +655,7 @@ export function Label({ label, align = "left" }) {
   return <label style={{ textAlign: align }}>{label}</label>;
 }
 
-export const Option = ({ value, options, process }) => {
+export function Option({ value, options, process }) {
   return (
     <select onChange={(e) => process(e.target.value)} value={value}>
       {options.map((option) => (
@@ -672,9 +663,9 @@ export const Option = ({ value, options, process }) => {
       ))}
     </select>
   );
-};
+}
 
-export const Input = ({
+export function Input({
   value,
   type,
   maxLength,
@@ -683,7 +674,7 @@ export const Input = ({
   placeholder = "",
   setRef = noop,
   blurHandler = noop,
-}) => {
+}) {
   const style = { position: "relative" };
   return (
     <input
@@ -699,9 +690,9 @@ export const Input = ({
       onBlur={(e) => blurHandler(e)}
     />
   );
-};
+}
 
-export const Radio = ({ value, options, process }) => {
+export function Radio({ value, options, process }) {
   return (
     <div className="radios">
       {options.map((option, i) => (
@@ -721,4 +712,29 @@ export const Radio = ({ value, options, process }) => {
       ))}
     </div>
   );
-};
+}
+
+export function DisplayRow({ children }) {
+  return <div className="displayRow">{children}</div>;
+}
+
+export function DisplayBox({ children }) {
+  return <div className="displayBox">{children}</div>;
+}
+
+export function DisplayFieldLabel({ label }) {
+  return <label className="displayFieldLabel">{label}</label>;
+}
+
+export function NavigationRow({ children }) {
+  return <div className="navigationRow">{children}</div>;
+}
+
+export function LabelledInput({ label, children }) {
+  return (
+    <DisplayRow>
+      <DisplayFieldLabel label={label} />
+      {children}
+    </DisplayRow>
+  );
+}

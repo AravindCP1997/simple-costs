@@ -2293,8 +2293,6 @@ class Transaction {
   };
 }
 
-
-
 class CollectionQuery {
   constructor(collection, method) {
     this.collection = collection;
@@ -3785,3 +3783,155 @@ class KB {
     return result;
   }
 }
+const MultipleInput = ({ field, output, setdata }) => {
+  const valueChange = (req, i, e) => {
+    const { value } = e.target;
+    setdata((prevdata) => ({
+      ...prevdata,
+      [field["name"]]: {
+        ...prevdata[field["name"]],
+        [req]: prevdata[field["name"]][req].map((item, index) =>
+          i == index ? value : item
+        ),
+      },
+    }));
+  };
+
+  const removeItem = (req, i) => {
+    setdata((prevdata) => ({
+      ...prevdata,
+      [field["name"]]: {
+        ...prevdata[field["name"]],
+        [req]: prevdata[field["name"]][req].filter((item, index) => i != index),
+      },
+    }));
+  };
+
+  const addValue = (req) => {
+    setdata((prevdata) => ({
+      ...prevdata,
+      [field["name"]]: {
+        ...prevdata[field["name"]],
+        [req]: [...prevdata[field["name"]][req], ""],
+      },
+    }));
+  };
+
+  const addRange = (req) => {
+    setdata((prevdata) => ({
+      ...prevdata,
+      [field["name"]]: {
+        ...prevdata[field["name"]],
+        [req]: [...prevdata[field["name"]][req], { from: "", to: "" }],
+      },
+    }));
+  };
+
+  const rangeChange = (req, i, subfield, e) => {
+    const { value } = e.target;
+    setdata((prevdata) => ({
+      ...prevdata,
+      [field["name"]]: {
+        ...prevdata[field["name"]],
+        [req]: prevdata[field["name"]][req].map((item, index) =>
+          i == index ? { ...item, [subfield]: value } : item
+        ),
+      },
+    }));
+  };
+
+  return (
+    <div className="displayField">
+      <label>{field["name"]}</label>
+      {field["req"].map((req) => (
+        <div className="displayObject">
+          <div className="displayRow">
+            <label>{req}</label>
+          </div>
+          {(req == "values" || req == "exclValues") && (
+            <div className="displayList">
+              <button onClick={() => addValue(req)}>+</button>
+              {output[field["name"]][req].map((item, i) => (
+                <div>
+                  {field["noteditable"] && <p>{item}</p>}
+                  {field["input"] == "input" && !field["noteditable"] && (
+                    <div>
+                      <input
+                        type={field["type"]}
+                        maxLength={field["maxLength"]}
+                        placeholder={field["placeholder"]}
+                        onChange={(e) => valueChange(req, i, e)}
+                        value={item}
+                      />
+                      <button onClick={() => removeItem(req, i)}>-</button>
+                    </div>
+                  )}
+                  {field["input"] == "option" && !field["noteditable"] && (
+                    <div>
+                      <select onChange={(e) => valueChange(i, e)} value={item}>
+                        {field["options"].map((option) => (
+                          <option value={option}>{option}</option>
+                        ))}
+                      </select>
+                      <button onClick={() => removeItem(req, i)}>-</button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {(req == "ranges" || req == "exclRanges") && (
+            <div className="displayList">
+              <button onClick={() => addRange(req)}>+</button>
+              {output[field["name"]][req].map((item, i) => (
+                <div>
+                  {field["noteditable"] && <p>{item}</p>}
+                  {field["input"] == "input" && !field["noteditable"] && (
+                    <div>
+                      <input
+                        type={field["type"]}
+                        maxLength={field["maxLength"]}
+                        placeholder={field["placeholder"]}
+                        onChange={(e) => rangeChange(req, i, "from", e)}
+                        value={item["from"]}
+                      />
+                      <input
+                        type={field["type"]}
+                        maxLength={field["maxLength"]}
+                        placeholder={field["placeholder"]}
+                        onChange={(e) => rangeChange(req, i, "to", e)}
+                        value={item["to"]}
+                      />
+                      <button onClick={() => removeItem(req, i)}>-</button>
+                    </div>
+                  )}
+                  {field["input"] == "option" && !field["noteditable"] && (
+                    <div>
+                      <select
+                        onChange={(e) => rangeChange(req, i, "from", e)}
+                        value={item["from"]}
+                      >
+                        {field["options"].map((option) => (
+                          <option value={option}>{option}</option>
+                        ))}
+                      </select>
+                      <select
+                        onChange={(e) => rangeChange(req, i, "to", e)}
+                        value={item["to"]}
+                      >
+                        {field["options"].map((option) => (
+                          <option value={option}>{option}</option>
+                        ))}
+                      </select>
+                      <button onClick={() => removeItem(req, i)}>-</button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
