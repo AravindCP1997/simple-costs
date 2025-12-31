@@ -30,12 +30,6 @@
   }
 }
 
-.windowContent {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
 .windowTitle {
   color: inherit;
   text-align: center;

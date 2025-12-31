@@ -108,6 +108,7 @@ export const AutoSuggestInput = ({
   suggestions,
   placeholder,
   onSelect = noop,
+  inputStyle,
 }) => {
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
   const [showSuggestion, setShowSuggestion] = useState(false);
@@ -225,6 +226,7 @@ export const AutoSuggestInput = ({
         setRef={setRef}
         keyDownHandler={keyDownHandler}
         blurHandler={onBlur}
+        style={inputStyle}
       />
       {renderSuggestion()}
     </div>
@@ -244,10 +246,23 @@ export const TableRow = ({ cells }) => {
 };
 
 export function WindowTitle({ title, style = {} }) {
-  const defaultStyle = { textAlign: "center", padding: "20px" };
+  const defaultStyle = {
+    color: "var(--blue)",
+    textAlign: "center",
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: "10px",
+    alignItems: "center",
+    borderBottom: "2px solid var(--bluet)",
+    padding: "10px",
+    width: "min(100%,450px)",
+  };
+  const { closeWindow } = useInterface();
   return (
     <div style={{ ...defaultStyle, ...style }}>
       <h3 style={{ margin: "0" }}>{title}</h3>
+      <Button name={"Close"} functionsArray={[() => closeWindow()]} />
     </div>
   );
 }
@@ -260,11 +275,12 @@ export function DisplayArea({ children }) {
   const style = {
     display: "flex",
     flexDirection: "column",
+    gap: "20px",
     background: ["Tech", "No Background"].includes(Background)
       ? "var(--lightbluet)"
       : "var(--whitet)",
     borderRadius: "15px",
-    padding: "10px",
+    padding: "20px",
     border: ["Tech", "No Background"].includes(Background)
       ? "5px solid var(--lightbluet)"
       : "5px solid var(--whitet)",
@@ -650,7 +666,13 @@ export const Overlay = ({ children, onClick = noop }) => {
 };
 
 export function WindowContent({ children }) {
-  return <div className="windowContent">{children}</div>;
+  const style = {
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px",
+    marginTop: "30px",
+  };
+  return <div style={style}>{children}</div>;
 }
 
 export function Label({ label, style = {} }) {
@@ -676,8 +698,9 @@ export function Input({
   placeholder = "",
   setRef = noop,
   blurHandler = noop,
+  style = {},
 }) {
-  const style = { position: "relative" };
+  const defaultStyle = { position: "relative" };
   return (
     <input
       className="input"
@@ -688,7 +711,7 @@ export function Input({
       onKeyDown={(e) => keyDownHandler(e)}
       placeholder={placeholder}
       ref={(el) => setRef(el)}
-      style={style}
+      style={{ ...defaultStyle, ...style }}
       onBlur={(e) => blurHandler(e)}
     />
   );

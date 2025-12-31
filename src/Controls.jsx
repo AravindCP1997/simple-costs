@@ -73,32 +73,33 @@ export function CreateChartOfAccounts({
   return (
     <WindowContent>
       <WindowTitle title={`${method} Chart of Accounts`} />
-      <Flex>
-        <Conditional logic={method === "Create"}>
-          <ConditionalButton
-            name={"Save"}
-            result={process().length === 0}
-            whileFalse={[() => showAlert("Errors persist. Please retry!")]}
-            whileTrue={[() => Collection.save(data)]}
-          />
-        </Conditional>
-        <Conditional logic={method === "Update"}>
-          <ConditionalButton
-            name={"Update"}
-            result={process().length === 0}
-            whileFalse={[() => showAlert("Errors persist. Please retry!")]}
-            whileTrue={[() => Collection.update(data)]}
-          />
-        </Conditional>
-        <Conditional logic={method !== "View"}>
-          <Button name={"Reset"} functionsArray={[() => reset()]} />
-          <Button
-            name={"Manage"}
-            functionsArray={[() => openWindow(<ManageChartOfAccounts />)]}
-          />
-        </Conditional>
-      </Flex>
+
       <DisplayArea>
+        <Flex>
+          <Conditional logic={method === "Create"}>
+            <ConditionalButton
+              name={"Save"}
+              result={process().length === 0}
+              whileFalse={[() => showAlert("Errors persist. Please retry!")]}
+              whileTrue={[() => Collection.save(data)]}
+            />
+          </Conditional>
+          <Conditional logic={method === "Update"}>
+            <ConditionalButton
+              name={"Update"}
+              result={process().length === 0}
+              whileFalse={[() => showAlert("Errors persist. Please retry!")]}
+              whileTrue={[() => Collection.update(data)]}
+            />
+          </Conditional>
+          <Conditional logic={method !== "View"}>
+            <Button name={"Reset"} functionsArray={[() => reset()]} />
+            <Button
+              name={"Manage"}
+              functionsArray={[() => openWindow(<ManageChartOfAccounts />)]}
+            />
+          </Conditional>
+        </Flex>
         <DistributedRow>
           <Label label={"Code"} />
           <Input

@@ -136,22 +136,10 @@ export function Window() {
     gap: "15px",
     height: "fit-content",
     color: "inherit",
-    backdropFilter: "blur(3px)",
     marginBottom: "20px",
   };
 
-  return (
-    <div style={style}>
-      <Flex>
-        <Button
-          setRef={(element) => addRef("CloseWindow", element)}
-          name={`Back`}
-          functionsArray={[() => closeWindow()]}
-        />
-      </Flex>
-      {content}
-    </div>
-  );
+  return <div style={style}>{content}</div>;
 }
 
 function FloatingWindow() {
@@ -537,27 +525,23 @@ export function Drawer({ initial = "Record" }) {
     background: "none",
     boxShadow: "none",
     color: "var(--blue)",
-    border: "2px solid transparent",
+    border: "5px solid transparent",
     transition: "0.5s",
-    padding: "10px",
-    borderRadius: "10px",
+    padding: "5px",
+    borderRadius: "unset",
     fontSize: "14px",
   };
 
   const selectedButtonStyle = {
     ...buttonStyle,
     ...{
-      background: "var(--bluet)",
-      color: "white",
-      border: "2px solid var(--bluet)",
+      borderBottom: "5px solid var(--bluet)",
     },
   };
 
   const titleStyle = {
     width: "min(100%,450px)",
-    borderBottom: "2px solid var(--bluet)",
     textAlign: "left",
-    padding: "10px",
   };
 
   const subgroupsStyle = {
@@ -565,7 +549,6 @@ export function Drawer({ initial = "Record" }) {
     flexDirection: "column",
     justifyContent: "top",
     alignItems: "start",
-    gap: "10px",
     padding: "20px 0px",
     transition: "0.5s",
     borderBottom: "2px solid var(--bluet)",
@@ -579,6 +562,7 @@ export function Drawer({ initial = "Record" }) {
     gap: "15px",
     height: "fit-content",
     padding: "15px",
+    width: "100%",
   };
 
   const iconStyle = {
@@ -637,14 +621,23 @@ export function Drawer({ initial = "Record" }) {
 
   return (
     <div style={style}>
-      <RightFlex>
-        <Button name={`&times;`} functionsArray={[() => setscreen(<Home />)]} />
-      </RightFlex>
       <CoveredRow>
         <NavButton name={"Record"} />
         <NavButton name={"Control"} />
         <NavButton name={"Report"} />
         <NavButton name={"Application"} />
+        <Button
+          name={`Close`}
+          style={{
+            ...buttonStyle,
+            ...{
+              color: "white",
+              background: "var(--redt)",
+              borderRadius: "10px",
+            },
+          }}
+          functionsArray={[() => setscreen(<Home />)]}
+        />
       </CoveredRow>
       {subgroups.map((subgroup) => (
         <div style={subgroupsStyle}>
