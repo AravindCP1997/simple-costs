@@ -315,6 +315,7 @@ function SearchBar() {
 
   const style = {
     padding: "10px",
+    paddingTop: "15px",
     display: "flex",
     flexDirection: "row",
     justifyContent: "center",
@@ -325,8 +326,8 @@ function SearchBar() {
     border: "5px solid var(--whitet)",
     boxShadow: "0px 2px 5px 0px gray",
     borderTop: "none",
-    borderBottomLeftRadius: "20px",
-    borderBottomRightRadius: "20px",
+    borderBottomLeftRadius: "25px",
+    borderBottomRightRadius: "25px",
   };
 
   const searchAreaStyle = {
@@ -439,8 +440,7 @@ export function Home() {
   const style = {
     borderRadius: "25px",
     padding: "20px",
-    minHeight: "400px",
-    maxHeight: "100%",
+    height: "85%",
     overflow: "auto",
     gap: "35px",
     display: "flex",
