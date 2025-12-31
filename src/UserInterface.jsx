@@ -31,7 +31,6 @@ import { ListItems, ListUniqueItems, clickButton } from "./functions";
 import { Scratch } from "./App";
 import {
   CreateAsset,
-  CreateChartOfAccounts,
   CreateIncomeTaxCode,
   ManageChartOfAccounts,
   ManageFinancialStatementsCode,
@@ -39,6 +38,7 @@ import {
   IncomeTaxSimulate,
   JSONEditor,
 } from "./Transactions";
+import { CreateChartOfAccounts } from "./Controls";
 
 const codes = [
   { code: "home", screen: <Home />, window: null },
@@ -57,6 +57,14 @@ const codes = [
     name: "Create Asset",
     group: "Control",
     subgroup: "Asset",
+  },
+  {
+    code: "ccoa",
+    screen: <Window />,
+    window: <CreateChartOfAccounts />,
+    name: "Chart of Accounts",
+    group: "Control",
+    subgroup: "Global",
   },
   {
     code: "coa",
@@ -299,7 +307,6 @@ function SearchBar() {
 
   const overlayStyle = {
     width: "100%",
-    padding: "10px",
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
@@ -307,15 +314,19 @@ function SearchBar() {
   };
 
   const style = {
-    padding: "5px",
-    borderRadius: "25px",
+    padding: "10px",
     display: "flex",
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    width: "min(100%,360px)",
+    maxWidth: "100%",
     gap: "10px",
     overflow: "visible",
+    border: "5px solid var(--whitet)",
+    boxShadow: "0px 2px 5px 0px gray",
+    borderTop: "none",
+    borderBottomLeftRadius: "20px",
+    borderBottomRightRadius: "20px",
   };
 
   const searchAreaStyle = {

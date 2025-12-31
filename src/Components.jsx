@@ -1,8 +1,9 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { isObject, noop } from "./functions";
 import { useInterface } from "./useInterface";
 import { FocusTrap } from "focus-trap-react";
+import { FaAngleUp, FaAngleDown } from "react-icons/fa";
 
 export const Flex = ({ children, justify = "left", direction = "row" }) => {
   const style = {
@@ -242,10 +243,11 @@ export const TableRow = ({ cells }) => {
   );
 };
 
-export function WindowTitle({ title }) {
+export function WindowTitle({ title, style = {} }) {
+  const defaultStyle = { textAlign: "center", padding: "20px" };
   return (
-    <div className="windowTitle">
-      <h3>{title}</h3>
+    <div style={{ ...defaultStyle, ...style }}>
+      <h3 style={{ margin: "0" }}>{title}</h3>
     </div>
   );
 }
@@ -651,8 +653,8 @@ export function WindowContent({ children }) {
   return <div className="windowContent">{children}</div>;
 }
 
-export function Label({ label, align = "left" }) {
-  return <label style={{ textAlign: align }}>{label}</label>;
+export function Label({ label, style = {} }) {
+  return <label style={{ ...{ textAlign: "left" }, ...style }}>{label}</label>;
 }
 
 export function Option({ value, options, process }) {
@@ -737,4 +739,66 @@ export function LabelledInput({ label, children }) {
       {children}
     </DisplayRow>
   );
+}
+
+export function CollapsingDisplay({ title, children }) {
+  const [visible, setvisible] = useState(false);
+  const contentRef = useRef(null);
+  const [height, setheight] = useState(0);
+  useEffect(() => {
+    if (contentRef.current) {
+      setheight(contentRef.current.scrollHeight);
+    }
+  }, [children, visible]);
+  const toggleVisibility = () => {
+    setvisible(!visible);
+  };
+  return (
+    <div>
+      <Button
+        name={
+          visible ? (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              {title}
+              <FaAngleUp />
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              {title}
+              <FaAngleDown />
+            </div>
+          )
+        }
+        functionsArray={[() => toggleVisibility()]}
+      />
+      <div
+        style={{
+          maxHeight: visible ? `${height}px` : "0",
+          overflow: "hidden",
+          transition: "max-Height 0.3s ease-in-out",
+        }}
+      >
+        <div ref={contentRef}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
+export function Conditional({ logic, children }) {
+  if (!logic) return null;
+  return <>{children}</>;
 }

@@ -148,3 +148,34 @@ export class IncomeTaxCode extends Collection {
     return data;
   }
 }
+
+export class ChartOfAccounts extends Collection {
+  constructor(Code, name = "ChartOfAccounts") {
+    super(name);
+    this.Code = Code;
+    this.criteria = { Code: this.Code };
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  async delete() {
+    if (!Code) {
+      return null;
+    }
+    return super.delete(this.criteria);
+  }
+  async update(data) {
+    if (!Code) {
+      return null;
+    }
+    return super.update(this.criteria, data);
+  }
+  numbering(group) {
+    const numberings = this.getData().GLNumbering;
+    const result = numberings.find((item) => item.LedgerType === group);
+    return [result.From, result.To];
+  }
+}

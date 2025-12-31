@@ -1,4 +1,8 @@
-import { ListItems } from "./functions";
+import {
+  ListItems,
+  existsInCollection,
+  filterOutCollection,
+} from "./functions";
 
 export class LocalStorage {
   constructor(name) {
@@ -11,7 +15,7 @@ export class LocalStorage {
         : null;
     return result;
   }
-  save(data) {
+  async save(data) {
     localStorage.setItem(this.name, JSON.stringify(data));
     return "Saved";
   }
@@ -32,7 +36,7 @@ export class Collection extends LocalStorage {
   constructor(name) {
     super(name);
   }
-  getAll(criteria) {
+  filtered(criteria) {
     const data = super.load();
     if (data === null) {
       return [];
@@ -44,38 +48,35 @@ export class Collection extends LocalStorage {
     });
     return result;
   }
-  getData(criteria) {
-    const result = this.getAll(criteria);
-    return result[0];
-  }
-  exists(criteria) {
-    const alldata = this.getAll(criteria);
-    const result = alldata.length > 0;
-    return result;
-  }
-  list(field) {
-    const items = super.load();
-    const list = ListItems(items, field);
+  filteredList(criteria, field) {
+    const data = this.filtered(criteria);
+    const list = ListItems(data, field);
     return list;
   }
-  add(data) {
-    const olddata = this.load();
+  getData(criteria) {
+    return this.filtered(criteria)[0];
+  }
+  exists(criteria) {
+    return existsInCollection(super.load(), criteria);
+  }
+  listAll(field) {
+    return ListItems(super.load(), field);
+  }
+  async add(data) {
+    const olddata = super.load();
     const newdata = olddata === null ? [data] : [...olddata, data];
-    this.save(newdata);
-    return "Success";
+    const result = await super.save(newdata);
+    return result;
   }
-  delete(criteria) {
+  async delete(criteria) {
     const data = super.load();
-    const itemForDeletion = this.getData(criteria);
-    const newData = data.filter(
-      (item) => JSON.stringify(item) !== JSON.stringify(itemForDeletion)
-    );
-    super.save(newData);
-    return "Success";
+    const newData = filterOutCollection(data, criteria);
+    const result = await super.save(newData);
+    return result;
   }
-  update(criteria, data) {
-    this.delete(criteria);
-    super.add(data);
-    return "Success";
+  async update(criteria, data) {
+    await this.delete(criteria);
+    const result = await super.add(data);
+    return result;
   }
 }
