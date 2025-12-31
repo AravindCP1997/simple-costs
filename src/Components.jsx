@@ -39,7 +39,13 @@ export const TopFlex = ({ children }) => {
   );
 };
 
-export const Button = ({ name, functionsArray, setRef = noop, style = {} }) => {
+export const Button = ({
+  name,
+  functionsArray,
+  setRef = noop,
+  style = {},
+  className,
+}) => {
   const perform = () => {
     functionsArray.forEach((func) => {
       func();
@@ -47,7 +53,12 @@ export const Button = ({ name, functionsArray, setRef = noop, style = {} }) => {
   };
 
   return (
-    <button ref={(el) => setRef(el)} style={style} onClick={perform}>
+    <button
+      className={className}
+      ref={(el) => setRef(el)}
+      style={style}
+      onClick={perform}
+    >
       {name}
     </button>
   );
@@ -651,7 +662,7 @@ export const Overlay = ({ children, onClick = noop }) => {
     left: "0",
     height: "100%",
     width: "100%",
-    backdropFilter: "blur(2px)",
+    background: "var(--bluet)",
     display: "flex",
     flexDirection: "column",
     justifyContent: "top",

@@ -16,9 +16,35 @@
   transform: rotate(10deg);
 }
 
+.drawerButton,
+.drawerButtonSelected {
+  background: none;
+  box-shadow: none;
+  color: var(--blue);
+  border: 2px solid transparent;
+  transition: 0.5s;
+  padding: 5px;
+  border-radius: unset;
+  font-size: 100%;
+}
+
+.drawerButtonSelected {
+  color: var(--greent);
+  border-top: 2px solid var(--greent);
+}
+
 .drawerButton:hover,
 .drawerButton:focus {
   background: var(--goldt);
+}
+
+.drawerButtonSelected:focus,
+.drawerButtonSelected:hover {
+  background: none;
+}
+
+.closeButton {
+  color: var(--redt);
 }
 
 .icon:hover,

@@ -159,12 +159,13 @@ function FloatingWindow() {
     background: "var(--bluet)",
     boxShadow: "0px 2px 10px 0px black",
     color: "white",
-    width: "min(100%,480px)",
+    width: "min(90%,480px)",
     borderRadius: "15px",
     gap: "10px",
     backdropFilter: "blur(30px)",
     display: "flex",
     flexDirection: "column",
+    margin: "10px",
   };
 
   const contentStyle = {
@@ -205,13 +206,14 @@ function Alert() {
     top: "10%",
     maxHeight: "80%",
     padding: "20px",
-    background: "var(--blue)",
+    background: "var(--bluet)",
     color: "white",
     boxShadow: "0px 2px 10px 0px black",
-    width: "min(100%,480px)",
+    width: "min(90%,480px)",
     borderRadius: "15px",
     gap: "20px",
     backdropFilter: "blur(30px)",
+    border: "5px solid var(--bluet)",
     display: "flex",
     flexDirection: "column",
   };
@@ -427,7 +429,7 @@ export function Home() {
 
   const style = {
     borderRadius: "25px",
-    padding: "20px",
+    padding: "0px 20px",
     height: "85%",
     overflow: "auto",
     gap: "35px",
@@ -517,26 +519,8 @@ export function Drawer({ initial = "Record" }) {
     gap: "10px",
     padding: "10px",
     width: "min(100%,960px)",
-    height: "fit-content",
+    height: "100%",
     color: "var(--blue)",
-  };
-
-  const buttonStyle = {
-    background: "none",
-    boxShadow: "none",
-    color: "var(--blue)",
-    border: "5px solid transparent",
-    transition: "0.5s",
-    padding: "5px",
-    borderRadius: "unset",
-    fontSize: "14px",
-  };
-
-  const selectedButtonStyle = {
-    ...buttonStyle,
-    ...{
-      borderBottom: "5px solid var(--bluet)",
-    },
   };
 
   const titleStyle = {
@@ -551,7 +535,7 @@ export function Drawer({ initial = "Record" }) {
     alignItems: "start",
     padding: "20px 0px",
     transition: "0.5s",
-    borderBottom: "2px solid var(--bluet)",
+    borderBottom: "5px solid var(--whitet)",
     width: "100%",
   };
 
@@ -585,9 +569,8 @@ export function Drawer({ initial = "Record" }) {
   const NavButton = ({ name }) => {
     return (
       <button
-        className="drawerButton"
+        className={group === name ? "drawerButtonSelected" : "drawerButton"}
         onClick={() => setgroup(name)}
-        style={group === name ? selectedButtonStyle : buttonStyle}
       >
         {name}
       </button>
@@ -621,38 +604,45 @@ export function Drawer({ initial = "Record" }) {
 
   return (
     <div style={style}>
-      <CoveredRow>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-around",
+          overflow: "auto",
+          width: "100%",
+          padding: "5px",
+          background: "var(--whitet)",
+          borderRadius: "10px",
+          border: "5px solid var(--whitet)",
+        }}
+      >
         <NavButton name={"Record"} />
         <NavButton name={"Control"} />
         <NavButton name={"Report"} />
         <NavButton name={"Application"} />
         <Button
           name={`Close`}
-          style={{
-            ...buttonStyle,
-            ...{
-              color: "white",
-              background: "var(--redt)",
-              borderRadius: "10px",
-            },
-          }}
+          className="drawerButton closeButton"
           functionsArray={[() => setscreen(<Home />)]}
         />
-      </CoveredRow>
-      {subgroups.map((subgroup) => (
-        <div style={subgroupsStyle}>
-          <h4 style={titleStyle}>{subgroup}</h4>
-          <div style={transactionsStyle}>
-            {transactionsInSubgroup(subgroup).map((transaction) => (
-              <Icon
-                name={transaction.name}
-                code={transaction.code}
-                window={transaction.window}
-              />
-            ))}
+      </div>
+      <div style={{ height: "100%", overflow: "auto", padding: "10px" }}>
+        {subgroups.map((subgroup) => (
+          <div style={subgroupsStyle}>
+            <h4 style={titleStyle}>{subgroup}</h4>
+            <div style={transactionsStyle}>
+              {transactionsInSubgroup(subgroup).map((transaction) => (
+                <Icon
+                  name={transaction.name}
+                  code={transaction.code}
+                  window={transaction.window}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
