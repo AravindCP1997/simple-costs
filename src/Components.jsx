@@ -135,6 +135,7 @@ export const AutoSuggestInput = ({
   process,
   setRef = noop,
   suggestions,
+  captions = [],
   placeholder,
   onSelect = noop,
   inputStyle,
@@ -172,7 +173,7 @@ export const AutoSuggestInput = ({
     borderBottomLeftRadius: "10px",
     borderBottomRightRadius: "10px",
     overflow: "hidden",
-    boxShadow: "0px 2px 10px 0px var(--gray)",
+    boxShadow: "0px 2px 10px -5px gray",
   };
 
   const keyDownHandler = (e) => {
@@ -202,34 +203,40 @@ export const AutoSuggestInput = ({
     }
   };
 
-  const onBlur = () => {};
+  const onBlur = () => {
+    async function delayedCancel() {
+      setTimeout(() => cancel(), 1000);
+    }
+    delayedCancel();
+  };
 
   const renderSuggestion = () => {
+    const style = {
+      borderTop: "2px solid var(--lightgray)",
+      fontSize: "14px",
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    };
+    const selectedStyle = { background: "var(--bluet)", color: "white" };
+
     if (showSuggestion && value) {
       if (filteredSuggestions.length) {
         return (
           <div style={dropdownStyle}>
             {filteredSuggestions.map((suggestion, s) => (
-              <p
-                style={
-                  s === selected
-                    ? {
-                        background: "var(--redt)",
-                        fontSize: "14px",
-                        borderTop: "2px solid var(--lightgray)",
-                        color: "white",
-                      }
-                    : {
-                        borderTop: "2px solid var(--lightgray)",
-                        fontSize: "14px",
-                      }
-                }
+              <div
                 key={suggestion}
-                onClick={() => handleClick(suggestion)}
+                style={s === selected ? { ...style, ...selectedStyle } : style}
                 className="autoSuggestion"
+                onClick={() => handleClick(suggestion)}
               >
-                {suggestion}
-              </p>
+                <p>{suggestion.toUpperCase()}</p>
+                <p style={{ opacity: 0.5, textAlign: "right" }}>
+                  {captions[suggestions.indexOf(suggestion)]}
+                </p>
+              </div>
             ))}
           </div>
         );

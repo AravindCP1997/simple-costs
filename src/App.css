@@ -30,7 +30,6 @@
 
 .drawerButtonSelected {
   border-top: 2px solid var(--greent);
-  color: var(--greent);
 }
 
 .drawerButton:hover,
@@ -45,6 +44,18 @@
 
 .closeButton {
   color: var(--redt);
+}
+
+.icon {
+  p {
+    background: var(--goldt);
+    font-size: 80%;
+    border-radius: 5px;
+    padding: 5px;
+    margin: 0;
+    opacity: 0.5;
+    transition: 0.5s;
+  }
 }
 
 .icon:hover,

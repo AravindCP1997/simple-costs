@@ -41,14 +41,13 @@ import {
 import { CreateChartOfAccounts } from "./Controls";
 
 const codes = [
-  { code: "home", screen: <Home />, window: null },
   {
-    code: "sc",
+    code: "test",
     screen: <Window />,
     window: <Scratch />,
-    name: "Scratch",
-    group: "Record",
-    subgroup: "Scratch",
+    name: "Test",
+    group: "System",
+    subgroup: "General",
   },
   {
     code: "casset",
@@ -365,6 +364,7 @@ function SearchBar() {
           </button>
           <AutoSuggestInput
             suggestions={ListItems(codes, "code")}
+            captions={ListItems(codes, "name")}
             value={code}
             process={(value) => setcode(value)}
             placeholder="Go to . . ."
@@ -595,17 +595,7 @@ export function Drawer({ initial = "Record" }) {
         style={iconStyle}
       >
         <h4 style={{ width: "120px", margin: "0" }}>{name}</h4>
-        <p
-          style={{
-            background: "var(--goldt)",
-            margin: "0",
-            fontSize: "80%",
-            borderRadius: "5px",
-            padding: "5px",
-          }}
-        >
-          {code.toUpperCase()}
-        </p>
+        <p>{code.toUpperCase()}</p>
       </div>
     );
   };

@@ -26,7 +26,7 @@ label {
   --goldt: rgb(255, 192, 80, 0.2);
   --cream: rgb(255, 235, 210);
   --lightgray: rgb(245, 245, 240);
-  --greent: rgb(0, 176, 80, 0.7);
+  --greent: rgb(0, 176, 80, 0.5);
   --lightbluet: rgb(150, 200, 255, 0.25);
   --lightbluetold: rgb(200, 220, 255, 0.25);
   --redt: rgb(255, 0, 30, 0.55);
@@ -62,7 +62,6 @@ button {
   background: var(--bluet);
   color: white;
   border-radius: 10px;
-  box-shadow: 0px 0px 2px 0px var(--gray);
   border: 2px solid var(--bluet);
 }
 
