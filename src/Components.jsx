@@ -76,6 +76,24 @@ export const HidingDisplay = ({ title, children }) => {
     accessibility: { Font },
   } = useInterface();
 
+  const style = {
+    fontFamily: Font,
+    width: "min(90%,600px)",
+    height: "min(fit-content,70%)",
+    overflow: "auto",
+    boxShadow: "0px 2px 10px -5px gray",
+    background: "var(--whitet)",
+    border: "5px solid var(--whitet)",
+    backdropFilter: "blur(30px)",
+    padding: "10px",
+    borderRadius: "15px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+    position: "fixed",
+    top: "15%",
+  };
+
   return (
     <div>
       <Button name={title} functionsArray={[() => setOpen(true)]} />
@@ -89,7 +107,7 @@ export const HidingDisplay = ({ title, children }) => {
                   clickOutsideDeactivates: false,
                 }}
               >
-                <div style={{ fontFamily: Font }} className="hidingDisplay">
+                <div style={style}>
                   <WindowTitle title={title} />
                   {children}
                   <Button
@@ -662,7 +680,6 @@ export const Overlay = ({ children, onClick = noop }) => {
     left: "0",
     height: "100%",
     width: "100%",
-    background: "var(--bluet)",
     display: "flex",
     flexDirection: "column",
     justifyContent: "top",

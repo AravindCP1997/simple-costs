@@ -104,7 +104,7 @@ const codes = [
     screen: <Window />,
     window: <IncomeTaxSimulate />,
     name: "Remuneration Tax Simulator",
-    group: "Application",
+    group: "Report",
     subgroup: "Application",
   },
   {
@@ -112,7 +112,7 @@ const codes = [
     screen: <Window />,
     window: <JSONEditor initial={[["Aravind"]]} />,
     name: "JSON Editor",
-    group: "Application",
+    group: "Report",
     subgroup: "Application",
   },
 ];
@@ -157,7 +157,7 @@ function FloatingWindow() {
     maxHeight: "80%",
     padding: "10px",
     background: "var(--bluet)",
-    boxShadow: "0px 2px 10px 0px black",
+    boxShadow: "0px 2px 10px -5px black",
     color: "white",
     width: "min(90%,480px)",
     borderRadius: "15px",
@@ -203,17 +203,17 @@ function Alert() {
   const style = {
     position: "fixed",
     zIndex: "1010",
-    top: "10%",
-    maxHeight: "80%",
+    bottom: "20%",
+    maxHeight: "60%",
     padding: "20px",
-    background: "var(--bluet)",
-    color: "white",
-    boxShadow: "0px 2px 10px 0px black",
+    background: "var(--whitet)",
+    border: "5px solid var(--whitet)",
+    color: "var(--blue)",
+    boxShadow: "0px 2px 10px -5px gray",
     width: "min(90%,480px)",
     borderRadius: "15px",
     gap: "20px",
     backdropFilter: "blur(30px)",
-    border: "5px solid var(--bluet)",
     display: "flex",
     flexDirection: "column",
   };
@@ -221,8 +221,8 @@ function Alert() {
   return (
     <Overlay>
       <div style={style}>
-        <h2 style={{ margin: "0" }}>{type}</h2>
-        <h4 style={{ margin: "0" }}>{message}</h4>
+        <h3 style={{ margin: "0", textAlign: "center" }}>{type}</h3>
+        <p style={{ margin: "0", textAlign: "center" }}>{message}</p>
       </div>
     </Overlay>
   );
@@ -239,13 +239,14 @@ function Confirm() {
   const style = {
     position: "fixed",
     zIndex: "1010",
-    top: "10%",
-    maxHeight: "80%",
+    bottom: "20%",
+    maxHeight: "60%",
     padding: "20px",
-    background: "var(--blue)",
-    color: "white",
-    boxShadow: "0px 2px 10px 0px black",
-    width: "min(100%,480px)",
+    background: "var(--whitet)",
+    border: "5px solid var(--whitet)",
+    color: "var(--blue)",
+    boxShadow: "0px 2px 10px -5px gray",
+    width: "min(90%,480px)",
     borderRadius: "15px",
     gap: "20px",
     backdropFilter: "blur(30px)",
@@ -262,8 +263,8 @@ function Confirm() {
         }}
       >
         <div style={style}>
-          <h2 style={{ margin: "0" }}>Are your sure?</h2>
-          <h4 style={{ margin: "0" }}>{message}</h4>
+          <h3 style={{ margin: "0", textAlign: "center" }}>Are your sure?</h3>
+          <p style={{ margin: "0", textAlign: "center" }}>{message}</p>
           <CenterFlex>
             <Button
               name="Cancel"
@@ -290,7 +291,10 @@ function SearchBar() {
     if (result) {
       openWindow(result.window);
     } else {
-      showAlert("The code entered is not yet configured. Please retry!");
+      showAlert(
+        "The code entered is not yet configured. Please retry!",
+        "Error"
+      );
     }
     setcode("");
   };
@@ -492,7 +496,12 @@ export function Home() {
   return (
     <div style={style}>
       <div>
-        <h2 style={titleStyle}>C O M P O U N D S</h2>
+        <h2
+          style={titleStyle}
+          onClick={() => setscreen(<Drawer initial="System" />)}
+        >
+          C O M P O U N D S
+        </h2>
       </div>
       <div style={menusStyle}>
         <Menu name="Record" color="green" drawer="Record" />
@@ -557,7 +566,7 @@ export function Drawer({ initial = "Record" }) {
     backdropFilter: "blur(10x)",
     borderRadius: "15px",
     border: "5px solid var(--whitet)",
-    boxShadow: "0px 1px 5px 0px var(--gray)",
+    boxShadow: "0px 1px 5px -2px gray",
     transition: "0.5s",
     cursor: "pointer",
     textAlign: "center",
@@ -610,7 +619,8 @@ export function Drawer({ initial = "Record" }) {
           justifyContent: "space-around",
           overflow: "auto",
           width: "100%",
-          padding: "5px",
+          padding: "10px",
+          gap: "10px",
           background: "var(--whitet)",
           borderRadius: "10px",
           border: "5px solid var(--whitet)",
@@ -619,7 +629,7 @@ export function Drawer({ initial = "Record" }) {
         <NavButton name={"Record"} />
         <NavButton name={"Control"} />
         <NavButton name={"Report"} />
-        <NavButton name={"Application"} />
+        <NavButton name={"System"} />
         <Button
           name={`Close`}
           className="drawerButton closeButton"
@@ -675,6 +685,7 @@ function UserInterface() {
     backgroundColor: "var(--lightgray)",
     backgroundImage: `url('../${Background}.png')`,
     fontFamily: `${Font},'Arial', Tahoma, Geneva, Verdana, sans-serif`,
+    color: "var(--blue)",
   };
 
   const screenStyle = {

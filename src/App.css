@@ -29,8 +29,8 @@
 }
 
 .drawerButtonSelected {
-  color: var(--greent);
   border-top: 2px solid var(--greent);
+  color: var(--greent);
 }
 
 .drawerButton:hover,
