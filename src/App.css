@@ -74,31 +74,15 @@
   }
 }
 
-.windowTitle {
-  color: inherit;
-  text-align: center;
+.controlButton {
+  border: none;
+  background: none;
+  color: var(--blue);
   padding: 10px;
-  padding-left: 20px;
-  border-radius: 15px;
-  margin: 0;
-  cursor: pointer;
-  transition: 0.5s;
-  box-shadow: 0px 0.5px 2px 0px var(--gray);
-  border: 5px solid var(--whitet);
-
-  h3 {
-    margin: 0;
-  }
 }
 
-.displayArea {
-  display: flex;
-  flex-direction: column;
-  background: var(--whitet);
-  border-radius: 15px;
-  padding: 10px;
-  border: 5px solid white;
-  box-shadow: 0px 0.5px 2px 0px var(--gray);
+.controlButton:hover {
+  background: none;
 }
 
 .displayRow {

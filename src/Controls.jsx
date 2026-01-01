@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
   Conditional,
   ConditionalButton,
+  ControlButton,
   DistributedRow,
   Input,
   WindowContent,
@@ -71,67 +72,72 @@ export function CreateChartOfAccounts({
   const [clone, setclone] = useState("");
 
   return (
-    <WindowContent>
-      <WindowTitle title={`${method} Chart of Accounts`} />
-
-      <DisplayArea>
-        <Flex>
+    <>
+      <WindowTitle
+        title={`${method} Chart of Accounts`}
+        menu={[
           <Conditional logic={method === "Create"}>
-            <ConditionalButton
+            <ControlButton
               name={"Save"}
               result={process().length === 0}
               whileFalse={[() => showAlert("Errors persist. Please retry!")]}
               whileTrue={[() => Collection.save(data)]}
             />
-          </Conditional>
+          </Conditional>,
           <Conditional logic={method === "Update"}>
-            <ConditionalButton
+            <ControlButton
               name={"Update"}
               result={process().length === 0}
               whileFalse={[() => showAlert("Errors persist. Please retry!")]}
               whileTrue={[() => Collection.update(data)]}
             />
-          </Conditional>
+          </Conditional>,
           <Conditional logic={method !== "View"}>
-            <Button name={"Reset"} functionsArray={[() => reset()]} />
-            <Button
-              name={"Manage"}
-              functionsArray={[() => openWindow(<ManageChartOfAccounts />)]}
+            <ControlButton
+              name={"Reset"}
+              result={true}
+              whileTrue={[() => reset()]}
             />
-          </Conditional>
-        </Flex>
-        <DistributedRow>
-          <Label label={"Code"} />
-          <Input
-            value={Code}
-            process={(value) => changeData("", "Code", value)}
-            maxLength={4}
-          />
-        </DistributedRow>
-        <DisplayError path={"Code"} />
-        <TopFlex>
-          <Label label={"General Ledger Numbering"} />
-          <Table
-            columns={["Ledger Type", "From", "To"]}
-            rows={GLNumbering.map((numbering, n) => [
-              <Label label={numbering.LedgerType} />,
-              <Input
-                value={numbering.From}
-                process={(value) =>
-                  changeData(`GLNumbering/${n}`, "From", value)
-                }
-                type={"number"}
-              />,
-              <Input
-                value={numbering.To}
-                process={(value) => changeData(`GLNumbering/${n}`, "To", value)}
-                type={"number"}
-              />,
-            ])}
-          />
-          <DisplayHidingError path={"GLNumbering"} />
-        </TopFlex>
-      </DisplayArea>
-    </WindowContent>
+          </Conditional>,
+        ]}
+      />
+      <WindowContent>
+        <DisplayArea>
+          <DistributedRow>
+            <Label label={"Code"} />
+            <Input
+              value={Code}
+              process={(value) => changeData("", "Code", value)}
+              maxLength={4}
+            />
+          </DistributedRow>
+          <DisplayError path={"Code"} />
+          <TopFlex>
+            <Label label={"General Ledger Numbering"} />
+            <Table
+              columns={["Ledger Type", "From", "To"]}
+              rows={GLNumbering.map((numbering, n) => [
+                <Label label={numbering.LedgerType} />,
+                <Input
+                  value={numbering.From}
+                  process={(value) =>
+                    changeData(`GLNumbering/${n}`, "From", value)
+                  }
+                  type={"number"}
+                />,
+                <Input
+                  value={numbering.To}
+                  process={(value) =>
+                    changeData(`GLNumbering/${n}`, "To", value)
+                  }
+                  type={"number"}
+                />,
+              ])}
+            />
+            <DisplayHidingError path={"GLNumbering"} />
+          </TopFlex>
+        </DisplayArea>
+      </WindowContent>
+    </>
   );
 }

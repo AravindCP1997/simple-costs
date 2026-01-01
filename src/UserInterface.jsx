@@ -144,8 +144,9 @@ export function Window() {
     display: "flex",
     flexDirection: "column",
     justifyContent: "top",
-    gap: "15px",
     color: "inherit",
+    height: "100%",
+    overflow: "auto",
   };
 
   return (
@@ -415,36 +416,38 @@ function Accessibility() {
   const windowtype = useWindowType();
 
   return (
-    <WindowContent>
+    <>
       <WindowTitle title={"Accessibility"} />
-      <RightFlex>
-        <Button name="Reset" functionsArray={[() => resetAccessibility()]} />
-        <ConditionalButton
-          name="Save"
-          result={windowtype === "static"}
-          whileFalse={[() => saveAccessibility(), () => closeFloat()]}
-          whileTrue={[() => alert(saveAccessibility())]}
-        />
-      </RightFlex>
-      <DisplayArea>
-        <TopFlex>
-          <Label label={"Background"} />
-          <Radio
-            value={Background}
-            process={(value) => changeAccessibility("Background", value)}
-            options={["Fabric", "Tech"]}
+      <WindowContent>
+        <RightFlex>
+          <Button name="Reset" functionsArray={[() => resetAccessibility()]} />
+          <ConditionalButton
+            name="Save"
+            result={windowtype === "static"}
+            whileFalse={[() => saveAccessibility(), () => closeFloat()]}
+            whileTrue={[() => alert(saveAccessibility())]}
           />
-        </TopFlex>
-        <TopFlex>
-          <Label label={"Font"} />
-          <Radio
-            value={Font}
-            process={(value) => changeAccessibility("Font", value)}
-            options={["Helvetica", "Lexend"]}
-          />
-        </TopFlex>
-      </DisplayArea>
-    </WindowContent>
+        </RightFlex>
+        <DisplayArea>
+          <TopFlex>
+            <Label label={"Background"} />
+            <Radio
+              value={Background}
+              process={(value) => changeAccessibility("Background", value)}
+              options={["Fabric", "Tech"]}
+            />
+          </TopFlex>
+          <TopFlex>
+            <Label label={"Font"} />
+            <Radio
+              value={Font}
+              process={(value) => changeAccessibility("Font", value)}
+              options={["Helvetica", "Lexend"]}
+            />
+          </TopFlex>
+        </DisplayArea>
+      </WindowContent>
+    </>
   );
 }
 
@@ -709,13 +712,14 @@ function UserInterface() {
 
   const screenStyle = {
     height: "100%",
+    overflow: "auto",
     display: "flex",
     flexDirection: "column",
     justifyContent: "top",
     alignItems: "center",
-    overflow: "auto",
     width: "100%",
-    padding: "10px",
+    padding: "10px 15px",
+    paddingBottom: 0,
   };
 
   const shortcuts = [

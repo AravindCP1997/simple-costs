@@ -138,9 +138,37 @@ export const HidingDisplay = ({ title, children }) => {
     </div>
   );
 };
-export const ConditionalButton = ({ name, result, whileTrue, whileFalse }) => {
+export const ConditionalButton = ({
+  name,
+  result,
+  whileTrue,
+  whileFalse,
+  className = "",
+}) => {
   return (
-    <Button name={name} functionsArray={result ? whileTrue : whileFalse} />
+    <Button
+      className={className}
+      name={name}
+      functionsArray={result ? whileTrue : whileFalse}
+    />
+  );
+};
+
+export const ControlButton = ({
+  name,
+  result,
+  whileTrue,
+  whileFalse,
+  className = "controlButton",
+}) => {
+  return (
+    <ConditionalButton
+      name={name}
+      result={result}
+      whileFalse={whileFalse}
+      whileTrue={whileTrue}
+      className={className}
+    />
   );
 };
 
@@ -297,7 +325,7 @@ export const TableRow = ({ cells }) => {
   );
 };
 
-export function WindowTitle({ title, style = {} }) {
+export function WindowTitle({ title, style = {}, menu = [] }) {
   const { closeWindow } = useInterface();
   const windowType = useWindowType();
 
@@ -314,18 +342,37 @@ export function WindowTitle({ title, style = {} }) {
         ? "2px solid var(--bluet)"
         : "2px solid var(--whitet)",
     padding: "10px",
-    width: "min(100%,450px)",
   };
   return (
-    <div style={{ ...defaultStyle, ...style }}>
-      <h3 style={{ margin: "0" }}>{title}</h3>
-      <Conditional logic={windowType === "static"}>
-        <Button
-          className={"closeButton"}
-          name={"Close"}
-          functionsArray={[() => closeWindow()]}
-        />
-      </Conditional>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        width: "min(100%,600px)",
+      }}
+    >
+      <div style={{ ...defaultStyle, ...style }}>
+        <h3 style={{ margin: "0" }}>{title}</h3>
+        <Conditional logic={windowType === "static"}>
+          <Button
+            className={"closeButton"}
+            name={"Close"}
+            functionsArray={[() => closeWindow()]}
+          />
+        </Conditional>
+      </div>
+      {menu.length > 0 && (
+        <div
+          style={{
+            borderBottom: "1px solid var(--greent)",
+            width: "min(100%,480px)",
+          }}
+        >
+          {menu.map((control) => (
+            <>{control}</>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -731,8 +778,10 @@ export function WindowContent({ children }) {
     display: "flex",
     flexDirection: "column",
     gap: "20px",
-    marginTop: float ? "inherit" : "30px",
-    marginBottom: "30px",
+    width: "100%",
+    padding: "20px 0px",
+    height: "100%",
+    overflow: "auto",
   };
   return <div style={style}>{children}</div>;
 }
