@@ -22,12 +22,11 @@
 .closeButton {
   background: none;
   box-shadow: none;
+  border: none;
   color: var(--blue);
-  border: 2px solid transparent;
+  border-radius: 0px;
   transition: 0.5s;
-  padding: 5px;
-  border-radius: 5px;
-  font-size: 100%;
+  border: 2px solid transparent;
 }
 
 .drawerButtonSelected {
@@ -35,9 +34,7 @@
 }
 
 .drawerButton:hover,
-.drawerButton:focus,
-.closeButton:hover,
-.closeButton:focus {
+.drawerButton:focus {
   background: var(--goldt);
 }
 
@@ -47,7 +44,13 @@
 }
 
 .closeButton {
-  color: var(--redt);
+  background: var(--redt);
+  color: white;
+}
+
+.closeButton:hover,
+.closeButton:focus {
+  background: var(--red);
 }
 
 .icon {

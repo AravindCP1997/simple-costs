@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { isObject, noop } from "./functions";
 import { useInterface, useWindowType } from "./useInterface";
 import { FocusTrap } from "focus-trap-react";
-import { FaAngleUp, FaAngleDown } from "react-icons/fa";
+import { FaAngleUp, FaAngleDown, FaWindowClose } from "react-icons/fa";
 
 export const Flex = ({ children, justify = "left", direction = "row" }) => {
   const style = {
@@ -78,6 +78,7 @@ export const HidingDisplay = ({ title, children }) => {
 
   const style = {
     fontFamily: Font,
+    color: "var(--blue)",
     width: "min(90%,600px)",
     height: "min(fit-content,70%)",
     overflow: "auto",
@@ -108,12 +109,25 @@ export const HidingDisplay = ({ title, children }) => {
                 }}
               >
                 <div style={style}>
-                  <WindowTitle title={title} />
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      borderBottom: "2px solid var(--bluet)",
+                      padding: "10px",
+                      width: "min(100%,450px)",
+                    }}
+                  >
+                    <h3 style={{ margin: 0 }}>{title}</h3>
+                    <Button
+                      name="Close"
+                      className={"closeButton"}
+                      functionsArray={[() => setOpen(false)]}
+                    />
+                  </div>
                   {children}
-                  <Button
-                    name="Close"
-                    functionsArray={[() => setOpen(false)]}
-                  />
                 </div>
               </FocusTrap>
             </Overlay>,
@@ -233,7 +247,9 @@ export const AutoSuggestInput = ({
                 onClick={() => handleClick(suggestion)}
               >
                 <p>{suggestion.toUpperCase()}</p>
-                <p style={{ opacity: 0.5, textAlign: "right" }}>
+                <p
+                  style={{ opacity: 0.5, textAlign: "right", fontSize: "90%" }}
+                >
                   {captions[suggestions.indexOf(suggestion)]}
                 </p>
               </div>
@@ -292,7 +308,7 @@ export function WindowTitle({ title, style = {} }) {
     flexDirection: "row",
     justifyContent: "space-between",
     gap: "10px",
-    alignItems: "center",
+    alignItems: "flex-end",
     borderBottom:
       windowType === "static"
         ? "2px solid var(--bluet)"
@@ -319,18 +335,16 @@ export function DisplayArea({ children }) {
     accessibility: { Background },
   } = useInterface();
 
+  const blue = useWindowType() === "float" || Background === "Tech";
+
   const style = {
     display: "flex",
     flexDirection: "column",
     gap: "20px",
-    background: ["Tech", "No Background"].includes(Background)
-      ? "var(--lightbluet)"
-      : "var(--whitet)",
+    background: blue ? "var(--lightbluet)" : "var(--whitet)",
     borderRadius: "15px",
     padding: "20px",
-    border: ["Tech", "No Background"].includes(Background)
-      ? "5px solid var(--lightbluet)"
-      : "5px solid var(--whitet)",
+    border: blue ? "5px solid var(--lightbluet)" : "5px solid var(--whitet)",
     boxShadow: "0px 0.5px 2px 0px var(--gray)",
   };
   return <div style={style}>{children}</div>;
@@ -718,6 +732,7 @@ export function WindowContent({ children }) {
     flexDirection: "column",
     gap: "20px",
     marginTop: float ? "inherit" : "30px",
+    marginBottom: "30px",
   };
   return <div style={style}>{children}</div>;
 }

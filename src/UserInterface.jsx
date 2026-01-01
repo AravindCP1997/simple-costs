@@ -28,6 +28,8 @@ import {
   FaHome,
   FaArrowRight,
   FaDesktop,
+  FaWindowClose,
+  FaUniversalAccess,
 } from "react-icons/fa";
 import { ListItems, ListUniqueItems, clickButton } from "./functions";
 import { Scratch } from "./App";
@@ -138,14 +140,12 @@ export function Window() {
   }
 
   const style = {
-    borderRadius: "20px",
     width: "min(100%, 960px)",
     display: "flex",
     flexDirection: "column",
+    justifyContent: "top",
     gap: "15px",
-    height: "fit-content",
     color: "inherit",
-    marginBottom: "20px",
   };
 
   return (
@@ -545,10 +545,9 @@ export function Drawer({ initial = "Record" }) {
     display: "flex",
     flexDirection: "column",
     justifyContent: "top",
-    gap: "10px",
     width: "min(100%,960px)",
-    height: "100%",
     color: "var(--blue)",
+    padding: "0",
   };
 
   const titleStyle = {
@@ -561,7 +560,7 @@ export function Drawer({ initial = "Record" }) {
     flexDirection: "column",
     justifyContent: "top",
     alignItems: "start",
-    padding: "20px 0px",
+    padding: "10px",
     transition: "0.5s",
     borderBottom: "5px solid var(--whitet)",
     width: "100%",
@@ -573,7 +572,7 @@ export function Drawer({ initial = "Record" }) {
     overflow: "auto",
     gap: "15px",
     height: "fit-content",
-    padding: "15px",
+    padding: "10px",
     width: "100%",
   };
 
@@ -596,12 +595,11 @@ export function Drawer({ initial = "Record" }) {
 
   const NavButton = ({ name }) => {
     return (
-      <button
+      <Button
+        name={name}
         className={group === name ? "drawerButtonSelected" : "drawerButton"}
-        onClick={() => setgroup(name)}
-      >
-        {name}
-      </button>
+        functionsArray={[() => setgroup(name)]}
+      />
     );
   };
 
@@ -627,13 +625,15 @@ export function Drawer({ initial = "Record" }) {
           display: "flex",
           flexDirection: "row",
           justifyContent: "space-around",
-          overflow: "auto",
           width: "100%",
-          padding: "10px",
+          overflowX: "auto",
           gap: "10px",
           background: "var(--whitet)",
           borderRadius: "10px",
           border: "5px solid var(--whitet)",
+          padding: "10px",
+          position: "sticky",
+          top: "0",
         }}
       >
         <NavButton name={"Record"} />
@@ -646,21 +646,30 @@ export function Drawer({ initial = "Record" }) {
           functionsArray={[() => setscreen(<Home />)]}
         />
       </div>
-      <div style={{ height: "100%", overflow: "auto", padding: "10px" }}>
-        {subgroups.map((subgroup) => (
-          <div style={subgroupsStyle}>
-            <h4 style={titleStyle}>{subgroup}</h4>
-            <div style={transactionsStyle}>
-              {transactionsInSubgroup(subgroup).map((transaction) => (
-                <Icon
-                  name={transaction.name}
-                  code={transaction.code}
-                  window={transaction.window}
-                />
-              ))}
+      <div>
+        <div
+          style={{
+            padding: "10px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "top",
+          }}
+        >
+          {subgroups.map((subgroup) => (
+            <div style={subgroupsStyle}>
+              <h4 style={titleStyle}>{subgroup}</h4>
+              <div style={transactionsStyle}>
+                {transactionsInSubgroup(subgroup).map((transaction) => (
+                  <Icon
+                    name={transaction.name}
+                    code={transaction.code}
+                    window={transaction.window}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -699,14 +708,14 @@ function UserInterface() {
   };
 
   const screenStyle = {
-    position: "relative",
     height: "100%",
     display: "flex",
     flexDirection: "column",
-    padding: "20px",
+    justifyContent: "top",
     alignItems: "center",
     overflow: "auto",
     width: "100%",
+    padding: "10px",
   };
 
   const shortcuts = [
