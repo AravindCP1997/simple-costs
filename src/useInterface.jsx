@@ -116,3 +116,7 @@ export const UserInterfaceProvider = ({ children }) => {
     </UserInterfaceContext.Provider>
   );
 };
+
+export const WindowContext = createContext("static");
+
+export const useWindowType = () => useContext(WindowContext);

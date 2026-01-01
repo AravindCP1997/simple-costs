@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { useInterface } from "./useInterface";
+import { useInterface, WindowContext, useWindowType } from "./useInterface";
 import {
   RightFlex,
   DistributedRow,
   Button,
+  ConditionalButton,
   Overlay,
   Flex,
   CenterFlex,
@@ -17,6 +18,7 @@ import {
   Radio,
   AutoSuggestInput,
   CoveredRow,
+  Conditional,
 } from "./Components";
 import Draggable from "react-draggable";
 import { FocusTrap } from "focus-trap-react";
@@ -46,6 +48,14 @@ const codes = [
     screen: <Window />,
     window: <Scratch />,
     name: "Test",
+    group: "System",
+    subgroup: "General",
+  },
+  {
+    code: "accs",
+    screen: <Window />,
+    window: <Accessibility />,
+    name: "Accessibility",
     group: "System",
     subgroup: "General",
   },
@@ -138,7 +148,11 @@ export function Window() {
     marginBottom: "20px",
   };
 
-  return <div style={style}>{content}</div>;
+  return (
+    <WindowContext.Provider value="static">
+      <div style={style}>{content}</div>
+    </WindowContext.Provider>
+  );
 }
 
 function FloatingWindow() {
@@ -176,19 +190,21 @@ function FloatingWindow() {
   if (!visible) return null;
 
   return (
-    <Draggable nodeRef={nodeRef} handle=".drag">
-      <div style={style} ref={nodeRef}>
-        <DistributedRow>
-          <button className="drag">
-            <FaArrowsAlt />
-          </button>
-          <button onClick={() => closeFloat()}>&times;</button>
-        </DistributedRow>
-        <div style={contentStyle} className="floatingWindowContent">
-          {window}
+    <WindowContext.Provider value="float">
+      <Draggable nodeRef={nodeRef} handle=".drag">
+        <div style={style} ref={nodeRef}>
+          <DistributedRow>
+            <button className="drag">
+              <FaArrowsAlt />
+            </button>
+            <button onClick={() => closeFloat()}>&times;</button>
+          </DistributedRow>
+          <div style={contentStyle} className="floatingWindowContent">
+            {window}
+          </div>
         </div>
-      </div>
-    </Draggable>
+      </Draggable>
+    </WindowContext.Provider>
   );
 }
 
@@ -396,14 +412,18 @@ function Accessibility() {
     closeFloat,
   } = useInterface();
 
+  const windowtype = useWindowType();
+
   return (
     <WindowContent>
       <WindowTitle title={"Accessibility"} />
       <RightFlex>
         <Button name="Reset" functionsArray={[() => resetAccessibility()]} />
-        <Button
+        <ConditionalButton
           name="Save"
-          functionsArray={[() => saveAccessibility(), () => closeFloat()]}
+          result={windowtype === "static"}
+          whileFalse={[() => saveAccessibility(), () => closeFloat()]}
+          whileTrue={[() => alert(saveAccessibility())]}
         />
       </RightFlex>
       <DisplayArea>

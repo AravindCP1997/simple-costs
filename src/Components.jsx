@@ -1,7 +1,7 @@
 import { useState, useContext, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { isObject, noop } from "./functions";
-import { useInterface } from "./useInterface";
+import { useInterface, useWindowType } from "./useInterface";
 import { FocusTrap } from "focus-trap-react";
 import { FaAngleUp, FaAngleDown } from "react-icons/fa";
 
@@ -282,23 +282,34 @@ export const TableRow = ({ cells }) => {
 };
 
 export function WindowTitle({ title, style = {} }) {
+  const { closeWindow } = useInterface();
+  const windowType = useWindowType();
+
   const defaultStyle = {
-    color: "var(--blue)",
+    color: windowType === "static" ? "var(--blue)" : "white",
     textAlign: "center",
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
     gap: "10px",
     alignItems: "center",
-    borderBottom: "2px solid var(--bluet)",
+    borderBottom:
+      windowType === "static"
+        ? "2px solid var(--bluet)"
+        : "2px solid var(--whitet)",
     padding: "10px",
     width: "min(100%,450px)",
   };
-  const { closeWindow } = useInterface();
   return (
     <div style={{ ...defaultStyle, ...style }}>
       <h3 style={{ margin: "0" }}>{title}</h3>
-      <Button name={"Close"} functionsArray={[() => closeWindow()]} />
+      <Conditional logic={windowType === "static"}>
+        <Button
+          className={"closeButton"}
+          name={"Close"}
+          functionsArray={[() => closeWindow()]}
+        />
+      </Conditional>
     </div>
   );
 }
@@ -701,11 +712,12 @@ export const Overlay = ({ children, onClick = noop }) => {
 };
 
 export function WindowContent({ children }) {
+  const float = useWindowType() === "float";
   const style = {
     display: "flex",
     flexDirection: "column",
     gap: "20px",
-    marginTop: "30px",
+    marginTop: float ? "inherit" : "30px",
   };
   return <div style={style}>{children}</div>;
 }

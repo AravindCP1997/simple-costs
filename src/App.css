@@ -6,7 +6,8 @@
   transition: 0.5s;
 }
 .autoSuggestion:hover {
-  background: var(--lightgray);
+  background: var(--bluet);
+  color: white;
   font-size: 14px;
   border-top: 2px solid var(--lightgray);
 }
@@ -17,14 +18,15 @@
 }
 
 .drawerButton,
-.drawerButtonSelected {
+.drawerButtonSelected,
+.closeButton {
   background: none;
   box-shadow: none;
   color: var(--blue);
   border: 2px solid transparent;
   transition: 0.5s;
   padding: 5px;
-  border-radius: unset;
+  border-radius: 5px;
   font-size: 100%;
 }
 
@@ -33,7 +35,9 @@
 }
 
 .drawerButton:hover,
-.drawerButton:focus {
+.drawerButton:focus,
+.closeButton:hover,
+.closeButton:focus {
   background: var(--goldt);
 }
 
