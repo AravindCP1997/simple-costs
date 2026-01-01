@@ -417,17 +417,19 @@ function Accessibility() {
 
   return (
     <>
-      <WindowTitle title={"Accessibility"} />
-      <WindowContent>
-        <RightFlex>
-          <Button name="Reset" functionsArray={[() => resetAccessibility()]} />
+      <WindowTitle
+        title={"Accessibility"}
+        menu={[
+          <Button name="Reset" functionsArray={[() => resetAccessibility()]} />,
           <ConditionalButton
             name="Save"
             result={windowtype === "static"}
             whileFalse={[() => saveAccessibility(), () => closeFloat()]}
             whileTrue={[() => alert(saveAccessibility())]}
-          />
-        </RightFlex>
+          />,
+        ]}
+      />
+      <WindowContent>
         <DisplayArea>
           <TopFlex>
             <Label label={"Background"} />

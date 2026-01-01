@@ -349,6 +349,7 @@ export function WindowTitle({ title, style = {}, menu = [] }) {
         display: "flex",
         flexDirection: "column",
         width: "min(100%,600px)",
+        color: windowType === "static" ? "var(--blue)" : "white",
       }}
     >
       <div style={{ ...defaultStyle, ...style }}>
@@ -363,8 +364,12 @@ export function WindowTitle({ title, style = {}, menu = [] }) {
       </div>
       {menu.length > 0 && (
         <div
+          className="controlButtons"
           style={{
-            borderBottom: "1px solid var(--greent)",
+            borderBottom:
+              windowType === "static"
+                ? "1px solid var(--bluet)"
+                : "1px solid var(--whitet)",
             width: "min(100%,480px)",
           }}
         >

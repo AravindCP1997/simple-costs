@@ -26,11 +26,12 @@
   color: var(--blue);
   border-radius: 0px;
   transition: 0.5s;
-  border: 2px solid transparent;
+  border: 3px solid transparent;
+  font-size: 100%;
 }
 
 .drawerButtonSelected {
-  border-top: 2px solid var(--greent);
+  border-top: 3px solid var(--greent);
 }
 
 .drawerButton:hover,
@@ -74,15 +75,19 @@
   }
 }
 
-.controlButton {
-  border: none;
-  background: none;
-  color: var(--blue);
-  padding: 10px;
-}
+.controlButtons {
+  button {
+    border: none;
+    background: none;
+    color: unset;
+    padding: 10px;
+    border-radius: 0;
+    transition: 0.5s ease-in-out;
+  }
 
-.controlButton:hover {
-  background: none;
+  button:hover {
+    background: var(--whitet);
+  }
 }
 
 .displayRow {
