@@ -208,7 +208,7 @@ export const CreateIncomeTaxCode = () => {
         }
         type="number"
       />,
-      <HidingDisplay title={"Slab Rate"}>
+      <HidingDisplay title={"Slab Rate"} menu={[<Button name={"Save"} />]}>
         <Table
           columns={["From", "To", "Rate"]}
           rows={Taxation[taxationIndex]["SlabRate"].map((slab, s) =>
@@ -300,13 +300,13 @@ export const CreateIncomeTaxCode = () => {
           </button>
         </NavigationRow>
       </DisplayArea>
-      <DisplayArea>
+      <DisplayRow>
         <p>
           `<FaInfoCircle /> Income tax code is necessary for calculating and
           deducting tax at source on remuneration payable to personnel of a
           company.`
         </p>
-      </DisplayArea>
+      </DisplayRow>
       <NavigationRow>
         <Button
           name={"Save"}

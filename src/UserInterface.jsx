@@ -420,13 +420,13 @@ function Accessibility() {
       <WindowTitle
         title={"Accessibility"}
         menu={[
-          <Button name="Reset" functionsArray={[() => resetAccessibility()]} />,
           <ConditionalButton
             name="Save"
             result={windowtype === "static"}
             whileFalse={[() => saveAccessibility(), () => closeFloat()]}
             whileTrue={[() => alert(saveAccessibility())]}
           />,
+          <Button name="Reset" functionsArray={[() => resetAccessibility()]} />,
         ]}
       />
       <WindowContent>
@@ -577,7 +577,7 @@ export function Drawer({ initial = "Record" }) {
     overflow: "auto",
     gap: "15px",
     height: "fit-content",
-    padding: "10px",
+    padding: "15px",
     width: "100%",
   };
 

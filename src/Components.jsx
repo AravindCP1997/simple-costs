@@ -70,7 +70,7 @@ export const CheckBox = ({ value, process }) => {
   );
 };
 
-export const HidingDisplay = ({ title, children }) => {
+export const HidingDisplay = ({ title, children, menu }) => {
   const [isOpen, setOpen] = useState(false);
   const {
     accessibility: { Font },
@@ -112,20 +112,39 @@ export const HidingDisplay = ({ title, children }) => {
                   <div
                     style={{
                       display: "flex",
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      borderBottom: "2px solid var(--bluet)",
-                      padding: "10px",
-                      width: "min(100%,450px)",
+                      flexDirection: "column",
                     }}
                   >
-                    <h3 style={{ margin: 0 }}>{title}</h3>
-                    <Button
-                      name="Close"
-                      className={"closeButton"}
-                      functionsArray={[() => setOpen(false)]}
-                    />
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        borderBottom: "2px solid var(--bluet)",
+                        padding: "10px",
+                      }}
+                    >
+                      <h3 style={{ margin: 0 }}>{title}</h3>
+                      <Button
+                        name="Close"
+                        className={"closeButton"}
+                        functionsArray={[() => setOpen(false)]}
+                      />
+                    </div>
+                    {menu.length > 0 && (
+                      <div
+                        className="controlButtons"
+                        style={{
+                          borderBottom: "1px solid var(--bluet)",
+                          width: "min(100%,480px)",
+                        }}
+                      >
+                        {menu.map((control) => (
+                          <>{control}</>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   {children}
                 </div>
@@ -341,7 +360,7 @@ export function WindowTitle({ title, style = {}, menu = [] }) {
       windowType === "static"
         ? "2px solid var(--bluet)"
         : "2px solid var(--whitet)",
-    padding: "10px",
+    padding: "5px",
   };
   return (
     <div
@@ -784,7 +803,7 @@ export function WindowContent({ children }) {
     flexDirection: "column",
     gap: "20px",
     width: "100%",
-    padding: "20px 0px",
+    padding: "20px 10px",
     height: "100%",
     overflow: "auto",
   };
@@ -857,6 +876,62 @@ export function Radio({ value, options, process }) {
 
 export function DisplayRow({ children }) {
   return <div className="displayRow">{children}</div>;
+}
+
+export function Row({
+  children,
+  jc = "left",
+  ac = "center",
+  cn = "",
+  gap = "5px",
+  padding = "0",
+}) {
+  return (
+    <div
+      className={cn}
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: jc,
+        alignContent: ac,
+        gap: gap,
+        padding: padding,
+        width: "100%",
+        overflow: "auto",
+        borderBottom: "1px solid var(--bluet)",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function Column({
+  children,
+  jc = "left",
+  ac = "center",
+  cn = "",
+  gap = "5px",
+  padding = "0",
+}) {
+  return (
+    <div
+      className={cn}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: jc,
+        alignContent: ac,
+        gap: gap,
+        padding: padding,
+        width: "100%",
+        overflow: "auto",
+        borderBottom: "1px solid var(--bluet)",
+      }}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function DisplayBox({ children }) {
