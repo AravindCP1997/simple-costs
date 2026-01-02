@@ -62,6 +62,16 @@ export const UserInterfaceProvider = ({ children }) => {
     setconfirm({ visible: false, message: null, onCancel: [], onConfirm: [] });
   };
 
+  const [prompt, setprompt] = useState({ visible: false, content: null });
+
+  const openPrompt = (content) => {
+    setprompt({ visible: true, content });
+  };
+
+  const closePrompt = () => {
+    setprompt({ visible: false, content: null });
+  };
+
   const [accessibility, setaccessibility] = useState(accessibilityData.read());
 
   const changeAccessibility = (field, value) => {
@@ -101,6 +111,9 @@ export const UserInterfaceProvider = ({ children }) => {
     setconfirm,
     openConfirm,
     closeConfirm,
+    prompt,
+    openPrompt,
+    closePrompt,
     accessibility,
     setaccessibility,
     changeAccessibility,

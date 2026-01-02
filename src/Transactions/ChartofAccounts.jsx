@@ -91,34 +91,45 @@ export function CreateChartofAccounts({
             whileTrue={[() => collection.add(data)]}
           />,
           <Button name={"Reset"} functionsArray={[() => reset()]} />,
-          <HidingDisplay title={"Clone Existing"}>
-            <Row>
-              <Label label={"Chart of Accounts Code"} />
-              <Input
-                value={clone}
-                process={(value) => setclone(value)}
-                type={"text"}
-                maxLength={6}
-              />
-            </Row>
-            <Row>
-              <ConditionalButton
-                name={"Clone"}
-                result={clone !== "" && new ChartOfAccounts(clone).exists()}
-                whileFalse={[
-                  () => showAlert("Chart of accounts does not exist!"),
-                ]}
-                whileTrue={[
-                  () =>
-                    changeData(
-                      "",
-                      "GLNumbering",
-                      new ChartOfAccounts(clone).getData().GLNumbering
-                    ),
-                ]}
-              />
-            </Row>
-          </HidingDisplay>,
+          <HidingDisplay
+            title={"Clone Existing"}
+            menu={[
+              <Button
+                name={"Say Hello"}
+                functionsArray={[() => alert("Hello")]}
+              />,
+            ]}
+            content={
+              <>
+                <Row>
+                  <Label label={"Chart of Accounts Code"} />
+                  <Input
+                    value={clone}
+                    process={(value) => setclone(value)}
+                    type={"text"}
+                    maxLength={6}
+                  />
+                </Row>
+                <Row>
+                  <ConditionalButton
+                    name={"Clone"}
+                    result={clone !== "" && new ChartOfAccounts(clone).exists()}
+                    whileFalse={[
+                      () => showAlert("Chart of accounts does not exist!"),
+                    ]}
+                    whileTrue={[
+                      () =>
+                        changeData(
+                          "",
+                          "GLNumbering",
+                          new ChartOfAccounts(clone).getData().GLNumbering
+                        ),
+                    ]}
+                  />
+                </Row>
+              </>
+            }
+          />,
           <Button
             name="Sample"
             functionsArray={[() => setdata(sampleChartOfAccounts)]}

@@ -195,7 +195,7 @@ function Alert() {
 
   const style = {
     position: "fixed",
-    zIndex: "1010",
+    zIndex: "1050",
     bottom: "20%",
     maxHeight: "60%",
     padding: "20px",
@@ -269,6 +269,44 @@ function Confirm() {
             />
           </CenterFlex>
         </div>
+      </FocusTrap>
+    </Overlay>
+  );
+}
+
+function Prompt() {
+  const {
+    prompt: { visible, content },
+  } = useInterface();
+
+  const style = {
+    position: "fixed",
+    zIndex: "1005",
+    bottom: "20%",
+    maxHeight: "60%",
+    padding: "20px",
+    background: "var(--whitet)",
+    border: "5px solid var(--whitet)",
+    color: "var(--blue)",
+    boxShadow: "0px 2px 10px -5px gray",
+    width: "min(90%,480px)",
+    borderRadius: "15px",
+    gap: "20px",
+    backdropFilter: "blur(30px)",
+    display: "flex",
+    flexDirection: "column",
+  };
+
+  if (!visible) return null;
+  return (
+    <Overlay>
+      <FocusTrap
+        focusTrapOptions={{
+          escapeDeactivates: false,
+          clickOutsideDeactivates: false,
+        }}
+      >
+        <div style={style}>{content}</div>
       </FocusTrap>
     </Overlay>
   );
@@ -724,6 +762,7 @@ function UserInterface() {
       <FloatingWindow />
       <Confirm />
       <Alert />
+      <Prompt />
       <SearchBar />
       <div className="screen" style={screenStyle}>
         {screen}
