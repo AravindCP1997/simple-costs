@@ -1,42 +1,56 @@
 import { ListItems, ListUniqueItems } from "./functions";
-import { CollapsingDisplay } from "./Components";
+import { CollapsingDisplay, HidingDisplay, Label, Table } from "./Components";
+import { useState } from "react";
 
 export const useError = () => {
-  const list = [];
+  const [errors, seterrors] = useState(["Hi"]);
   const addError = (logic, path, error) => {
     if (logic) {
-      list.push({ path, error });
+      seterrors((prevdata) => [...prevdata, { path, error }]);
     }
   };
-  return { list, addError };
-};
+  const clearErrors = () => seterrors([]);
 
-export const useErrorDisplay = (errors) => {
   const errorsByPath = (path) => {
     const filtered = errors.filter((error) => error.path === path);
-    return ListItems(filtered, "error");
+    return ListUniqueItems(filtered, "error");
   };
-  const DisplayError = ({ path }) => {
-    const errors = errorsByPath(path);
-    if (!errors.length) {
+
+  const errorsExist = errors.length > 0;
+  const haveErrors = (path) => {
+    return errorsByPath(path).length > 0;
+  };
+
+  const DisplayError = () => {
+    if (!errorsExist) {
       return null;
     }
     return (
-      <ul>
-        {errors.map((error, e) => (
-          <li key={e}>{error}</li>
-        ))}
-      </ul>
+      <Table
+        columns={["Path", "Error"]}
+        rows={errors.map((error) => [
+          <p>{error.path}</p>,
+          <p>{error.error}</p>,
+        ])}
+      />
     );
   };
 
-  const DisplayHidingError = ({ path }) => {
+  const DisplayHidingError = () => {
+    if (!errorsExist) return null;
     return (
-      <CollapsingDisplay title={"Errors"}>
-        <DisplayError path={path} />
-      </CollapsingDisplay>
+      <HidingDisplay title={`Errors ${errors.length}`}>
+        <DisplayError />
+      </HidingDisplay>
     );
   };
 
-  return { DisplayError, DisplayHidingError };
+  return {
+    errors,
+    addError,
+    clearErrors,
+    errorsExist,
+    DisplayError,
+    DisplayHidingError,
+  };
 };

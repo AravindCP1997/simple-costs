@@ -42,7 +42,8 @@ import {
   IncomeTaxSimulate,
   JSONEditor,
 } from "./Transactions";
-import { CreateChartOfAccounts } from "./Controls";
+
+import { CreateChartofAccounts } from "./Transactions/ChartofAccounts";
 
 const codes = [
   {
@@ -62,34 +63,10 @@ const codes = [
     subgroup: "General",
   },
   {
-    code: "casset",
-    screen: <Window />,
-    window: <CreateAsset />,
-    name: "Create Asset",
-    group: "Control",
-    subgroup: "Asset",
-  },
-  {
     code: "ccoa",
     screen: <Window />,
-    window: <CreateChartOfAccounts />,
+    window: <CreateChartofAccounts />,
     name: "Chart of Accounts",
-    group: "Control",
-    subgroup: "Global",
-  },
-  {
-    code: "coa",
-    screen: <Window />,
-    window: <ManageChartOfAccounts />,
-    name: "Chart of Accounts",
-    group: "Control",
-    subgroup: "Global",
-  },
-  {
-    code: "fs",
-    screen: <Window />,
-    window: <ManageFinancialStatementsCode />,
-    name: "Financial Statements",
     group: "Control",
     subgroup: "Global",
   },

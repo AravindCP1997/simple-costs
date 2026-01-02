@@ -45,6 +45,7 @@ const useData = (defaults) => {
   return {
     data,
     reset,
+    setdata,
     changeData,
     addItemtoArray,
     addItemtoObject,

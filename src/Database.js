@@ -57,6 +57,9 @@ export class Collection extends LocalStorage {
     return this.filtered(criteria)[0];
   }
   exists(criteria) {
+    if (super.load() === null) {
+      return false;
+    }
     return existsInCollection(super.load(), criteria);
   }
   listAll(field) {

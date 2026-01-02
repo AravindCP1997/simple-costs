@@ -76,6 +76,8 @@
 }
 
 .controlButtons {
+  display: flex;
+  flex-direction: row;
   button {
     border: none;
     background: none;

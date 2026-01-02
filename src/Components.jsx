@@ -70,17 +70,18 @@ export const CheckBox = ({ value, process }) => {
   );
 };
 
-export const HidingDisplay = ({ title, children, menu }) => {
+export const HidingDisplay = ({ title, children, menu = [] }) => {
   const [isOpen, setOpen] = useState(false);
   const {
     accessibility: { Font },
   } = useInterface();
 
   const style = {
+    position: "fixed",
     fontFamily: Font,
     color: "var(--blue)",
     width: "min(90%,600px)",
-    height: "min(fit-content,70%)",
+    maxHeight: "90%",
     overflow: "auto",
     boxShadow: "0px 2px 10px -5px gray",
     background: "var(--whitet)",
@@ -91,8 +92,6 @@ export const HidingDisplay = ({ title, children, menu }) => {
     display: "flex",
     flexDirection: "column",
     gap: "10px",
-    position: "fixed",
-    top: "15%",
   };
 
   return (
@@ -137,7 +136,6 @@ export const HidingDisplay = ({ title, children, menu }) => {
                         className="controlButtons"
                         style={{
                           borderBottom: "1px solid var(--bluet)",
-                          width: "min(100%,480px)",
                         }}
                       >
                         {menu.map((control) => (
@@ -411,10 +409,10 @@ export function DisplayArea({ children }) {
   const style = {
     display: "flex",
     flexDirection: "column",
-    gap: "20px",
+    gap: "5px",
     background: blue ? "var(--lightbluet)" : "var(--whitet)",
     borderRadius: "15px",
-    padding: "20px",
+    padding: "10px",
     border: blue ? "5px solid var(--lightbluet)" : "5px solid var(--whitet)",
     boxShadow: "0px 0.5px 2px 0px var(--gray)",
   };
@@ -811,7 +809,11 @@ export function WindowContent({ children }) {
 }
 
 export function Label({ label, style = {} }) {
-  return <label style={{ ...{ textAlign: "left" }, ...style }}>{label}</label>;
+  return (
+    <label style={{ ...{ textAlign: "left", fontWeight: "bold" }, ...style }}>
+      {label}
+    </label>
+  );
 }
 
 export function Option({ value, options, process }) {
@@ -884,7 +886,7 @@ export function Row({
   ac = "center",
   cn = "",
   gap = "5px",
-  padding = "0",
+  padding = "0px",
 }) {
   return (
     <div
@@ -898,7 +900,6 @@ export function Row({
         padding: padding,
         width: "100%",
         overflow: "auto",
-        borderBottom: "1px solid var(--bluet)",
       }}
     >
       {children}
@@ -912,7 +913,7 @@ export function Column({
   ac = "center",
   cn = "",
   gap = "5px",
-  padding = "0",
+  padding = "0px",
 }) {
   return (
     <div
@@ -926,7 +927,6 @@ export function Column({
         padding: padding,
         width: "100%",
         overflow: "auto",
-        borderBottom: "1px solid var(--bluet)",
       }}
     >
       {children}
@@ -970,6 +970,11 @@ export function CollapsingDisplay({ title, children }) {
   return (
     <div>
       <Button
+        style={{
+          border: "none",
+          borderRadius: "0",
+          background: "var(--bluet)",
+        }}
         name={
           visible ? (
             <div
