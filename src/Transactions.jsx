@@ -15,6 +15,7 @@ import {
   CheckBox,
   DisplayArea,
   HidingDisplay,
+  Conditional,
   ConditionalButton,
   Table,
   TableRow,
@@ -22,6 +23,11 @@ import {
   ArrayInput,
   FSGroupInput,
   AutoSuggestInput,
+  Row,
+  Label,
+  InputJSONFile,
+  ExportJSONFile,
+  CollapsingDisplay,
 } from "./Components";
 
 import {
@@ -46,25 +52,7 @@ import {
 import { IncomeTaxCode } from "./classes";
 import { FaInfoCircle } from "react-icons/fa";
 import { useError } from "./useError";
-import { useInterface } from "./useInterface";
-
-export function CreateAsset() {
-  const [data, setdata] = useState({ Code: "", Description: "" });
-  return (
-    <WindowContent>
-      <WindowTitle title={"Create Asset"} />
-      <DisplayRow>
-        <DisplayFieldLabel label={"Code"} />
-        <Input
-          value={data["Code"]}
-          process={(value) =>
-            setdata((pd) => updateKeyValue(pd, "Code", value))
-          }
-        />
-      </DisplayRow>
-    </WindowContent>
-  );
-}
+import { useInterface, useWindowType } from "./useInterface";
 
 export const CreateIncomeTaxCode = () => {
   const defaults = {
@@ -448,100 +436,102 @@ export const IncomeTaxSimulate = ({ initialCode = "" }) => {
   };
 
   return (
-    <WindowContent>
+    <>
       <WindowTitle title={"Income Tax Simulate"} />
-      <DisplayArea>
-        <LabelledInput label={"Code"}>
-          {Code === "" && (
-            <p>
-              Code cannot be blank. Or,{" "}
-              <Button
-                name="Create Code"
-                functionsArray={[() => openWindow(<CreateIncomeTaxCode />)]}
-              />
-            </p>
-          )}
-          {Code !== "" && (
-            <Button
-              name="View Code"
-              functionsArray={[
-                () => openFloat(<ViewIncomeTaxCode Code={Code} />),
-              ]}
-            />
-          )}
-          <AutoSuggestInput
-            value={Code}
-            process={(value) => changeData("", "Code", value)}
-            onSelect={(value) => changeData("", "Code", value)}
-            suggestions={[...new IncomeTaxCode().list("Code")]}
-            placeholder={"Enter Code"}
-          />
-        </LabelledInput>
-        <LabelledInput label={"Year"}>
-          {Code !== "" && Year !== "" && !TaxCode.yearExists(Year) && (
-            <p>Year does not exist in the tax code.</p>
-          )}
-          <Input
-            value={Year}
-            process={(value) => changeData("", "Year", value)}
-            type={"number"}
-          />
-        </LabelledInput>
-        <LabelledInput label={"Income"}>
-          <Input
-            value={Income}
-            process={(value) => changeData("", "Income", value)}
-            type={"number"}
-          />
-        </LabelledInput>
-      </DisplayArea>
-      {result() && (
+      <WindowContent>
         <DisplayArea>
-          <DisplayRow>
-            <DisplayFieldLabel label={"Tax on Total Income (A)"} />
-            <p>{result().tax.toFixed(2)}</p>
-          </DisplayRow>
-          <DisplayRow>
-            <DisplayFieldLabel label={"Tax Exemption (B)"} />
-            <p>{result().taxExemption.toFixed(2)}</p>
-          </DisplayRow>
-          <DisplayRow>
-            <DisplayFieldLabel label={"Marginal Relief (C)"} />
-            <p>{result().marginalReliefOnExemption.toFixed(2)}</p>
-          </DisplayRow>
-          <DisplayRow>
-            <DisplayFieldLabel label={"Gross Exemption (D) = (B) + (C)"} />
-            <p>{result().grossExemption.toFixed(2)}</p>
-          </DisplayRow>
-          <DisplayRow>
-            <DisplayFieldLabel label={"Surcharge (E)"} />
-            <p>{result().surcharge.toFixed(2)}</p>
-          </DisplayRow>
-          <DisplayRow>
-            <DisplayFieldLabel label={"Marginal Relief from Surcharge (F)"} />
-            <p>{result().marginalReliefOnSurcharge.toFixed(2)}</p>
-          </DisplayRow>
-          <DisplayRow>
-            <DisplayFieldLabel label={"Net Surcharge (G) = (E) - (F)"} />
-            <p>{result().netSurcharge.toFixed(2)}</p>
-          </DisplayRow>
-          <DisplayRow>
-            <DisplayFieldLabel
-              label={"Tax Before Cess (H) = (A) - (D) + (G)"}
+          <LabelledInput label={"Code"}>
+            {Code === "" && (
+              <p>
+                Code cannot be blank. Or,{" "}
+                <Button
+                  name="Create Code"
+                  functionsArray={[() => openWindow(<CreateIncomeTaxCode />)]}
+                />
+              </p>
+            )}
+            {Code !== "" && (
+              <Button
+                name="View Code"
+                functionsArray={[
+                  () => openFloat(<ViewIncomeTaxCode Code={Code} />),
+                ]}
+              />
+            )}
+            <AutoSuggestInput
+              value={Code}
+              process={(value) => changeData("", "Code", value)}
+              onSelect={(value) => changeData("", "Code", value)}
+              suggestions={[...new IncomeTaxCode().listAll("Code")]}
+              placeholder={"Enter Code"}
             />
-            <p>{result().taxBeforeCess.toFixed(2)}</p>
-          </DisplayRow>
-          <DisplayRow>
-            <DisplayFieldLabel label={"Cess (I)"} />
-            <p>{result().cess.toFixed(2)}</p>
-          </DisplayRow>
-          <DisplayRow>
-            <DisplayFieldLabel label={"Total Tax (J) = (H) + (I)"} />
-            <p>{result().totalTax.toFixed(2)}</p>
-          </DisplayRow>
+          </LabelledInput>
+          <LabelledInput label={"Year"}>
+            {Code !== "" && Year !== "" && !TaxCode.yearExists(Year) && (
+              <p>Year does not exist in the tax code.</p>
+            )}
+            <Input
+              value={Year}
+              process={(value) => changeData("", "Year", value)}
+              type={"number"}
+            />
+          </LabelledInput>
+          <LabelledInput label={"Income"}>
+            <Input
+              value={Income}
+              process={(value) => changeData("", "Income", value)}
+              type={"number"}
+            />
+          </LabelledInput>
         </DisplayArea>
-      )}
-    </WindowContent>
+        {result() && (
+          <DisplayArea>
+            <DisplayRow>
+              <DisplayFieldLabel label={"Tax on Total Income (A)"} />
+              <p>{result().tax.toFixed(2)}</p>
+            </DisplayRow>
+            <DisplayRow>
+              <DisplayFieldLabel label={"Tax Exemption (B)"} />
+              <p>{result().taxExemption.toFixed(2)}</p>
+            </DisplayRow>
+            <DisplayRow>
+              <DisplayFieldLabel label={"Marginal Relief (C)"} />
+              <p>{result().marginalReliefOnExemption.toFixed(2)}</p>
+            </DisplayRow>
+            <DisplayRow>
+              <DisplayFieldLabel label={"Gross Exemption (D) = (B) + (C)"} />
+              <p>{result().grossExemption.toFixed(2)}</p>
+            </DisplayRow>
+            <DisplayRow>
+              <DisplayFieldLabel label={"Surcharge (E)"} />
+              <p>{result().surcharge.toFixed(2)}</p>
+            </DisplayRow>
+            <DisplayRow>
+              <DisplayFieldLabel label={"Marginal Relief from Surcharge (F)"} />
+              <p>{result().marginalReliefOnSurcharge.toFixed(2)}</p>
+            </DisplayRow>
+            <DisplayRow>
+              <DisplayFieldLabel label={"Net Surcharge (G) = (E) - (F)"} />
+              <p>{result().netSurcharge.toFixed(2)}</p>
+            </DisplayRow>
+            <DisplayRow>
+              <DisplayFieldLabel
+                label={"Tax Before Cess (H) = (A) - (D) + (G)"}
+              />
+              <p>{result().taxBeforeCess.toFixed(2)}</p>
+            </DisplayRow>
+            <DisplayRow>
+              <DisplayFieldLabel label={"Cess (I)"} />
+              <p>{result().cess.toFixed(2)}</p>
+            </DisplayRow>
+            <DisplayRow>
+              <DisplayFieldLabel label={"Total Tax (J) = (H) + (I)"} />
+              <p>{result().totalTax.toFixed(2)}</p>
+            </DisplayRow>
+          </DisplayArea>
+        )}
+      </WindowContent>
+    </>
   );
 };
 
@@ -1048,7 +1038,9 @@ function CreateFinancialStatementsCode({
 export function JSONEditor({ initial }) {
   const {
     data,
+    setdata,
     changeData,
+    reset,
     addItemtoArray,
     addItemtoObject,
     deleteItemfromArray,
@@ -1059,52 +1051,77 @@ export function JSONEditor({ initial }) {
     convertAsObject,
   } = useData(initial);
 
+  const { showAlert, openFloat, closeWindow } = useInterface();
+  const float = useWindowType() === "float";
+
   const editable = typeof data === "object";
 
   return (
-    <WindowContent>
-      <WindowTitle title="JSON Editor" />
-      <DisplayArea>
-        {!editable && (
-          <LabelledInput label={"JSON Not Editable"}>
-            <p>The data isn't a valid JSON and therefore can't be edited.</p>
-          </LabelledInput>
-        )}
-        {editable && (
-          <>
-            {isObject(data) ? (
-              <ObjectInput
-                path={""}
-                value={data}
-                changeData={changeData}
-                updateKeyOfObject={updateKey}
-                addToArray={addItemtoArray}
-                addToObject={addItemtoObject}
-                deleteFromArray={deleteItemfromArray}
-                deleteFromObject={deleteItemfromObject}
-                convertAsArray={convertAsArray}
-                convertAsObject={convertAsObject}
-                convertAsValue={convertAsValue}
-              />
-            ) : (
-              <ArrayInput
-                path={""}
-                value={data}
-                changeData={changeData}
-                updateKeyOfObject={updateKey}
-                addToArray={addItemtoArray}
-                addToObject={addItemtoObject}
-                deleteFromArray={deleteItemfromArray}
-                deleteFromObject={deleteItemfromObject}
-                convertAsArray={convertAsArray}
-                convertAsObject={convertAsObject}
-                convertAsValue={convertAsValue}
-              />
-            )}
-          </>
-        )}
-      </DisplayArea>
-      {JSON.stringify(data)}
-    </WindowContent>
+    <>
+      <WindowTitle
+        title="JSON Editor"
+        menu={[
+          <InputJSONFile
+            process={(value) => {
+              reset();
+              setdata(value);
+            }}
+            handleError={(value) => showAlert(value)}
+          />,
+          <HidingDisplay title={"View JSON Text"}>
+            <Row>
+              <p>{JSON.stringify(data)}</p>
+            </Row>
+          </HidingDisplay>,
+          <ExportJSONFile
+            name="Download"
+            fileName="Compounds JSON"
+            data={data}
+          />,
+        ]}
+      />
+      <WindowContent>
+        <DisplayArea>
+          {!editable && (
+            <LabelledInput label={"JSON Not Editable"}>
+              <p>The data isn't a valid JSON and therefore can't be edited.</p>
+            </LabelledInput>
+          )}
+          {editable && (
+            <>
+              {isObject(data) ? (
+                <ObjectInput
+                  path={""}
+                  value={data}
+                  changeData={changeData}
+                  updateKeyOfObject={updateKey}
+                  addToArray={addItemtoArray}
+                  addToObject={addItemtoObject}
+                  deleteFromArray={deleteItemfromArray}
+                  deleteFromObject={deleteItemfromObject}
+                  convertAsArray={convertAsArray}
+                  convertAsObject={convertAsObject}
+                  convertAsValue={convertAsValue}
+                />
+              ) : (
+                <ArrayInput
+                  path={""}
+                  value={data}
+                  changeData={changeData}
+                  updateKeyOfObject={updateKey}
+                  addToArray={addItemtoArray}
+                  addToObject={addItemtoObject}
+                  deleteFromArray={deleteItemfromArray}
+                  deleteFromObject={deleteItemfromObject}
+                  convertAsArray={convertAsArray}
+                  convertAsObject={convertAsObject}
+                  convertAsValue={convertAsValue}
+                />
+              )}
+            </>
+          )}
+        </DisplayArea>
+      </WindowContent>
+    </>
   );
 }

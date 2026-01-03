@@ -4,6 +4,7 @@ import { isObject, noop } from "./functions";
 import { useInterface, useWindowType } from "./useInterface";
 import { FocusTrap } from "focus-trap-react";
 import { FaAngleUp, FaAngleDown, FaWindowClose } from "react-icons/fa";
+import exportFromJSON from "export-from-json";
 
 export const Flex = ({ children, justify = "left", direction = "row" }) => {
   const style = {
@@ -463,15 +464,11 @@ export function ObjectInput({
   };
 
   return (
-    <DisplayBox>
-      <NavigationRow>
-        <Button name="Add (+)" functionsArray={[() => addToObject(path, "")]} />
-      </NavigationRow>
-
+    <Column>
       {keys.map((key, k) => (
         <>
           {typeof value[key] !== "object" && (
-            <DisplayRow>
+            <Row>
               <Input
                 keyDownHandler={preventDeletion}
                 value={key}
@@ -486,18 +483,18 @@ export function ObjectInput({
                 functionsArray={[() => deleteFromObject(path, key)]}
               />
               <Button
-                name={"Object"}
+                name={"{}"}
                 functionsArray={[() => convertAsObject(path, key)]}
               />
               <Button
-                name={"Array"}
+                name={"[]"}
                 functionsArray={[() => convertAsArray(path, key)]}
               />
-            </DisplayRow>
+            </Row>
           )}
           {typeof value[key] === "object" && (
-            <DisplayBox>
-              <DisplayFieldLabel label={key} />
+            <Column>
+              <Label label={key} />
               {isObject(value[key]) ? (
                 <>
                   <ObjectInput
@@ -514,7 +511,7 @@ export function ObjectInput({
                     convertAsValue={convertAsValue}
                   />
                   <Button
-                    name={"Array"}
+                    name={"[]"}
                     functionsArray={[() => convertAsArray(path, key)]}
                   />
                   <Button
@@ -538,7 +535,7 @@ export function ObjectInput({
                     convertAsValue={convertAsValue}
                   />
                   <Button
-                    name={"Object"}
+                    name={"{}"}
                     functionsArray={[() => convertAsObject(path, key)]}
                   />
                   <Button
@@ -551,11 +548,14 @@ export function ObjectInput({
                 name="-"
                 functionsArray={[() => deleteFromObject(path, key)]}
               />
-            </DisplayBox>
+            </Column>
           )}
         </>
       ))}
-    </DisplayBox>
+      <Row>
+        <Button name="+" functionsArray={[() => addToObject(path, "")]} />
+      </Row>
+    </Column>
   );
 }
 
@@ -573,29 +573,28 @@ export function ArrayInput({
   convertAsValue,
 }) {
   return (
-    <DisplayBox>
-      <Button name="Add (+)" functionsArray={[() => addToArray(path, "")]} />
+    <Column>
       {value.map((valu, v) => (
         <>
           {typeof valu !== "object" && (
-            <DisplayRow>
+            <Row>
               <Input value={valu} process={(val) => changeData(path, v, val)} />
               <Button
                 name={"-"}
                 functionsArray={[() => deleteFromArray(path, v)]}
               />
               <Button
-                name={"Object"}
+                name={"{}"}
                 functionsArray={[() => convertAsObject(path, v)]}
               />
               <Button
-                name={"Array"}
+                name={"[]"}
                 functionsArray={[() => convertAsArray(path, v)]}
               />
-            </DisplayRow>
+            </Row>
           )}
           {typeof valu === "object" && (
-            <DisplayBox>
+            <Column>
               {isObject(valu) ? (
                 <>
                   <ObjectInput
@@ -611,14 +610,16 @@ export function ArrayInput({
                     convertAsObject={convertAsObject}
                     convertAsValue={convertAsValue}
                   />
-                  <Button
-                    name={"Array"}
-                    functionsArray={[() => convertAsArray(path, v)]}
-                  />
-                  <Button
-                    name={"Value"}
-                    functionsArray={[() => convertAsValue(path, v)]}
-                  />
+                  <Row>
+                    <Button
+                      name={"[]"}
+                      functionsArray={[() => convertAsArray(path, v)]}
+                    />
+                    <Button
+                      name={"Value"}
+                      functionsArray={[() => convertAsValue(path, v)]}
+                    />
+                  </Row>
                 </>
               ) : (
                 <>
@@ -635,25 +636,32 @@ export function ArrayInput({
                     convertAsObject={convertAsObject}
                     convertAsValue={convertAsValue}
                   />
-                  <Button
-                    name={"Object"}
-                    functionsArray={[() => convertAsObject(path, v)]}
-                  />
-                  <Button
-                    name={"Value"}
-                    functionsArray={[() => convertAsValue(path, v)]}
-                  />
+                  <Row>
+                    <Button
+                      name={"{}"}
+                      functionsArray={[() => convertAsObject(path, v)]}
+                    />
+                    <Button
+                      name={"Value"}
+                      functionsArray={[() => convertAsValue(path, v)]}
+                    />
+                  </Row>
                 </>
               )}
-              <Button
-                name="-"
-                functionsArray={[() => deleteFromArray(path, v)]}
-              />
-            </DisplayBox>
+              <Row>
+                <Button
+                  name="-"
+                  functionsArray={[() => deleteFromArray(path, v)]}
+                />
+              </Row>
+            </Column>
           )}
         </>
       ))}
-    </DisplayBox>
+      <Row>
+        <Button name="+" functionsArray={[() => addToArray(path, "")]} />
+      </Row>
+    </Column>
   );
 }
 
@@ -887,6 +895,7 @@ export function Row({
   cn = "",
   gap = "5px",
   padding = "0px",
+  overflow = "auto",
 }) {
   return (
     <div
@@ -899,7 +908,7 @@ export function Row({
         gap: gap,
         padding: padding,
         width: "100%",
-        overflow: "auto",
+        overflow: overflow,
       }}
     >
       {children}
@@ -1020,4 +1029,57 @@ export function CollapsingDisplay({ title, children }) {
 export function Conditional({ logic, children }) {
   if (!logic) return null;
   return <>{children}</>;
+}
+
+export function InputJSONFile({ process, handleError }) {
+  const button = useRef(null);
+  const fileChange = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === "application/json") {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        try {
+          const parsedData = JSON.parse(e.target.result);
+          process(parsedData);
+        } catch (err) {
+          process({});
+          handleError("Error parsing JSON file. Please ensure it is valid.");
+        }
+      };
+
+      reader.readAsText(file);
+    } else {
+      process({});
+      handleError("Please upload a valid JSON file.");
+    }
+  };
+
+  return (
+    <>
+      <Button
+        name="Import JSON"
+        functionsArray={[() => button.current.click()]}
+      />
+      <input
+        style={{ display: "none" }}
+        ref={button}
+        type="file"
+        accept=".json"
+        onChange={fileChange}
+      />
+    </>
+  );
+}
+
+export function ExportJSONFile({
+  fileName = "New",
+  data,
+  name = "Export JSON",
+}) {
+  const exportType = "json";
+  const handleExport = () => {
+    exportFromJSON({ data, fileName, exportType });
+  };
+  return <Button name={name} functionsArray={[() => handleExport()]} />;
 }

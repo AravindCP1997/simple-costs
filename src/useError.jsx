@@ -39,7 +39,7 @@ export const useError = () => {
   const DisplayHidingError = () => {
     if (!errorsExist) return null;
     return (
-      <HidingDisplay title={`Errors ${errors.length}`}>
+      <HidingDisplay title={`Messages`}>
         <DisplayError />
       </HidingDisplay>
     );

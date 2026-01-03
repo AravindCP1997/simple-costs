@@ -33,15 +33,13 @@ import {
 } from "react-icons/fa";
 import { ListItems, ListUniqueItems, clickButton } from "./functions";
 import { Scratch } from "./App";
+import { JSONEditor } from "./Transactions";
+
 import {
-  CreateAsset,
   CreateIncomeTaxCode,
-  ManageChartOfAccounts,
-  ManageFinancialStatementsCode,
   ManageIncomeTaxCode,
   IncomeTaxSimulate,
-  JSONEditor,
-} from "./Transactions";
+} from "./Transactions/IncomeTaxCode";
 
 import { CreateChartofAccounts } from "./Transactions/ChartofAccounts";
 
@@ -61,14 +59,6 @@ const codes = [
     name: "Accessibility",
     group: "System",
     subgroup: "General",
-  },
-  {
-    code: "ccoa",
-    screen: <Window />,
-    window: <CreateChartofAccounts />,
-    name: "Chart of Accounts",
-    group: "Control",
-    subgroup: "Global",
   },
   {
     code: "citc",

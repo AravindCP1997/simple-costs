@@ -6,9 +6,20 @@ export class IncomeTaxCode extends Collection {
     super(name);
     this.code = code;
   }
+  exists() {
+    return super.exists({ Code: this.code });
+  }
+  add(data) {
+    super.add(data);
+    return "Added";
+  }
   getData() {
     const result = super.getData({ Code: this.code });
     return result;
+  }
+  delete() {
+    super.delete({ Code: this.code });
+    return "Deleted";
   }
   yearExists(year) {
     const result = this.taxation(year) !== undefined;
