@@ -31,7 +31,8 @@
 }
 
 .drawerButtonSelected {
-  border-top: 3px solid var(--greent);
+  border: 3px solid var(--bluet);
+  border-radius: 5px;
 }
 
 .drawerButton:hover,

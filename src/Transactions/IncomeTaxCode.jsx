@@ -478,6 +478,7 @@ export const IncomeTaxSimulate = ({ initialCode = "" }) => {
       Code !== "" &&
       Year !== "" &&
       Income !== "" &&
+      TaxCode.exists() &&
       TaxCode.yearExists(Year)
     ) {
       return TaxCode.taxComputation(Year, Income);
@@ -530,7 +531,37 @@ export const IncomeTaxSimulate = ({ initialCode = "" }) => {
               type={"number"}
             />
           </LabelledInput>
-          {Code === "" && (
+        </DisplayArea>
+        {Code === "" && (
+          <p
+            style={{
+              background: "var(--redt)",
+              color: "white",
+              fontSize: "85%",
+              margin: "0",
+              width: "fit-content",
+            }}
+          >
+            Code cannot be blank.
+          </p>
+        )}
+        {Code !== "" && !TaxCode.exists() && (
+          <p
+            style={{
+              background: "var(--redt)",
+              color: "white",
+              fontSize: "85%",
+              margin: "0",
+              width: "fit-content",
+            }}
+          >
+            Income Tax Code does not exists.
+          </p>
+        )}
+        {Code !== "" &&
+          Year !== "" &&
+          TaxCode.exists() &&
+          !TaxCode.yearExists(Year) && (
             <p
               style={{
                 background: "var(--redt)",
@@ -540,26 +571,9 @@ export const IncomeTaxSimulate = ({ initialCode = "" }) => {
                 width: "fit-content",
               }}
             >
-              Code cannot be blank.
+              Year does not exist in the tax code.
             </p>
           )}
-          {Code !== "" &&
-            Year !== "" &&
-            TaxCode.exists() &&
-            !TaxCode.yearExists(Year) && (
-              <p
-                style={{
-                  background: "var(--redt)",
-                  color: "white",
-                  fontSize: "85%",
-                  margin: "0",
-                  width: "fit-content",
-                }}
-              >
-                Year does not exist in the tax code.
-              </p>
-            )}
-        </DisplayArea>
         {result() && (
           <DisplayArea>
             <DisplayRow>
