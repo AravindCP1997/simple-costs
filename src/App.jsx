@@ -1,16 +1,29 @@
 import "./App.css";
-import { UserInterfaceProvider } from "./useInterface";
+import { useInterface, UserInterfaceProvider } from "./useInterface";
 import { LocalStorage, Dictionary, Collection } from "./Database";
-import { Button, CollapsingDisplay } from "./Components";
+import {
+  Button,
+  CollapsingDisplay,
+  WindowTitle,
+  WindowContent,
+} from "./Components";
 import UserInterface from "./UserInterface";
 
 export function Scratch() {
+  const { showAlert } = useInterface();
   return (
-    <div>
-      <CollapsingDisplay title={"Hello"}>
-        <p>Sample Paragraph</p>
-      </CollapsingDisplay>
-    </div>
+    <>
+      <WindowTitle title={"Test Page"} />
+      <WindowContent>
+        <Button
+          name="Clear Storage"
+          functionsArray={[
+            () => localStorage.clear(),
+            () => showAlert("Cleared!", "Storage"),
+          ]}
+        />
+      </WindowContent>
+    </>
   );
 }
 

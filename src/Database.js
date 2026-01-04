@@ -63,6 +63,9 @@ export class Collection extends LocalStorage {
     return existsInCollection(super.load(), criteria);
   }
   listAll(field) {
+    if (super.load() === null) {
+      return [];
+    }
     return ListItems(super.load(), field);
   }
   async add(data) {

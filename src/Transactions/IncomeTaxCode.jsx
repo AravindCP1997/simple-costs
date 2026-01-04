@@ -334,13 +334,13 @@ export const ViewIncomeTaxCode = ({ Code }) => {
       <WindowTitle
         title={"View Income Tax Code"}
         menu={[
-          <Conditional>
+          <Conditional logic={!float}>
             <Button
               name="Back"
               functionsArray={[() => openWindow(<ManageIncomeTaxCode />)]}
             />
           </Conditional>,
-          <Conditional>
+          <Conditional logic={!float}>
             <Button
               name="Create"
               functionsArray={[() => openWindow(<CreateIncomeTaxCode />)]}
@@ -488,27 +488,26 @@ export const IncomeTaxSimulate = ({ initialCode = "" }) => {
 
   return (
     <>
-      <WindowTitle title={"Income Tax Simulate"} />
+      <WindowTitle
+        title={"Income Tax Simulate"}
+        menu={[
+          <Button
+            name={"Create Code"}
+            functionsArray={[() => openWindow(<CreateIncomeTaxCode />)]}
+          />,
+          <Conditional logic={Code !== "" && TaxCode.exists()}>
+            <Button
+              name={"View Code"}
+              functionsArray={[
+                () => openFloat(<ViewIncomeTaxCode Code={Code} />),
+              ]}
+            />
+          </Conditional>,
+        ]}
+      />
       <WindowContent>
         <DisplayArea>
           <LabelledInput label={"Code"}>
-            {Code === "" && (
-              <p>
-                Code cannot be blank. Or,{" "}
-                <Button
-                  name="Create Code"
-                  functionsArray={[() => openWindow(<CreateIncomeTaxCode />)]}
-                />
-              </p>
-            )}
-            {Code !== "" && (
-              <Button
-                name="View Code"
-                functionsArray={[
-                  () => openFloat(<ViewIncomeTaxCode Code={Code} />),
-                ]}
-              />
-            )}
             <AutoSuggestInput
               value={Code}
               process={(value) => changeData("", "Code", value)}
@@ -518,9 +517,6 @@ export const IncomeTaxSimulate = ({ initialCode = "" }) => {
             />
           </LabelledInput>
           <LabelledInput label={"Year"}>
-            {Code !== "" && Year !== "" && !TaxCode.yearExists(Year) && (
-              <p>Year does not exist in the tax code.</p>
-            )}
             <Input
               value={Year}
               process={(value) => changeData("", "Year", value)}
@@ -534,6 +530,35 @@ export const IncomeTaxSimulate = ({ initialCode = "" }) => {
               type={"number"}
             />
           </LabelledInput>
+          {Code === "" && (
+            <p
+              style={{
+                background: "var(--redt)",
+                color: "white",
+                fontSize: "85%",
+                margin: "0",
+                width: "fit-content",
+              }}
+            >
+              Code cannot be blank.
+            </p>
+          )}
+          {Code !== "" &&
+            Year !== "" &&
+            TaxCode.exists() &&
+            !TaxCode.yearExists(Year) && (
+              <p
+                style={{
+                  background: "var(--redt)",
+                  color: "white",
+                  fontSize: "85%",
+                  margin: "0",
+                  width: "fit-content",
+                }}
+              >
+                Year does not exist in the tax code.
+              </p>
+            )}
         </DisplayArea>
         {result() && (
           <DisplayArea>

@@ -186,7 +186,6 @@ function Alert() {
   const style = {
     position: "fixed",
     zIndex: "1050",
-    bottom: "20%",
     maxHeight: "60%",
     padding: "20px",
     background: "var(--whitet)",
@@ -222,7 +221,6 @@ function Confirm() {
   const style = {
     position: "fixed",
     zIndex: "1010",
-    bottom: "20%",
     maxHeight: "60%",
     padding: "20px",
     background: "var(--whitet)",
@@ -416,6 +414,7 @@ function Accessibility() {
     resetAccessibility,
     saveAccessibility,
     closeFloat,
+    closeWindow,
   } = useInterface();
 
   const windowtype = useWindowType();
@@ -429,7 +428,7 @@ function Accessibility() {
             name="Save"
             result={windowtype === "static"}
             whileFalse={[() => saveAccessibility(), () => closeFloat()]}
-            whileTrue={[() => alert(saveAccessibility())]}
+            whileTrue={[() => saveAccessibility(), () => closeWindow()]}
           />,
           <Button name="Reset" functionsArray={[() => resetAccessibility()]} />,
         ]}

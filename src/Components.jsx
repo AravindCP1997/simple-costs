@@ -791,7 +791,7 @@ export const Overlay = ({ children, onClick = noop }) => {
     width: "100%",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "top",
+    justifyContent: "center",
     alignItems: "center",
     padding: "10px",
   };
@@ -891,7 +891,7 @@ export function DisplayRow({ children }) {
 export function Row({
   children,
   jc = "left",
-  ac = "center",
+  ai = "center",
   cn = "",
   gap = "5px",
   padding = "0px",
@@ -904,7 +904,7 @@ export function Row({
         display: "flex",
         flexDirection: "row",
         justifyContent: jc,
-        alignContent: ac,
+        alignItems: ai,
         gap: gap,
         padding: padding,
         width: "100%",

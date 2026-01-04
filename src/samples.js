@@ -46,7 +46,7 @@ export const sampleIncomeTaxCode = {
         { From: 0, To: 400000, Rate: 0 },
         { From: 400001, To: 800000, Rate: 5 },
         { From: 800001, To: 1200000, Rate: 10 },
-        { From: 12000001, To: 1600000, Rate: 15 },
+        { From: 1200001, To: 1600000, Rate: 15 },
         { From: 1600001, To: 2000000, Rate: 20 },
         { From: 2000001, To: 2400000, Rate: 25 },
         { From: 2400001, To: 2800000, Rate: 30 },
