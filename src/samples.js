@@ -49,7 +49,7 @@ export const sampleIncomeTaxCode = {
         { From: 1200001, To: 1600000, Rate: 15 },
         { From: 1600001, To: 2000000, Rate: 20 },
         { From: 2000001, To: 2400000, Rate: 25 },
-        { From: 2400001, To: 2800000, Rate: 30 },
+        { From: 2400001, To: 9999999999, Rate: 30 },
       ],
       Surcharge: [
         { Threshold: 5000000, Rate: 10 },
