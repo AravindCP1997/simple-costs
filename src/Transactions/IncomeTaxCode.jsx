@@ -213,7 +213,7 @@ export const CreateIncomeTaxCode = ({
           onClick={() =>
             addItemtoArray(
               `Taxation/${taxationIndex}/SlabRate`,
-              Taxation[0]["SlabRate"][0]
+              initial.Taxation[0]["SlabRate"][0]
             )
           }
         >
@@ -232,7 +232,7 @@ export const CreateIncomeTaxCode = ({
             onClick={() =>
               addItemtoArray(
                 `Taxation/${taxationIndex}/Surcharge`,
-                defaults.Taxation[0]["Surcharge"][0]
+                initial.Taxation[0]["Surcharge"][0]
               )
             }
           >
@@ -308,7 +308,7 @@ export const CreateIncomeTaxCode = ({
             <Row>
               <DisplayFieldLabel label={"Taxation"} />
               <button
-                onClick={() => addItemtoArray("Taxation", defaults.Taxation[0])}
+                onClick={() => addItemtoArray("Taxation", initial.Taxation[0])}
               >
                 Add
               </button>
@@ -489,7 +489,7 @@ export const IncomeTaxSimulate = ({ initialCode = "" }) => {
   return (
     <>
       <WindowTitle
-        title={"Income Tax Simulate"}
+        title={"Income Tax Simulation"}
         menu={[
           <Button
             name={"Create Code"}
