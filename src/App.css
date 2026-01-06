@@ -23,16 +23,15 @@
   background: none;
   box-shadow: none;
   border: none;
-  color: var(--blue);
+  color: var(--bluet);
   border-radius: 0px;
   transition: 0.5s;
-  border: 3px solid transparent;
   font-size: 100%;
 }
 
 .drawerButtonSelected {
-  border: 3px solid var(--bluet);
-  border-radius: 5px;
+  background: var(--bluet);
+  color: white;
 }
 
 .drawerButton:hover,
@@ -42,7 +41,7 @@
 
 .drawerButtonSelected:focus,
 .drawerButtonSelected:hover {
-  background: none;
+  background: var(--blue);
 }
 
 .closeButton {
@@ -56,6 +55,7 @@
 }
 
 .icon {
+  box-shadow: 0px 2px 5px -1px gray;
   p {
     background: var(--goldt);
     font-size: 80%;
@@ -81,15 +81,16 @@
   flex-direction: row;
   button {
     border: none;
-    background: none;
-    color: unset;
+    background: var(--bluet);
+    color: white;
     padding: 10px;
     border-radius: 0;
     transition: 0.5s ease-in-out;
+    border-right: 1px solid var(--whitet);
   }
 
   button:hover {
-    background: var(--lightbluet);
+    background: var(--blue);
   }
 }
 
@@ -138,7 +139,7 @@
 }
 
 .radio:hover {
-  background: var(--goldt);
+  background: var(--lightbluet);
 }
 
 .tableContainer {

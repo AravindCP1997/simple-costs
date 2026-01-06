@@ -7,6 +7,7 @@ export const sampleChartOfAccounts = {
     { LedgerType: "Income", From: 300, To: 399 },
     { LedgerType: "Expense", From: 400, To: 499 },
   ],
+  Status: "Draft",
 };
 
 export const sampleIncomeTaxCode = {

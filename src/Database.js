@@ -82,7 +82,7 @@ export class Collection extends LocalStorage {
   }
   async update(criteria, data) {
     await this.delete(criteria);
-    const result = await super.add(data);
+    const result = await this.add(data);
     return result;
   }
 }

@@ -415,7 +415,6 @@ export function DisplayArea({ children }) {
     borderRadius: "15px",
     padding: "10px",
     border: blue ? "5px solid var(--lightbluet)" : "5px solid var(--whitet)",
-    boxShadow: "0px 0.5px 2px 0px var(--gray)",
   };
   return <div style={style}>{children}</div>;
 }
@@ -1082,4 +1081,46 @@ export function ExportJSONFile({
     exportFromJSON({ data, fileName, exportType });
   };
   return <Button name={name} functionsArray={[() => handleExport()]} />;
+}
+
+export function Menu({ title, menu }) {
+  const [visible, setvisible] = useState(false);
+  const toggleVisibility = () => {
+    setvisible((prev) => !prev);
+  };
+  const style = {
+    display: "flex",
+    flexDirection: "column",
+    position: "absolute",
+    width: "100%",
+  };
+
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (visible && menuRef.current && !menuRef.current.contains(e.target)) {
+        setvisible(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    document.addEventListener("touchstart", handler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchstart", handler);
+    };
+  }, [visible]);
+
+  return (
+    <div ref={menuRef} style={{ position: "relative" }}>
+      <Button name={title} functionsArray={[() => toggleVisibility()]} />
+      {visible && (
+        <div className="controlButtons" style={style}>
+          {menu.map((item) => (
+            <>{item}</>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }

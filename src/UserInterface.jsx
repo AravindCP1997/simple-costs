@@ -33,7 +33,7 @@ import {
 } from "react-icons/fa";
 import { ListItems, ListUniqueItems, clickButton } from "./functions";
 import { Scratch } from "./App";
-import { JSONEditor } from "./Transactions";
+import { JSONEditor } from "./Transactions/JsonEditor";
 
 import {
   CreateIncomeTaxCode,
@@ -41,7 +41,12 @@ import {
   IncomeTaxSimulate,
 } from "./Transactions/IncomeTaxCode";
 
-import { CreateChartofAccounts } from "./Transactions/ChartofAccounts";
+import {
+  CreateChartofAccounts,
+  ManageChartofAccounts,
+  ViewChartofAccounts,
+  UpdateChartofAccounts,
+} from "./Transactions/ChartofAccounts";
 
 const codes = [
   {
@@ -61,6 +66,22 @@ const codes = [
     subgroup: "General",
   },
   {
+    code: "ccoa",
+    screen: <Window />,
+    window: <CreateChartofAccounts />,
+    name: "Create Chart of Accounts",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "mcoa",
+    screen: <Window />,
+    window: <ManageChartofAccounts />,
+    name: "Manage Chart of Accounts",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
     code: "citc",
     screen: <Window />,
     window: <CreateIncomeTaxCode />,
@@ -76,12 +97,19 @@ const codes = [
     group: "Control",
     subgroup: "Global",
   },
-
   {
     code: "simtax",
     screen: <Window />,
     window: <IncomeTaxSimulate />,
     name: "Income Tax Simulation",
+    group: "Report",
+    subgroup: "Application",
+  },
+  {
+    code: "json",
+    screen: <Window />,
+    window: <JSONEditor />,
+    name: "JSON Editor",
     group: "Report",
     subgroup: "Application",
   },
@@ -561,9 +589,9 @@ export function Drawer({ initial = "Record" }) {
     flexDirection: "column",
     justifyContent: "top",
     alignItems: "start",
-    padding: "10px",
+    padding: "10px 0px",
     transition: "0.5s",
-    borderBottom: "5px solid var(--whitet)",
+    borderBottom: "2px solid var(--bluet)",
     width: "100%",
   };
 
@@ -586,7 +614,6 @@ export function Drawer({ initial = "Record" }) {
     backdropFilter: "blur(10x)",
     borderRadius: "15px",
     border: "5px solid var(--whitet)",
-    boxShadow: "0px 1px 5px -2px gray",
     transition: "0.5s",
     cursor: "pointer",
     textAlign: "center",
@@ -629,10 +656,8 @@ export function Drawer({ initial = "Record" }) {
           width: "100%",
           overflowX: "auto",
           gap: "10px",
-          background: "var(--whitet)",
-          borderRadius: "10px",
-          border: "5px solid var(--whitet)",
-          padding: "10px",
+          borderBottom: "2px solid var(--bluet)",
+          padding: "10px 0px",
           position: "sticky",
           top: "0",
         }}
