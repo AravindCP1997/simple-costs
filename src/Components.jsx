@@ -1030,7 +1030,7 @@ export function Conditional({ logic, children }) {
   return <>{children}</>;
 }
 
-export function InputJSONFile({ process, handleError }) {
+export function InputJSONFile({ title = "Import", process, handleError }) {
   const button = useRef(null);
   const fileChange = (event) => {
     const file = event.target.files[0];
@@ -1056,10 +1056,7 @@ export function InputJSONFile({ process, handleError }) {
 
   return (
     <>
-      <Button
-        name="Import JSON"
-        functionsArray={[() => button.current.click()]}
-      />
+      <Button name={title} functionsArray={[() => button.current.click()]} />
       <input
         style={{ display: "none" }}
         ref={button}

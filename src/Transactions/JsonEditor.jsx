@@ -90,8 +90,8 @@ export const JSONEditor = ({ initial = [""] }) => {
               </Row>
             )}
             {isObject(data[key]) && (
-              <details key={key}>
-                <summary>
+              <Column key={key}>
+                <Row>
                   <Input
                     value={key}
                     process={(value) => updateKey(path, k, value)}
@@ -117,53 +117,49 @@ export const JSONEditor = ({ initial = [""] }) => {
                       />,
                     ]}
                   />
-                </summary>
+                </Row>
                 <ObjectInput
                   data={data[key]}
                   path={path === "" ? key : `${path}/${key}`}
                 />
-              </details>
+              </Column>
             )}
             {Array.isArray(data[key]) && (
-              <details>
-                <summary>
-                  <Row>
-                    <Input
-                      value={key}
-                      process={(value) => updateKey(path, k, value)}
-                    />
-                    <Menu
-                      title={"Menu"}
-                      menu={[
-                        <Button
-                          name={"Convert to Object"}
-                          functionsArray={[
-                            () => changeData(path, key, { "": "" }),
-                          ]}
-                        />,
-                        <Button
-                          name={"Convert to Value"}
-                          functionsArray={[() => changeData(path, key, "")]}
-                        />,
-                        <Button
-                          name={"Remove"}
-                          functionsArray={[
-                            () => deleteItemfromArray(path, key),
-                          ]}
-                        />,
-                        <Button
-                          name={"Add"}
-                          functionsArray={[() => addItemtoArray(path, "")]}
-                        />,
-                      ]}
-                    />
-                  </Row>
-                </summary>
+              <Column key={key}>
+                <Row>
+                  <Input
+                    value={key}
+                    process={(value) => updateKey(path, k, value)}
+                  />
+                  <Menu
+                    title={"Menu"}
+                    menu={[
+                      <Button
+                        name={"Convert to Object"}
+                        functionsArray={[
+                          () => changeData(path, key, { "": "" }),
+                        ]}
+                      />,
+                      <Button
+                        name={"Convert to Value"}
+                        functionsArray={[() => changeData(path, key, "")]}
+                      />,
+                      <Button
+                        name={"Remove"}
+                        functionsArray={[() => deleteItemfromArray(path, key)]}
+                      />,
+                      <Button
+                        name={"Add"}
+                        functionsArray={[() => addItemtoArray(path, "")]}
+                      />,
+                    ]}
+                  />
+                </Row>
                 <ArrayInput
                   data={data[key]}
                   path={path === "" ? key : `${path}/${key}`}
                 />
-              </details>
+              </Column>
             )}
           </>
         ))}
@@ -203,74 +199,68 @@ export const JSONEditor = ({ initial = [""] }) => {
               </Row>
             )}
             {isObject(item) && (
-              <details key={i}>
-                <summary>
-                  <Row>
-                    <Label label={i + 1} />
-                    <Menu
-                      title={"Menu"}
-                      menu={[
-                        <Button
-                          name={"Convert to Array"}
-                          functionsArray={[() => changeData(path, i, [""])]}
-                        />,
-                        <Button
-                          name={"Convert to Value"}
-                          functionsArray={[() => changeData(path, i, "")]}
-                        />,
-                        <Button
-                          name={"Remove"}
-                          functionsArray={[() => deleteItemfromObject(path, i)]}
-                        />,
-                        <Button
-                          name={"Add"}
-                          functionsArray={[() => addItemtoObject(path, "")]}
-                        />,
-                      ]}
-                    />
-                  </Row>
-                </summary>
+              <Column key={i}>
+                <Row>
+                  <Label label={i + 1} />
+                  <Menu
+                    title={"Menu"}
+                    menu={[
+                      <Button
+                        name={"Convert to Array"}
+                        functionsArray={[() => changeData(path, i, [""])]}
+                      />,
+                      <Button
+                        name={"Convert to Value"}
+                        functionsArray={[() => changeData(path, i, "")]}
+                      />,
+                      <Button
+                        name={"Remove"}
+                        functionsArray={[() => deleteItemfromObject(path, i)]}
+                      />,
+                      <Button
+                        name={"Add"}
+                        functionsArray={[() => addItemtoObject(path, "")]}
+                      />,
+                    ]}
+                  />
+                </Row>
                 <ObjectInput
                   data={item}
                   path={path === "" ? i : `${path}/${i}`}
                 />
-              </details>
+              </Column>
             )}
             {Array.isArray(item) && (
-              <details>
-                <summary>
-                  <Row>
-                    <Label label={i + 1} />
-                    <Menu
-                      title={"Menu"}
-                      menu={[
-                        <Button
-                          name={"Convert to Object"}
-                          functionsArray={[
-                            () => changeData(path, i, { "": "" }),
-                          ]}
-                        />,
-                        <Button
-                          name={"Convert to Value"}
-                          functionsArray={[() => changeData(path, i, "")]}
-                        />,
-                        <Button
-                          name={"Remove"}
-                          functionsArray={[() => deleteItemfromArray(path, i)]}
-                        />,
-                        <Button
-                          name={"Add"}
-                          functionsArray={[() => addItemtoArray(path, "")]}
-                        />,
-                      ]}
-                    />
-                  </Row>
-                </summary>
+              <Column>
+                <Row>
+                  <Label label={i + 1} />
+                  <Menu
+                    title={"Menu"}
+                    menu={[
+                      <Button
+                        name={"Convert to Object"}
+                        functionsArray={[() => changeData(path, i, { "": "" })]}
+                      />,
+                      <Button
+                        name={"Convert to Value"}
+                        functionsArray={[() => changeData(path, i, "")]}
+                      />,
+                      <Button
+                        name={"Remove"}
+                        functionsArray={[() => deleteItemfromArray(path, i)]}
+                      />,
+                      <Button
+                        name={"Add"}
+                        functionsArray={[() => addItemtoArray(path, "")]}
+                      />,
+                    ]}
+                  />
+                </Row>
                 <ArrayInput
                   data={item}
                   path={path === "" ? i : `${path}/${i}`}
                 />
-              </details>
+              </Column>
             )}
           </>
         ))}
@@ -304,7 +294,7 @@ export const JSONEditor = ({ initial = [""] }) => {
             name="Download"
           />,
           <HidingDisplay title={"Text View"}>
-            <p>{JSON.stringify(data, null, 2)}</p>
+            <p>{JSON.stringify(data, null, "\n")}</p>
           </HidingDisplay>,
         ]}
       />
