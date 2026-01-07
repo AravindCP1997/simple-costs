@@ -26,20 +26,20 @@ import { sampleChartOfAccounts } from "../samples";
 export function CreateChartofAccounts({
   initial = {
     Code: "",
-    GLNumbering: [
-      { LedgerType: "Asset", From: "", To: "" },
-      { LedgerType: "Equity", From: "", To: "" },
-      { LedgerType: "Liability", From: "", To: "" },
-      { LedgerType: "Income", From: "", To: "" },
-      { LedgerType: "Expense", From: "", To: "" },
-    ],
+    AccountGroups: [{ Group: "", From: "", To: "" }],
     Status: "Draft",
   },
 }) {
-  const { data, changeData, reset, setdata } = useData(initial);
-  const { Code, GLNumbering, Status } = data;
+  const {
+    data,
+    changeData,
+    reset,
+    setdata,
+    addItemtoArray,
+    deleteItemfromArray,
+  } = useData(initial);
+  const { Code, AccountGroups, Status } = data;
   const { showAlert, openWindow } = useInterface();
-  const isFloat = useWindowType() === "float";
   const { addError, clearErrors, errorsExist, DisplayHidingError } = useError();
   const collection = new ChartOfAccounts(Code);
 
@@ -51,19 +51,24 @@ export function CreateChartofAccounts({
       "Code",
       "Chart of accounts with same code already exists."
     );
-    GLNumbering.forEach((numbering, n) => {
-      const { From, To, LedgerType } = numbering;
+    AccountGroups.forEach((numbering, n) => {
+      const { From, To, Group } = numbering;
       addError(
         From === "" || To === "",
-        "GLNumbering",
-        `For ${LedgerType}, range incomplete.`
+        "AccountGroups",
+        `For Account Group ${n}, range incomplete.`
+      );
+      addError(
+        Group === "",
+        "AccountGroups",
+        `For Group ${n + 1}, group name is blank.`
       );
       addError(
         From > To,
-        "GLNumbering",
-        `For ${LedgerType}, 'From' is greater than 'To'.`
+        "AccountGroups",
+        `For Account Group ${n}, 'From' is greater than 'To'.`
       );
-      GLNumbering.forEach((numberingtwo, ntwo) => {
+      AccountGroups.forEach((numberingtwo, ntwo) => {
         const { From: Fromtwo, To: Totwo } = numberingtwo;
         addError(
           n !== ntwo &&
@@ -71,10 +76,11 @@ export function CreateChartofAccounts({
               [Number(From), Number(To)],
               [Number(Fromtwo), Number(Totwo)]
             ),
-          "GLNumbering",
-          `Range overlaps between ${
-            GLNumbering[Math.min(n, ntwo)].LedgerType
-          } and ${GLNumbering[Math.max(n, ntwo)].LedgerType}`
+          "AccountGroups",
+          `Range overlaps between group ${Math.min(n, ntwo)} and ${Math.max(
+            n,
+            ntwo
+          )}`
         );
       });
     });
@@ -115,22 +121,47 @@ export function CreateChartofAccounts({
             />
           </Row>
           <Column>
-            <Label label={"General Ledger Numbering"} />
+            <Row>
+              <Label label={"Account Groups"} />
+              <Button
+                name={"Add Group"}
+                functionsArray={[
+                  () =>
+                    addItemtoArray("AccountGroups", {
+                      Group: "",
+                      From: "",
+                      To: "",
+                    }),
+                ]}
+              />
+            </Row>
             <Table
-              columns={["Ledger Type", "From Range", "To Range"]}
-              rows={GLNumbering.map((numbering, n) => [
-                <Label label={numbering.LedgerType} />,
+              columns={["", "Group Name", "From Range", "To Range"]}
+              rows={AccountGroups.map((numbering, n) => [
+                <Button
+                  name="-"
+                  functionsArray={[
+                    () => deleteItemfromArray("AccountGroups", n),
+                  ]}
+                />,
+                <Input
+                  value={numbering.Group}
+                  process={(value) =>
+                    changeData(`AccountGroups/${n}`, "Group", value)
+                  }
+                  type={"text"}
+                />,
                 <Input
                   value={numbering.From}
                   process={(value) =>
-                    changeData(`GLNumbering/${n}`, "From", value)
+                    changeData(`AccountGroups/${n}`, "From", value)
                   }
                   type={"number"}
                 />,
                 <Input
                   value={numbering.To}
                   process={(value) =>
-                    changeData(`GLNumbering/${n}`, "To", value)
+                    changeData(`AccountGroups/${n}`, "To", value)
                   }
                   type={"number"}
                 />,
@@ -154,27 +185,38 @@ export function CreateChartofAccounts({
 export function UpdateChartofAccounts({ Code }) {
   const collection = new ChartOfAccounts(Code);
   const initial = collection.getData();
-  const { data, changeData, reset, setdata } = useData(initial);
-  const { GLNumbering, Status } = data;
+  const {
+    data,
+    changeData,
+    reset,
+    setdata,
+    addItemtoArray,
+    deleteItemfromArray,
+  } = useData(initial);
+  const { AccountGroups, Status } = data;
   const { showAlert, openWindow } = useInterface();
-  const isFloat = useWindowType() === "float";
   const { addError, clearErrors, errorsExist, DisplayHidingError } = useError();
 
   useEffect(() => {
     clearErrors();
-    GLNumbering.forEach((numbering, n) => {
-      const { From, To, LedgerType } = numbering;
+    AccountGroups.forEach((numbering, n) => {
+      const { From, To, Group } = numbering;
       addError(
         From === "" || To === "",
-        "GLNumbering",
-        `For ${LedgerType}, range incomplete.`
+        "AccountGroups",
+        `For Account Group ${n}, range incomplete.`
+      );
+      addError(
+        Group === "",
+        "AccountGroups",
+        `For Group ${n}, group name is blank.`
       );
       addError(
         From > To,
-        "GLNumbering",
-        `For ${LedgerType}, 'From' is greater than 'To'.`
+        "AccountGroups",
+        `For Account Group ${n}, 'From' is greater than 'To'.`
       );
-      GLNumbering.forEach((numberingtwo, ntwo) => {
+      AccountGroups.forEach((numberingtwo, ntwo) => {
         const { From: Fromtwo, To: Totwo } = numberingtwo;
         addError(
           n !== ntwo &&
@@ -182,10 +224,11 @@ export function UpdateChartofAccounts({ Code }) {
               [Number(From), Number(To)],
               [Number(Fromtwo), Number(Totwo)]
             ),
-          "GLNumbering",
-          `Range overlaps between ${
-            GLNumbering[Math.min(n, ntwo)].LedgerType
-          } and ${GLNumbering[Math.max(n, ntwo)].LedgerType}`
+          "AccountGroups",
+          `Range overlaps between group ${Math.min(n, ntwo)} and ${Math.max(
+            n,
+            ntwo
+          )}`
         );
       });
     });
@@ -224,22 +267,47 @@ export function UpdateChartofAccounts({ Code }) {
             <label>{Code}</label>
           </Row>
           <Column>
-            <Label label={"General Ledger Numbering"} />
+            <Row>
+              <Label label={"Account Groups"} />
+              <Button
+                name={"Add Group"}
+                functionsArray={[
+                  () =>
+                    addItemtoArray("AccountGroups", {
+                      Group: "",
+                      From: "",
+                      To: "",
+                    }),
+                ]}
+              />
+            </Row>
             <Table
-              columns={["Ledger Type", "From Range", "To Range"]}
-              rows={GLNumbering.map((numbering, n) => [
-                <Label label={numbering.LedgerType} />,
+              columns={["", "Group Name", "From Range", "To Range"]}
+              rows={AccountGroups.map((numbering, n) => [
+                <Button
+                  name="-"
+                  functionsArray={[
+                    () => deleteItemfromArray("AccountGroups", n),
+                  ]}
+                />,
+                <Input
+                  value={numbering.Group}
+                  process={(value) =>
+                    changeData(`AccountGroups/${n}`, "Group", value)
+                  }
+                  type={"text"}
+                />,
                 <Input
                   value={numbering.From}
                   process={(value) =>
-                    changeData(`GLNumbering/${n}`, "From", value)
+                    changeData(`AccountGroups/${n}`, "From", value)
                   }
                   type={"number"}
                 />,
                 <Input
                   value={numbering.To}
                   process={(value) =>
-                    changeData(`GLNumbering/${n}`, "To", value)
+                    changeData(`AccountGroups/${n}`, "To", value)
                   }
                   type={"number"}
                 />,
@@ -263,7 +331,7 @@ export function UpdateChartofAccounts({ Code }) {
 export function ViewChartofAccounts({ Code }) {
   const collection = new ChartOfAccounts(Code);
   const data = collection.getData();
-  const { GLNumbering, Status } = data;
+  const { AccountGroups, Status } = data;
   const { showAlert, openWindow } = useInterface();
   const isFloat = useWindowType() === "float";
 
@@ -285,11 +353,11 @@ export function ViewChartofAccounts({ Code }) {
             <label>{Code}</label>
           </Row>
           <Column>
-            <Label label={"General Ledger Numbering"} />
+            <Label label={"Account Groups"} />
             <Table
-              columns={["Ledger Type", "From Range", "To Range"]}
-              rows={GLNumbering.map((numbering, n) => [
-                <Label label={numbering.LedgerType} />,
+              columns={["Group Name", "From Range", "To Range"]}
+              rows={AccountGroups.map((numbering, n) => [
+                <Label label={numbering.Group} />,
                 <label>{numbering.From}</label>,
                 <label>{numbering.To}</label>,
               ])}

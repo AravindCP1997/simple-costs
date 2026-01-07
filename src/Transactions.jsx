@@ -484,6 +484,7 @@ export function ManageFinancialStatementsCode() {
 function CreateFinancialStatementsCode({
   initial = {
     Code: "",
+    ChartofAccounts: "",
     Hierarchy: [
       { name: "Asset", presentations: [], subgroups: [] },
       { name: "Equity", presentations: [], subgroups: [] },
@@ -499,7 +500,7 @@ function CreateFinancialStatementsCode({
   const { data, changeData, reset, addItemtoArray, deleteItemfromArray } =
     useData(initial);
 
-  const { Code, Hierarchy } = data;
+  const { Code, Hierarchy, ChartofAccounts } = data;
 
   const processErrors = () => {
     const errors = [];

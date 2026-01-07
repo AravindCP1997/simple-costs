@@ -152,7 +152,7 @@
   text-align: center;
   h4 {
     margin: 0;
-    min-width: 100px;
+    min-width: 10px;
   }
   button {
     width: 100%;

@@ -195,3 +195,39 @@ export class ChartOfAccounts extends Collection {
     return [result.From, result.To];
   }
 }
+
+export class GroupChartOfAccounts extends Collection {
+  constructor(Code, name = "GroupChartofAccounts") {
+    super(name);
+    this.Code = Code;
+    this.criteria = { Code: this.Code };
+  }
+  add(data) {
+    super.add(data);
+    return "Added";
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  async delete() {
+    if (this.Code === "") {
+      return null;
+    }
+    return super.delete(this.criteria);
+  }
+  async update(data) {
+    if (!this.Code) {
+      return null;
+    }
+    await super.update(this.criteria, data);
+    return "Updated";
+  }
+  numbering(group) {
+    const numberings = this.getData().GLNumbering;
+    const result = numberings.find((item) => item.LedgerType === group);
+    return [result.From, result.To];
+  }
+}

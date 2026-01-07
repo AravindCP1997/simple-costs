@@ -9,9 +9,12 @@ import {
   WindowContent,
 } from "./Components";
 import UserInterface from "./UserInterface";
+import { useState } from "react";
 
 export function Scratch() {
   const { showAlert } = useInterface();
+  const [key, setkey] = useState("");
+  const [value, setvalue] = useState("");
   return (
     <>
       <WindowTitle
@@ -34,12 +37,6 @@ export function Scratch() {
           functionsArray={[
             () => localStorage.clear(),
             () => showAlert("Cleared!", "Storage"),
-          ]}
-        />
-        <Menu
-          title={"Sample Menu"}
-          menu={[
-            <Button name="Sample 1" functionsArray={[() => alert("Sample")]} />,
           ]}
         />
       </WindowContent>
