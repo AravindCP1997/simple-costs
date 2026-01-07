@@ -47,6 +47,10 @@ import {
   ViewChartofAccounts,
   UpdateChartofAccounts,
 } from "./Transactions/ChartofAccounts";
+import {
+  CreateInterestCode,
+  ManageInterestCode,
+} from "./Transactions/InterestCode";
 
 const codes = [
   {
@@ -94,6 +98,22 @@ const codes = [
     screen: <Window />,
     window: <ManageIncomeTaxCode />,
     name: "Manage Income Tax Code",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "cinc",
+    screen: <Window />,
+    window: <CreateInterestCode />,
+    name: "Create Interest Code",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "minc",
+    screen: <Window />,
+    window: <ManageInterestCode />,
+    name: "Manage Interest Code",
     group: "Control",
     subgroup: "Global",
   },
@@ -657,6 +677,7 @@ export function Drawer({ initial = "Record" }) {
           overflowX: "auto",
           gap: "10px",
           borderBottom: "2px solid var(--bluet)",
+          background: "var(--whitet)",
           padding: "10px 0px",
           position: "sticky",
           top: "0",

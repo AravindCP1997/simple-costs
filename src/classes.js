@@ -231,3 +231,34 @@ export class GroupChartOfAccounts extends Collection {
     return [result.From, result.To];
   }
 }
+
+export class InterestCode extends Collection {
+  constructor(Code, name = "InterestCode") {
+    super(name);
+    this.Code = Code;
+    this.criteria = { Code: this.Code };
+  }
+  add(data) {
+    super.add(data);
+    return "Added";
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  async delete() {
+    if (this.Code === "") {
+      return null;
+    }
+    return super.delete(this.criteria);
+  }
+  async update(data) {
+    if (!this.Code) {
+      return null;
+    }
+    await super.update(this.criteria, data);
+    return "Updated";
+  }
+}

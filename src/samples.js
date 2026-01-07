@@ -60,3 +60,10 @@ export const sampleIncomeTaxCode = {
     },
   ],
 };
+
+export const sampleInterestCode = {
+  Code: "ABC",
+  Description: "Sample Interest Code",
+  Compounding: "Daily",
+  DaysinYear: 360,
+};
