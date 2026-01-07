@@ -922,6 +922,7 @@ export function Column({
   cn = "",
   gap = "5px",
   padding = "0px",
+  overflow = "auto",
 }) {
   return (
     <div
@@ -934,7 +935,7 @@ export function Column({
         gap: gap,
         padding: padding,
         width: "100%",
-        overflow: "auto",
+        overflow: overflow,
       }}
     >
       {children}
@@ -1080,16 +1081,17 @@ export function ExportJSONFile({
   return <Button name={name} functionsArray={[() => handleExport()]} />;
 }
 
-export function Menu({ title, menu }) {
+export function Menu({ title, menu, arrange = "column" }) {
   const [visible, setvisible] = useState(false);
   const toggleVisibility = () => {
     setvisible((prev) => !prev);
   };
   const style = {
     display: "flex",
-    flexDirection: "column",
+    flexDirection: arrange,
     position: "absolute",
-    width: "100%",
+    width: "fit-content",
+    zIndex: "1000",
   };
 
   const menuRef = useRef(null);
@@ -1109,7 +1111,7 @@ export function Menu({ title, menu }) {
   }, [visible]);
 
   return (
-    <div ref={menuRef} style={{ position: "relative" }}>
+    <div ref={menuRef} style={{ position: "relative", overflow: "visible" }}>
       <Button name={title} functionsArray={[() => toggleVisibility()]} />
       {visible && (
         <div className="controlButtons" style={style}>
