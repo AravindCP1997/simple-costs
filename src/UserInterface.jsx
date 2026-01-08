@@ -45,6 +45,11 @@ import {
   CreateChartofAccounts,
   ManageChartofAccounts,
 } from "./Transactions/ChartofAccounts";
+
+import {
+  CreateGroupChartofAccounts,
+  ManageGroupChartofAccounts,
+} from "./Transactions/GroupChartofAccounts";
 import {
   CreateInterestCode,
   ManageInterestCode,
@@ -80,6 +85,22 @@ const codes = [
     screen: <Window />,
     window: <ManageChartofAccounts />,
     name: "Manage Chart of Accounts",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "cgcoa",
+    screen: <Window />,
+    window: <CreateGroupChartofAccounts />,
+    name: "Create Group Chart of Accounts",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "mgcoa",
+    screen: <Window />,
+    window: <ManageGroupChartofAccounts />,
+    name: "Manage Group Chart of Accounts",
     group: "Control",
     subgroup: "Global",
   },
@@ -609,7 +630,6 @@ export function Drawer({ initial = "Record" }) {
     alignItems: "start",
     padding: "10px 0px",
     transition: "0.5s",
-    borderBottom: "2px solid var(--bluet)",
     width: "100%",
   };
 

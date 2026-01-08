@@ -14,9 +14,9 @@ export const UserInterfaceProvider = ({ children }) => {
     setscreen(<Window />);
     setwindow({ visible: true, content });
   };
-  const closeWindow = () => {
+  const closeWindow = (initial = "Control") => {
     setwindow({ visible: true, content: null });
-    setscreen(<Drawer />);
+    setscreen(<Drawer initial={initial} />);
   };
 
   const [alert, setalert] = useState({

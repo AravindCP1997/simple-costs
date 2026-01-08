@@ -3,3 +3,9 @@ export const defaultChartofAccounts = {
   AccountGroups: [{ Group: "", From: "", To: "" }],
   Status: "Draft",
 };
+
+export const defaultGroupChartofAccounts = {
+  Code: "",
+  AccountGroups: [{ Group: "", From: "", To: "" }],
+  Status: "Draft",
+};

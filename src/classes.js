@@ -1,5 +1,5 @@
 import { Collection } from "./Database";
-import { valueInRange } from "./functions";
+import { ListItems, valueInRange } from "./functions";
 
 export class IncomeTaxCode extends Collection {
   constructor(code, name = "IncomeTaxCode") {
@@ -225,7 +225,13 @@ export class GroupChartOfAccounts extends Collection {
     await super.update(this.criteria, data);
     return "Updated";
   }
-  numbering(group) {
+  groups() {
+    if (!this.exists()) {
+      return [];
+    }
+    return ListItems(this.getData().AccountGroups, "Group");
+  }
+  grouprange(group) {
     const numberings = this.getData().GLNumbering;
     const result = numberings.find((item) => item.LedgerType === group);
     return [result.From, result.To];

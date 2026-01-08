@@ -21,12 +21,12 @@ import { useError } from "../useError";
 import { ChartOfAccounts, GroupChartOfAccounts } from "../classes";
 import { Collection } from "../Database";
 import { rangeOverlap } from "../functions";
-import { sampleChartOfAccounts } from "../samples";
-import { defaultChartofAccounts } from "../defaults";
+import { sampleGroupChartOfAccounts } from "../samples";
+import { defaultGroupChartofAccounts } from "../defaults";
 
-export function CreateChartofAccounts({
+export function CreateGroupChartofAccounts({
   method = "Create",
-  initial = defaultChartofAccounts,
+  initial = defaultGroupChartofAccounts,
 }) {
   const {
     data,
@@ -39,7 +39,7 @@ export function CreateChartofAccounts({
   const { Code, AccountGroups, Status } = data;
   const { showAlert, openWindow } = useInterface();
   const { addError, clearErrors, errorsExist, DisplayHidingError } = useError();
-  const collection = new ChartOfAccounts(Code);
+  const collection = new GroupChartOfAccounts(Code);
 
   useEffect(() => {
     clearErrors();
@@ -51,14 +51,12 @@ export function CreateChartofAccounts({
     addError(
       method === "Create" && Code !== "" && collection.exists(),
       "Code",
-      `Chart of accounts ${Code} already exists.`
+      `Group Chart of accounts ${Code} already exists.`
     );
     addError(
-      method === "Create" &&
-        Code !== "" &&
-        new GroupChartOfAccounts(Code).exists(),
+      method === "Create" && Code !== "" && new ChartOfAccounts(Code).exists(),
       "Code",
-      "Group Chart of accounts with same code already exists."
+      "Company Chart of accounts with same code already exists."
     );
     AccountGroups.forEach((numbering, n) => {
       const { From, To, Group } = numbering;
@@ -105,7 +103,7 @@ export function CreateChartofAccounts({
     return (
       <>
         <WindowTitle
-          title={"Create Chart of Accounts"}
+          title={"Create Group Chart of Accounts"}
           menu={[
             <ConditionalButton
               name="Save"
@@ -116,12 +114,14 @@ export function CreateChartofAccounts({
             <Button name={"Reset"} functionsArray={[() => reset()]} />,
             <Button
               name="Sample"
-              functionsArray={[() => setdata(sampleChartOfAccounts)]}
+              functionsArray={[() => setdata(sampleGroupChartOfAccounts)]}
             />,
             <DisplayHidingError />,
             <Button
               name={"Manage"}
-              functionsArray={[() => openWindow(<ManageChartofAccounts />)]}
+              functionsArray={[
+                () => openWindow(<ManageGroupChartofAccounts />),
+              ]}
             />,
           ]}
         />
@@ -200,7 +200,7 @@ export function CreateChartofAccounts({
     return (
       <>
         <WindowTitle
-          title={"Create Chart of Accounts"}
+          title={"Update Group Chart of Accounts"}
           menu={[
             <ConditionalButton
               name="Save"
@@ -208,12 +208,12 @@ export function CreateChartofAccounts({
               whileFalse={[() => showAlert("Messages exist. Please check!")]}
               whileTrue={[
                 () => showAlert(collection.update(data)),
-                () => openWindow(<ManageChartofAccounts />),
+                () => openWindow(<ManageGroupChartofAccounts />),
               ]}
             />,
             <Button
               name={"Reset"}
-              functionsArray={[() => setdata(defaultChartofAccounts)]}
+              functionsArray={[() => setdata(defaultGroupChartofAccounts)]}
             />,
             <DisplayHidingError />,
             <Button
@@ -292,11 +292,13 @@ export function CreateChartofAccounts({
     return (
       <>
         <WindowTitle
-          title={"View Chart of Accounts"}
+          title={"View Group Chart of Accounts"}
           menu={[
             <Button
               name={"Manage"}
-              functionsArray={[() => openWindow(<ManageChartofAccounts />)]}
+              functionsArray={[
+                () => openWindow(<ManageGroupChartofAccounts />),
+              ]}
             />,
           ]}
         />
@@ -330,28 +332,30 @@ export function CreateChartofAccounts({
   }
 }
 
-export function ManageChartofAccounts() {
+export function ManageGroupChartofAccounts() {
   const [Code, setCode] = useState("");
   const { showAlert, openConfirm, openWindow } = useInterface();
-  const collection = new ChartOfAccounts(Code);
+  const collection = new GroupChartOfAccounts(Code);
 
   return (
     <>
       <WindowTitle
-        title={"Manage Chart of Accounts"}
+        title={"Manage Group Chart of Accounts"}
         menu={[
           <Button
             name="New"
-            functionsArray={[() => openWindow(<CreateChartofAccounts />)]}
+            functionsArray={[() => openWindow(<CreateGroupChartofAccounts />)]}
           />,
           <ConditionalButton
             name="View"
             result={Code !== "" && collection.exists()}
-            whileFalse={[() => showAlert("Chart of Accounts does not exist.")]}
+            whileFalse={[
+              () => showAlert("Group Chart of Accounts does not exist."),
+            ]}
             whileTrue={[
               () =>
                 openWindow(
-                  <CreateChartofAccounts
+                  <CreateGroupChartofAccounts
                     method="View"
                     initial={collection.getData()}
                   />
@@ -368,13 +372,13 @@ export function ManageChartofAccounts() {
             whileFalse={[
               () =>
                 showAlert(
-                  "Either the Chart of Accounts does not exist, or it is not in draft stage to make changes."
+                  "Either the Group Chart of Accounts does not exist, or it is not in draft stage to make changes."
                 ),
             ]}
             whileTrue={[
               () =>
                 openWindow(
-                  <CreateChartofAccounts
+                  <CreateGroupChartofAccounts
                     method="Update"
                     initial={collection.getData()}
                   />
@@ -391,13 +395,13 @@ export function ManageChartofAccounts() {
             whileFalse={[
               () =>
                 showAlert(
-                  "Either the Chart of Accounts does not exist, or it is not in draft stage to be deleted."
+                  "Either the Group Chart of Accounts does not exist, or it is not in draft stage to be deleted."
                 ),
             ]}
             whileTrue={[
               () =>
                 openConfirm(
-                  "This action will permanently delete the Chart of Accounts",
+                  "This action will permanently delete the Group Chart of Accounts",
                   [],
                   [() => showAlert(collection.delete()), () => setCode("")]
                 ),
@@ -406,11 +410,13 @@ export function ManageChartofAccounts() {
           <ConditionalButton
             name="Copy"
             result={Code !== "" && collection.exists()}
-            whileFalse={[() => showAlert("Chart of Accounts does not exist.")]}
+            whileFalse={[
+              () => showAlert("Group Chart of Accounts does not exist."),
+            ]}
             whileTrue={[
               () =>
                 openWindow(
-                  <CreateChartofAccounts initial={collection.getData()} />
+                  <CreateGroupChartofAccounts initial={collection.getData()} />
                 ),
             ]}
           />,
@@ -419,7 +425,7 @@ export function ManageChartofAccounts() {
       <WindowContent>
         <DisplayArea>
           <Row overflow="visible">
-            <Label label={"Chart of Accounts"} />
+            <Label label={"Group Chart of Accounts"} />
             <AutoSuggestInput
               value={Code}
               process={(value) => setCode(value)}

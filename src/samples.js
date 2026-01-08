@@ -10,6 +10,18 @@ export const sampleChartOfAccounts = {
   Status: "Draft",
 };
 
+export const sampleGroupChartOfAccounts = {
+  Code: "GABCD",
+  AccountGroups: [
+    { Group: "Asset", From: 1, To: 99 },
+    { Group: "Equity", From: 100, To: 199 },
+    { Group: "Liability", From: 200, To: 299 },
+    { Group: "Income", From: 300, To: 399 },
+    { Group: "Expense", From: 400, To: 499 },
+  ],
+  Status: "Draft",
+};
+
 export const sampleIncomeTaxCode = {
   Code: "115BAC",
   Taxation: [
