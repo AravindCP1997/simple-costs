@@ -231,10 +231,37 @@ export class GroupChartOfAccounts extends Collection {
     }
     return ListItems(this.getData().AccountGroups, "Group");
   }
-  grouprange(group) {
-    const numberings = this.getData().GLNumbering;
-    const result = numberings.find((item) => item.LedgerType === group);
+  groupExists(group) {
+    return this.groups().includes(group);
+  }
+  groupRange(group) {
+    const numberings = this.getData().AccountGroups;
+    const result = numberings.find((item) => item.Group === group);
     return [result.From, result.To];
+  }
+}
+
+export class GroupGeneralLedger extends Collection {
+  constructor(chart, generalledger, name = "GroupGeneralLedger") {
+    super(name);
+    this.chart = chart;
+    this.generalledger = generalledger;
+    this.criteria = {
+      ChartofAccounts: this.chart,
+      GeneralLedger: this.generalledger,
+    };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
   }
 }
 

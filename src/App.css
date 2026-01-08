@@ -123,12 +123,11 @@
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
-  width: 100%;
+  width: fit-content;
   align-items: start;
 }
 
 .radio {
-  width: max(100%, 100px);
   display: flex;
   flex-direction: row;
   justify-content: left;

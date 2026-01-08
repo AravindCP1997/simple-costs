@@ -10,6 +10,7 @@ import {
 } from "./Components";
 import UserInterface from "./UserInterface";
 import { useState } from "react";
+import { GroupGeneralLedger } from "./classes";
 
 export function Scratch() {
   const { showAlert } = useInterface();
@@ -39,6 +40,7 @@ export function Scratch() {
             () => showAlert("Cleared!", "Storage"),
           ]}
         />
+        {JSON.stringify(new GroupGeneralLedger("GABCD", "1").exists())}
       </WindowContent>
     </>
   );

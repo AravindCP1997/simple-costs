@@ -54,6 +54,10 @@ import {
   CreateInterestCode,
   ManageInterestCode,
 } from "./Transactions/InterestCode";
+import {
+  CreateGroupGeneralLedger,
+  ManageGroupGeneralLedger,
+} from "./Transactions/GroupGeneralLedger";
 
 const codes = [
   {
@@ -101,6 +105,22 @@ const codes = [
     screen: <Window />,
     window: <ManageGroupChartofAccounts />,
     name: "Manage Group Chart of Accounts",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "cggl",
+    screen: <Window />,
+    window: <CreateGroupGeneralLedger />,
+    name: "Create Group General Ledger",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "mggl",
+    screen: <Window />,
+    window: <ManageGroupGeneralLedger />,
+    name: "Manage Group General Ledger",
     group: "Control",
     subgroup: "Global",
   },

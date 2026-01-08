@@ -9,3 +9,12 @@ export const defaultGroupChartofAccounts = {
   AccountGroups: [{ Group: "", From: "", To: "" }],
   Status: "Draft",
 };
+
+export const defaultGroupGeneralLedger = {
+  ChartofAccounts: "",
+  GeneralLedger: "",
+  Group: "",
+  LedgerType: "Balance Sheet",
+  Description: "",
+  Status: "Draft",
+};
