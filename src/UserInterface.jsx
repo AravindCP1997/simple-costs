@@ -44,8 +44,6 @@ import {
 import {
   CreateChartofAccounts,
   ManageChartofAccounts,
-  ViewChartofAccounts,
-  UpdateChartofAccounts,
 } from "./Transactions/ChartofAccounts";
 import {
   CreateInterestCode,

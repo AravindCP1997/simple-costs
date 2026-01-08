@@ -366,7 +366,7 @@ export function WindowTitle({ title, style = {}, menu = [] }) {
       style={{
         display: "flex",
         flexDirection: "column",
-        width: "min(100%,600px)",
+        width: "min(100%,720px)",
         color: windowType === "static" ? "var(--blue)" : "white",
       }}
     >
@@ -388,7 +388,7 @@ export function WindowTitle({ title, style = {}, menu = [] }) {
               windowType === "static"
                 ? "1px solid var(--bluet)"
                 : "1px solid var(--whitet)",
-            width: "min(100%,480px)",
+            width: "min(100%,640px)",
           }}
         >
           {menu.map((control) => (
@@ -889,7 +889,7 @@ export function DisplayRow({ children }) {
 
 export function Row({
   children,
-  jc = "left",
+  jc = "space-between",
   ai = "center",
   cn = "",
   gap = "5px",

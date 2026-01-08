@@ -22,13 +22,11 @@ import { ChartOfAccounts } from "../classes";
 import { Collection } from "../Database";
 import { rangeOverlap } from "../functions";
 import { sampleChartOfAccounts } from "../samples";
+import { defaultChartofAccounts } from "../defaults";
 
 export function CreateChartofAccounts({
-  initial = {
-    Code: "",
-    AccountGroups: [{ Group: "", From: "", To: "" }],
-    Status: "Draft",
-  },
+  method = "Create",
+  initial = defaultChartofAccounts,
 }) {
   const {
     data,
@@ -45,9 +43,13 @@ export function CreateChartofAccounts({
 
   useEffect(() => {
     clearErrors();
-    addError(Code === "", "Code", "Code cannot be blank.");
     addError(
-      Code !== "" && collection.exists(),
+      method === "Create" && Code === "",
+      "Code",
+      "Code cannot be blank."
+    );
+    addError(
+      method === "Create" && Code !== "" && collection.exists(),
       "Code",
       "Chart of accounts with same code already exists."
     );
@@ -69,308 +71,256 @@ export function CreateChartofAccounts({
         `For Account Group ${n}, 'From' is greater than 'To'.`
       );
       AccountGroups.forEach((numberingtwo, ntwo) => {
-        const { From: Fromtwo, To: Totwo } = numberingtwo;
+        const { From: Fromtwo, To: Totwo, Group: Grouptwo } = numberingtwo;
         addError(
           n !== ntwo &&
+            n < ntwo &&
             rangeOverlap(
               [Number(From), Number(To)],
               [Number(Fromtwo), Number(Totwo)]
             ),
           "AccountGroups",
-          `Range overlaps between group ${Math.min(n, ntwo)} and ${Math.max(
-            n,
-            ntwo
-          )}`
+          `Range overlaps between group ${Math.min(n, ntwo) + 1} and ${
+            Math.max(n, ntwo) + 1
+          }`
         );
-      });
-    });
-  }, [data]);
-
-  return (
-    <>
-      <WindowTitle
-        title={"Create Chart of Accounts"}
-        menu={[
-          <ConditionalButton
-            name="Save"
-            result={!errorsExist}
-            whileFalse={[() => showAlert("Messages exist. Please check!")]}
-            whileTrue={[() => showAlert(collection.add(data)), () => reset()]}
-          />,
-          <Button name={"Reset"} functionsArray={[() => reset()]} />,
-          <Button
-            name="Sample"
-            functionsArray={[() => setdata(sampleChartOfAccounts)]}
-          />,
-          <DisplayHidingError />,
-          <Button
-            name={"Manage"}
-            functionsArray={[() => openWindow(<ManageChartofAccounts />)]}
-          />,
-        ]}
-      />
-      <WindowContent>
-        <DisplayArea>
-          <Row>
-            <Label label={"Code"} />
-            <Input
-              value={Code}
-              process={(value) => changeData("", "Code", value)}
-              type={"text"}
-              maxLength={6}
-            />
-          </Row>
-          <Column>
-            <Row>
-              <Label label={"Account Groups"} />
-              <Button
-                name={"Add Group"}
-                functionsArray={[
-                  () =>
-                    addItemtoArray("AccountGroups", {
-                      Group: "",
-                      From: "",
-                      To: "",
-                    }),
-                ]}
-              />
-            </Row>
-            <Table
-              columns={["", "Group Name", "From Range", "To Range"]}
-              rows={AccountGroups.map((numbering, n) => [
-                <Button
-                  name="-"
-                  functionsArray={[
-                    () => deleteItemfromArray("AccountGroups", n),
-                  ]}
-                />,
-                <Input
-                  value={numbering.Group}
-                  process={(value) =>
-                    changeData(`AccountGroups/${n}`, "Group", value)
-                  }
-                  type={"text"}
-                />,
-                <Input
-                  value={numbering.From}
-                  process={(value) =>
-                    changeData(`AccountGroups/${n}`, "From", value)
-                  }
-                  type={"number"}
-                />,
-                <Input
-                  value={numbering.To}
-                  process={(value) =>
-                    changeData(`AccountGroups/${n}`, "To", value)
-                  }
-                  type={"number"}
-                />,
-              ])}
-            />
-          </Column>
-          <Row>
-            <Label label={"Status"} />
-            <Option
-              value={Status}
-              process={(value) => changeData("", "Status", value)}
-              options={["Draft", "Ready", "Blocked"]}
-            />
-          </Row>
-        </DisplayArea>
-      </WindowContent>
-    </>
-  );
-}
-
-export function UpdateChartofAccounts({ Code }) {
-  const collection = new ChartOfAccounts(Code);
-  const initial = collection.getData();
-  const {
-    data,
-    changeData,
-    reset,
-    setdata,
-    addItemtoArray,
-    deleteItemfromArray,
-  } = useData(initial);
-  const { AccountGroups, Status } = data;
-  const { showAlert, openWindow } = useInterface();
-  const { addError, clearErrors, errorsExist, DisplayHidingError } = useError();
-
-  useEffect(() => {
-    clearErrors();
-    AccountGroups.forEach((numbering, n) => {
-      const { From, To, Group } = numbering;
-      addError(
-        From === "" || To === "",
-        "AccountGroups",
-        `For Account Group ${n}, range incomplete.`
-      );
-      addError(
-        Group === "",
-        "AccountGroups",
-        `For Group ${n}, group name is blank.`
-      );
-      addError(
-        From > To,
-        "AccountGroups",
-        `For Account Group ${n}, 'From' is greater than 'To'.`
-      );
-      AccountGroups.forEach((numberingtwo, ntwo) => {
-        const { From: Fromtwo, To: Totwo } = numberingtwo;
         addError(
-          n !== ntwo &&
-            rangeOverlap(
-              [Number(From), Number(To)],
-              [Number(Fromtwo), Number(Totwo)]
-            ),
+          n !== ntwo && n < ntwo && Group === Grouptwo,
           "AccountGroups",
-          `Range overlaps between group ${Math.min(n, ntwo)} and ${Math.max(
-            n,
-            ntwo
-          )}`
+          `Names of groups ${Math.min(n, ntwo) + 1} and ${
+            Math.max(n, ntwo) + 1
+          } are same.`
         );
       });
     });
   }, [data]);
-
-  return (
-    <>
-      <WindowTitle
-        title={"Update Chart of Accounts"}
-        menu={[
-          <ConditionalButton
-            name="Save"
-            result={!errorsExist}
-            whileFalse={[() => showAlert("Messages exist. Please check!")]}
-            whileTrue={[
-              () => showAlert(collection.update(data)),
-              () => openWindow(<ManageChartofAccounts />),
-            ]}
-          />,
-          <Button name={"Reset"} functionsArray={[() => reset()]} />,
-          <Button
-            name="Sample"
-            functionsArray={[() => setdata(sampleChartOfAccounts)]}
-          />,
-          <DisplayHidingError />,
-          <Button
-            name={"Manage"}
-            functionsArray={[() => openWindow(<ManageChartofAccounts />)]}
-          />,
-        ]}
-      />
-      <WindowContent>
-        <DisplayArea>
-          <Row>
-            <Label label={"Code"} />
-            <label>{Code}</label>
-          </Row>
-          <Column>
+  if (method === "Create") {
+    return (
+      <>
+        <WindowTitle
+          title={"Create Chart of Accounts"}
+          menu={[
+            <ConditionalButton
+              name="Save"
+              result={!errorsExist}
+              whileFalse={[() => showAlert("Messages exist. Please check!")]}
+              whileTrue={[() => showAlert(collection.add(data)), () => reset()]}
+            />,
+            <Button name={"Reset"} functionsArray={[() => reset()]} />,
+            <Button
+              name="Sample"
+              functionsArray={[() => setdata(sampleChartOfAccounts)]}
+            />,
+            <DisplayHidingError />,
+            <Button
+              name={"Manage"}
+              functionsArray={[() => openWindow(<ManageChartofAccounts />)]}
+            />,
+          ]}
+        />
+        <WindowContent>
+          <DisplayArea>
             <Row>
-              <Label label={"Account Groups"} />
-              <Button
-                name={"Add Group"}
-                functionsArray={[
-                  () =>
-                    addItemtoArray("AccountGroups", {
-                      Group: "",
-                      From: "",
-                      To: "",
-                    }),
-                ]}
+              <Label label={"Code"} />
+              <Input
+                value={Code}
+                process={(value) => changeData("", "Code", value)}
+                type={"text"}
+                maxLength={6}
               />
             </Row>
-            <Table
-              columns={["", "Group Name", "From Range", "To Range"]}
-              rows={AccountGroups.map((numbering, n) => [
+            <Column>
+              <Row>
+                <Label label={"Account Groups"} />
                 <Button
-                  name="-"
+                  name={"Add Group"}
                   functionsArray={[
-                    () => deleteItemfromArray("AccountGroups", n),
+                    () =>
+                      addItemtoArray("AccountGroups", {
+                        Group: "",
+                        From: "",
+                        To: "",
+                      }),
                   ]}
-                />,
-                <Input
-                  value={numbering.Group}
-                  process={(value) =>
-                    changeData(`AccountGroups/${n}`, "Group", value)
-                  }
-                  type={"text"}
-                />,
-                <Input
-                  value={numbering.From}
-                  process={(value) =>
-                    changeData(`AccountGroups/${n}`, "From", value)
-                  }
-                  type={"number"}
-                />,
-                <Input
-                  value={numbering.To}
-                  process={(value) =>
-                    changeData(`AccountGroups/${n}`, "To", value)
-                  }
-                  type={"number"}
-                />,
-              ])}
-            />
-          </Column>
-          <Row>
-            <Label label={"Status"} />
-            <Option
-              value={Status}
-              process={(value) => changeData("", "Status", value)}
-              options={["Draft", "Ready", "Blocked"]}
-            />
-          </Row>
-        </DisplayArea>
-      </WindowContent>
-    </>
-  );
-}
-
-export function ViewChartofAccounts({ Code }) {
-  const collection = new ChartOfAccounts(Code);
-  const data = collection.getData();
-  const { AccountGroups, Status } = data;
-  const { showAlert, openWindow } = useInterface();
-  const isFloat = useWindowType() === "float";
-
-  return (
-    <>
-      <WindowTitle
-        title={"View Chart of Accounts"}
-        menu={[
-          <Button
-            name={"Manage"}
-            functionsArray={[() => openWindow(<ManageChartofAccounts />)]}
-          />,
-        ]}
-      />
-      <WindowContent>
-        <DisplayArea>
-          <Row>
-            <Label label={"Code"} />
-            <label>{Code}</label>
-          </Row>
-          <Column>
-            <Label label={"Account Groups"} />
-            <Table
-              columns={["Group Name", "From Range", "To Range"]}
-              rows={AccountGroups.map((numbering, n) => [
-                <Label label={numbering.Group} />,
-                <label>{numbering.From}</label>,
-                <label>{numbering.To}</label>,
-              ])}
-            />
-          </Column>
-          <Row>
-            <Label label={"Status"} />
-            <label>{Status}</label>
-          </Row>
-        </DisplayArea>
-      </WindowContent>
-    </>
-  );
+                />
+              </Row>
+              <Table
+                columns={["", "Group Name", "From Range", "To Range"]}
+                rows={AccountGroups.map((numbering, n) => [
+                  <Button
+                    name="-"
+                    functionsArray={[
+                      () => deleteItemfromArray("AccountGroups", n),
+                    ]}
+                  />,
+                  <Input
+                    value={numbering.Group}
+                    process={(value) =>
+                      changeData(`AccountGroups/${n}`, "Group", value)
+                    }
+                    type={"text"}
+                  />,
+                  <Input
+                    value={numbering.From}
+                    process={(value) =>
+                      changeData(`AccountGroups/${n}`, "From", value)
+                    }
+                    type={"number"}
+                  />,
+                  <Input
+                    value={numbering.To}
+                    process={(value) =>
+                      changeData(`AccountGroups/${n}`, "To", value)
+                    }
+                    type={"number"}
+                  />,
+                ])}
+              />
+            </Column>
+            <Row>
+              <Label label={"Status"} />
+              <Option
+                value={Status}
+                process={(value) => changeData("", "Status", value)}
+                options={["Draft", "Ready", "Blocked"]}
+              />
+            </Row>
+          </DisplayArea>
+        </WindowContent>
+      </>
+    );
+  } else if (method === "Update") {
+    return (
+      <>
+        <WindowTitle
+          title={"Create Chart of Accounts"}
+          menu={[
+            <ConditionalButton
+              name="Save"
+              result={!errorsExist}
+              whileFalse={[() => showAlert("Messages exist. Please check!")]}
+              whileTrue={[
+                () => showAlert(collection.update(data)),
+                () => openWindow(<ManageChartofAccounts />),
+              ]}
+            />,
+            <Button
+              name={"Reset"}
+              functionsArray={[() => setdata(defaultChartofAccounts)]}
+            />,
+            <DisplayHidingError />,
+            <Button
+              name={"Manage"}
+              functionsArray={[() => openWindow(<ManageChartofAccounts />)]}
+            />,
+          ]}
+        />
+        <WindowContent>
+          <DisplayArea>
+            <Row>
+              <Label label={"Code"} />
+              <label>{Code}</label>
+            </Row>
+            <Column>
+              <Row>
+                <Label label={"Account Groups"} />
+                <Button
+                  name={"Add Group"}
+                  functionsArray={[
+                    () =>
+                      addItemtoArray("AccountGroups", {
+                        Group: "",
+                        From: "",
+                        To: "",
+                      }),
+                  ]}
+                />
+              </Row>
+              <Table
+                columns={["", "Group Name", "From Range", "To Range"]}
+                rows={AccountGroups.map((numbering, n) => [
+                  <Button
+                    name="-"
+                    functionsArray={[
+                      () => deleteItemfromArray("AccountGroups", n),
+                    ]}
+                  />,
+                  <Input
+                    value={numbering.Group}
+                    process={(value) =>
+                      changeData(`AccountGroups/${n}`, "Group", value)
+                    }
+                    type={"text"}
+                  />,
+                  <Input
+                    value={numbering.From}
+                    process={(value) =>
+                      changeData(`AccountGroups/${n}`, "From", value)
+                    }
+                    type={"number"}
+                  />,
+                  <Input
+                    value={numbering.To}
+                    process={(value) =>
+                      changeData(`AccountGroups/${n}`, "To", value)
+                    }
+                    type={"number"}
+                  />,
+                ])}
+              />
+            </Column>
+            <Row>
+              <Label label={"Status"} />
+              <Option
+                value={Status}
+                process={(value) => changeData("", "Status", value)}
+                options={["Draft", "Ready", "Blocked"]}
+              />
+            </Row>
+          </DisplayArea>
+        </WindowContent>
+      </>
+    );
+  } else {
+    return (
+      <>
+        <WindowTitle
+          title={"View Chart of Accounts"}
+          menu={[
+            <Button
+              name={"Manage"}
+              functionsArray={[() => openWindow(<ManageChartofAccounts />)]}
+            />,
+          ]}
+        />
+        <WindowContent>
+          <DisplayArea>
+            <Row>
+              <Label label={"Code"} />
+              <label>{Code}</label>
+            </Row>
+            <Column>
+              <Row>
+                <Label label={"Account Groups"} />
+              </Row>
+              <Table
+                columns={["Group Name", "From Range", "To Range"]}
+                rows={AccountGroups.map((numbering, n) => [
+                  <label>{numbering.Group}</label>,
+                  <label>{numbering.From}</label>,
+                  <label>{numbering.To}</label>,
+                ])}
+              />
+            </Column>
+            <Row>
+              <Label label={"Status"} />
+              <label>{Status}</label>
+            </Row>
+          </DisplayArea>
+        </WindowContent>
+      </>
+    );
+  }
 }
 
 export function ManageChartofAccounts() {
@@ -391,7 +341,15 @@ export function ManageChartofAccounts() {
             name="View"
             result={Code !== "" && collection.exists()}
             whileFalse={[() => showAlert("Chart of Accounts does not exist.")]}
-            whileTrue={[() => openWindow(<ViewChartofAccounts Code={Code} />)]}
+            whileTrue={[
+              () =>
+                openWindow(
+                  <CreateChartofAccounts
+                    method="View"
+                    initial={collection.getData()}
+                  />
+                ),
+            ]}
           />,
           <ConditionalButton
             name="Update"
@@ -407,7 +365,13 @@ export function ManageChartofAccounts() {
                 ),
             ]}
             whileTrue={[
-              () => openWindow(<UpdateChartofAccounts Code={Code} />),
+              () =>
+                openWindow(
+                  <CreateChartofAccounts
+                    method="Update"
+                    initial={collection.getData()}
+                  />
+                ),
             ]}
           />,
           <ConditionalButton
