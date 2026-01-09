@@ -21,6 +21,9 @@ export class IncomeTaxCode extends Collection {
     super.delete({ Code: this.code });
     return "Deleted";
   }
+  update(data) {
+    super.update({ Code: this.code }, data);
+  }
   yearExists(year) {
     const result = this.taxation(year) !== undefined;
     return result;

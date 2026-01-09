@@ -40,24 +40,12 @@ import { FaInfoCircle } from "react-icons/fa";
 import { useError } from "../useError";
 import { useInterface, useWindowType } from "../useInterface";
 import { sampleIncomeTaxCode } from "../samples";
+import { defaultIncomeTaxCode } from "../defaults";
+import { rangeOverlap } from "../functions";
 
 export const CreateIncomeTaxCode = ({
-  initial = {
-    Code: "",
-    Taxation: [
-      {
-        YearFrom: "",
-        YearTo: "",
-        ExemptionLimit: "",
-        StandardDeductionSalary: "",
-        Cess: "",
-        SlabRate: [{ From: "", To: "", Rate: "" }],
-        Surcharge: [{ Threshold: "", Rate: "" }],
-        CalculateMarginalReliefOnExemption: true,
-        CalculateMarginalReliefOnSurcharge: true,
-      },
-    ],
-  },
+  method = "Create",
+  initial = defaultIncomeTaxCode,
 }) => {
   const {
     data,
@@ -70,338 +58,669 @@ export const CreateIncomeTaxCode = ({
 
   const { showAlert, openWindow } = useInterface();
 
-  const { Code, Taxation } = data;
+  const { Code, Taxation, Status } = data;
   const collection = new IncomeTaxCode(Code);
-  const TaxationFields = [
-    "Year From",
-    "Year To",
-    "Exemption Limit",
-    "Standard Deduction on Salary",
-    "Cess",
-    "Slab Rate",
-    "Surcharge",
-    "Calculate Marginal Relief on Exemption Limit",
-    "Calculate Marginal Relief on Surcharge",
-    "",
-  ];
 
   const { addError, clearErrors, DisplayHidingError, errorsExist } = useError();
 
   useEffect(() => {
     clearErrors();
-    addError(Code === "", "Code", "Code cannot be blank.");
-    addError(
-      Code !== "" && collection.exists(),
-      "Code",
-      `Income Tax Code ${Code} already exists.`
-    );
+    if (method === "Create") {
+      addError(Code === "", "Code", "Code cannot be blank.");
+      addError(
+        Code !== "" && collection.exists(),
+        "Code",
+        `Income Tax Code ${Code} already exists.`
+      );
+    }
+    Taxation.forEach((taxation, t) => {
+      const {
+        YearFrom,
+        YearTo,
+        ExemptionLimit,
+        StandardDeductionSalary,
+        Cess,
+        SlabRate,
+        Surcharge,
+        CalculateMarginalReliefOnExemption,
+        CalculateMarginalReliefOnSurcharge,
+      } = taxation;
+      addError(
+        YearFrom === "" || YearFrom < 1900,
+        "Taxation",
+        `Taxation ${t + 1}, From year shall be greater than 1900`
+      );
+      addError(
+        YearTo === "" || YearTo < 1900,
+        "Taxation",
+        `Taxation ${t + 1}, To year shall be greater than 1900`
+      );
+      addError(
+        ExemptionLimit === "" || ExemptionLimit < 0,
+        "Taxation",
+        `Taxation ${t + 1}, Exemption Limit shall be non-negative value.`
+      );
+
+      addError(
+        StandardDeductionSalary === "" || StandardDeductionSalary < 0,
+        "Taxation",
+        `Taxation ${
+          t + 1
+        }, Standard Deduction Salary shall be non-negative value.`
+      );
+      addError(
+        Cess === "" || Cess < 0,
+        "Taxation",
+        `Taxation ${t + 1}, Cess Rate shall be non-negative value.`
+      );
+      addError(
+        YearFrom > YearTo,
+        "Taxation",
+        `Taxation ${t + 1}, From Year is greater than To Year`
+      );
+      Taxation.forEach((taxationTwo, ttwo) => {
+        const { YearFrom: YF, YearTo: YT } = taxationTwo;
+        addError(
+          t < ttwo && rangeOverlap([YearFrom, YearTo], [YF, YT]),
+          "Taxation",
+          `Taxation period overlaps between taxation ${t + 1} and ${ttwo + 1}`
+        );
+      });
+      SlabRate.forEach((slab, s) => {
+        const { From, To, Rate } = slab;
+        addError(
+          From === "" || From < 0,
+          "Taxation",
+          `Taxation ${t + 1}, Slab ${s + 1}, From shall be non-negative value.`
+        );
+        addError(
+          To === "" || To < 0,
+          "Taxation",
+          `Taxation ${t + 1}, Slab ${s + 1}, To shall be non-negative value.`
+        );
+        addError(
+          Rate === "" || Rate < 0,
+          "Taxation",
+          `Taxation ${t + 1}, Slab ${s + 1}, Rate shall be non-negative value.`
+        );
+      });
+      Surcharge.forEach((surcharge, s) => {
+        const { Threshold, Rate } = surcharge;
+        addError(
+          Rate === "" || Rate < 0,
+          "Taxation",
+          `Taxation ${t + 1}, Surcharge ${
+            s + 1
+          }, Rate shall be non-negative value.`
+        );
+        addError(
+          Threshold === "" || Threshold < 0,
+          "Taxation",
+          `Taxation ${t + 1}, Surcharge ${
+            s + 1
+          }, Threshold shall be non-negative value.`
+        );
+      });
+    });
   }, [data]);
 
-  const slabCells = (taxationIndex, slabIndex) => {
-    return [
-      <Input
-        value={Taxation[taxationIndex]["SlabRate"][slabIndex]["From"]}
-        process={(value) =>
-          changeData(
-            `Taxation/${taxationIndex}/SlabRate/${slabIndex}`,
-            "From",
-            value
-          )
-        }
-        type="number"
-      />,
-      <Input
-        value={Taxation[taxationIndex]["SlabRate"][slabIndex]["To"]}
-        process={(value) =>
-          changeData(
-            `Taxation/${taxationIndex}/SlabRate/${slabIndex}`,
-            "To",
-            value
-          )
-        }
-        type="number"
-      />,
-      <Input
-        value={Taxation[taxationIndex]["SlabRate"][slabIndex]["Rate"]}
-        process={(value) =>
-          changeData(
-            `Taxation/${taxationIndex}/SlabRate/${slabIndex}`,
-            "Rate",
-            value
-          )
-        }
-        type="number"
-      />,
-    ];
-  };
-
-  const surchargeCells = (taxationIndex, slabIndex) => {
-    return [
-      <Input
-        value={Taxation[taxationIndex]["Surcharge"][slabIndex]["Threshold"]}
-        type="number"
-        process={(value) =>
-          changeData(
-            `Taxation/${taxationIndex}/Surcharge/${slabIndex}`,
-            "Threshold",
-            value
-          )
-        }
-      />,
-      <Input
-        value={Taxation[taxationIndex]["Surcharge"][slabIndex]["Rate"]}
-        type="number"
-        process={(value) =>
-          changeData(
-            `Taxation/${taxationIndex}/Surcharge/${slabIndex}`,
-            "Rate",
-            value
-          )
-        }
-      />,
-    ];
-  };
-  const rowCells = (taxationIndex) => {
-    return [
-      <Input
-        value={Taxation[taxationIndex]["YearFrom"]}
-        process={(value) =>
-          changeData(`Taxation/${taxationIndex}`, "YearFrom", value)
-        }
-        type="number"
-      />,
-      <Input
-        value={Taxation[taxationIndex]["YearTo"]}
-        process={(value) =>
-          changeData(`Taxation/${taxationIndex}`, "YearTo", value)
-        }
-        type="number"
-      />,
-      <Input
-        value={Taxation[taxationIndex]["ExemptionLimit"]}
-        process={(value) =>
-          changeData(`Taxation/${taxationIndex}`, `ExemptionLimit`, value)
-        }
-        type="number"
-      />,
-      <Input
-        value={Taxation[taxationIndex]["StandardDeductionSalary"]}
-        process={(value) =>
-          changeData(
-            `Taxation/${taxationIndex}`,
-            `StandardDeductionSalary`,
-            value
-          )
-        }
-        type="number"
-      />,
-      <Input
-        value={Taxation[taxationIndex]["Cess"]}
-        process={(value) =>
-          changeData(`Taxation/${taxationIndex}`, `Cess`, value)
-        }
-        type="number"
-      />,
-      <HidingDisplay title={"Slab Rate"} menu={[<Button name={"Save"} />]}>
-        <Table
-          columns={["From", "To", "Rate"]}
-          rows={Taxation[taxationIndex]["SlabRate"].map((slab, s) =>
-            slabCells(taxationIndex, s)
-          )}
-        />
-        <button
-          onClick={() =>
-            addItemtoArray(
-              `Taxation/${taxationIndex}/SlabRate`,
-              initial.Taxation[0]["SlabRate"][0]
-            )
-          }
-        >
-          Add slab
-        </button>
-      </HidingDisplay>,
-      <HidingDisplay title={"Surcharge"}>
-        <Table
-          columns={["Threshold", "Rate"]}
-          rows={Taxation[taxationIndex].Surcharge.map((slab, s) =>
-            surchargeCells(taxationIndex, s)
-          )}
-        />
-        <NavigationRow>
-          <button
-            onClick={() =>
-              addItemtoArray(
-                `Taxation/${taxationIndex}/Surcharge`,
-                initial.Taxation[0]["Surcharge"][0]
-              )
-            }
-          >
-            Add
-          </button>
-        </NavigationRow>
-      </HidingDisplay>,
-      <CheckBox
-        value={Taxation[taxationIndex]["CalculateMarginalReliefOnExemption"]}
-        process={(value) =>
-          changeData(
-            `Taxation/${taxationIndex}`,
-            `CalculateMarginalReliefOnExemption`,
-            value
-          )
-        }
-      />,
-      <CheckBox
-        value={Taxation[taxationIndex]["CalculateMarginalReliefOnSurcharge"]}
-        process={(value) =>
-          changeData(
-            `Taxation/${taxationIndex}`,
-            `CalculateMarginalReliefOnSurcharge`,
-            value
-          )
-        }
-      />,
-      <Button
-        name="-"
-        functionsArray={[() => deleteItemfromArray(`Taxation`, taxationIndex)]}
-      />,
-    ];
-  };
-
-  return (
-    <>
-      <WindowTitle
-        title={"Create Income Tax Code"}
-        menu={[
-          <ConditionalButton
-            name={"Save"}
-            result={!errorsExist}
-            whileFalse={[() => showAlert("Messages persist, please check!")]}
-            whileTrue={[() => showAlert(collection.add(data)), () => reset()]}
-          />,
-          <Button name={"Reset"} functionsArray={[() => reset()]} />,
-          <Button
-            name={"Sample"}
-            functionsArray={[
-              () => setdata(sampleIncomeTaxCode),
-              () => showAlert("Sample Copied"),
-            ]}
-          />,
-          <DisplayHidingError />,
-          <Button
-            name="Manage"
-            functionsArray={[() => openWindow(<ManageIncomeTaxCode />)]}
-          />,
-        ]}
-      />
-      <WindowContent>
-        <DisplayArea>
-          <Row>
-            <Label label={"Code"} />
-            <Input
-              value={Code}
-              process={(value) => changeData("", "Code", value)}
-              maxLength={8}
-              type={"text"}
-            />
-          </Row>
-          <DisplayBox>
-            <Row>
-              <DisplayFieldLabel label={"Taxation"} />
-              <button
-                onClick={() => addItemtoArray("Taxation", initial.Taxation[0])}
-              >
-                Add
-              </button>
-            </Row>
-            <Table
-              columns={[...TaxationFields]}
-              rows={Taxation.map((item, i) => rowCells(i))}
-            />
-          </DisplayBox>
-        </DisplayArea>
-      </WindowContent>
-    </>
-  );
-};
-
-export const ViewIncomeTaxCode = ({ Code }) => {
-  const data = new IncomeTaxCode(Code).getData();
-  const { Taxation } = data;
-  const { openWindow } = useInterface();
-  const float = useWindowType() === "float";
-  return (
-    <>
-      <WindowTitle
-        title={"View Income Tax Code"}
-        menu={[
-          <Conditional logic={!float}>
+  if (method === "Create") {
+    return (
+      <>
+        <WindowTitle
+          title={"Create Income Tax Code"}
+          menu={[
+            <ConditionalButton
+              name={"Save"}
+              result={!errorsExist}
+              whileFalse={[() => showAlert("Messages persist, please check!")]}
+              whileTrue={[() => showAlert(collection.add(data)), () => reset()]}
+            />,
+            <Button name={"Reset"} functionsArray={[() => reset()]} />,
             <Button
-              name="Back"
+              name={"Sample"}
+              functionsArray={[() => setdata(sampleIncomeTaxCode)]}
+            />,
+            <DisplayHidingError />,
+            <Button
+              name="Manage"
               functionsArray={[() => openWindow(<ManageIncomeTaxCode />)]}
-            />
-          </Conditional>,
-          <Conditional logic={!float}>
-            <Button
-              name="Create"
-              functionsArray={[() => openWindow(<CreateIncomeTaxCode />)]}
-            />
-          </Conditional>,
-        ]}
-      />
-      <WindowContent>
-        <DisplayArea>
-          <Row>
-            <Label label={"Income Tax Code"} />
-            <label>{Code}</label>
-          </Row>
-          <DisplayBox>
-            <DisplayFieldLabel label="Taxation" />
-            <Table
-              columns={[
-                "Year From",
-                "Year To",
-                "Exemption Limit",
-                "Standard Deduction on Salary",
-                "Cess",
-                "Slab Rate",
-                "Surcharge",
-                "Calculate Marginal Relief on Exemption Limit",
-                "Calculate Marginal Relief on Surcharge",
+            />,
+          ]}
+        />
+        <WindowContent>
+          <DisplayArea>
+            <Row>
+              <Label label={"Code"} />
+              <Input
+                value={Code}
+                process={(value) => changeData("", "Code", value)}
+                maxLength={8}
+                type={"text"}
+              />
+            </Row>
+            <Column>
+              <Row>
+                <Label label={"Taxation"} />
+                <button
+                  onClick={() =>
+                    addItemtoArray("Taxation", defaultIncomeTaxCode.Taxation[0])
+                  }
+                >
+                  Add
+                </button>
+              </Row>
+              <Table
+                columns={[
+                  "From Year",
+                  "To Year",
+                  "Exemption Limit",
+                  "Standard Deduction from Salary",
+                  "Cess",
+                  "Slab Rate",
+                  "Surcharge",
+                  "Marginal Releif after Exemption",
+                  "Marginal Relief on Surcharge",
+                  "Delete",
+                ]}
+                rows={Taxation.map((item, i) => [
+                  <Input
+                    value={item.YearFrom}
+                    process={(value) =>
+                      changeData(`Taxation/${i}`, "YearFrom", value)
+                    }
+                    type={"number"}
+                  />,
+                  <Input
+                    value={item.YearTo}
+                    process={(value) =>
+                      changeData(`Taxation/${i}`, "YearTo", value)
+                    }
+                    type={"number"}
+                  />,
+                  <Input
+                    value={item.ExemptionLimit}
+                    process={(value) =>
+                      changeData(`Taxation/${i}`, "ExemptionLimit", value)
+                    }
+                    type={"number"}
+                  />,
+                  <Input
+                    value={item.StandardDeductionSalary}
+                    process={(value) =>
+                      changeData(
+                        `Taxation/${i}`,
+                        "StandardDeductionSalary",
+                        value
+                      )
+                    }
+                    type={"number"}
+                  />,
+                  <Input
+                    value={item.Cess}
+                    process={(value) =>
+                      changeData(`Taxation/${i}`, "Cess", value)
+                    }
+                    type={"number"}
+                  />,
+                  <HidingDisplay
+                    title={"Slab Rate"}
+                    menu={[
+                      <Button
+                        name="Add Threshold"
+                        functionsArray={[
+                          () =>
+                            addItemtoArray(`Taxation/${i}/SlabRate`, {
+                              From: "",
+                              To: "",
+                              Rate: "",
+                            }),
+                        ]}
+                      />,
+                    ]}
+                  >
+                    <Table
+                      columns={["From", "To", "Rate", "Delete"]}
+                      rows={item.SlabRate.map((slab, s) => [
+                        <Input
+                          value={slab.From}
+                          process={(value) =>
+                            changeData(
+                              `Taxation/${i}/SlabRate/${s}`,
+                              "From",
+                              value
+                            )
+                          }
+                        />,
+                        <Input
+                          value={slab.To}
+                          process={(value) =>
+                            changeData(
+                              `Taxation/${i}/SlabRate/${s}`,
+                              "To",
+                              value
+                            )
+                          }
+                        />,
+                        <Input
+                          value={slab.Rate}
+                          process={(value) =>
+                            changeData(
+                              `Taxation/${i}/SlabRate/${s}`,
+                              "Rate",
+                              value
+                            )
+                          }
+                        />,
+                        <Button
+                          name={""}
+                          functionsArray={[
+                            () =>
+                              deleteItemfromArray(`Taxation/${i}/SlabRate`, s),
+                          ]}
+                        />,
+                      ])}
+                    />
+                  </HidingDisplay>,
+                  <HidingDisplay
+                    title={"Surcharge"}
+                    menu={[
+                      <Button
+                        name="Add Threshold"
+                        functionsArray={[
+                          () =>
+                            addItemtoArray(`Taxation/${i}/Surcharge`, {
+                              Threshold: "",
+                              Rate: "",
+                            }),
+                        ]}
+                      />,
+                    ]}
+                  >
+                    <Table
+                      columns={["Threshold", "Rate", "Delete"]}
+                      rows={item.Surcharge.map((slab, s) => [
+                        <Input
+                          value={slab.Threshold}
+                          process={(value) =>
+                            changeData(
+                              `Taxation/${i}/Surcharge/${s}`,
+                              "Threshold",
+                              value
+                            )
+                          }
+                        />,
+                        <Input
+                          value={slab.Rate}
+                          process={(value) =>
+                            changeData(
+                              `Taxation/${i}/Surcharge/${s}`,
+                              "Rate",
+                              value
+                            )
+                          }
+                        />,
+                        <Button
+                          name={""}
+                          functionsArray={[
+                            () =>
+                              deleteItemfromArray(`Taxation/${i}/Surcharge`, s),
+                          ]}
+                        />,
+                      ])}
+                    />
+                  </HidingDisplay>,
+                  <CheckBox
+                    value={item.CalculateMarginalReliefOnExemption}
+                    process={(value) =>
+                      changeData(
+                        `Taxation/${i}`,
+                        "CalculateMarginalReliefOnExemption",
+                        value
+                      )
+                    }
+                  />,
+                  <CheckBox
+                    value={item.CalculateMarginalReliefOnSurcharge}
+                    process={(value) =>
+                      changeData(
+                        `Taxation/${i}`,
+                        "CalculateMarginalReliefOnSurcharge",
+                        value
+                      )
+                    }
+                  />,
+                  <Button
+                    name={""}
+                    functionsArray={[() => deleteItemfromArray(`Taxation`, i)]}
+                  />,
+                ])}
+              />
+            </Column>
+            <Row>
+              <Label label={"Status"} />
+              <Option
+                value={Status}
+                process={(value) => changeData("", "Status", value)}
+                options={["Draft", "Ready", "Blocked"]}
+              />
+            </Row>
+          </DisplayArea>
+        </WindowContent>
+      </>
+    );
+  } else if (method === "Update") {
+    return (
+      <>
+        <WindowTitle
+          title={"Update Income Tax Code"}
+          menu={[
+            <ConditionalButton
+              name={"Save"}
+              result={!errorsExist}
+              whileFalse={[() => showAlert("Messages persist, please check!")]}
+              whileTrue={[
+                () => showAlert(collection.update(data)),
+                () => openWindow(<ManageIncomeTaxCode />),
               ]}
-              rows={Taxation.map((item) => [
-                item["YearFrom"],
-                item["YearTo"],
-                item["ExemptionLimit"],
-                item["StandardDeductionSalary"],
-                item["Cess"],
-                <HidingDisplay title={"Slab Rate"}>
-                  <Table
-                    columns={["From", "To", "Rate"]}
-                    rows={item["SlabRate"].map((slabitem) => [
-                      slabitem["From"],
-                      slabitem["To"],
-                      slabitem["Rate"],
-                    ])}
-                  />
-                </HidingDisplay>,
-                <HidingDisplay title={"Surcharge"}>
-                  <Table
-                    columns={["Threshold", "Rate"]}
-                    rows={item["Surcharge"].map((surchargeitem) => [
-                      surchargeitem["Threshold"],
-                      surchargeitem["Rate"],
-                    ])}
-                  />
-                </HidingDisplay>,
-                <CheckBox value={item["CalculateMarginalReliefOnExemption"]} />,
-                <CheckBox value={item["CalculateMarginalReliefOnSurcharge"]} />,
-              ])}
-            />
-          </DisplayBox>
-        </DisplayArea>
-      </WindowContent>
-    </>
-  );
+            />,
+            <Button name={"Reset"} functionsArray={[() => reset()]} />,
+            <DisplayHidingError />,
+            <Button
+              name="Manage"
+              functionsArray={[() => openWindow(<ManageIncomeTaxCode />)]}
+            />,
+          ]}
+        />
+        <WindowContent>
+          <DisplayArea>
+            <Row>
+              <Label label={"Code"} />
+              <label>{Code}</label>
+            </Row>
+            <Column>
+              <Row>
+                <Label label={"Taxation"} />
+                <button
+                  onClick={() =>
+                    addItemtoArray("Taxation", defaultIncomeTaxCode.Taxation[0])
+                  }
+                >
+                  Add
+                </button>
+              </Row>
+              <Table
+                columns={[
+                  "From Year",
+                  "To Year",
+                  "Exemption Limit",
+                  "Standard Deduction from Salary",
+                  "Cess",
+                  "Slab Rate",
+                  "Surcharge",
+                  "Marginal Releif after Exemption",
+                  "Marginal Relief on Surcharge",
+                  "Delete",
+                ]}
+                rows={Taxation.map((item, i) => [
+                  <Input
+                    value={item.YearFrom}
+                    process={(value) =>
+                      changeData(`Taxation/${i}`, "YearFrom", value)
+                    }
+                    type={"number"}
+                  />,
+                  <Input
+                    value={item.YearTo}
+                    process={(value) =>
+                      changeData(`Taxation/${i}`, "YearTo", value)
+                    }
+                    type={"number"}
+                  />,
+                  <Input
+                    value={item.ExemptionLimit}
+                    process={(value) =>
+                      changeData(`Taxation/${i}`, "ExemptionLimit", value)
+                    }
+                    type={"number"}
+                  />,
+                  <Input
+                    value={item.StandardDeductionSalary}
+                    process={(value) =>
+                      changeData(
+                        `Taxation/${i}`,
+                        "StandardDeductionSalary",
+                        value
+                      )
+                    }
+                    type={"number"}
+                  />,
+                  <Input
+                    value={item.Cess}
+                    process={(value) =>
+                      changeData(`Taxation/${i}`, "Cess", value)
+                    }
+                    type={"number"}
+                  />,
+                  <HidingDisplay
+                    title={"Slab Rate"}
+                    menu={[
+                      <Button
+                        name="Add Threshold"
+                        functionsArray={[
+                          () =>
+                            addItemtoArray(`Taxation/${i}/SlabRate`, {
+                              From: "",
+                              To: "",
+                              Rate: "",
+                            }),
+                        ]}
+                      />,
+                    ]}
+                  >
+                    <Table
+                      columns={["From", "To", "Rate", "Delete"]}
+                      rows={item.SlabRate.map((slab, s) => [
+                        <Input
+                          value={slab.From}
+                          process={(value) =>
+                            changeData(
+                              `Taxation/${i}/SlabRate/${s}`,
+                              "From",
+                              value
+                            )
+                          }
+                        />,
+                        <Input
+                          value={slab.To}
+                          process={(value) =>
+                            changeData(
+                              `Taxation/${i}/SlabRate/${s}`,
+                              "To",
+                              value
+                            )
+                          }
+                        />,
+                        <Input
+                          value={slab.Rate}
+                          process={(value) =>
+                            changeData(
+                              `Taxation/${i}/SlabRate/${s}`,
+                              "Rate",
+                              value
+                            )
+                          }
+                        />,
+                        <Button
+                          name={""}
+                          functionsArray={[
+                            () =>
+                              deleteItemfromArray(`Taxation/${i}/SlabRate`, s),
+                          ]}
+                        />,
+                      ])}
+                    />
+                  </HidingDisplay>,
+                  <HidingDisplay
+                    title={"Surcharge"}
+                    menu={[
+                      <Button
+                        name="Add Threshold"
+                        functionsArray={[
+                          () =>
+                            addItemtoArray(`Taxation/${i}/Surcharge`, {
+                              Threshold: "",
+                              Rate: "",
+                            }),
+                        ]}
+                      />,
+                    ]}
+                  >
+                    <Table
+                      columns={["Threshold", "Rate", "Delete"]}
+                      rows={item.Surcharge.map((slab, s) => [
+                        <Input
+                          value={slab.Threshold}
+                          process={(value) =>
+                            changeData(
+                              `Taxation/${i}/Surcharge/${s}`,
+                              "Threshold",
+                              value
+                            )
+                          }
+                        />,
+                        <Input
+                          value={slab.Rate}
+                          process={(value) =>
+                            changeData(
+                              `Taxation/${i}/Surcharge/${s}`,
+                              "Rate",
+                              value
+                            )
+                          }
+                        />,
+                        <Button
+                          name={""}
+                          functionsArray={[
+                            () =>
+                              deleteItemfromArray(`Taxation/${i}/Surcharge`, s),
+                          ]}
+                        />,
+                      ])}
+                    />
+                  </HidingDisplay>,
+                  <CheckBox
+                    value={item.CalculateMarginalReliefOnExemption}
+                    process={(value) =>
+                      changeData(
+                        `Taxation/${i}`,
+                        "CalculateMarginalReliefOnExemption",
+                        value
+                      )
+                    }
+                  />,
+                  <CheckBox
+                    value={item.CalculateMarginalReliefOnSurcharge}
+                    process={(value) =>
+                      changeData(
+                        `Taxation/${i}`,
+                        "CalculateMarginalReliefOnSurcharge",
+                        value
+                      )
+                    }
+                  />,
+                  <Button
+                    name={""}
+                    functionsArray={[() => deleteItemfromArray(`Taxation`, i)]}
+                  />,
+                ])}
+              />
+            </Column>
+            <Row>
+              <Label label={"Status"} />
+              <Option
+                value={Status}
+                process={(value) => changeData("", "Status", value)}
+                options={["Draft", "Ready", "Blocked"]}
+              />
+            </Row>
+          </DisplayArea>
+        </WindowContent>
+      </>
+    );
+  } else {
+    return (
+      <>
+        <WindowTitle
+          title={"View Income Tax Code"}
+          menu={[
+            <Button
+              name="Manage"
+              functionsArray={[() => openWindow(<ManageIncomeTaxCode />)]}
+            />,
+          ]}
+        />
+        <WindowContent>
+          <DisplayArea>
+            <Row>
+              <Label label={"Code"} />
+              <label>{Code}</label>
+            </Row>
+            <Column>
+              <Row>
+                <Label label={"Taxation"} />
+              </Row>
+              <Table
+                columns={[
+                  "From Year",
+                  "To Year",
+                  "Exemption Limit",
+                  "Standard Deduction from Salary",
+                  "Cess",
+                  "Slab Rate",
+                  "Surcharge",
+                  "Marginal Releif after Exemption",
+                  "Marginal Relief on Surcharge",
+                ]}
+                rows={Taxation.map((item, i) => [
+                  <label>{item.YearFrom}</label>,
+                  <label>{item.YearFrom}</label>,
+                  <label>{item.ExemptionLimit}</label>,
+                  <label>{item.StandardDeductionSalary}</label>,
+                  <label>{item.Cess}</label>,
+                  <HidingDisplay title={"Slab Rate"}>
+                    <Table
+                      columns={["From", "To", "Rate"]}
+                      rows={item.SlabRate.map((slab, s) => [
+                        <label>{slab.From}</label>,
+                        <label>{slab.To}</label>,
+                        <label>{slab.Rate}</label>,
+                      ])}
+                    />
+                  </HidingDisplay>,
+                  <HidingDisplay title={"Surcharge"}>
+                    <Table
+                      columns={["Threshold", "Rate"]}
+                      rows={item.Surcharge.map((slab, s) => [
+                        <label>{slab.Threshold}</label>,
+                        <label>{slab.Rate}</label>,
+                      ])}
+                    />
+                  </HidingDisplay>,
+                  <CheckBox value={item.CalculateMarginalReliefOnExemption} />,
+                  <CheckBox value={item.CalculateMarginalReliefOnSurcharge} />,
+                ])}
+              />
+            </Column>
+            <Row>
+              <Label label={"Status"} />
+              <label>{Status}</label>
+            </Row>
+          </DisplayArea>
+        </WindowContent>
+      </>
+    );
+  }
 };
 
 export const ManageIncomeTaxCode = () => {
@@ -414,24 +733,58 @@ export const ManageIncomeTaxCode = () => {
       <WindowTitle
         title={"Manage Income Tax Code"}
         menu={[
+          <Button
+            name={"New"}
+            functionsArray={[() => openWindow(<CreateIncomeTaxCode />)]}
+          />,
           <ConditionalButton
             name={"View"}
             result={Code !== "" && collection.exists()}
+            whileFalse={[() => showAlert("Income Tax Code does not exists.")]}
+            whileTrue={[
+              () =>
+                openWindow(
+                  <CreateIncomeTaxCode
+                    method="View"
+                    initial={collection.getData()}
+                  />
+                ),
+            ]}
+          />,
+          <ConditionalButton
+            name={"Update"}
+            result={
+              Code !== "" &&
+              collection.exists() &&
+              collection.getData().Status === "Draft"
+            }
             whileFalse={[
               () =>
                 showAlert(
-                  "Income Tax Code does not exists. Please check the code."
+                  "Either the Income Tax Code does not exists or, it is not in draft stage to be updated."
                 ),
             ]}
-            whileTrue={[() => openWindow(<ViewIncomeTaxCode Code={Code} />)]}
+            whileTrue={[
+              () =>
+                openWindow(
+                  <CreateIncomeTaxCode
+                    method="Update"
+                    initial={collection.getData()}
+                  />
+                ),
+            ]}
           />,
           <ConditionalButton
             name={"Delete"}
-            result={Code !== "" && collection.exists()}
+            result={
+              Code !== "" &&
+              collection.exists() &&
+              collection.getData().Status === "Draft"
+            }
             whileFalse={[
               () =>
                 showAlert(
-                  "Income Tax Code does not exists. Please check the code."
+                  "Either the Income Tax Code does not exists or, it is not in draft stage to be deleted."
                 ),
             ]}
             whileTrue={[
@@ -440,6 +793,22 @@ export const ManageIncomeTaxCode = () => {
                   "This action will permanently delete the Income Tax Code",
                   [],
                   [() => showAlert(collection.delete())]
+                ),
+            ]}
+          />,
+          <ConditionalButton
+            name={"Copy"}
+            result={Code !== "" && collection.exists()}
+            whileFalse={[
+              () => showAlert("The Income Tax Code does not exists."),
+            ]}
+            whileTrue={[
+              () =>
+                openWindow(
+                  <CreateIncomeTaxCode
+                    method="Create"
+                    initial={collection.getData()}
+                  />
                 ),
             ]}
           />,

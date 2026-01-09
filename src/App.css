@@ -151,11 +151,12 @@
   text-align: center;
   h4 {
     margin: 0;
-    min-width: 10px;
+    min-width: 100px;
   }
   button {
     width: 100%;
     border-radius: 0;
+    color: white;
   }
   input,
   select {

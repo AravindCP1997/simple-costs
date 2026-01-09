@@ -71,6 +71,7 @@ export const sampleIncomeTaxCode = {
       ],
     },
   ],
+  Status: "Draft",
 };
 
 export const sampleInterestCode = {
