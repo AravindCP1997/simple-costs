@@ -36,3 +36,11 @@ export const defaultIncomeTaxCode = {
     },
   ],
 };
+
+export const defaultInterestCode = {
+  Code: "",
+  Description: "",
+  Compounding: "Daily",
+  DaysinYear: 360,
+  Status: "Draft",
+};

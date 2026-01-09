@@ -279,7 +279,11 @@ export const AutoSuggestInput = ({
       justifyContent: "space-between",
       alignItems: "center",
     };
-    const selectedStyle = { background: "var(--bluet)", color: "white" };
+    const selectedStyle = {
+      background: "var(--bluet)",
+      color: "white",
+      opacity: "1",
+    };
 
     if (showSuggestion && value) {
       if (filteredSuggestions.length) {

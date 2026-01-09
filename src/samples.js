@@ -80,4 +80,5 @@ export const sampleInterestCode = {
   Description: "Sample Interest Code",
   Compounding: "Daily",
   DaysinYear: 360,
+  Status: "Draft",
 };

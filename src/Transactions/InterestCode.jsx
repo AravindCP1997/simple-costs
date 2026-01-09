@@ -22,6 +22,7 @@ import { Collection } from "../Database";
 import { noop, rangeOverlap } from "../functions";
 import { InterestCode } from "../classes";
 import { sampleInterestCode } from "../samples";
+import { defaultInterestCode } from "../defaults";
 
 export function ManageInterestCode() {
   const [Code, setCode] = useState("");
@@ -41,7 +42,15 @@ export function ManageInterestCode() {
             name={"View"}
             result={collection.exists()}
             whileFalse={[() => showAlert("The Interest Code does not exist.")]}
-            whileTrue={[() => openWindow(<ViewInterestCode Code={Code} />)]}
+            whileTrue={[
+              () =>
+                openWindow(
+                  <CreateInterestCode
+                    method="View"
+                    initial={collection.getData()}
+                  />
+                ),
+            ]}
           />,
           <ConditionalButton
             name={"Update"}
@@ -54,7 +63,15 @@ export function ManageInterestCode() {
                   "Either the Interest Code does not exist, or it is not in a draft stage to be updated."
                 ),
             ]}
-            whileTrue={[() => openWindow(<UpdateInterestCode Code={Code} />)]}
+            whileTrue={[
+              () =>
+                openWindow(
+                  <CreateInterestCode
+                    method="Update"
+                    initial={collection.getData()}
+                  />
+                ),
+            ]}
           />,
           <ConditionalButton
             name={"Delete"}
@@ -72,7 +89,7 @@ export function ManageInterestCode() {
                 openConfirm(
                   "This action will permanently delete the Interest Code.",
                   [],
-                  [() => showAlert(collection.delete())]
+                  [() => showAlert(collection.delete()), () => setCode("")]
                 ),
             ]}
           />,
@@ -83,7 +100,10 @@ export function ManageInterestCode() {
             whileTrue={[
               () =>
                 openWindow(
-                  <CreateInterestCode initial={collection.getData()} />
+                  <CreateInterestCode
+                    method="Create"
+                    initial={collection.getData()}
+                  />
                 ),
             ]}
           />,
@@ -109,13 +129,8 @@ export function ManageInterestCode() {
 }
 
 export function CreateInterestCode({
-  initial = {
-    Code: "",
-    Description: "",
-    Compounding: "Daily",
-    DaysinYear: 360,
-    Status: "Draft",
-  },
+  method = "Create",
+  initial = defaultInterestCode,
 }) {
   const { data, reset, setdata, changeData } = useData(initial);
   const { showAlert, openWindow } = useInterface();
@@ -125,91 +140,203 @@ export function CreateInterestCode({
 
   useEffect(() => {
     clearErrors();
-    addError(Code === "", "Code", "Code cannot be blank");
-    addError(
-      Code !== "" && collection.exists(),
-      "Code",
-      `Interest Code ${Code} already exists.`
-    );
+    if (method === "Create") {
+      addError(Code === "", "Code", "Code cannot be blank");
+      addError(
+        Code !== "" && collection.exists(),
+        "Code",
+        `Interest Code ${Code} already exists.`
+      );
+    }
     addError(Description === "", "Descripition", "Description cannot be blank");
   }, [data]);
-
-  return (
-    <>
-      <WindowTitle
-        title={"Create Interest Code"}
-        menu={[
-          <ConditionalButton
-            name={"Save"}
-            result={!errorsExist}
-            whileFalse={[() => showAlert("Messages exist. Please check!")]}
-            whileTrue={[() => showAlert(collection.add(data)), () => reset()]}
-          />,
-          <Button name="Reset" functionsArray={[() => reset()]} />,
-          <Button
-            name="Sample"
-            functionsArray={[() => setdata(sampleInterestCode)]}
-          />,
-          <DisplayHidingError />,
-          <Button
-            name={"Manage"}
-            functionsArray={[() => openWindow(<ManageInterestCode />)]}
-          />,
-        ]}
-      />
-      <WindowContent>
-        <DisplayArea>
-          <Row>
-            <Label label={"Code"} />
-            <Input
-              value={Code}
-              process={(value) => changeData("", "Code", value)}
-              type={"text"}
-              maxLength={4}
-            />
-          </Row>
-          <Row>
-            <Label label={"Description"} />
-            <Input
-              value={Description}
-              process={(value) => changeData("", "Description", value)}
-              type={"text"}
-            />
-          </Row>
-          <Row>
-            <Label label={"Compounding"} />
-            <Option
-              value={Compounding}
-              process={(value) => changeData("", "Compounding", value)}
-              options={[
-                "Daily",
-                "Weekly",
-                "Monthly",
-                "Yearly",
-                "Exponentially",
+  if (method === "Create") {
+    return (
+      <>
+        <WindowTitle
+          title={"Create Interest Code"}
+          menu={[
+            <ConditionalButton
+              name={"Save"}
+              result={!errorsExist}
+              whileFalse={[() => showAlert("Messages exist. Please check!")]}
+              whileTrue={[() => showAlert(collection.add(data)), () => reset()]}
+            />,
+            <Button name="Reset" functionsArray={[() => reset()]} />,
+            <Button
+              name="Sample"
+              functionsArray={[() => setdata(sampleInterestCode)]}
+            />,
+            <DisplayHidingError />,
+            <Button
+              name={"Manage"}
+              functionsArray={[() => openWindow(<ManageInterestCode />)]}
+            />,
+          ]}
+        />
+        <WindowContent>
+          <DisplayArea>
+            <Row>
+              <Label label={"Code"} />
+              <Input
+                value={Code}
+                process={(value) => changeData("", "Code", value)}
+                type={"text"}
+                maxLength={4}
+              />
+            </Row>
+            <Row>
+              <Label label={"Description"} />
+              <Input
+                value={Description}
+                process={(value) => changeData("", "Description", value)}
+                type={"text"}
+              />
+            </Row>
+            <Row>
+              <Label label={"Compounding"} />
+              <Option
+                value={Compounding}
+                process={(value) => changeData("", "Compounding", value)}
+                options={[
+                  "Daily",
+                  "Weekly",
+                  "Monthly",
+                  "Yearly",
+                  "Exponentially",
+                ]}
+              />
+            </Row>
+            <Row>
+              <Label label={"Days in Year"} />
+              <Option
+                value={DaysinYear}
+                process={(value) => changeData("", "DaysinYear", value)}
+                options={[360, 365, "Actual"]}
+              />
+            </Row>
+            <Row>
+              <Label label={"Status"} />
+              <Option
+                value={Status}
+                options={["Draft", "Ready", "Blocked"]}
+                process={(value) => changeData("", "Status", value)}
+              />
+            </Row>
+          </DisplayArea>
+        </WindowContent>
+      </>
+    );
+  } else if (method === "Update") {
+    return (
+      <>
+        <WindowTitle
+          title={"Update Interest Code"}
+          menu={[
+            <ConditionalButton
+              name={"Save"}
+              result={!errorsExist}
+              whileFalse={[() => showAlert("Messages exist. Please check!")]}
+              whileTrue={[
+                () => showAlert(collection.update(data)),
+                () => openWindow(<ManageInterestCode />),
               ]}
-            />
-          </Row>
-          <Row>
-            <Label label={"Days in Year"} />
-            <Option
-              value={DaysinYear}
-              process={(value) => changeData("", "DaysinYear", value)}
-              options={[360, 365, "Actual"]}
-            />
-          </Row>
-          <Row>
-            <Label label={"Status"} />
-            <Option
-              value={Status}
-              options={["Draft", "Ready", "Blocked"]}
-              process={(value) => changeData("", "Status", value)}
-            />
-          </Row>
-        </DisplayArea>
-      </WindowContent>
-    </>
-  );
+            />,
+            <Button name="Reset" functionsArray={[() => reset()]} />,
+            <DisplayHidingError />,
+            <Button
+              name={"Manage"}
+              functionsArray={[() => openWindow(<ManageInterestCode />)]}
+            />,
+          ]}
+        />
+        <WindowContent>
+          <DisplayArea>
+            <Row>
+              <Label label={"Code"} />
+              <label>{Code}</label>
+            </Row>
+            <Row>
+              <Label label={"Description"} />
+              <Input
+                value={Description}
+                process={(value) => changeData("", "Description", value)}
+                type={"text"}
+              />
+            </Row>
+            <Row>
+              <Label label={"Compounding"} />
+              <Option
+                value={Compounding}
+                process={(value) => changeData("", "Compounding", value)}
+                options={[
+                  "Daily",
+                  "Weekly",
+                  "Monthly",
+                  "Yearly",
+                  "Exponentially",
+                ]}
+              />
+            </Row>
+            <Row>
+              <Label label={"Days in Year"} />
+              <Option
+                value={DaysinYear}
+                process={(value) => changeData("", "DaysinYear", value)}
+                options={[360, 365, "Actual"]}
+              />
+            </Row>
+            <Row>
+              <Label label={"Status"} />
+              <Option
+                value={Status}
+                options={["Draft", "Ready", "Blocked"]}
+                process={(value) => changeData("", "Status", value)}
+              />
+            </Row>
+          </DisplayArea>
+        </WindowContent>
+      </>
+    );
+  } else {
+    return (
+      <>
+        <WindowTitle
+          title={"Create Interest Code"}
+          menu={[
+            <Button
+              name={"Manage"}
+              functionsArray={[() => openWindow(<ManageInterestCode />)]}
+            />,
+          ]}
+        />
+        <WindowContent>
+          <DisplayArea>
+            <Row>
+              <Label label={"Code"} />
+              <label>{Code}</label>
+            </Row>
+            <Row>
+              <Label label={"Description"} />
+              <label>{Description}</label>
+            </Row>
+            <Row>
+              <Label label={"Compounding"} />
+              <label>{Compounding}</label>
+            </Row>
+            <Row>
+              <Label label={"Days in Year"} />
+              <label>{DaysinYear}</label>
+            </Row>
+            <Row>
+              <Label label={"Status"} />
+              <label>{Status}</label>
+            </Row>
+          </DisplayArea>
+        </WindowContent>
+      </>
+    );
+  }
 }
 
 export function UpdateInterestCode({ Code }) {
