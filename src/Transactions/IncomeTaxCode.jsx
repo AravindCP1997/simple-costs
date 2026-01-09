@@ -60,6 +60,7 @@ export const CreateIncomeTaxCode = ({
 
   const { Code, Taxation, Status } = data;
   const collection = new IncomeTaxCode(Code);
+  const float = useWindowType() === "float";
 
   const { addError, clearErrors, DisplayHidingError, errorsExist } = useError();
 
@@ -654,10 +655,12 @@ export const CreateIncomeTaxCode = ({
         <WindowTitle
           title={"View Income Tax Code"}
           menu={[
-            <Button
-              name="Manage"
-              functionsArray={[() => openWindow(<ManageIncomeTaxCode />)]}
-            />,
+            <Conditional logic={!float}>
+              <Button
+                name="Manage"
+                functionsArray={[() => openWindow(<ManageIncomeTaxCode />)]}
+              />
+            </Conditional>,
           ]}
         />
         <WindowContent>
@@ -869,7 +872,13 @@ export const IncomeTaxSimulate = ({ initialCode = "" }) => {
             <Button
               name={"View Code"}
               functionsArray={[
-                () => openFloat(<ViewIncomeTaxCode Code={Code} />),
+                () =>
+                  openFloat(
+                    <CreateIncomeTaxCode
+                      method="View"
+                      initial={TaxCode.getData()}
+                    />
+                  ),
               ]}
             />
           </Conditional>,

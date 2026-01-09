@@ -12,6 +12,13 @@
   border-top: 2px solid var(--lightgray);
 }
 
+.home-title {
+  transition: 0.5s ease-in-out;
+}
+
+.home-title:hover {
+  transform: translate(-10px);
+}
 .menu:hover,
 .menu:focus {
   transform: rotate(10deg);

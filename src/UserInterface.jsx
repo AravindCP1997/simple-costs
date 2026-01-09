@@ -584,6 +584,7 @@ export function Home() {
     <div style={style}>
       <div>
         <h2
+          className="home-title"
           style={titleStyle}
           onClick={() => setscreen(<Drawer initial="System" />)}
         >
