@@ -45,11 +45,6 @@ import {
   CreateChartofAccounts,
   ManageChartofAccounts,
 } from "./Transactions/ChartofAccounts";
-
-import {
-  CreateGroupChartofAccounts,
-  ManageGroupChartofAccounts,
-} from "./Transactions/GroupChartofAccounts";
 import {
   CreateInterestCode,
   ManageInterestCode,
@@ -89,22 +84,6 @@ const codes = [
     screen: <Window />,
     window: <ManageChartofAccounts />,
     name: "Manage Chart of Accounts",
-    group: "Control",
-    subgroup: "Global",
-  },
-  {
-    code: "cgcoa",
-    screen: <Window />,
-    window: <CreateGroupChartofAccounts />,
-    name: "Create Group Chart of Accounts",
-    group: "Control",
-    subgroup: "Global",
-  },
-  {
-    code: "mgcoa",
-    screen: <Window />,
-    window: <ManageGroupChartofAccounts />,
-    name: "Manage Group Chart of Accounts",
     group: "Control",
     subgroup: "Global",
   },

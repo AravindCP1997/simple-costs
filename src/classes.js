@@ -192,9 +192,18 @@ export class ChartOfAccounts extends Collection {
     await super.update(this.criteria, data);
     return "Updated";
   }
-  numbering(group) {
-    const numberings = this.getData().GLNumbering;
-    const result = numberings.find((item) => item.LedgerType === group);
+  groups() {
+    if (!this.exists()) {
+      return [];
+    }
+    return ListItems(this.getData().AccountGroups, "Group");
+  }
+  groupExists(group) {
+    return this.groups().includes(group);
+  }
+  groupRange(group) {
+    const numberings = this.getData().AccountGroups;
+    const result = numberings.find((item) => item.Group === group);
     return [result.From, result.To];
   }
 }

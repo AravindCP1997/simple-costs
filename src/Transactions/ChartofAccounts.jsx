@@ -36,7 +36,7 @@ export function CreateChartofAccounts({
     addItemtoArray,
     deleteItemfromArray,
   } = useData(initial);
-  const { Code, AccountGroups, Status } = data;
+  const { Code, Level, AccountGroups, Status } = data;
   const { showAlert, openWindow } = useInterface();
   const { addError, clearErrors, errorsExist, DisplayHidingError } = useError();
   const collection = new ChartOfAccounts(Code);
@@ -52,13 +52,6 @@ export function CreateChartofAccounts({
       method === "Create" && Code !== "" && collection.exists(),
       "Code",
       `Chart of accounts ${Code} already exists.`
-    );
-    addError(
-      method === "Create" &&
-        Code !== "" &&
-        new GroupChartOfAccounts(Code).exists(),
-      "Code",
-      "Group Chart of accounts with same code already exists."
     );
     AccountGroups.forEach((numbering, n) => {
       const { From, To, Group } = numbering;
@@ -136,8 +129,16 @@ export function CreateChartofAccounts({
                 maxLength={6}
               />
             </Row>
+            <Row>
+              <Label label={"Level"} />
+              <Radio
+                value={Level}
+                process={(value) => changeData("", "Level", value)}
+                options={["Group", "Company"]}
+              />
+            </Row>
             <Column>
-              <Row>
+              <Row jc="left" borderBottom="none">
                 <Label label={"Account Groups"} />
                 <Button
                   name={"Add Group"}
@@ -200,7 +201,7 @@ export function CreateChartofAccounts({
     return (
       <>
         <WindowTitle
-          title={"Create Chart of Accounts"}
+          title={"Update Chart of Accounts"}
           menu={[
             <ConditionalButton
               name="Save"
@@ -228,8 +229,16 @@ export function CreateChartofAccounts({
               <Label label={"Code"} />
               <label>{Code}</label>
             </Row>
+            <Row>
+              <Label label={"Level"} />
+              <Radio
+                value={Level}
+                process={(value) => changeData("", "Level", value)}
+                options={["Group", "Company"]}
+              />
+            </Row>
             <Column>
-              <Row>
+              <Row jc="left" borderBottom="none">
                 <Label label={"Account Groups"} />
                 <Button
                   name={"Add Group"}
@@ -306,8 +315,12 @@ export function CreateChartofAccounts({
               <Label label={"Code"} />
               <label>{Code}</label>
             </Row>
+            <Row>
+              <Label label={"Level"} />
+              <label>{Level}</label>
+            </Row>
             <Column>
-              <Row>
+              <Row jc="left" borderBottom="none">
                 <Label label={"Account Groups"} />
               </Row>
               <Table

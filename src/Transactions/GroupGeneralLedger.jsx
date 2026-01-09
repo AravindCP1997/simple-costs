@@ -18,7 +18,7 @@ import {
 import { useWindowType, useInterface } from "../useInterface";
 import useData from "../useData";
 import { useError } from "../useError";
-import { GroupGeneralLedger, GroupChartOfAccounts } from "../classes";
+import { GroupGeneralLedger, ChartOfAccounts } from "../classes";
 import { Collection } from "../Database";
 import { rangeOverlap, valueInRange } from "../functions";
 import { defaultGroupGeneralLedger } from "../defaults";
@@ -28,7 +28,7 @@ export function ManageGroupGeneralLedger() {
   const [coa, setcoa] = useState("");
   const { openWindow, showAlert, openConfirm } = useInterface();
   const collection = new GroupGeneralLedger(coa, gl);
-  const chart = new GroupChartOfAccounts(coa);
+  const chart = new ChartOfAccounts(coa);
   return (
     <>
       <WindowTitle
@@ -124,7 +124,7 @@ export function ManageGroupGeneralLedger() {
             <AutoSuggestInput
               value={coa}
               process={(value) => setcoa(value)}
-              suggestions={chart.listAll("Code")}
+              suggestions={chart.filteredList({ Level: "Group" }, "Code")}
               onSelect={(value) => setcoa(value)}
               placeholder={"Enter Chart of Accounts"}
             />
@@ -134,7 +134,10 @@ export function ManageGroupGeneralLedger() {
             <AutoSuggestInput
               value={gl}
               process={(value) => setgl(value)}
-              suggestions={collection.listAll("GeneralLedger")}
+              suggestions={collection.filteredList(
+                { ChartofAccounts: coa },
+                "GeneralLedger"
+              )}
               onSelect={(value) => setgl(value)}
               placeholder={"Enter General Ledger"}
             />
@@ -161,7 +164,7 @@ export function CreateGroupGeneralLedger({
     Status,
   } = data;
   const collection = new GroupGeneralLedger(ChartofAccounts, GeneralLedger);
-  const chart = new GroupChartOfAccounts(ChartofAccounts);
+  const chart = new ChartOfAccounts(ChartofAccounts);
 
   useEffect(() => {
     clearErrors();
@@ -242,7 +245,10 @@ export function CreateGroupGeneralLedger({
                 process={(value) => changeData("", "ChartofAccounts", value)}
                 onSelect={(value) => changeData("", "ChartofAccounts", value)}
                 placeholder={"Enter Chart of Accounts"}
-                suggestions={chart.filteredList({ Status: "Draft" }, "Code")}
+                suggestions={chart.filteredList(
+                  { Level: "Group", Status: "Ready" },
+                  "Code"
+                )}
               />
             </Row>
             <Row>

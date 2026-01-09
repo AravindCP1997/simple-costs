@@ -1,5 +1,6 @@
 export const sampleChartOfAccounts = {
   Code: "ABCD",
+  Level: "Company",
   AccountGroups: [
     { Group: "Asset", From: 1, To: 99 },
     { Group: "Equity", From: 100, To: 199 },

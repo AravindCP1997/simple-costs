@@ -1,5 +1,6 @@
 export const defaultChartofAccounts = {
   Code: "",
+  Level: "Company",
   AccountGroups: [{ Group: "", From: "", To: "" }],
   Status: "Draft",
 };
