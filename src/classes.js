@@ -208,48 +208,24 @@ export class ChartOfAccounts extends Collection {
   }
 }
 
-export class GroupChartOfAccounts extends Collection {
-  constructor(Code, name = "GroupChartofAccounts") {
+export class FinancialStatementStructure extends Collection {
+  constructor(Chart, Code, name = "FinancialStatementStructure") {
     super(name);
+    this.Chart = Chart;
     this.Code = Code;
-    this.criteria = { Code: this.Code };
-  }
-  add(data) {
-    super.add(data);
-    return "Added";
-  }
-  getData() {
-    return super.getData(this.criteria);
+    this.criteria = { Chart: this.Chart, Code: this.Code };
   }
   exists() {
     return super.exists(this.criteria);
   }
-  async delete() {
-    if (this.Code === "") {
-      return null;
-    }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
     return super.delete(this.criteria);
   }
-  async update(data) {
-    if (!this.Code) {
-      return null;
-    }
-    await super.update(this.criteria, data);
-    return "Updated";
-  }
-  groups() {
-    if (!this.exists()) {
-      return [];
-    }
-    return ListItems(this.getData().AccountGroups, "Group");
-  }
-  groupExists(group) {
-    return this.groups().includes(group);
-  }
-  groupRange(group) {
-    const numberings = this.getData().AccountGroups;
-    const result = numberings.find((item) => item.Group === group);
-    return [result.From, result.To];
+  update(data) {
+    return super.update(this.criteria, data);
   }
 }
 

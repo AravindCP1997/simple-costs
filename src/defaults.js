@@ -5,6 +5,35 @@ export const defaultChartofAccounts = {
   Status: "Draft",
 };
 
+export const defaultFinancialStatementStructure = {
+  Chart: "",
+  Code: "",
+  Description: "",
+  Hierarchy: [
+    {
+      name: "Assets",
+      altName: "Assets",
+      presentations: [],
+      subgroups: [],
+    },
+    {
+      name: "Equity and Liabilities",
+      altName: "Equity and Liabilities",
+      presentations: [],
+      subgroups: [],
+    },
+    {
+      name: "Net Profit",
+      altName: "Net Profit",
+    },
+    {
+      name: "Net Loss",
+      altName: "Net Loss",
+    },
+  ],
+  Status: "Draft",
+};
+
 export const defaultGroupChartofAccounts = {
   Code: "",
   AccountGroups: [{ Group: "", From: "", To: "" }],

@@ -18,7 +18,7 @@ import {
 import { useWindowType, useInterface } from "../useInterface";
 import useData from "../useData";
 import { useError } from "../useError";
-import { ChartOfAccounts, GroupChartOfAccounts } from "../classes";
+import { ChartOfAccounts } from "../classes";
 import { Collection } from "../Database";
 import { rangeOverlap } from "../functions";
 import { sampleChartOfAccounts } from "../samples";

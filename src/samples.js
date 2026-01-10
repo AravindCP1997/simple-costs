@@ -11,6 +11,115 @@ export const sampleChartOfAccounts = {
   Status: "Draft",
 };
 
+export const sampleFinancialStatementStructure = {
+  Chart: "",
+  Code: "SFSC",
+  Description: "Sample FS Structure",
+  Hierarchy: [
+    {
+      name: "Assets",
+      altName: "Assets",
+      presentations: [],
+      subgroups: [
+        {
+          name: "Non-Current Assets",
+          subgroups: [],
+          presentations: [
+            {
+              name: "Property, Plant and Equipment",
+              ledgers: [{ From: "", To: "", Debit: "", Credit: "" }],
+            },
+            {
+              name: "Intangible Assets",
+              ledgers: [{ From: "", To: "", Debit: "", Credit: "" }],
+            },
+            {
+              name: "Investments",
+              ledgers: [{ From: "", To: "", Debit: "", Credit: "" }],
+            },
+          ],
+        },
+        {
+          name: "Current Assets",
+          subgroups: [],
+          presentations: [
+            {
+              name: "Inventories",
+              ledgers: [{ From: "", To: "", Debit: "", Credit: "" }],
+            },
+            {
+              name: "Cash and Cash Equivalents",
+              ledgers: [{ From: "", To: "", Debit: "", Credit: "" }],
+            },
+            {
+              name: "Trade Receivables",
+              ledgers: [{ From: "", To: "", Debit: "", Credit: "" }],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: "Equity and Liabilities",
+      altName: "Equity and Liabilities",
+      presentations: [],
+      subgroups: [
+        {
+          name: "Equity",
+          subgroups: [],
+          presentations: [
+            {
+              name: "Share Capital",
+              ledgers: [{ From: "", To: "", Debit: "", Credit: "" }],
+            },
+            {
+              name: "Other Equity",
+              ledgers: [{ From: "", To: "", Debit: "", Credit: "" }],
+            },
+          ],
+        },
+        {
+          name: "Liabilities",
+          presentations: [],
+          subgroups: [
+            {
+              name: "Non-Current Liabilities",
+              subgroups: [],
+              presentations: [
+                {
+                  name: "Long-term Borrowings",
+                  ledgers: [{ From: "", To: "", Debit: "", Credit: "" }],
+                },
+                {
+                  name: "Lease Liabilities",
+                  ledgers: [{ From: "", To: "", Debit: "", Credit: "" }],
+                },
+              ],
+            },
+            {
+              name: "Current Liabilities",
+              subgroups: [],
+              presentations: [
+                {
+                  name: "Short-term Borrowings",
+                  ledgers: [{ From: "", To: "", Debit: "", Credit: "" }],
+                },
+                {
+                  name: "Trade Payables",
+                  ledgers: [{ From: "", To: "", Debit: "", Credit: "" }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    { name: "Net Profit", altName: "Net Profit" },
+    { name: "Net Loss", altName: "Net Loss" },
+  ],
+  Status: "Draft",
+};
+
 export const sampleGroupChartOfAccounts = {
   Code: "GABCD",
   AccountGroups: [

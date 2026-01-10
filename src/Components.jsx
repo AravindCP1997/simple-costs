@@ -71,7 +71,12 @@ export const CheckBox = ({ value, process }) => {
   );
 };
 
-export const HidingDisplay = ({ title, children, menu = [] }) => {
+export const HidingDisplay = ({
+  title,
+  children,
+  menu = [],
+  buttonName = title,
+}) => {
   const [isOpen, setOpen] = useState(false);
   const {
     accessibility: { Font },
@@ -97,7 +102,7 @@ export const HidingDisplay = ({ title, children, menu = [] }) => {
 
   return (
     <div>
-      <Button name={title} functionsArray={[() => setOpen(true)]} />
+      <Button name={buttonName} functionsArray={[() => setOpen(true)]} />
       {isOpen && (
         <>
           {createPortal(

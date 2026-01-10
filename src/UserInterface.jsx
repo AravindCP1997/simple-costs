@@ -53,6 +53,10 @@ import {
   CreateGroupGeneralLedger,
   ManageGroupGeneralLedger,
 } from "./Transactions/GroupGeneralLedger";
+import {
+  CreateFinancialStatementStructure,
+  ManageFinancialStatementStructure,
+} from "./Transactions/FinancialStatementStructure";
 
 const codes = [
   {
@@ -84,6 +88,22 @@ const codes = [
     screen: <Window />,
     window: <ManageChartofAccounts />,
     name: "Manage Chart of Accounts",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "cfsc",
+    screen: <Window />,
+    window: <CreateFinancialStatementStructure />,
+    name: "Create Financial Statement Structure",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "mfsc",
+    screen: <Window />,
+    window: <ManageFinancialStatementStructure />,
+    name: "Manage Financial Statement Structure",
     group: "Control",
     subgroup: "Global",
   },
