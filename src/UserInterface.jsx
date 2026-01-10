@@ -57,6 +57,10 @@ import {
   CreateFinancialStatementStructure,
   ManageFinancialStatementStructure,
 } from "./Transactions/FinancialStatementStructure";
+import {
+  CreatePaymentTerms,
+  ManagePaymentTerms,
+} from "./Transactions/PaymentTerms";
 
 const codes = [
   {
@@ -152,6 +156,22 @@ const codes = [
     screen: <Window />,
     window: <ManageInterestCode />,
     name: "Manage Interest Code",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "cpt",
+    screen: <Window />,
+    window: <CreatePaymentTerms />,
+    name: "Create Payment Terms",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "mpt",
+    screen: <Window />,
+    window: <ManagePaymentTerms />,
+    name: "Manage Payment Terms",
     group: "Control",
     subgroup: "Global",
   },

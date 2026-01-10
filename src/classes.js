@@ -283,3 +283,23 @@ export class InterestCode extends Collection {
     return "Updated";
   }
 }
+
+export class PaymentTerms extends Collection {
+  constructor(code, name = "PaymentTerms") {
+    super(name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}

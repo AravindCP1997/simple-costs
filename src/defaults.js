@@ -34,12 +34,6 @@ export const defaultFinancialStatementStructure = {
   Status: "Draft",
 };
 
-export const defaultGroupChartofAccounts = {
-  Code: "",
-  AccountGroups: [{ Group: "", From: "", To: "" }],
-  Status: "Draft",
-};
-
 export const defaultGroupGeneralLedger = {
   ChartofAccounts: "",
   GeneralLedger: "",
@@ -71,5 +65,13 @@ export const defaultInterestCode = {
   Description: "",
   Compounding: "Daily",
   DaysinYear: 360,
+  Status: "Draft",
+};
+
+export const defaultPaymentTerms = {
+  Code: "",
+  Description: "",
+  Discount: [{ PaymentInDays: "", Discount: "" }],
+  DueWithinDays: 0,
   Status: "Draft",
 };

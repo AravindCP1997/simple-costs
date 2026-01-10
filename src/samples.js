@@ -191,3 +191,11 @@ export const sampleInterestCode = {
   DaysinYear: 360,
   Status: "Draft",
 };
+
+export const samplePaymentTerms = {
+  Code: "SMPT",
+  Description: "2/10 Net 30",
+  Discount: [{ PaymentInDays: "10", Discount: "2" }],
+  DueWithinDays: 30,
+  Status: "Draft",
+};
