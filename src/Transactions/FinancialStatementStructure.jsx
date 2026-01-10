@@ -369,7 +369,6 @@ export function CreateFinancialStatementStructure({
                 </Row>
               </Column>
             </Column>
-            {JSON.stringify(allGLAssignment(data["Hierarchy"]))}
           </DisplayArea>
         </WindowContent>
       </>
@@ -630,6 +629,16 @@ const GroupInput = ({
                           value
                         )
                       }
+                    />,
+                    <Button
+                      name="Delete"
+                      functionsArray={[
+                        () =>
+                          deleteItemfromArray(
+                            `${path}/presentations/${p}/ledgers`,
+                            l
+                          ),
+                      ]}
                     />,
                   ])}
                 />

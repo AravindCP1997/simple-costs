@@ -1,4 +1,4 @@
-import { Collection } from "./Database";
+import { Collection, Dictionary } from "./Database";
 import { ListItems, valueInRange } from "./functions";
 
 export class IncomeTaxCode extends Collection {
@@ -303,3 +303,16 @@ export class PaymentTerms extends Collection {
     return super.update(this.criteria, data);
   }
 }
+
+export const HSN = {
+  object: new Dictionary("HSN"),
+  defaults: [{ Code: "", Description: "" }],
+  read: function () {
+    const stored = this.object.load();
+    const result = stored === null ? this.defaults : stored;
+    return result;
+  },
+  save: function (data) {
+    this.object.save(data);
+  },
+};

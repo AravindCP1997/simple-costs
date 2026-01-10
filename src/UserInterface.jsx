@@ -61,6 +61,7 @@ import {
   CreatePaymentTerms,
   ManagePaymentTerms,
 } from "./Transactions/PaymentTerms";
+import { TableHSN } from "./Transactions/HSN";
 
 const codes = [
   {
@@ -172,6 +173,14 @@ const codes = [
     screen: <Window />,
     window: <ManagePaymentTerms />,
     name: "Manage Payment Terms",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "hsn",
+    screen: <Window />,
+    window: <TableHSN />,
+    name: "Table HSN",
     group: "Control",
     subgroup: "Global",
   },
