@@ -1,3 +1,5 @@
+import { ChartOfAccounts } from "./classes";
+
 export const sampleChartOfAccounts = {
   Code: "ABCD",
   Level: "Company",
@@ -197,5 +199,45 @@ export const samplePaymentTerms = {
   Description: "2/10 Net 30",
   Discount: [{ PaymentInDays: "10", Discount: "2" }],
   DueWithinDays: 30,
+  Status: "Draft",
+};
+
+export const sampleCompany = {
+  Code: "ABC",
+  Name: "ABC Limited",
+  Address: "Street 01, New City",
+  Country: "",
+  State: "",
+  PostalCode: "000001",
+  Email: "example@abc.com",
+  Phone: "1234 23456789",
+  CIN: "",
+  CTIN: "",
+  ChartofAccounts: "",
+  GroupChartofAccounts: "",
+  Currency: "",
+  StartingYear: 2025,
+  FYBeginning: "04",
+  BusinessPlaces: [
+    {
+      ID: "BP01",
+      Name: "Business Place 01",
+      Address: "Street 01, New City",
+      Country: "",
+      State: "",
+      PostalCode: "000001",
+      Email: "bp01@abc.com",
+      Phone: "1234 23456790",
+      BTIN: "",
+    },
+  ],
+  Numbering: [
+    { Item: "Asset", From: 100000 },
+    { Item: "Asset Group", From: 100000 },
+    { Item: "Material", From: 100000 },
+    { Item: "Material Group", From: 100000 },
+    { Item: "Service", From: 100000 },
+    { Item: "Service Group", From: 100000 },
+  ],
   Status: "Draft",
 };

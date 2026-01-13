@@ -307,12 +307,89 @@ export class PaymentTerms extends Collection {
 export const HSN = {
   object: new Dictionary("HSN"),
   defaults: [{ Code: "", Description: "" }],
+  sample: [
+    { Code: "998328", Description: "Landscape and Architectural Services" },
+  ],
   read: function () {
     const stored = this.object.load();
     const result = stored === null ? this.defaults : stored;
     return result;
   },
   save: function (data) {
-    this.object.save(data);
+    return this.object.save(data);
   },
 };
+
+export const Currencies = {
+  object: new Dictionary("Currencies"),
+  defaults: [{ Code: "", Description: "" }],
+  sample: [
+    { Code: "INR", Description: "Indian Rupee" },
+    { Code: "USD", Description: "US Dollar" },
+    { Code: "MYR", Description: "Malaysian Ringgit" },
+    { Code: "AED", Description: "UAE Dirham" },
+  ],
+  read: function () {
+    const stored = this.object.load();
+    const result = stored === null ? this.defaults : stored;
+    return result;
+  },
+  save: function (data) {
+    return this.object.save(data);
+  },
+};
+
+export const Segments = {
+  object: new Dictionary("Segments"),
+  defaults: [{ Segment: "", Description: "" }],
+  sample: [
+    { Segment: "ETRS", Description: "Electronics" },
+    { Segment: "FMCG", Description: "Consumer Goods" },
+  ],
+  read: function () {
+    const stored = this.object.load();
+    const result = stored === null ? this.defaults : stored;
+    return result;
+  },
+  save: function (data) {
+    return this.object.save(data);
+  },
+};
+
+export const Units = {
+  object: new Dictionary("Units"),
+  defaults: [{ Unit: "", Description: "" }],
+  sample: [
+    { Unit: "Kg", Description: "Kilogram" },
+    { Unit: "L", Description: "Litre" },
+    { Unit: "m", Description: "Meter" },
+  ],
+  read: function () {
+    const stored = this.object.load();
+    const result = stored === null ? this.defaults : stored;
+    return result;
+  },
+  save: function (data) {
+    return this.object.save(data);
+  },
+};
+
+export class Company extends Collection {
+  constructor(code, name = "Company") {
+    super(name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}

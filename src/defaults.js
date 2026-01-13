@@ -75,3 +75,43 @@ export const defaultPaymentTerms = {
   DueWithinDays: 0,
   Status: "Draft",
 };
+
+export const defaultCompany = {
+  Code: "",
+  Name: "",
+  Address: "",
+  Country: "",
+  State: "",
+  PostalCode: "",
+  Email: "",
+  Phone: "",
+  CIN: "",
+  CTIN: "",
+  ChartofAccounts: "",
+  GroupChartofAccounts: "",
+  Currency: "",
+  StartingYear: "",
+  FYBeginning: "04",
+  BusinessPlaces: [
+    {
+      ID: "",
+      Name: "",
+      Address: "",
+      Country: "",
+      State: "",
+      PostalCode: "",
+      Email: "",
+      Phone: "",
+      BTIN: "",
+    },
+  ],
+  Numbering: [
+    { Item: "Asset", From: 100000 },
+    { Item: "Asset Group", From: 100000 },
+    { Item: "Material", From: 100000 },
+    { Item: "Material Group", From: 100000 },
+    { Item: "Service", From: 100000 },
+    { Item: "Service Group", From: 100000 },
+  ],
+  Status: "",
+};

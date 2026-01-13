@@ -149,8 +149,8 @@
 }
 
 .tableContainer {
-  width: 100%;
-  overflow: auto;
+  padding: 5px;
+  overflow-x: auto;
 }
 
 .tableCell {

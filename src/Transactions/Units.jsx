@@ -19,12 +19,12 @@ import { useWindowType, useInterface } from "../useInterface";
 import useData from "../useData";
 import { useError } from "../useError";
 import { Dictionary } from "../Database";
-import { HSN } from "../classes";
+import { Units } from "../classes";
 import { noop, rangeOverlap } from "../functions";
 
-export function TableHSN() {
+export function TableUnits() {
   const [method, setmethod] = useState("View");
-  const initial = HSN.read();
+  const initial = Units.read();
   const {
     data,
     setdata,
@@ -37,15 +37,15 @@ export function TableHSN() {
   const { errorsExist, clearErrors, addError, DisplayHidingError } = useError();
   useEffect(() => {
     clearErrors();
-    data.forEach((hsn, h) => {
-      const { Code, Description } = hsn;
-      addError(Code === "", `${h + 1}`, `Code cannot blank.`);
+    data.forEach((unit, h) => {
+      const { Unit, Description } = unit;
+      addError(Unit === "", `${h + 1}`, `Unit cannot blank.`);
       addError(Description === "", `${h + 1}`, `Description cannot blank.`);
-      data.forEach((hsntwo, htwo) => {
+      data.forEach((unittwo, htwo) => {
         addError(
-          htwo > h && Code === hsntwo.Code,
+          htwo > h && Unit === unittwo.Unit,
           htwo + 1,
-          `Duplicate HSN Code ${h + 1} and ${htwo + 1}.`
+          `Duplicate Unit ${h + 1} and ${htwo + 1}.`
         );
       });
     });
@@ -54,7 +54,7 @@ export function TableHSN() {
   return (
     <>
       <WindowTitle
-        title={"Table HSN"}
+        title={"Table Units"}
         menu={
           method === "View"
             ? [
@@ -71,7 +71,7 @@ export function TableHSN() {
                     () => showAlert("Messages exist. Please check."),
                   ]}
                   whileTrue={[
-                    () => showAlert(HSN.save(data)),
+                    () => showAlert(Units.save(data)),
                     () => setmethod("View"),
                   ]}
                 />,
@@ -82,13 +82,13 @@ export function TableHSN() {
                 <Button
                   name={"Add"}
                   functionsArray={[
-                    () => addItemtoArray("", { Code: "", Description: "" }),
+                    () => addItemtoArray("", { Unit: "", Description: "" }),
                   ]}
                 />,
                 <Button name={"Reset"} functionsArray={[() => reset()]} />,
                 <Button
                   name={"Sample"}
-                  functionsArray={[() => setdata(HSN.sample)]}
+                  functionsArray={[() => setdata(Units.sample)]}
                 />,
                 <DisplayHidingError />,
               ]
@@ -100,25 +100,25 @@ export function TableHSN() {
             <Table
               columns={
                 method === "View"
-                  ? ["HSN Code", "Description"]
-                  : ["HSN Code", "Description", ""]
+                  ? ["Units", "Description"]
+                  : ["Units", "Description", ""]
               }
               rows={
                 method === "View"
-                  ? data.map((hsn, h) => [
-                      <label>{hsn.Code}</label>,
-                      <label>{hsn.Description}</label>,
+                  ? data.map((unit, h) => [
+                      <label>{unit.Unit}</label>,
+                      <label>{unit.Description}</label>,
                     ])
-                  : data.map((hsn, h) => [
+                  : data.map((unit, h) => [
                       <Input
-                        value={hsn.Code}
+                        value={unit.Unit}
                         process={(value) =>
-                          changeData(h.toString(), "Code", value)
+                          changeData(h.toString(), "Unit", value)
                         }
                         type="text"
                       />,
                       <Input
-                        value={hsn.Description}
+                        value={unit.Description}
                         process={(value) =>
                           changeData(h.toString(), "Description", value)
                         }
@@ -126,11 +126,11 @@ export function TableHSN() {
                       />,
                       <ConditionalButton
                         name="Delete"
-                        result={hsn.Code !== "" && hsn.Description !== ""}
+                        result={unit.Unit !== "" && unit.Description !== ""}
                         whileTrue={[
                           () =>
                             openConfirm(
-                              "This will permanently remove the HSN Code.",
+                              "This will permanently remove the Currency.",
                               [],
                               [() => deleteItemfromArray("", h)]
                             ),

@@ -62,6 +62,10 @@ import {
   ManagePaymentTerms,
 } from "./Transactions/PaymentTerms";
 import { TableHSN } from "./Transactions/HSN";
+import { TableCurrencies } from "./Transactions/Currencies";
+import { TableSegments } from "./Transactions/Segments";
+import { TableUnits } from "./Transactions/Units";
+import { CreateCompany, ManageCompany } from "./Transactions/Company";
 
 const codes = [
   {
@@ -177,12 +181,52 @@ const codes = [
     subgroup: "Global",
   },
   {
+    code: "cur",
+    screen: <Window />,
+    window: <TableCurrencies />,
+    name: "Table Currencies",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
     code: "hsn",
     screen: <Window />,
     window: <TableHSN />,
     name: "Table HSN",
     group: "Control",
     subgroup: "Global",
+  },
+  {
+    code: "seg",
+    screen: <Window />,
+    window: <TableSegments />,
+    name: "Table Segments",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "unit",
+    screen: <Window />,
+    window: <TableUnits />,
+    name: "Table Units",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "ccom",
+    screen: <Window />,
+    window: <CreateCompany />,
+    name: "Create Company",
+    group: "Control",
+    subgroup: "Company",
+  },
+  {
+    code: "mcom",
+    screen: <Window />,
+    window: <ManageCompany />,
+    name: "Manage Company",
+    group: "Control",
+    subgroup: "Company",
   },
   {
     code: "simtax",

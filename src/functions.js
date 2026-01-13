@@ -32,6 +32,10 @@ export const ListUniqueItems = (collection, key) => {
   return uniquelist;
 };
 
+export const FilteredList = (collection, criteria, field) => {
+  return ListItems(filterCollection(collection, criteria), field);
+};
+
 export const updateKeyValue = (object, key, value) => {
   const result = { ...object, [key]: value };
   return result;

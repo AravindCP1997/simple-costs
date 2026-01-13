@@ -929,7 +929,7 @@ export function Row({
 export function Column({
   children,
   jc = "left",
-  ac = "center",
+  ac = "left",
   cn = "",
   gap = "5px",
   padding = "0px",
@@ -942,7 +942,7 @@ export function Column({
         display: "flex",
         flexDirection: "column",
         justifyContent: jc,
-        alignContent: ac,
+        alignItems: ac,
         gap: gap,
         padding: padding,
         width: "100%",
