@@ -91,7 +91,7 @@ export function ManageCompany() {
             whileTrue={[
               () =>
                 openConfirm(
-                  "This action will permanently delete the Company.",
+                  "This action will permanently delete the Company",
                   [],
                   [() => showAlert(collection.delete()), () => setcode("")]
                 ),
