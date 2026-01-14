@@ -29,7 +29,7 @@ import {
 } from "../functions";
 import { sampleCompany } from "../samples";
 import { defaultCompany } from "../defaults";
-import { StatesMaster } from "../Constants";
+import { StatesMaster } from "../constants";
 
 export function ManageCompany() {
   const [code, setcode] = useState("");
