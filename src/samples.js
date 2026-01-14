@@ -241,3 +241,11 @@ export const sampleCompany = {
   ],
   Status: "Draft",
 };
+
+export const sampleProfitCenter = {
+  Company: "",
+  Code: "SPC",
+  Description: "Sample Profit Center",
+  Segment: "",
+  Status: "Draft",
+};

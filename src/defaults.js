@@ -115,3 +115,11 @@ export const defaultCompany = {
   ],
   Status: "",
 };
+
+export const defaultProfitCenter = {
+  Company: "",
+  Code: "",
+  Description: "",
+  Segment: "",
+  Status: "Draft",
+};

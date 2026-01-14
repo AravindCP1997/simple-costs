@@ -1,5 +1,12 @@
+import { List } from "@react-pdf/renderer";
 import { Collection, Dictionary } from "./Database";
-import { ListItems, valueInRange } from "./functions";
+import {
+  existsInCollection,
+  filterCollection,
+  FilteredList,
+  ListItems,
+  valueInRange,
+} from "./functions";
 
 export class IncomeTaxCode extends Collection {
   constructor(code, name = "IncomeTaxCode") {
@@ -354,6 +361,12 @@ export const Segments = {
   save: function (data) {
     return this.object.save(data);
   },
+  list: function () {
+    return ListItems(this.read(), "Segment");
+  },
+  segmentExists: function (segment) {
+    return this.list().includes(segment);
+  },
 };
 
 export const Units = {
@@ -385,6 +398,91 @@ export class Company extends Collection {
   }
   exists() {
     return super.exists(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}
+
+export class OpenPeriods extends Collection {
+  constructor(Company, name = "OpenPeriods") {
+    super(name);
+    this.Company = Company;
+    this.defaults = {
+      Company: this.Company,
+      Accounting: [],
+      Costing: [],
+      Material: [],
+    };
+  }
+  getData() {
+    if (!super.exists({ Company: this.Company })) {
+      return this.defaults;
+    } else {
+      return super.getData({ Company: this.Company });
+    }
+  }
+  update(data) {
+    if (!super.exists({ Company: this.Company })) {
+      return super.add(data);
+    }
+    return super.update({ Company: this.Company }, data);
+  }
+}
+
+export class CompanyCollection extends Collection {
+  constructor(company, name) {
+    super(name);
+    this.companycode = company;
+    this.companyCriteria = { Company: this.companycode };
+    this.company = new Company(this.companycode);
+  }
+  loadFromCompany() {
+    if (super.load() === null) {
+      return [];
+    }
+    return filterCollection(super.load(), this.companyCriteria);
+  }
+  filtered(criteria) {
+    return filterCollection(this.loadFromCompany(), criteria);
+  }
+  getData(criteria) {
+    return this.filtered(criteria)[0];
+  }
+  exists(criteria) {
+    return existsInCollection(this.loadFromCompany(), criteria);
+  }
+  listAllFromCompany() {
+    return super.filteredList(this.companyCriteria, "Code");
+  }
+  filterFromCompany(criteria, field) {
+    return FilteredList(this.listAllFromCompany(), criteria, field);
+  }
+  mergedCriteria(criteria) {
+    return { ...criteria, ...this.companyCriteria };
+  }
+  delete(criteria) {
+    return super.delete(this.mergedCriteria(criteria));
+  }
+  update(criteria, data) {
+    return super.update(this.mergedCriteria(criteria), data);
+  }
+}
+
+export class ProfitCenter extends CompanyCollection {
+  constructor(code, company, name = "ProfitCenter") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
   }
   delete() {
     return super.delete(this.criteria);

@@ -10,12 +10,13 @@ import {
 } from "./Components";
 import UserInterface from "./UserInterface";
 import { useState } from "react";
-import { GroupGeneralLedger } from "./classes";
+import { GroupGeneralLedger, ProfitCenter, Segments } from "./classes";
 
 export function Scratch() {
   const { showAlert } = useInterface();
   const [key, setkey] = useState("");
   const [value, setvalue] = useState("");
+  const pc = new ProfitCenter("A", "ABC");
   return (
     <>
       <WindowTitle
@@ -40,7 +41,7 @@ export function Scratch() {
             () => showAlert("Cleared!", "Storage"),
           ]}
         />
-        {JSON.stringify(new GroupGeneralLedger("GABCD", "1").exists())}
+        {JSON.stringify(pc.listAllFromCompany())}
       </WindowContent>
     </>
   );

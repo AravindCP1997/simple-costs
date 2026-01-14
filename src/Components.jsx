@@ -202,7 +202,7 @@ export const AutoSuggestInput = ({
   suggestions,
   captions = [],
   placeholder,
-  onSelect = noop,
+  onSelect = process,
   inputStyle,
 }) => {
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);

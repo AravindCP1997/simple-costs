@@ -66,6 +66,11 @@ import { TableCurrencies } from "./Transactions/Currencies";
 import { TableSegments } from "./Transactions/Segments";
 import { TableUnits } from "./Transactions/Units";
 import { CreateCompany, ManageCompany } from "./Transactions/Company";
+import { ManageOpenPeriods } from "./Transactions/OpenPeriods";
+import {
+  CreateProfitCenter,
+  ManageProfitCenter,
+} from "./Transactions/ProfitCenter";
 
 const codes = [
   {
@@ -225,6 +230,30 @@ const codes = [
     screen: <Window />,
     window: <ManageCompany />,
     name: "Manage Company",
+    group: "Control",
+    subgroup: "Company",
+  },
+  {
+    code: "sop",
+    screen: <Window />,
+    window: <ManageOpenPeriods />,
+    name: "Set Open Periods",
+    group: "Control",
+    subgroup: "Company",
+  },
+  {
+    code: "cpc",
+    screen: <Window />,
+    window: <CreateProfitCenter />,
+    name: "Create Profit Center",
+    group: "Control",
+    subgroup: "Company",
+  },
+  {
+    code: "mpc",
+    screen: <Window />,
+    window: <ManageProfitCenter />,
+    name: "Manage Profit Center",
     group: "Control",
     subgroup: "Company",
   },
