@@ -344,6 +344,12 @@ export const Currencies = {
   save: function (data) {
     return this.object.save(data);
   },
+  list: function () {
+    return ListItems(this.read(), "Code");
+  },
+  currencyExists: function (currency) {
+    return this.list().includes(currency);
+  },
 };
 
 export const Segments = {
@@ -455,8 +461,8 @@ export class CompanyCollection extends Collection {
   exists(criteria) {
     return existsInCollection(this.loadFromCompany(), criteria);
   }
-  listAllFromCompany() {
-    return super.filteredList(this.companyCriteria, "Code");
+  listAllFromCompany(field) {
+    return super.filteredList(this.companyCriteria, field);
   }
   filterFromCompany(criteria, field) {
     return FilteredList(this.listAllFromCompany(), criteria, field);
@@ -489,5 +495,31 @@ export class ProfitCenter extends CompanyCollection {
   }
   update(data) {
     return super.update(this.criteria, data);
+  }
+}
+
+export class GeneralLedger extends CompanyCollection {
+  constructor(code, company, name = "GeneralLedger") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+  getChart() {
+    if (!this.company.exists()) {
+      return new ChartOfAccounts("");
+    }
+    return new ChartOfAccounts(this.company.getData().ChartofAccounts);
   }
 }

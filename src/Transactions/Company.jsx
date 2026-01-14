@@ -219,7 +219,7 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
               <Input
                 value={CIN}
                 process={(value) => changeData("", "CIN", value)}
-                type="number"
+                type="text"
               />
             </Row>
             <Row>
@@ -227,7 +227,7 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
               <Input
                 value={CTIN}
                 process={(value) => changeData("", "CTIN", value)}
-                type="number"
+                type="text"
               />
             </Row>
             <Row>
@@ -530,7 +530,7 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
               <Input
                 value={CIN}
                 process={(value) => changeData("", "CIN", value)}
-                type="number"
+                type="text"
               />
             </Row>
             <Row>
@@ -538,7 +538,7 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
               <Input
                 value={CTIN}
                 process={(value) => changeData("", "CTIN", value)}
-                type="number"
+                type="text"
               />
             </Row>
             <Row>

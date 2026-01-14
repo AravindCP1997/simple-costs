@@ -10,7 +10,12 @@ import {
 } from "./Components";
 import UserInterface from "./UserInterface";
 import { useState } from "react";
-import { GroupGeneralLedger, ProfitCenter, Segments } from "./classes";
+import {
+  GeneralLedger,
+  GroupGeneralLedger,
+  ProfitCenter,
+  Segments,
+} from "./classes";
 
 export function Scratch() {
   const { showAlert } = useInterface();
@@ -41,7 +46,9 @@ export function Scratch() {
             () => showAlert("Cleared!", "Storage"),
           ]}
         />
-        {JSON.stringify(pc.listAllFromCompany())}
+        {JSON.stringify(
+          new GeneralLedger("A", "FACT").getChart().groupRange("Asset")
+        )}
       </WindowContent>
     </>
   );

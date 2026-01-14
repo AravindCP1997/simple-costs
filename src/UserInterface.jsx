@@ -71,6 +71,10 @@ import {
   CreateProfitCenter,
   ManageProfitCenter,
 } from "./Transactions/ProfitCenter";
+import {
+  CreateGeneralLedger,
+  ManageGeneralLedger,
+} from "./Transactions/GeneralLedger";
 
 const codes = [
   {
@@ -256,6 +260,22 @@ const codes = [
     name: "Manage Profit Center",
     group: "Control",
     subgroup: "Company",
+  },
+  {
+    code: "cgl",
+    screen: <Window />,
+    window: <CreateGeneralLedger />,
+    name: "Create General Ledger",
+    group: "Control",
+    subgroup: "Financial Accounting",
+  },
+  {
+    code: "mgl",
+    screen: <Window />,
+    window: <ManageGeneralLedger />,
+    name: "Manage General Ledger",
+    group: "Control",
+    subgroup: "Financial Accounting",
   },
   {
     code: "simtax",
@@ -738,6 +758,7 @@ export function Drawer({ initial = "Record" }) {
     width: "min(100%,960px)",
     color: "var(--blue)",
     padding: "0",
+    height: "100%",
   };
 
   const titleStyle = {
@@ -808,32 +829,33 @@ export function Drawer({ initial = "Record" }) {
 
   return (
     <div style={style}>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          justifyContent: "space-around",
-          width: "100%",
-          overflowX: "auto",
-          gap: "10px",
-          borderBottom: "2px solid var(--bluet)",
-          background: "var(--whitet)",
-          padding: "10px 0px",
-          position: "sticky",
-          top: "0",
-        }}
-      >
-        <NavButton name={"Record"} />
-        <NavButton name={"Control"} />
-        <NavButton name={"Report"} />
-        <NavButton name={"System"} />
-        <Button
-          name={`Close`}
-          className="drawerButton closeButton"
-          functionsArray={[() => setscreen(<Home />)]}
-        />
-      </div>
       <div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-around",
+            width: "100%",
+            overflowX: "auto",
+            gap: "10px",
+            padding: "10px 0px",
+            position: "sticky",
+            top: "0",
+            zIndex: 1000,
+          }}
+        >
+          <NavButton name={"Record"} />
+          <NavButton name={"Control"} />
+          <NavButton name={"Report"} />
+          <NavButton name={"System"} />
+          <Button
+            name={`Close`}
+            className="drawerButton closeButton"
+            functionsArray={[() => setscreen(<Home />)]}
+          />
+        </div>
+      </div>
+      <div style={{ height: "100%", overflow: "auto" }}>
         <div
           style={{
             padding: "10px",

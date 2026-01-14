@@ -123,3 +123,18 @@ export const defaultProfitCenter = {
   Segment: "",
   Status: "Draft",
 };
+
+export const defaultGeneralLedger = {
+  Company: "",
+  Code: "",
+  Description: "",
+  Group: "",
+  Type: "Balance Sheet",
+  CostElement: false,
+  RestrictManual: false,
+  Currency: "",
+  PostForex: false,
+  PostInterest: false,
+  InterestCode: "",
+  Status: "Draft",
+};
