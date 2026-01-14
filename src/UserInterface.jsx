@@ -758,12 +758,14 @@ export function Drawer({ initial = "Record" }) {
     width: "min(100%,960px)",
     color: "var(--blue)",
     padding: "0",
+    gap: "10px",
     height: "100%",
   };
 
   const titleStyle = {
     width: "min(100%,450px)",
     textAlign: "left",
+    margin: "10px",
   };
 
   const subgroupsStyle = {
@@ -835,6 +837,7 @@ export function Drawer({ initial = "Record" }) {
             display: "flex",
             flexDirection: "row",
             justifyContent: "space-around",
+            borderBottom: "2px solid var(--bluet)",
             width: "100%",
             overflowX: "auto",
             gap: "10px",
@@ -855,10 +858,9 @@ export function Drawer({ initial = "Record" }) {
           />
         </div>
       </div>
-      <div style={{ height: "100%", overflow: "auto" }}>
+      <div style={{ height: "100%", overflow: "auto", padding: "10px" }}>
         <div
           style={{
-            padding: "10px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "top",

@@ -27,9 +27,6 @@ import {
   ListUniqueItems,
   rangeOverlap,
 } from "../functions";
-import { sampleCompany } from "../samples";
-import { defaultCompany } from "../defaults";
-import { StatesMaster } from "../Constants";
 
 export function ManageOpenPeriods() {
   const [company, setcompany] = useState("");
