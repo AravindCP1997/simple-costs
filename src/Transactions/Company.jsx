@@ -140,7 +140,6 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
     CTIN,
     Email,
     Phone,
-    BusinessPlaces,
     Numbering,
     ChartofAccounts,
     GroupChartofAccounts,
@@ -362,111 +361,6 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
               />
             </Row>
             <Row jc="left">
-              <HidingDisplay
-                title={"Business Places"}
-                menu={[
-                  <Button
-                    name={"Add"}
-                    functionsArray={[
-                      () =>
-                        addItemtoArray(
-                          "BusinessPlaces",
-                          defaultCompany.BusinessPlaces[0]
-                        ),
-                    ]}
-                  />,
-                ]}
-              >
-                <Table
-                  columns={[
-                    "ID",
-                    "Name",
-                    "Address",
-                    "Country",
-                    "State",
-                    "Postal Code",
-                    "Phone",
-                    "Email",
-                    "Business Tax Identification Number",
-                  ]}
-                  rows={BusinessPlaces.map((bp, b) => [
-                    <Input
-                      value={bp.ID}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "ID", value)
-                      }
-                      type={"text"}
-                      maxLength={4}
-                    />,
-                    <Input
-                      value={bp.Name}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "Name", value)
-                      }
-                      type={"text"}
-                    />,
-                    <Input
-                      value={bp.Address}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "Address", value)
-                      }
-                      type={"text"}
-                    />,
-                    <Option
-                      value={bp.Country}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "Country", value)
-                      }
-                      options={[
-                        "",
-                        ...ListUniqueItems(StatesMaster, "Country"),
-                      ]}
-                    />,
-                    <Option
-                      value={bp.State}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "State", value)
-                      }
-                      options={[
-                        "",
-                        ...FilteredList(
-                          StatesMaster,
-                          { Country: bp.Country },
-                          "State"
-                        ),
-                      ]}
-                    />,
-                    <Input
-                      value={bp.PostalCode}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "PostalCode", value)
-                      }
-                      type={"text"}
-                    />,
-                    <Input
-                      value={bp.Phone}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "Phone", value)
-                      }
-                      type={"text"}
-                    />,
-                    <Input
-                      value={bp.Email}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "Email", value)
-                      }
-                      type={"text"}
-                    />,
-                    <Input
-                      value={bp.BTIN}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "BTIN", value)
-                      }
-                      type={"text"}
-                    />,
-                  ])}
-                />
-              </HidingDisplay>
               <HidingDisplay title={"Numbering"}>
                 <Column>
                   <Table
@@ -673,111 +567,6 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
               />
             </Row>
             <Row jc="left">
-              <HidingDisplay
-                title={"Business Places"}
-                menu={[
-                  <Button
-                    name={"Add"}
-                    functionsArray={[
-                      () =>
-                        addItemtoArray(
-                          "BusinessPlaces",
-                          defaultCompany.BusinessPlaces[0]
-                        ),
-                    ]}
-                  />,
-                ]}
-              >
-                <Table
-                  columns={[
-                    "ID",
-                    "Name",
-                    "Address",
-                    "Country",
-                    "State",
-                    "Postal Code",
-                    "Phone",
-                    "Email",
-                    "Business Tax Identification Number",
-                  ]}
-                  rows={BusinessPlaces.map((bp, b) => [
-                    <Input
-                      value={bp.ID}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "ID", value)
-                      }
-                      type={"text"}
-                      maxLength={4}
-                    />,
-                    <Input
-                      value={bp.Name}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "Name", value)
-                      }
-                      type={"text"}
-                    />,
-                    <Input
-                      value={bp.Address}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "Address", value)
-                      }
-                      type={"text"}
-                    />,
-                    <Option
-                      value={bp.Country}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "Country", value)
-                      }
-                      options={[
-                        "",
-                        ...ListUniqueItems(StatesMaster, "Country"),
-                      ]}
-                    />,
-                    <Option
-                      value={bp.State}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "State", value)
-                      }
-                      options={[
-                        "",
-                        ...FilteredList(
-                          StatesMaster,
-                          { Country: bp.Country },
-                          "State"
-                        ),
-                      ]}
-                    />,
-                    <Input
-                      value={bp.PostalCode}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "PostalCode", value)
-                      }
-                      type={"text"}
-                    />,
-                    <Input
-                      value={bp.Phone}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "Phone", value)
-                      }
-                      type={"text"}
-                    />,
-                    <Input
-                      value={bp.Email}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "Email", value)
-                      }
-                      type={"text"}
-                    />,
-                    <Input
-                      value={bp.BTIN}
-                      process={(value) =>
-                        changeData(`BusinessPlaces/${b}`, "BTIN", value)
-                      }
-                      type={"text"}
-                    />,
-                  ])}
-                />
-              </HidingDisplay>
               <HidingDisplay title={"Numbering"}>
                 <Column>
                   <Table
@@ -878,32 +667,6 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
               <label>{Status}</label>
             </Row>
             <Row jc="left">
-              <HidingDisplay title={"Business Places"}>
-                <Table
-                  columns={[
-                    "ID",
-                    "Name",
-                    "Address",
-                    "Country",
-                    "State",
-                    "Postal Code",
-                    "Phone",
-                    "Email",
-                    "Business Tax Identification Number",
-                  ]}
-                  rows={BusinessPlaces.map((bp, b) => [
-                    <label>{bp.ID}</label>,
-                    <label>{bp.Name}</label>,
-                    <label>{bp.Address}</label>,
-                    <label>{bp.Country}</label>,
-                    <label>{bp.State}</label>,
-                    <label>{bp.PostalCode}</label>,
-                    <label>{bp.Phone}</label>,
-                    <label>{bp.Email}</label>,
-                    <label>{bp.BTIN}</label>,
-                  ])}
-                />
-              </HidingDisplay>
               <HidingDisplay title={"Numbering"}>
                 <Column>
                   <Table

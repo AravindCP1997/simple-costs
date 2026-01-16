@@ -5,6 +5,7 @@ import {
   filterCollection,
   FilteredList,
   ListItems,
+  newAutoNumber,
   valueInRange,
 } from "./functions";
 
@@ -476,6 +477,14 @@ export class CompanyCollection extends Collection {
   update(criteria, data) {
     return super.update(this.mergedCriteria(criteria), data);
   }
+  autoNumber(criteria, field, start) {
+    return newAutoNumber(
+      this.loadFromCompany(),
+      this.mergedCriteria(criteria),
+      field,
+      start
+    );
+  }
 }
 
 export class ProfitCenter extends CompanyCollection {
@@ -521,5 +530,159 @@ export class GeneralLedger extends CompanyCollection {
       return new ChartOfAccounts("");
     }
     return new ChartOfAccounts(this.company.getData().ChartofAccounts);
+  }
+}
+
+export class BusinessPlace extends CompanyCollection {
+  constructor(code, company, name = "BusinessPlace") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}
+
+export class CostCenter extends CompanyCollection {
+  constructor(code, company, name = "CostCenter") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}
+
+export class Location extends CompanyCollection {
+  constructor(code, company, name = "Location") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}
+
+export class Plant extends CompanyCollection {
+  constructor(code, company, name = "Plant") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}
+
+export class RevenueCenter extends CompanyCollection {
+  constructor(code, company, name = "RevenueCenter") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}
+
+export class AssetGroup extends CompanyCollection {
+  constructor(code, company, name = "AssetGroup") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+  depreciable() {
+    if (!this.exists()) {
+      return false;
+    }
+    return this.getData().Depreciable;
+  }
+}
+
+export class Asset extends CompanyCollection {
+  constructor(code = "", company = "", name = "Asset") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Asset").From;
+    const Code = super.autoNumber(this.criteria, "Code", numberingStart);
+    super.add({ ...data, ["Code"]: Code });
+    return `Asset created. Code: ${Code}`;
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
   }
 }

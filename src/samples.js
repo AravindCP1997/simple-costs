@@ -218,19 +218,6 @@ export const sampleCompany = {
   Currency: "",
   StartingYear: 2025,
   FYBeginning: "04",
-  BusinessPlaces: [
-    {
-      ID: "BP01",
-      Name: "Business Place 01",
-      Address: "Street 01, New City",
-      Country: "",
-      State: "",
-      PostalCode: "000001",
-      Email: "bp01@abc.com",
-      Phone: "1234 23456790",
-      BTIN: "",
-    },
-  ],
   Numbering: [
     { Item: "Asset", From: 100000 },
     { Item: "Asset Group", From: 100000 },
@@ -247,5 +234,19 @@ export const sampleProfitCenter = {
   Code: "SPC",
   Description: "Sample Profit Center",
   Segment: "",
+  Status: "Draft",
+};
+
+export const sampleBusinessPlace = {
+  Company: "",
+  Code: "SBP",
+  Description: "Sample Business Place",
+  Address: "Street 01, New City",
+  PostalCode: "000001",
+  Country: "India",
+  State: "Kerala",
+  Email: "bp1@abc.com",
+  Phone: "1234 23456790",
+  BTIN: "32ABDCA1234H1Z9",
   Status: "Draft",
 };

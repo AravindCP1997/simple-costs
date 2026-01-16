@@ -75,6 +75,17 @@ import {
   CreateGeneralLedger,
   ManageGeneralLedger,
 } from "./Transactions/GeneralLedger";
+import {
+  CreateBusinessPlace,
+  ManageBusinessPlace,
+} from "./Transactions/BusinessPlace";
+import { CreateCostCenter, ManageCostCenter } from "./Transactions/CostCenter";
+import { CreateLocation, ManageLocation } from "./Transactions/Location";
+import { CreatePlant, ManagePlant } from "./Transactions/Plant";
+import {
+  CreateRevenueCenter,
+  ManageRevenueCenter,
+} from "./Transactions/RevenueCenter";
 
 const codes = [
   {
@@ -238,10 +249,18 @@ const codes = [
     subgroup: "Company",
   },
   {
-    code: "sop",
+    code: "cbp",
     screen: <Window />,
-    window: <ManageOpenPeriods />,
-    name: "Set Open Periods",
+    window: <CreateBusinessPlace />,
+    name: "Create Business Place",
+    group: "Control",
+    subgroup: "Company",
+  },
+  {
+    code: "mbp",
+    screen: <Window />,
+    window: <ManageBusinessPlace />,
+    name: "Manage Business Place",
     group: "Control",
     subgroup: "Company",
   },
@@ -258,6 +277,78 @@ const codes = [
     screen: <Window />,
     window: <ManageProfitCenter />,
     name: "Manage Profit Center",
+    group: "Control",
+    subgroup: "Company",
+  },
+  {
+    code: "ccc",
+    screen: <Window />,
+    window: <CreateCostCenter />,
+    name: "Create Cost Center",
+    group: "Control",
+    subgroup: "Company",
+  },
+  {
+    code: "mcc",
+    screen: <Window />,
+    window: <ManageCostCenter />,
+    name: "Manage Cost Center",
+    group: "Control",
+    subgroup: "Company",
+  },
+  {
+    code: "cloc",
+    screen: <Window />,
+    window: <CreateLocation />,
+    name: "Create Location",
+    group: "Control",
+    subgroup: "Company",
+  },
+  {
+    code: "mloc",
+    screen: <Window />,
+    window: <ManageLocation />,
+    name: "Manage Location",
+    group: "Control",
+    subgroup: "Company",
+  },
+  {
+    code: "cplt",
+    screen: <Window />,
+    window: <CreatePlant />,
+    name: "Create Plant",
+    group: "Control",
+    subgroup: "Company",
+  },
+  {
+    code: "mplt",
+    screen: <Window />,
+    window: <ManagePlant />,
+    name: "Manage Plant",
+    group: "Control",
+    subgroup: "Company",
+  },
+  {
+    code: "crc",
+    screen: <Window />,
+    window: <CreateRevenueCenter />,
+    name: "Create Revenue Center",
+    group: "Control",
+    subgroup: "Company",
+  },
+  {
+    code: "mplt",
+    screen: <Window />,
+    window: <ManageRevenueCenter />,
+    name: "Manage Revenue Center",
+    group: "Control",
+    subgroup: "Company",
+  },
+  {
+    code: "sop",
+    screen: <Window />,
+    window: <ManageOpenPeriods />,
+    name: "Set Open Periods",
     group: "Control",
     subgroup: "Company",
   },
@@ -794,7 +885,6 @@ export function Drawer({ initial = "Record" }) {
     justifyContent: "center",
     alignItems: "center",
     gap: "10px",
-    backdropFilter: "blur(10x)",
     borderRadius: "15px",
     border: "5px solid var(--whitet)",
     transition: "0.5s",
@@ -802,6 +892,7 @@ export function Drawer({ initial = "Record" }) {
     textAlign: "center",
     aspectRatio: "1 / 1",
     padding: "10px",
+    backdropFilter: "blur(3px)",
   };
 
   const NavButton = ({ name }) => {

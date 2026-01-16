@@ -1,6 +1,6 @@
 import { useState, useContext, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { isObject, noop } from "./functions";
+import { clickButton, isObject, noop } from "./functions";
 import { useInterface, useWindowType } from "./useInterface";
 import { FocusTrap } from "focus-trap-react";
 import { FaAngleUp, FaAngleDown, FaWindowClose } from "react-icons/fa";
@@ -245,12 +245,10 @@ export const AutoSuggestInput = ({
     if (e.key === "ArrowUp" && selected > 0) {
       e.preventDefault();
       setselected((prev) => prev - 1);
-      console.log(filteredSuggestions[selected]);
     }
     if (e.key === "ArrowDown" && selected < filteredSuggestions.length - 1) {
       e.preventDefault();
       setselected((prev) => prev + 1);
-      console.log(filteredSuggestions[selected]);
     }
     if (e.key === "Enter") {
       e.preventDefault();
@@ -294,7 +292,7 @@ export const AutoSuggestInput = ({
       if (filteredSuggestions.length) {
         return (
           <div style={dropdownStyle}>
-            {filteredSuggestions.map((suggestion, s) => (
+            {filteredSuggestions.slice(0, 11).map((suggestion, s) => (
               <div
                 key={suggestion}
                 style={s === selected ? { ...style, ...selectedStyle } : style}
@@ -450,6 +448,62 @@ export const Table = ({ columns, rows }) => {
     </div>
   );
 };
+
+export function MultiDisplayArea({ heads = [], contents = [] }) {
+  const [selected, setselected] = useState(0);
+  const blue =
+    useWindowType() === "float" ||
+    useInterface().accessibility.Background === "Tech";
+  return (
+    <div className="multiDisplay">
+      <div key={"Header"}>
+        <div
+          className="multiDisplayOptions"
+          style={{
+            background: blue ? "var(--lightbluet)" : "var(--whitet)",
+            border: blue
+              ? "5px solid var(--lightbluet)"
+              : "5px solid var(--whitet)",
+            borderBottom: "none",
+          }}
+        >
+          {heads.map((head, h) => (
+            <div
+              key={head}
+              tabIndex={0}
+              onClick={() => setselected(h)}
+              onKeyDown={(e) => clickButton(e)}
+              className={
+                selected === h
+                  ? "multiDisplayOptionSelected"
+                  : "multiDisplayOption"
+              }
+            >
+              <h4>{head}</h4>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div
+        key={"content"}
+        className="multiDisplayContent"
+        style={
+          blue
+            ? {
+                background: "var(--lightbluet)",
+                border: "5px solid var(--lightbluet)",
+              }
+            : {
+                background: "var(--whitet)",
+                border: "5px solid var(--whitet)",
+              }
+        }
+      >
+        {contents.length && contents[selected]}
+      </div>
+    </div>
+  );
+}
 
 export function ObjectInput({
   path,
@@ -866,6 +920,7 @@ export function Input({
       ref={(el) => setRef(el)}
       style={{ ...defaultStyle, ...style }}
       onBlur={(e) => blurHandler(e)}
+      autoComplete="off"
     />
   );
 }
