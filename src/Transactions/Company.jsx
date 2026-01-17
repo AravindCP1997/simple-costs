@@ -416,185 +416,194 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
           ]}
         />
         <WindowContent>
-          <DisplayArea>
-            <Row>
-              <Label label={"Code"} />
-              <label>{Code}</label>
-            </Row>
-            <Row>
-              <Label label={"Name"} />
-              <Input
-                value={Name}
-                process={(value) => changeData("", "Name", value)}
-                type="text"
-              />
-            </Row>
-            <Row>
-              <Label label={"Corporate Identification Number"} />
-              <Input
-                value={CIN}
-                process={(value) => changeData("", "CIN", value)}
-                type="text"
-              />
-            </Row>
-            <Row>
-              <Label label={"Corporate Tax Identification Number"} />
-              <Input
-                value={CTIN}
-                process={(value) => changeData("", "CTIN", value)}
-                type="text"
-              />
-            </Row>
-            <Row>
-              <Label label={"Registered Address"} />
-              <Input
-                value={Address}
-                process={(value) => changeData("", "Address", value)}
-                type="text"
-              />
-            </Row>
-            <Row>
-              <Label label={"Country"} />
-              <Option
-                value={Country}
-                process={(value) => changeData("", "Country", value)}
-                options={["", ...ListUniqueItems(StatesMaster, "Country")]}
-              />
-            </Row>
-            <Row>
-              <Label label={"State"} />
-              <Option
-                value={State}
-                process={(value) => changeData("", "State", value)}
-                options={[
-                  "",
-                  ...FilteredList(StatesMaster, { Country: Country }, "State"),
-                ]}
-              />
-            </Row>
-            <Row>
-              <Label label={"Postal Code"} />
-              <Input
-                value={PostalCode}
-                process={(value) => changeData("", "PostalCode", value)}
-                type="text"
-              />
-            </Row>
-            <Row>
-              <Label label={"Email"} />
-              <Input
-                value={Email}
-                process={(value) => changeData("", "Email", value)}
-                type="text"
-                placeholder="example@domain.com"
-              />
-            </Row>
-            <Row>
-              <Label label={"Phone"} />
-              <Input
-                value={Phone}
-                process={(value) => changeData("", "Phone", value)}
-                type="text"
-                placeholder="1234 23456789"
-              />
-            </Row>
-            <Row overflow="visible">
-              <Label label={"Chart of Accounts"} />
-              <AutoSuggestInput
-                value={ChartofAccounts}
-                process={(value) => changeData("", "ChartofAccounts", value)}
-                onSelect={(value) => changeData("", "ChartofAccounts", value)}
-                placeholder="Enter Chart of Accounts"
-                suggestions={charts.filteredList(
-                  { Status: "Ready", Level: "Company" },
-                  "Code"
-                )}
-              />
-            </Row>
-            <Row overflow="visible">
-              <Label label={"Group Chart of Accounts"} />
-              <AutoSuggestInput
-                value={GroupChartofAccounts}
-                process={(value) =>
-                  changeData("", "GroupChartofAccounts", value)
-                }
-                onSelect={(value) =>
-                  changeData("", "GroupChartofAccounts", value)
-                }
-                placeholder="Enter Chart of Accounts"
-                suggestions={charts.filteredList(
-                  { Status: "Ready", Level: "Group" },
-                  "Code"
-                )}
-              />
-            </Row>
-            <Row overflow="visible">
-              <Label label={"Currency"} />
-              <AutoSuggestInput
-                value={Currency}
-                process={(value) => changeData("", "Currency", value)}
-                onSelect={(value) => changeData("", "Currency", value)}
-                placeholder="Enter Currency"
-                suggestions={ListItems(Currencies.read(), "Code")}
-                captions={ListItems(Currencies.read(), "Description")}
-              />
-            </Row>
-            <Row>
-              <Label label={"Starting Year"} />
-              <Input
-                value={StartingYear}
-                process={(value) => changeData("", "StartingYear", value)}
-                type="number"
-              />
-            </Row>
-            <Row>
-              <Label label={"Beginning of Financial Year"} />
-              <Option
-                value={FYBeginning}
-                process={(value) => changeData("", "FYBeginning", value)}
-                options={[
-                  "01",
-                  "02",
-                  "03",
-                  "04",
-                  "05",
-                  "06",
-                  "07",
-                  "08",
-                  "09",
-                  "10",
-                  "11",
-                  "12",
-                ]}
-              />
-            </Row>{" "}
-            <Row>
-              <Label label={"Status"} />
-              <Option
-                value={Status}
-                process={(value) => changeData("", "Status", value)}
-                options={["Draft", "Ready", "Blocked"]}
-              />
-            </Row>
-            <Row jc="left">
-              <HidingDisplay title={"Numbering"}>
-                <Column>
-                  <Table
-                    columns={["Particular", "Number From"]}
-                    rows={Numbering.map((numbering, n) => [
-                      <label>{numbering.Item}</label>,
-                      <Input
-                        value={numbering.From}
-                        process={(value) =>
-                          changeData(`Numbering/${n}`, "From", value)
-                        }
-                      />,
-                    ])}
+          <MultiDisplayArea
+            heads={["General", "Numbering"]}
+            contents={[
+              <Column>
+                <Row>
+                  <Label label={"Code"} />
+                  <label>{Code}</label>
+                </Row>
+                <Row>
+                  <Label label={"Name"} />
+                  <Input
+                    value={Name}
+                    process={(value) => changeData("", "Name", value)}
+                    type="text"
                   />
-                </Column>
-              </HidingDisplay>
-            </Row>
-          </DisplayArea>
+                </Row>
+                <Row>
+                  <Label label={"Corporate Identification Number"} />
+                  <Input
+                    value={CIN}
+                    process={(value) => changeData("", "CIN", value)}
+                    type="text"
+                  />
+                </Row>
+                <Row>
+                  <Label label={"Corporate Tax Identification Number"} />
+                  <Input
+                    value={CTIN}
+                    process={(value) => changeData("", "CTIN", value)}
+                    type="text"
+                  />
+                </Row>
+                <Row>
+                  <Label label={"Registered Address"} />
+                  <Input
+                    value={Address}
+                    process={(value) => changeData("", "Address", value)}
+                    type="text"
+                  />
+                </Row>
+                <Row>
+                  <Label label={"Country"} />
+                  <Option
+                    value={Country}
+                    process={(value) => changeData("", "Country", value)}
+                    options={["", ...ListUniqueItems(StatesMaster, "Country")]}
+                  />
+                </Row>
+                <Row>
+                  <Label label={"State"} />
+                  <Option
+                    value={State}
+                    process={(value) => changeData("", "State", value)}
+                    options={[
+                      "",
+                      ...FilteredList(
+                        StatesMaster,
+                        { Country: Country },
+                        "State"
+                      ),
+                    ]}
+                  />
+                </Row>
+                <Row>
+                  <Label label={"Postal Code"} />
+                  <Input
+                    value={PostalCode}
+                    process={(value) => changeData("", "PostalCode", value)}
+                    type="text"
+                  />
+                </Row>
+                <Row>
+                  <Label label={"Email"} />
+                  <Input
+                    value={Email}
+                    process={(value) => changeData("", "Email", value)}
+                    type="text"
+                    placeholder="example@domain.com"
+                  />
+                </Row>
+                <Row>
+                  <Label label={"Phone"} />
+                  <Input
+                    value={Phone}
+                    process={(value) => changeData("", "Phone", value)}
+                    type="text"
+                    placeholder="1234 23456789"
+                  />
+                </Row>
+                <Row overflow="visible">
+                  <Label label={"Chart of Accounts"} />
+                  <AutoSuggestInput
+                    value={ChartofAccounts}
+                    process={(value) =>
+                      changeData("", "ChartofAccounts", value)
+                    }
+                    onSelect={(value) =>
+                      changeData("", "ChartofAccounts", value)
+                    }
+                    placeholder="Enter Chart of Accounts"
+                    suggestions={charts.filteredList(
+                      { Status: "Ready", Level: "Company" },
+                      "Code"
+                    )}
+                  />
+                </Row>
+                <Row overflow="visible">
+                  <Label label={"Group Chart of Accounts"} />
+                  <AutoSuggestInput
+                    value={GroupChartofAccounts}
+                    process={(value) =>
+                      changeData("", "GroupChartofAccounts", value)
+                    }
+                    onSelect={(value) =>
+                      changeData("", "GroupChartofAccounts", value)
+                    }
+                    placeholder="Enter Chart of Accounts"
+                    suggestions={charts.filteredList(
+                      { Status: "Ready", Level: "Group" },
+                      "Code"
+                    )}
+                  />
+                </Row>
+                <Row overflow="visible">
+                  <Label label={"Currency"} />
+                  <AutoSuggestInput
+                    value={Currency}
+                    process={(value) => changeData("", "Currency", value)}
+                    onSelect={(value) => changeData("", "Currency", value)}
+                    placeholder="Enter Currency"
+                    suggestions={ListItems(Currencies.read(), "Code")}
+                    captions={ListItems(Currencies.read(), "Description")}
+                  />
+                </Row>
+                <Row>
+                  <Label label={"Starting Year"} />
+                  <Input
+                    value={StartingYear}
+                    process={(value) => changeData("", "StartingYear", value)}
+                    type="number"
+                  />
+                </Row>
+                <Row>
+                  <Label label={"Beginning of Financial Year"} />
+                  <Option
+                    value={FYBeginning}
+                    process={(value) => changeData("", "FYBeginning", value)}
+                    options={[
+                      "01",
+                      "02",
+                      "03",
+                      "04",
+                      "05",
+                      "06",
+                      "07",
+                      "08",
+                      "09",
+                      "10",
+                      "11",
+                      "12",
+                    ]}
+                  />
+                </Row>{" "}
+                <Row>
+                  <Label label={"Status"} />
+                  <Option
+                    value={Status}
+                    process={(value) => changeData("", "Status", value)}
+                    options={["Draft", "Ready", "Blocked"]}
+                  />
+                </Row>
+              </Column>,
+              <Column>
+                <Table
+                  columns={["Particular", "Number From"]}
+                  rows={Numbering.map((numbering, n) => [
+                    <label>{numbering.Item}</label>,
+                    <Input
+                      value={numbering.From}
+                      process={(value) =>
+                        changeData(`Numbering/${n}`, "From", value)
+                      }
+                    />,
+                  ])}
+                />
+              </Column>,
+            ]}
+          />
         </WindowContent>
       </>
     );
@@ -611,85 +620,86 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
           ]}
         />
         <WindowContent>
-          <DisplayArea>
-            <Row>
-              <Label label={"Code"} />
-              <label>{Code}</label>
-            </Row>
-            <Row>
-              <Label label={"Name"} />
-              <label>{Name}</label>
-            </Row>
-            <Row>
-              <Label label={"Corporate Identification Number"} />
-              <label>{CIN}</label>
-            </Row>
-            <Row>
-              <Label label={"Corporate Tax Identification Number"} />
-              <label>{CTIN}</label>
-            </Row>
-            <Row>
-              <Label label={"Registered Address"} />
-              <label>{Address}</label>
-            </Row>
-            <Row>
-              <Label label={"Country"} />
-              <label>{Country}</label>
-            </Row>
-            <Row>
-              <Label label={"State"} />
-              <label>{State}</label>
-            </Row>
-            <Row>
-              <Label label={"Postal Code"} />
-              <label>{PostalCode}</label>
-            </Row>
-            <Row>
-              <Label label={"Email"} />
-              <label>{Email}</label>
-            </Row>
-            <Row>
-              <Label label={"Phone"} />
-              <label>{Phone}</label>
-            </Row>
-            <Row overflow="visible">
-              <Label label={"Chart of Accounts"} />
-              <label>{ChartofAccounts}</label>
-            </Row>
-            <Row overflow="visible">
-              <Label label={"Group Chart of Accounts"} />
-              <label>{GroupChartofAccounts}</label>
-            </Row>
-            <Row overflow="visible">
-              <Label label={"Currency"} />
-              <label>{Currency}</label>
-            </Row>
-            <Row>
-              <Label label={"Starting Year"} />
-              <label>{StartingYear}</label>
-            </Row>
-            <Row>
-              <Label label={"Beginning of Financial Year"} />
-              <label>{FYBeginning}</label>
-            </Row>
-            <Row>
-              <Label label={"Status"} />
-              <label>{Status}</label>
-            </Row>
-            <Row jc="left">
-              <HidingDisplay title={"Numbering"}>
-                <Column>
-                  <Table
-                    columns={["Particular", "Number From"]}
-                    rows={Numbering.map((numbering, n) => [
-                      <label>{numbering.Item}</label>,
-                      <label>{numbering.From}</label>,
-                    ])}
-                  />
-                </Column>
-              </HidingDisplay>
-            </Row>
-          </DisplayArea>
+          <MultiDisplayArea
+            heads={["General", "Numbering"]}
+            contents={[
+              <Column>
+                <Row>
+                  <Label label={"Code"} />
+                  <label>{Code}</label>
+                </Row>
+                <Row>
+                  <Label label={"Name"} />
+                  <label>{Name}</label>
+                </Row>
+                <Row>
+                  <Label label={"Corporate Identification Number"} />
+                  <label>{CIN}</label>
+                </Row>
+                <Row>
+                  <Label label={"Corporate Tax Identification Number"} />
+                  <label>{CTIN}</label>
+                </Row>
+                <Row>
+                  <Label label={"Registered Address"} />
+                  <label>{Address}</label>
+                </Row>
+                <Row>
+                  <Label label={"Country"} />
+                  <label>{Country}</label>
+                </Row>
+                <Row>
+                  <Label label={"State"} />
+                  <label>{State}</label>
+                </Row>
+                <Row>
+                  <Label label={"Postal Code"} />
+                  <label>{PostalCode}</label>
+                </Row>
+                <Row>
+                  <Label label={"Email"} />
+                  <label>{Email}</label>
+                </Row>
+                <Row>
+                  <Label label={"Phone"} />
+                  <label>{Phone}</label>
+                </Row>
+                <Row overflow="visible">
+                  <Label label={"Chart of Accounts"} />
+                  <label>{ChartofAccounts}</label>
+                </Row>
+                <Row overflow="visible">
+                  <Label label={"Group Chart of Accounts"} />
+                  <label>{GroupChartofAccounts}</label>
+                </Row>
+                <Row overflow="visible">
+                  <Label label={"Currency"} />
+                  <label>{Currency}</label>
+                </Row>
+                <Row>
+                  <Label label={"Starting Year"} />
+                  <label>{StartingYear}</label>
+                </Row>
+                <Row>
+                  <Label label={"Beginning of Financial Year"} />
+                  <label>{FYBeginning}</label>
+                </Row>
+                <Row>
+                  <Label label={"Status"} />
+                  <label>{Status}</label>
+                </Row>
+              </Column>,
+              <Column>
+                <Table
+                  columns={["Particular", "Number From"]}
+                  rows={Numbering.map((numbering, n) => [
+                    <label>{numbering.Item}</label>,
+                    <label>{numbering.From}</label>,
+                  ])}
+                />
+              </Column>,
+            ]}
+          />
         </WindowContent>
       </>
     );
