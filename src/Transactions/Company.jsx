@@ -53,7 +53,10 @@ export function ManageCompany() {
             whileTrue={[
               () =>
                 openWindow(
-                  <CreateCompany initial={collection.getData()} method="View" />
+                  <CreateCompany
+                    initial={collection.getData()}
+                    method="View"
+                  />,
                 ),
             ]}
           />,
@@ -65,7 +68,7 @@ export function ManageCompany() {
             whileFalse={[
               () =>
                 showAlert(
-                  "Either the Company does not exist, or it is not in draft stage to be updated."
+                  "Either the Company does not exist, or it is not in draft stage to be updated.",
                 ),
             ]}
             whileTrue={[
@@ -74,7 +77,7 @@ export function ManageCompany() {
                   <CreateCompany
                     initial={collection.getData()}
                     method="Update"
-                  />
+                  />,
                 ),
             ]}
           />,
@@ -86,7 +89,7 @@ export function ManageCompany() {
             whileFalse={[
               () =>
                 showAlert(
-                  "Either the Company does not exist, or it is not in draft stage to be deleted."
+                  "Either the Company does not exist, or it is not in draft stage to be deleted.",
                 ),
             ]}
             whileTrue={[
@@ -94,7 +97,7 @@ export function ManageCompany() {
                 openConfirm(
                   "This action will permanently delete the Company",
                   [],
-                  [() => showAlert(collection.delete()), () => setcode("")]
+                  [() => showAlert(collection.delete()), () => setcode("")],
                 ),
             ]}
           />,
@@ -159,15 +162,37 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
       addError(
         Code !== "" && collection.exists(),
         "Code",
-        `Company Code ${Code} already exists.`
+        `Company Code ${Code} already exists.`,
       );
     }
+    addError(
+      !charts.exists(),
+      "ChartofAccounts",
+      `Chart of Accounts does not exist.`,
+    );
+    addError(
+      GroupChartofAccounts !== "" && !groupcharts.exists(),
+      "GroupChartofAccounts",
+      `Group Chart of Accounts ${GroupChartofAccounts} does not exist.`,
+    );
+    addError(
+      !Currencies.currencyExists(Currency),
+      "Currency",
+      `Currency does not exist.`,
+    );
+    addError(
+      StartingYear === "" || StartingYear < 1900,
+      "StartingYear",
+      `Starting Year shall be after 1900.`,
+    );
+    addError(State === "", "State", "State cannot be blank.");
+    addError(Country === "", "Country", "Country cannot be blank.");
     Numbering.map((numbering, n) => {
       const { Item, From } = numbering;
       addError(
         From === "" || From < 1,
         "Numbering",
-        `Numbering of ${Item} shall be a positive integer.`
+        `Numbering of ${Item} shall be a positive integer.`,
       );
     });
   }, [data]);
@@ -259,7 +284,7 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
                       ...FilteredList(
                         StatesMaster,
                         { Country: Country },
-                        "State"
+                        "State",
                       ),
                     ]}
                   />
@@ -303,7 +328,7 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
                     placeholder="Enter Chart of Accounts"
                     suggestions={charts.filteredList(
                       { Status: "Ready", Level: "Company" },
-                      "Code"
+                      "Code",
                     )}
                   />
                 </Row>
@@ -320,7 +345,7 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
                     placeholder="Enter Chart of Accounts"
                     suggestions={charts.filteredList(
                       { Status: "Ready", Level: "Group" },
-                      "Code"
+                      "Code",
                     )}
                   />
                 </Row>
@@ -474,7 +499,7 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
                       ...FilteredList(
                         StatesMaster,
                         { Country: Country },
-                        "State"
+                        "State",
                       ),
                     ]}
                   />
@@ -518,7 +543,7 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
                     placeholder="Enter Chart of Accounts"
                     suggestions={charts.filteredList(
                       { Status: "Ready", Level: "Company" },
-                      "Code"
+                      "Code",
                     )}
                   />
                 </Row>
@@ -535,7 +560,7 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
                     placeholder="Enter Chart of Accounts"
                     suggestions={charts.filteredList(
                       { Status: "Ready", Level: "Group" },
-                      "Code"
+                      "Code",
                     )}
                   />
                 </Row>

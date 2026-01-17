@@ -55,7 +55,7 @@ export function ManageProfitCenter() {
                   <CreateProfitCenter
                     method="View"
                     initial={collection.getData()}
-                  />
+                  />,
                 ),
             ]}
           />,
@@ -67,7 +67,7 @@ export function ManageProfitCenter() {
             whileFalse={[
               () =>
                 showAlert(
-                  "Either the Profit Center does not exist, or it is not in draft stage to be updated."
+                  "Either the Profit Center does not exist, or it is not in draft stage to be updated.",
                 ),
             ]}
             whileTrue={[
@@ -76,7 +76,7 @@ export function ManageProfitCenter() {
                   <CreateProfitCenter
                     method="Update"
                     initial={collection.getData()}
-                  />
+                  />,
                 ),
             ]}
           />,
@@ -88,7 +88,7 @@ export function ManageProfitCenter() {
             whileFalse={[
               () =>
                 showAlert(
-                  "Either the Profit Center does not exist, or it is not in draft stage to be deleted."
+                  "Either the Profit Center does not exist, or it is not in draft stage to be deleted.",
                 ),
             ]}
             whileTrue={[
@@ -100,7 +100,7 @@ export function ManageProfitCenter() {
                     () => showAlert(collection.delete()),
                     () => setcode(""),
                     () => setcompany(""),
-                  ]
+                  ],
                 ),
             ]}
           />,
@@ -115,7 +115,7 @@ export function ManageProfitCenter() {
                   <CreateProfitCenter
                     method="Create"
                     initial={collection.getData()}
-                  />
+                  />,
                 ),
             ]}
           />,
@@ -166,19 +166,20 @@ export function CreateProfitCenter({
       addError(
         !collection.company.exists(),
         "Company",
-        "Company does not exist."
+        "Company does not exist.",
       );
       addError(Code === "", "Code", `Code cannot be blank.`);
       addError(
         Code !== "" && collection.exists(),
         "Code",
-        `Profit Center ${Code} already exists in Company ${Company}.`
+        `Profit Center ${Code} already exists in Company ${Company}.`,
       );
     }
+    addError(Segment === "", "Segment", "Segment cannot be blank.");
     addError(
       !Segments.segmentExists(Segment),
       "Segment",
-      `Segment does not exist.`
+      `Segment does not exist.`,
     );
   }, [data]);
   if (method === "Create") {
@@ -216,11 +217,11 @@ export function CreateProfitCenter({
                 placeholder={"Enter Company Code"}
                 suggestions={collection.company.filteredList(
                   { Status: "Ready" },
-                  "Code"
+                  "Code",
                 )}
                 captions={collection.company.filteredList(
                   { Status: "Ready" },
-                  "Name"
+                  "Name",
                 )}
               />
             </Row>

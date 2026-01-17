@@ -328,6 +328,14 @@ export function CreateGeneralLedger({
                 )}
               />
             </Row>
+            <Row>
+              <Label label={"Status"} />
+              <Option
+                value={Status}
+                process={(value) => changeData("", "Status", value)}
+                options={["Draft", "Ready", "Blocked"]}
+              />
+            </Row>
           </DisplayArea>
         </WindowContent>
       </>
@@ -444,6 +452,14 @@ export function CreateGeneralLedger({
                 )}
               />
             </Row>
+            <Row>
+              <Label label={"Status"} />
+              <Option
+                value={Status}
+                process={(value) => changeData("", "Status", value)}
+                options={["Draft", "Ready", "Blocked"]}
+              />
+            </Row>
           </DisplayArea>
         </WindowContent>
       </>
@@ -508,6 +524,10 @@ export function CreateGeneralLedger({
             <Row overflow="visible">
               <Label label={"Interest Code"} />
               <label>{int}</label>
+            </Row>
+            <Row>
+              <Label label={"Status"} />
+              <label>{Status}</label>
             </Row>
           </DisplayArea>
         </WindowContent>

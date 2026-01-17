@@ -24,6 +24,16 @@
   transform: rotate(10deg);
 }
 
+.floatTopbar {
+  button {
+    border-radius: 10px;
+    min-width: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
 .drawerButton,
 .drawerButtonSelected,
 .closeButton {
@@ -123,8 +133,10 @@
   cursor: pointer;
   padding: 10px;
   color: var(--blue);
-  opacity: 0.7;
   transition: 0.5s;
+  border-bottom: 5px solid transparent;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
   h4 {
     margin: 0;
   }
@@ -138,9 +150,7 @@
 }
 
 .multiDisplayOptionSelected {
-  opacity: 1;
-  background: var(--bluet);
-  color: white;
+  border-bottom: 5px solid var(--bluet);
 }
 
 .multiDisplayContent {

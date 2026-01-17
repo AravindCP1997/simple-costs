@@ -113,7 +113,7 @@ function listFilter(collection, field, list) {
       (filtered = [
         ...filtered,
         ...collection.filter((item) => item[field] === value),
-      ])
+      ]),
   );
   return filtered;
 }
@@ -121,7 +121,7 @@ function listFilter(collection, field, list) {
 function exclListFilter(collection, field, list) {
   let filtered = collection;
   list.map(
-    (value) => (filtered = filtered.filter((item) => item[field] !== value))
+    (value) => (filtered = filtered.filter((item) => item[field] !== value)),
   );
   return filtered;
 }
@@ -133,9 +133,9 @@ function rangeFilter(collection, field, list) {
       (filtered = [
         ...filtered,
         ...collection.filter(
-          (item) => item[field] >= range[0] && item[field] <= range[1]
+          (item) => item[field] >= range[0] && item[field] <= range[1],
         ),
-      ])
+      ]),
   );
   return filtered;
 }
@@ -145,8 +145,8 @@ function exclRangeFilter(collection, field, list) {
   list.map(
     (range) =>
       (filtered = filtered.filter(
-        (item) => item[field] < range[0] || item[field] > range[1]
-      ))
+        (item) => item[field] < range[0] || item[field] > range[1],
+      )),
   );
   return filtered;
 }
@@ -173,7 +173,7 @@ function moveDate(date, years, months, days) {
   const newdate = new Date(
     olddate.getFullYear() + years,
     olddate.getMonth() + months,
-    olddate.getDate() + days
+    olddate.getDate() + days,
   );
   return numberDay(dayNumber(newdate));
 }
@@ -196,7 +196,7 @@ function ageInDays(d, t) {
 
 function SuperRange(collection, range, from, to) {
   const filtered = collection.filter(
-    (item) => item[from] <= range[0] && item[to] >= range[1]
+    (item) => item[from] <= range[0] && item[to] >= range[1],
   );
   return filtered;
 }
@@ -237,7 +237,7 @@ function datesInMonth(year, month) {
   const endDate = new Date(
     startDate.getFullYear(),
     startDate.getMonth() + 1,
-    0
+    0,
   );
   const list = datesInPeriod([
     `${startDate.getFullYear()}-${startDate.getMonth() + 1}-01`,
@@ -251,7 +251,7 @@ function daysInMonth(year, month) {
   const endDate = new Date(
     startDate.getFullYear(),
     startDate.getMonth() + 1,
-    0
+    0,
   );
   const interval = daysInPeriod([
     `${startDate.getFullYear()}-${startDate.getMonth() + 1}-01`,
@@ -312,7 +312,7 @@ function timeSeriesError(
   Fromfield,
   Tofield,
   LastDate = "9999-12-31",
-  FirstDate = "9999-12-31"
+  FirstDate = "9999-12-31",
 ) {
   const list = [];
   const ToDateStrings = ListUniqueItems(Collection, Tofield);
@@ -342,14 +342,14 @@ function collectionError(
   Collection,
   nonBlanks,
   Fromfield = "",
-  Tofield = ""
+  Tofield = "",
 ) {
   const list = [];
   Collection.forEach((item, i) => {
     if (item[Fromfield] !== "" && item[Tofield] !== "") {
       if (Number(item[Fromfield]) > Number(item[Tofield])) {
         list.push(
-          `At ${Name} ${i + 1} ${Fromfield} is greater than ${Tofield}`
+          `At ${Name} ${i + 1} ${Fromfield} is greater than ${Tofield}`,
         );
       }
       Collection.forEach((counteritem, j) => {
@@ -357,13 +357,13 @@ function collectionError(
           i !== j &&
           rangeOverlap(
             [Number(item[Fromfield]), Number(item[Tofield])],
-            [Number(counteritem[Fromfield]), Number(counteritem[Tofield])]
+            [Number(counteritem[Fromfield]), Number(counteritem[Tofield])],
           )
         ) {
           list.push(
             `${Name} overlaps between item ${Math.min(i, j) + 1} and ${
               Math.max(i, j) + 1
-            }`
+            }`,
           );
         }
       });

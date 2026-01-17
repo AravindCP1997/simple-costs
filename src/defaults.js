@@ -2,7 +2,7 @@ export const defaultChartofAccounts = {
   Code: "",
   Level: "Company",
   AccountGroups: [{ Group: "", From: "", To: "" }],
-  Status: "Draft",
+  Status: "Ready",
 };
 
 export const defaultFinancialStatementStructure = {
@@ -31,7 +31,7 @@ export const defaultFinancialStatementStructure = {
       altName: "Net Loss",
     },
   ],
-  Status: "Draft",
+  Status: "Ready",
 };
 
 export const defaultGroupGeneralLedger = {
@@ -40,7 +40,7 @@ export const defaultGroupGeneralLedger = {
   Group: "",
   LedgerType: "Balance Sheet",
   Description: "",
-  Status: "Draft",
+  Status: "Ready",
 };
 
 export const defaultIncomeTaxCode = {
@@ -65,7 +65,7 @@ export const defaultInterestCode = {
   Description: "",
   Compounding: "Daily",
   DaysinYear: 360,
-  Status: "Draft",
+  Status: "Ready",
 };
 
 export const defaultPaymentTerms = {
@@ -73,7 +73,7 @@ export const defaultPaymentTerms = {
   Description: "",
   Discount: [{ PaymentInDays: "", Discount: "" }],
   DueWithinDays: 0,
-  Status: "Draft",
+  Status: "Ready",
 };
 
 export const defaultCompany = {
@@ -108,7 +108,7 @@ export const defaultCompany = {
     { Item: "Stock Transport Order", From: 100000 },
     { Item: "Vendor", From: 100000 },
   ],
-  Status: "",
+  Status: "Ready",
 };
 
 export const defaultProfitCenter = {
@@ -116,7 +116,7 @@ export const defaultProfitCenter = {
   Code: "",
   Description: "",
   Segment: "",
-  Status: "Draft",
+  Status: "Ready",
 };
 
 export const defaultGeneralLedger = {
@@ -131,7 +131,7 @@ export const defaultGeneralLedger = {
   PostForex: false,
   PostInterest: false,
   InterestCode: "",
-  Status: "Draft",
+  Status: "Ready",
 };
 
 export const defaultBusinessPlace = {
@@ -145,7 +145,7 @@ export const defaultBusinessPlace = {
   Email: "",
   Phone: "",
   BTIN: "",
-  Status: "Draft",
+  Status: "Ready",
 };
 
 export const defaultCostCenter = {
@@ -203,11 +203,17 @@ export const defaultAsset = {
   Code: "",
   Description: "",
   AssetGroupCode: "",
-  Depreciable: true,
   DateofCapitalisation: "",
-  Method: "SLM",
+  Method: "Straight Line",
   Rate: "",
-  UsefulLife: 0,
+  UsefulLife: 1,
   SalvageValue: 0,
   OrgAssignment: [{ From: "", To: "", Type: "CostCenter", Assignment: "" }],
+};
+
+export const defaultAssetDevelopmentOrder = {
+  Company: "",
+  Code: "",
+  Description: "",
+  ProfitCenterCode: "",
 };

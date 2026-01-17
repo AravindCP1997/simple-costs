@@ -19,6 +19,7 @@ import {
   AutoSuggestInput,
   CoveredRow,
   Conditional,
+  Row,
 } from "./Components";
 import Draggable from "react-draggable";
 import { FocusTrap } from "focus-trap-react";
@@ -30,6 +31,8 @@ import {
   FaDesktop,
   FaWindowClose,
   FaUniversalAccess,
+  FaRegWindowClose,
+  FaWindowMinimize,
 } from "react-icons/fa";
 import { ListItems, ListUniqueItems, clickButton } from "./functions";
 import { Scratch } from "./App";
@@ -86,6 +89,12 @@ import {
   CreateRevenueCenter,
   ManageRevenueCenter,
 } from "./Transactions/RevenueCenter";
+import { CreateAssetGroup, ManageAssetGroup } from "./Transactions/AssetGroup";
+import { CreateAsset, ManageAsset } from "./Transactions/Asset";
+import {
+  CreateAssetDevelopmentOrder,
+  ManageAssetDevelopmentOrder,
+} from "./Transactions/AssetDevelopmentOrder";
 
 const codes = [
   {
@@ -369,6 +378,54 @@ const codes = [
     subgroup: "Financial Accounting",
   },
   {
+    code: "cag",
+    screen: <Window />,
+    window: <CreateAssetGroup />,
+    name: "Create Asset Group",
+    group: "Control",
+    subgroup: "Asset Accounting",
+  },
+  {
+    code: "mag",
+    screen: <Window />,
+    window: <ManageAssetGroup />,
+    name: "Manage Asset Group",
+    group: "Control",
+    subgroup: "Asset Accounting",
+  },
+  {
+    code: "cast",
+    screen: <Window />,
+    window: <CreateAsset />,
+    name: "Create Asset",
+    group: "Control",
+    subgroup: "Asset Accounting",
+  },
+  {
+    code: "mast",
+    screen: <Window />,
+    window: <ManageAsset />,
+    name: "Manage Asset",
+    group: "Control",
+    subgroup: "Asset Accounting",
+  },
+  {
+    code: "cado",
+    screen: <Window />,
+    window: <CreateAssetDevelopmentOrder />,
+    name: "Create Asset Development Order",
+    group: "Control",
+    subgroup: "Asset Accounting",
+  },
+  {
+    code: "mado",
+    screen: <Window />,
+    window: <ManageAssetDevelopmentOrder />,
+    name: "Manage Asset Development Order",
+    group: "Control",
+    subgroup: "Asset Accounting",
+  },
+  {
     code: "simtax",
     screen: <Window />,
     window: <IncomeTaxSimulate />,
@@ -452,12 +509,14 @@ function FloatingWindow() {
     <WindowContext.Provider value="float">
       <Draggable nodeRef={nodeRef} handle=".drag">
         <div style={style} ref={nodeRef}>
-          <DistributedRow>
+          <Row cn="floatTopbar" borderBottom="none">
             <button className="drag">
               <FaArrowsAlt />
             </button>
-            <button onClick={() => closeFloat()}>&times;</button>
-          </DistributedRow>
+            <button onClick={() => closeFloat()}>
+              <FaWindowClose />
+            </button>
+          </Row>
           <div style={contentStyle} className="floatingWindowContent">
             {window}
           </div>
@@ -470,6 +529,7 @@ function FloatingWindow() {
 function Alert() {
   const {
     alert: { visible, message, type },
+    closeAlert,
   } = useInterface();
 
   if (!visible) return null;
@@ -496,6 +556,9 @@ function Alert() {
       <div style={style}>
         <h3 style={{ margin: "0", textAlign: "center" }}>{type}</h3>
         <p style={{ margin: "0", textAlign: "center" }}>{message}</p>
+        <CenterFlex>
+          <Button name="OK" functionsArray={[() => closeAlert()]} />
+        </CenterFlex>
       </div>
     </Overlay>
   );
@@ -603,7 +666,7 @@ function SearchBar() {
     } else {
       showAlert(
         "The code entered is not yet configured. Please retry!",
-        "Error"
+        "Error",
       );
     }
     setcode("");
@@ -935,7 +998,6 @@ export function Drawer({ initial = "Record" }) {
             padding: "10px 0px",
             position: "sticky",
             top: "0",
-            zIndex: 1000,
           }}
         >
           <NavButton name={"Record"} />

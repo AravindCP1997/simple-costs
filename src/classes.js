@@ -39,7 +39,7 @@ export class IncomeTaxCode extends Collection {
   taxation(year) {
     const data = this.getData().Taxation;
     const taxationForTheYear = data.find((item) =>
-      valueInRange(year, [item.YearFrom, item.YearTo])
+      valueInRange(year, [item.YearFrom, item.YearTo]),
     );
     return taxationForTheYear;
   }
@@ -412,6 +412,9 @@ export class Company extends Collection {
   update(data) {
     return super.update(this.criteria, data);
   }
+  existsGL(gl) {
+    return new GeneralLedger(gl, this.code).exists();
+  }
 }
 
 export class OpenPeriods extends Collection {
@@ -466,7 +469,7 @@ export class CompanyCollection extends Collection {
     return super.filteredList(this.companyCriteria, field);
   }
   filterFromCompany(criteria, field) {
-    return FilteredList(this.listAllFromCompany(), criteria, field);
+    return FilteredList(this.loadFromCompany(), criteria, field);
   }
   mergedCriteria(criteria) {
     return { ...criteria, ...this.companyCriteria };
@@ -482,7 +485,7 @@ export class CompanyCollection extends Collection {
       this.loadFromCompany(),
       this.mergedCriteria(criteria),
       field,
-      start
+      start,
     );
   }
 }
@@ -671,7 +674,35 @@ export class Asset extends CompanyCollection {
       .Numbering.find((item) => item.Item === "Asset").From;
     const Code = super.autoNumber(this.criteria, "Code", numberingStart);
     super.add({ ...data, ["Code"]: Code });
-    return `Asset created. Code: ${Code}`;
+    return `Asset Saved, Code: ${Code}`;
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}
+
+export class AssetDevelopmentOrder extends CompanyCollection {
+  constructor(code = "", company = "", name = "AssetDevelopmentOrder") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Asset Development Order").From;
+    const Code = super.autoNumber(this.criteria, "Code", numberingStart);
+    super.add({ ...data, ["Code"]: Code });
+    return `Asset Development Order saved, Code: ${Code}`;
   }
   exists() {
     return super.exists(this.criteria);

@@ -65,7 +65,7 @@ export const Button = ({
   );
 };
 
-export const CheckBox = ({ value, process }) => {
+export const CheckBox = ({ value, process = noop }) => {
   return (
     <input type="checkbox" checked={value} onChange={() => process(!value)} />
   );
@@ -154,7 +154,7 @@ export const HidingDisplay = ({
                 </div>
               </FocusTrap>
             </Overlay>,
-            document.body
+            document.body,
           )}
         </>
       )}
@@ -211,7 +211,8 @@ export const AutoSuggestInput = ({
 
   const handleChange = (value) => {
     const newFilteredSuggestions = suggestions.filter(
-      (suggestion) => suggestion.toLowerCase().indexOf(value.toLowerCase()) > -1
+      (suggestion) =>
+        suggestion.toString().toLowerCase().indexOf(value.toLowerCase()) > -1,
     );
     process(value);
     setFilteredSuggestions(newFilteredSuggestions);
@@ -299,7 +300,7 @@ export const AutoSuggestInput = ({
                 className="autoSuggestion"
                 onClick={() => handleClick(suggestion)}
               >
-                <p>{suggestion.toUpperCase()}</p>
+                <p>{suggestion.toString().toUpperCase()}</p>
                 <p
                   style={{ opacity: 0.5, textAlign: "right", fontSize: "90%" }}
                 >
@@ -461,10 +462,7 @@ export function MultiDisplayArea({ heads = [], contents = [] }) {
           className="multiDisplayOptions"
           style={{
             background: blue ? "var(--lightbluet)" : "var(--whitet)",
-            border: blue
-              ? "5px solid var(--lightbluet)"
-              : "5px solid var(--whitet)",
-            borderBottom: "none",
+            border: "none",
           }}
         >
           {heads.map((head, h) => (
@@ -785,7 +783,7 @@ export const FSGroupInput = ({
                     changeData(
                       `${path}/presentations/${p}/generalledgers/${g}`,
                       "From",
-                      value
+                      value,
                     )
                   }
                 />,
@@ -796,7 +794,7 @@ export const FSGroupInput = ({
                     changeData(
                       `${path}/presentations/${p}/generalledgers/${g}`,
                       "To",
-                      value
+                      value,
                     )
                   }
                 />,
@@ -809,7 +807,7 @@ export const FSGroupInput = ({
                   () =>
                     addItemtoArray(
                       `${path}/presentations/${p}/generalledgers`,
-                      { From: "", To: "" }
+                      { From: "", To: "" },
                     ),
                 ]}
               />
@@ -879,11 +877,7 @@ export function WindowContent({ children }) {
 }
 
 export function Label({ label, style = {} }) {
-  return (
-    <label style={{ ...{ textAlign: "left", fontWeight: "bold" }, ...style }}>
-      {label}
-    </label>
-  );
+  return <label style={{ ...{ textAlign: "left" }, ...style }}>{label}</label>;
 }
 
 export function Option({ value, options, process }) {

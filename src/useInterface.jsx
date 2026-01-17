@@ -31,7 +31,6 @@ export const UserInterfaceProvider = ({ children }) => {
 
   const showAlert = (message, type = "Info") => {
     setalert({ visible: true, message, type });
-    setTimeout(() => closeAlert(), 1500);
   };
 
   const [floatingwindow, setfloatingwindow] = useState({
