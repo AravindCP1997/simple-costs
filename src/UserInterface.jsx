@@ -337,7 +337,7 @@ const codes = [
     subgroup: "Company",
   },
   {
-    code: "mplt",
+    code: "mrc",
     screen: <Window />,
     window: <ManageRevenueCenter />,
     name: "Manage Revenue Center",
