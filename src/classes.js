@@ -2,6 +2,7 @@ import { List } from "@react-pdf/renderer";
 import { Collection, Dictionary } from "./Database";
 import {
   dateInYear,
+  datesInMonth,
   existsInCollection,
   filterCollection,
   FilteredList,
@@ -794,6 +795,44 @@ export class Holidays extends CompanyCollection {
         { Day: "Saturday", Holiday: false },
       ],
       Holidays: [{ Date: "", Description: "" }],
+    };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    if (!this.exists()) {
+      return this.defaults;
+    }
+    return super.getData(this.criteria);
+  }
+  update(data) {
+    if (!this.exists()) {
+      return super.add(data);
+    }
+    return super.update(this.criteria, data);
+  }
+}
+
+export class Attendance extends CompanyCollection {
+  constructor(employee, year, month, company, name = "Attendance") {
+    super(company, name);
+    this.year = year;
+    this.employeecode = employee;
+    this.employee = new Employee(this.employeecode, this.companycode);
+    this.month = month;
+    this.criteria = {
+      EmployeeCode: this.employeecode,
+      Year: this.year,
+      Month: this.month,
+    };
+    this.defaults = {
+      ...super.mergedCriteria(this.criteria),
+      ["Attendance"]: datesInMonth(this.year, this.month).map((date, d) => ({
+        Date: date,
+        Status: "Absent",
+        Remarks: "",
+      })),
     };
   }
   exists() {

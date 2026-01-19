@@ -232,7 +232,7 @@ function daysInPeriod(period) {
   return interval;
 }
 
-function datesInMonth(year, month) {
+export function datesInMonth(year, month) {
   const startDate = new Date(`${year}-${month}-01`);
   const endDate = new Date(
     startDate.getFullYear(),

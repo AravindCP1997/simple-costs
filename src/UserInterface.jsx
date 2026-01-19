@@ -98,6 +98,7 @@ import {
 import { CreateWageType, ManageWageType } from "./Transactions/WageTypes";
 import { CreateEmployee, ManageEmployee } from "./Transactions/Employee";
 import { ManageHolidays } from "./Transactions/Holidays";
+import { ManageAttendance } from "./Transactions/Attendance";
 
 const codes = [
   {
@@ -465,6 +466,14 @@ const codes = [
     screen: <Window />,
     window: <ManageHolidays />,
     name: "Holidays",
+    group: "Control",
+    subgroup: "Human Resources",
+  },
+  {
+    code: "atc",
+    screen: <Window />,
+    window: <ManageAttendance />,
+    name: "Attendance",
     group: "Control",
     subgroup: "Human Resources",
   },

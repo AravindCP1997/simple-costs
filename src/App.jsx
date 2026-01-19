@@ -17,6 +17,7 @@ import { useState } from "react";
 import {
   Asset,
   AssetGroup,
+  Attendance,
   Company,
   GeneralLedger,
   GroupGeneralLedger,
@@ -76,7 +77,6 @@ export function Scratch() {
             </Row>
           </Row>
         </DisplayArea>
-        {JSON.stringify(new Company("ABC").dateInYear("2024-04-01", 2024))}
       </WindowContent>
     </>
   );
