@@ -17,12 +17,15 @@ import { useState } from "react";
 import {
   Asset,
   AssetGroup,
+  Company,
   GeneralLedger,
   GroupGeneralLedger,
+  Holidays,
   ProfitCenter,
   Segments,
 } from "./classes";
 import { FaHome } from "react-icons/fa";
+import { dateInYear } from "./functions";
 
 export function Scratch() {
   const { showAlert } = useInterface();
@@ -73,6 +76,7 @@ export function Scratch() {
             </Row>
           </Row>
         </DisplayArea>
+        {JSON.stringify(new Company("ABC").dateInYear("2024-04-01", 2024))}
       </WindowContent>
     </>
   );

@@ -217,3 +217,37 @@ export const defaultAssetDevelopmentOrder = {
   Description: "",
   ProfitCenterCode: "",
 };
+
+export const defaultWageType = {
+  Company: "",
+  Code: "",
+  Description: "",
+  Type: "Emolument",
+  Nature: "Variable",
+  GL: "",
+  Taxable: true,
+};
+
+export const defaultEmployee = {
+  Company: "",
+  Code: "",
+  Name: "",
+  Address: "",
+  PostalCode: "",
+  State: "Kerala",
+  Country: "India",
+  Email: "",
+  Phone: "",
+  DOB: "",
+  DOJ: "",
+  DOS: "",
+  Position: [{ From: "", To: "", Position: "" }],
+  OrgAssignment: [{ From: "", To: "", Type: "CostCenter", Assignment: "" }],
+  OneTimeWages: [{ WT: "", Date: "", Amount: "" }],
+  VariableWages: [{ WT: "", From: "", To: "", Amount: "" }],
+  FixedWages: [{ WT: "", From: "", To: "", Amount: "" }],
+  TaxCode: [{ From: "", To: "", Code: "" }],
+  Additions: [{ Year: "", Description: "", Amount: "" }],
+  Deductions: [{ Year: "", Description: "", Amount: "" }],
+  Status: "Working",
+};

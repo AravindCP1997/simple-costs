@@ -21,7 +21,7 @@
 }
 .menu:hover,
 .menu:focus {
-  transform: rotate(10deg);
+  transform: translateY(-10px) scale(1.05);
 }
 
 .floatTopbar {
@@ -86,7 +86,7 @@
 
 .icon:hover,
 .icon:focus {
-  transform: rotate(10deg);
+  transform: translateY(-10px);
 
   p {
     opacity: 1;
@@ -132,7 +132,7 @@
 .multiDisplayOption {
   cursor: pointer;
   padding: 10px;
-  color: var(--blue);
+  color: var(--bluet);
   transition: 0.5s;
   border-bottom: 5px solid transparent;
   border-top-left-radius: 10px;
@@ -146,11 +146,12 @@
 .multiDisplayOption:hover,
 .multiDisplayOptionSelected:focus,
 .multiDisplayOption:focus {
-  opacity: 0.85;
+  color: var(--blue);
 }
 
 .multiDisplayOptionSelected {
-  border-bottom: 5px solid var(--bluet);
+  border-bottom: 5px solid var(--blue);
+  color: var(--blue);
 }
 
 .multiDisplayContent {
@@ -210,7 +211,7 @@
 
 .tableContainer {
   padding: 5px;
-  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .tableCell {

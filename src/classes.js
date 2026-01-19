@@ -1,6 +1,7 @@
 import { List } from "@react-pdf/renderer";
 import { Collection, Dictionary } from "./Database";
 import {
+  dateInYear,
   existsInCollection,
   filterCollection,
   FilteredList,
@@ -415,6 +416,9 @@ export class Company extends Collection {
   existsGL(gl) {
     return new GeneralLedger(gl, this.code).exists();
   }
+  dateInYear(date, year) {
+    return dateInYear(date, year, this.getData().FYBeginning);
+  }
 }
 
 export class OpenPeriods extends Collection {
@@ -686,7 +690,9 @@ export class Asset extends CompanyCollection {
     return super.delete(this.criteria);
   }
   update(data) {
-    return super.update(this.criteria, data);
+    this.delete();
+    super.add(data);
+    return "Asset Updated";
   }
 }
 
@@ -714,6 +720,95 @@ export class AssetDevelopmentOrder extends CompanyCollection {
     return super.delete(this.criteria);
   }
   update(data) {
+    this.delete();
+    super.add(data);
+    return "Order Updated";
+  }
+}
+
+export class WageType extends CompanyCollection {
+  constructor(code, company, name = "WageType") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}
+
+export class Employee extends CompanyCollection {
+  constructor(code = "", company = "", name = "Employee") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Employee").From;
+    const Code = super.autoNumber(this.criteria, "Code", numberingStart);
+    super.add({ ...data, ["Code"]: Code });
+    return `Employee saved, Code: ${Code}`;
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    this.delete();
+    super.add(data);
+    return "Employee Updated";
+  }
+}
+
+export class Holidays extends CompanyCollection {
+  constructor(year, company, name = "Holidays") {
+    super(company, name);
+    this.year = year;
+    this.criteria = { Company: this.companycode, Year: this.year };
+    this.defaults = {
+      Company: this.companycode,
+      Year: this.year,
+      WeekHolidays: [
+        { Day: "Sunday", Holiday: false },
+        { Day: "Monday", Holiday: false },
+        { Day: "Tuesday", Holiday: false },
+        { Day: "Wednesday", Holiday: false },
+        { Day: "Thursday", Holiday: false },
+        { Day: "Friday", Holiday: false },
+        { Day: "Saturday", Holiday: false },
+      ],
+      Holidays: [{ Date: "", Description: "" }],
+    };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    if (!this.exists()) {
+      return this.defaults;
+    }
+    return super.getData(this.criteria);
+  }
+  update(data) {
+    if (!this.exists()) {
+      return super.add(data);
+    }
     return super.update(this.criteria, data);
   }
 }

@@ -983,6 +983,7 @@ export function Column({
   gap = "5px",
   padding = "0px",
   overflow = "auto",
+  borderBottom = "2px solid var(--whitet)",
 }) {
   return (
     <div
@@ -996,6 +997,7 @@ export function Column({
         padding: padding,
         width: "100%",
         overflow: overflow,
+        borderBottom,
       }}
     >
       {children}

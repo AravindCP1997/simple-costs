@@ -379,25 +379,6 @@ function collectionError(
   return list;
 }
 
-function totalError(Name, Collection, Field, Maximum) {
-  if (SumField(Collection, Field) > Maximum) {
-    return `Total of ${Name} ${Field} cannot be more than ${Maximum}`;
-  }
-}
-
-function maxError(Name, Value, Maximum) {
-  let list = [];
-  if (Value > Maximum) {
-    list.push(`${Name} cannot be more than ${Maximum}.`);
-  }
-  return list;
-}
-
-function setBlank(data, fields) {
-  fields.map((item) => (data[item] = ""));
-  return data;
-}
-
 export function isObject(value) {
   return typeof value === "object" && !Array.isArray(value) && value !== null;
 }
@@ -442,3 +423,23 @@ export const clickButton = (e) => {
     e.target.click();
   }
 };
+
+export function dateString(date) {
+  return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, 0)}-${date.getDate().toString().padStart(2, 0)}`;
+}
+
+export function dateInYear(date, year, beginMonth) {
+  const startDate = new Date(
+    `${year}-${beginMonth.toString().padStart(2, 0)}-01`,
+  );
+  const endDate = new Date(
+    startDate.getFullYear() + 1,
+    startDate.getMonth(),
+    0,
+  );
+  const result = valueInRange(dayNumber(new Date(date)), [
+    dayNumber(dateString(startDate)),
+    dayNumber(dateString(endDate)),
+  ]);
+  return result;
+}

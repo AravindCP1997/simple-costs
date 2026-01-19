@@ -95,6 +95,9 @@ import {
   CreateAssetDevelopmentOrder,
   ManageAssetDevelopmentOrder,
 } from "./Transactions/AssetDevelopmentOrder";
+import { CreateWageType, ManageWageType } from "./Transactions/WageTypes";
+import { CreateEmployee, ManageEmployee } from "./Transactions/Employee";
+import { ManageHolidays } from "./Transactions/Holidays";
 
 const codes = [
   {
@@ -424,6 +427,46 @@ const codes = [
     name: "Manage Asset Development Order",
     group: "Control",
     subgroup: "Asset Accounting",
+  },
+  {
+    code: "cwt",
+    screen: <Window />,
+    window: <CreateWageType />,
+    name: "Create Wage Type",
+    group: "Control",
+    subgroup: "Human Resources",
+  },
+  {
+    code: "mwt",
+    screen: <Window />,
+    window: <ManageWageType />,
+    name: "Manage Wage Type",
+    group: "Control",
+    subgroup: "Human Resources",
+  },
+  {
+    code: "cemp",
+    screen: <Window />,
+    window: <CreateEmployee />,
+    name: "Create Employee",
+    group: "Control",
+    subgroup: "Human Resources",
+  },
+  {
+    code: "memp",
+    screen: <Window />,
+    window: <ManageEmployee />,
+    name: "Manage Employee",
+    group: "Control",
+    subgroup: "Human Resources",
+  },
+  {
+    code: "holi",
+    screen: <Window />,
+    window: <ManageHolidays />,
+    name: "Holidays",
+    group: "Control",
+    subgroup: "Human Resources",
   },
   {
     code: "simtax",
@@ -909,7 +952,7 @@ export function Drawer({ initial = "Record" }) {
     display: "flex",
     flexDirection: "column",
     justifyContent: "top",
-    width: "min(100%,960px)",
+    width: "min(100%,1020px)",
     color: "var(--blue)",
     padding: "0",
     gap: "10px",
