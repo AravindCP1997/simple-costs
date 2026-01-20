@@ -125,6 +125,10 @@ import {
   CreateWithholdingTax,
   ManageWithholdingTax,
 } from "./Transactions/WithholdingTax";
+import {
+  CreateBusinessTaxCode,
+  ManageBusinessTaxCode,
+} from "./Transactions/BusinessTaxCode";
 
 const codes = [
   {
@@ -604,6 +608,22 @@ const codes = [
     screen: <Window />,
     window: <ManageVendorGroup />,
     name: "Manage Vendor Group",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
+    code: "cbtc",
+    screen: <Window />,
+    window: <CreateBusinessTaxCode />,
+    name: "Create Business Tax Code",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
+    code: "mbtc",
+    screen: <Window />,
+    window: <ManageBusinessTaxCode />,
+    name: "Manage Business Tax Code",
     group: "Control",
     subgroup: "Payables and Receivables",
   },

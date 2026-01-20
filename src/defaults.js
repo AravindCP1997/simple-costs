@@ -318,3 +318,10 @@ export const defaultWithholdingTax = {
   ExemptionA: 0,
   Accounting: [{ GL: "", Rate: "" }],
 };
+
+export const defaultBusinessTaxCode = {
+  Company: "",
+  Code: "",
+  Description: "",
+  Accounting: [{ BP: "", TType: "All", GL: "", Type: "Debit", Rate: 0 }],
+};

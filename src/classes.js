@@ -1037,3 +1037,51 @@ export class WithholdingTax extends CompanyCollection {
     return super.update(this.criteria, data);
   }
 }
+
+export class BusinessTaxCode extends CompanyCollection {
+  constructor(code, company, name = "BusinessTaxCode") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}
+
+export class ExchangeRates extends CompanyCollection {
+  constructor(currency, company, name = "ExchangeRates") {
+    super(company, name);
+    this.currency = currency;
+    this.criteria = { Currency: this.currency };
+    this.defaults = {
+      Currency: this.currency,
+      Company: this.companycode,
+      Rates: [{ From: "", To: "", Rate: "" }],
+    };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    if (!this.exists()) {
+      return this.defaults;
+    }
+    return super.getData(this.criteria);
+  }
+  update(data) {
+    if (!this.exists()) {
+      return super.add(data);
+    }
+    return super.update(this.criteria, data);
+  }
+}
