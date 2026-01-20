@@ -309,3 +309,12 @@ export const defaultVendorGroup = {
   Description: "",
   GL: "",
 };
+
+export const defaultWithholdingTax = {
+  Company: "",
+  Code: "",
+  Description: "",
+  ExemptionT: 0,
+  ExemptionA: 0,
+  Accounting: [{ GL: "", Rate: "" }],
+};

@@ -1017,3 +1017,23 @@ export class VendorGroup extends CompanyCollection {
     return super.update(this.criteria, data);
   }
 }
+
+export class WithholdingTax extends CompanyCollection {
+  constructor(code, company, name = "WithholdingTax") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}

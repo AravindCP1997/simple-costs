@@ -121,6 +121,10 @@ import {
   CreateVendorGroup,
   ManageVendorGroup,
 } from "./Transactions/VendorGroup";
+import {
+  CreateWithholdingTax,
+  ManageWithholdingTax,
+} from "./Transactions/WithholdingTax";
 
 const codes = [
   {
@@ -600,6 +604,22 @@ const codes = [
     screen: <Window />,
     window: <ManageVendorGroup />,
     name: "Manage Vendor Group",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
+    code: "cwht",
+    screen: <Window />,
+    window: <CreateWithholdingTax />,
+    name: "Create Withholding Tax",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
+    code: "mwht",
+    screen: <Window />,
+    window: <ManageWithholdingTax />,
+    name: "Manage Withholding Tax",
     group: "Control",
     subgroup: "Payables and Receivables",
   },
