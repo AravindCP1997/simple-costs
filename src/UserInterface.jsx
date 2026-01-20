@@ -99,6 +99,28 @@ import { CreateWageType, ManageWageType } from "./Transactions/WageTypes";
 import { CreateEmployee, ManageEmployee } from "./Transactions/Employee";
 import { ManageHolidays } from "./Transactions/Holidays";
 import { ManageAttendance } from "./Transactions/Attendance";
+import {
+  CreateMaterialGroup,
+  ManageMaterialGroup,
+} from "./Transactions/MaterialGroup";
+import {
+  CreateServiceGroup,
+  ManageServiceGroup,
+} from "./Transactions/ServiceGroup";
+import { CreateMaterial, ManageMaterial } from "./Transactions/Material";
+import { CreateService, ManageService } from "./Transactions/Service";
+import {
+  CreateEmployeeGroup,
+  ManageEmployeeGroup,
+} from "./Transactions/EmployeeGroup";
+import {
+  CreateCustomerGroup,
+  ManageCustomerGroup,
+} from "./Transactions/CustomerGroup";
+import {
+  CreateVendorGroup,
+  ManageVendorGroup,
+} from "./Transactions/VendorGroup";
 
 const codes = [
   {
@@ -446,6 +468,22 @@ const codes = [
     subgroup: "Human Resources",
   },
   {
+    code: "ceg",
+    screen: <Window />,
+    window: <CreateEmployeeGroup />,
+    name: "Create Employee Group",
+    group: "Control",
+    subgroup: "Human Resources",
+  },
+  {
+    code: "meg",
+    screen: <Window />,
+    window: <ManageEmployeeGroup />,
+    name: "Manage Employee Group",
+    group: "Control",
+    subgroup: "Human Resources",
+  },
+  {
     code: "cemp",
     screen: <Window />,
     window: <CreateEmployee />,
@@ -470,11 +508,107 @@ const codes = [
     subgroup: "Human Resources",
   },
   {
+    code: "cmg",
+    screen: <Window />,
+    window: <CreateMaterialGroup />,
+    name: "Create Material Group",
+    group: "Control",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "mmg",
+    screen: <Window />,
+    window: <ManageMaterialGroup />,
+    name: "Manage Material Group",
+    group: "Control",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "csg",
+    screen: <Window />,
+    window: <CreateServiceGroup />,
+    name: "Create Service Group",
+    group: "Control",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "msg",
+    screen: <Window />,
+    window: <ManageServiceGroup />,
+    name: "Manage Service Group",
+    group: "Control",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "cmat",
+    screen: <Window />,
+    window: <CreateMaterial />,
+    name: "Create Material",
+    group: "Control",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "mmat",
+    screen: <Window />,
+    window: <ManageMaterial />,
+    name: "Manage Material",
+    group: "Control",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "cser",
+    screen: <Window />,
+    window: <CreateService />,
+    name: "Create Service",
+    group: "Control",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "mser",
+    screen: <Window />,
+    window: <ManageService />,
+    name: "Manage Service",
+    group: "Control",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "ccg",
+    screen: <Window />,
+    window: <CreateCustomerGroup />,
+    name: "Create Customer Group",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
+    code: "mcg",
+    screen: <Window />,
+    window: <ManageCustomerGroup />,
+    name: "Manage Customer Group",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
+    code: "cvg",
+    screen: <Window />,
+    window: <CreateVendorGroup />,
+    name: "Create Vendor Group",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
+    code: "mvg",
+    screen: <Window />,
+    window: <ManageVendorGroup />,
+    name: "Manage Vendor Group",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
     code: "atc",
     screen: <Window />,
     window: <ManageAttendance />,
     name: "Attendance",
-    group: "Control",
+    group: "Record",
     subgroup: "Human Resources",
   },
   {
@@ -745,8 +879,8 @@ function SearchBar() {
     border: "3px solid var(--bluet)",
     background: "var(--bluet)",
     borderTop: "none",
-    borderBottomLeftRadius: "25px",
-    borderBottomRightRadius: "25px",
+    borderBottomLeftRadius: "15px",
+    borderBottomRightRadius: "15px",
   };
 
   const searchAreaStyle = {
@@ -1042,25 +1176,35 @@ export function Drawer({ initial = "Record" }) {
           style={{
             display: "flex",
             flexDirection: "row",
-            justifyContent: "space-around",
+            justifyContent: "space-between",
             borderBottom: "2px solid var(--bluet)",
-            width: "100%",
-            overflowX: "auto",
+            width: "min(100%,840px)",
             gap: "10px",
-            padding: "10px 0px",
+            padding: "0px 0px",
             position: "sticky",
             top: "0",
           }}
         >
-          <NavButton name={"Record"} />
-          <NavButton name={"Control"} />
-          <NavButton name={"Report"} />
-          <NavButton name={"System"} />
-          <Button
-            name={`Close`}
-            className="drawerButton closeButton"
-            functionsArray={[() => setscreen(<Home />)]}
-          />
+          <div
+            style={{
+              overflowX: "hidden",
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "left",
+            }}
+          >
+            <NavButton name={"Record"} />
+            <NavButton name={"Control"} />
+            <NavButton name={"Report"} />
+            <NavButton name={"System"} />
+          </div>
+          <div style={{ padding: "5px" }}>
+            <Button
+              name={`Close`}
+              className="drawerButton closeButton"
+              functionsArray={[() => setscreen(<Home />)]}
+            />
+          </div>
         </div>
       </div>
       <div style={{ height: "100%", overflow: "auto", padding: "10px" }}>

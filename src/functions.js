@@ -201,7 +201,7 @@ function SuperRange(collection, range, from, to) {
   return filtered;
 }
 
-function dayNumber(date) {
+export function dayNumber(date) {
   const time = new Date(date).getTime();
   const day = time / 86400000;
   return day;

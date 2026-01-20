@@ -33,7 +33,7 @@ import {
 export function ManageAttendance() {
   const [company, setcompany] = useState("");
   const [year, setyear] = useState("");
-  const [month, setmonth] = useState("");
+  const [month, setmonth] = useState("01");
   const [employee, setemployee] = useState("");
   const { errorsExist, clearErrors, addError, DisplayHidingError } = useError();
   const collection = new Attendance(employee, year, month, company);
@@ -53,7 +53,7 @@ export function ManageAttendance() {
         title={"Attendance"}
         menu={[
           <ConditionalButton
-            name={"Set"}
+            name={"Record"}
             result={!errorsExist}
             whileFalse={[() => showAlert("Messages exist. Please check.")]}
             whileTrue={[
@@ -62,6 +62,22 @@ export function ManageAttendance() {
             ]}
           />,
           <DisplayHidingError />,
+          <ConditionalButton
+            name={"View"}
+            result={collection.exists()}
+            whileFalse={[
+              () => showAlert("Attendance not yet recorded for the month."),
+            ]}
+            whileTrue={[
+              () =>
+                openWindow(
+                  <RecordAttendance
+                    initial={collection.getData()}
+                    method="View"
+                  />,
+                ),
+            ]}
+          />,
         ]}
       />
       <WindowContent>
@@ -127,4 +143,89 @@ export function ManageAttendance() {
   );
 }
 
-export function RecordAttendance() {}
+export function RecordAttendance({ initial, method = "Record" }) {
+  const { data, setdata, changeData } = useData(initial);
+  const { showAlert, openWindow } = useInterface();
+  const { errorsExist, DisplayHidingError, clearErrors, addError } = useError();
+  const { Company, Year, EmployeeCode, Month, Attendance: Days } = data;
+  const collection = new Attendance(EmployeeCode, Year, Month, Company);
+  useEffect(() => {
+    clearErrors();
+  }, [data]);
+  return (
+    <>
+      <WindowTitle
+        title={`${method} Attendance`}
+        menu={
+          method === "Record"
+            ? [
+                <ConditionalButton
+                  name={"Save"}
+                  result={!errorsExist}
+                  whileFalse={[
+                    () => showAlert("Messages Exist. Please check."),
+                  ]}
+                  whileTrue={[
+                    () => showAlert(collection.update(data)),
+                    () => openWindow(<ManageAttendance />),
+                  ]}
+                />,
+                <DisplayHidingError />,
+              ]
+            : []
+        }
+      />
+      <WindowContent>
+        <DisplayArea>
+          <Row>
+            <Label label={"Company"} />
+            <label>{Company}</label>
+          </Row>
+          <Row>
+            <Label label={"Employee"} />
+            <label>{EmployeeCode}</label>
+          </Row>
+          <Row>
+            <Label label={"Year"} />
+            <label>{Year}</label>
+          </Row>
+          <Row>
+            <Label label={"Month"} />
+            <label>{Month}</label>
+          </Row>
+          <Column>
+            <Label label={"Attendance"} />
+            <Table
+              columns={["Date", "Status", "Remarks"]}
+              rows={
+                method === "Record"
+                  ? Days.map((day, d) => [
+                      <label>{day.Date}</label>,
+                      <Option
+                        value={day.Status}
+                        process={(value) =>
+                          changeData(`Attendance/${d}`, `Status`, value)
+                        }
+                        options={["Absent", "Present", "Leave"]}
+                      />,
+                      <Input
+                        value={day.Remarks}
+                        process={(value) =>
+                          changeData(`Attendance/${d}`, `Remarks`, value)
+                        }
+                        type={"text"}
+                      />,
+                    ])
+                  : Days.map((day, d) => [
+                      <label>{day.Date}</label>,
+                      <label>{day.Status}</label>,
+                      <label>{day.Remarks}</label>,
+                    ])
+              }
+            />
+          </Column>
+        </DisplayArea>
+      </WindowContent>
+    </>
+  );
+}

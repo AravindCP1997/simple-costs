@@ -394,6 +394,12 @@ export const Units = {
   save: function (data) {
     return this.object.save(data);
   },
+  list: function () {
+    return ListItems(this.read(), "Unit");
+  },
+  unitExists: function (unit) {
+    return this.list().includes(unit);
+  },
 };
 
 export class Company extends Collection {
@@ -848,6 +854,166 @@ export class Attendance extends CompanyCollection {
     if (!this.exists()) {
       return super.add(data);
     }
+    return super.update(this.criteria, data);
+  }
+}
+
+export class MaterialGroup extends CompanyCollection {
+  constructor(code, company, name = "MaterialGroup") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}
+
+export class Material extends CompanyCollection {
+  constructor(code, company, name = "Material") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Material").From;
+    const Code = super.autoNumber(this.criteria, "Code", numberingStart);
+    super.add({ ...data, ["Code"]: Code });
+    return `Material saved, Code: ${Code}`;
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    this.delete();
+    super.add(data);
+    return "Material Updated";
+  }
+}
+
+export class Service extends CompanyCollection {
+  constructor(code, company, name = "Service") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Service").From;
+    const Code = super.autoNumber(this.criteria, "Code", numberingStart);
+    super.add({ ...data, ["Code"]: Code });
+    return `Service saved, Code: ${Code}`;
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    this.delete();
+    super.add(data);
+    return "Service Updated";
+  }
+}
+
+export class ServiceGroup extends CompanyCollection {
+  constructor(code, company, name = "ServiceGroup") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}
+
+export class EmployeeGroup extends CompanyCollection {
+  constructor(code, company, name = "EmployeeGroup") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}
+
+export class CustomerGroup extends CompanyCollection {
+  constructor(code, company, name = "CustomerGroup") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}
+
+export class VendorGroup extends CompanyCollection {
+  constructor(code, company, name = "VendorGroup") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
     return super.update(this.criteria, data);
   }
 }

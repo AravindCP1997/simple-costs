@@ -16,11 +16,12 @@ import {
   AutoSuggestInput,
   HidingDisplay,
   Conditional,
+  MultiDisplayArea,
 } from "../Components";
 import { useWindowType, useInterface } from "../useInterface";
 import useData from "../useData";
 import { useError } from "../useError";
-import { AssetGroup, CompanyCollection, GeneralLedger } from "../classes";
+import { Service, ServiceGroup, Units } from "../classes";
 import { Collection } from "../Database";
 import {
   FilteredList,
@@ -28,31 +29,31 @@ import {
   ListUniqueItems,
   rangeOverlap,
 } from "../functions";
-import { defaultAssetGroup } from "../defaults";
+import { defaultService } from "../defaults";
 
-export function ManageAssetGroup() {
+export function ManageService() {
   const [company, setcompany] = useState("");
   const [code, setcode] = useState("");
   const { openWindow, openConfirm, showAlert } = useInterface();
-  const collection = new AssetGroup(code, company);
+  const collection = new Service(code, company);
 
   return (
     <>
       <WindowTitle
-        title={"Manage Asset Group"}
+        title={"Manage Service"}
         menu={[
           <Button
             name="New"
-            functionsArray={[() => openWindow(<CreateAssetGroup />)]}
+            functionsArray={[() => openWindow(<CreateService />)]}
           />,
           <ConditionalButton
             name={"View"}
             result={collection.exists()}
-            whileFalse={[() => showAlert("Asset Group does not exist.")]}
+            whileFalse={[() => showAlert("Service does not exist.")]}
             whileTrue={[
               () =>
                 openWindow(
-                  <CreateAssetGroup
+                  <CreateService
                     method="View"
                     initial={collection.getData()}
                   />,
@@ -62,11 +63,11 @@ export function ManageAssetGroup() {
           <ConditionalButton
             name={"Update"}
             result={collection.exists()}
-            whileFalse={[() => showAlert("Asset Group does not exist.")]}
+            whileFalse={[() => showAlert("Service does not exist.")]}
             whileTrue={[
               () =>
                 openWindow(
-                  <CreateAssetGroup
+                  <CreateService
                     method="Update"
                     initial={collection.getData()}
                   />,
@@ -76,11 +77,11 @@ export function ManageAssetGroup() {
           <ConditionalButton
             name={"Copy"}
             result={collection.exists()}
-            whileFalse={[() => showAlert("Asset Group does not exist.")]}
+            whileFalse={[() => showAlert("Service does not exist.")]}
             whileTrue={[
               () =>
                 openWindow(
-                  <CreateAssetGroup
+                  <CreateService
                     method="Create"
                     initial={{
                       ...collection.getData(),
@@ -105,11 +106,11 @@ export function ManageAssetGroup() {
             />
           </Row>
           <Row overflow="visible">
-            <Label label={"Asset Group"} />
+            <Label label={"Service"} />
             <AutoSuggestInput
               value={code}
               process={(value) => setcode(value)}
-              placeholder={"Enter Asset Group"}
+              placeholder={"Enter Service Code"}
               suggestions={collection.listAllFromCompany("Code")}
               captions={collection.listAllFromCompany("Description")}
             />
@@ -120,36 +121,20 @@ export function ManageAssetGroup() {
   );
 }
 
-export function CreateAssetGroup({
-  initial = defaultAssetGroup,
-  method = "Create",
-}) {
-  const { data, changeData, reset, setdata } = useData(initial);
+export function CreateService({ initial = defaultService, method = "Create" }) {
+  const {
+    data,
+    changeData,
+    reset,
+    setdata,
+    addItemtoArray,
+    deleteItemfromArray,
+  } = useData(initial);
   const { openWindow, openConfirm, showAlert } = useInterface();
   const { DisplayHidingError, addError, clearErrors, errorsExist } = useError();
-  const {
-    Company,
-    Code,
-    Description,
-    Depreciable,
-    GLAsset,
-    GLDep,
-    GLAccDep,
-    GLLossRet,
-    GLLossDisp,
-    GLGainDisp,
-    Status,
-  } = data;
-  const Gls = [
-    { code: "GLAsset", name: "General Ledger Asset" },
-    { code: "GLDep", name: "General Ledger Depreciation" },
-    { code: "GLAccDep", name: "General Ledger Accumulated Depreciation" },
-    { code: "GLLossRet", name: "General Ledger Loss on Retirement" },
-    { code: "GLLossDisp", name: "General Ledger Loss on Disposal" },
-    { code: "GLGainDisp", name: "General Ledger Gain on Disposal" },
-  ];
-  const collection = new AssetGroup(Code, Company);
-  const glcollection = new GeneralLedger("", Company);
+  const { Company, Code, Description, ServiceGroupCode, Unit } = data;
+  const collection = new Service(Code, Company);
+  const ServiceGroups = new ServiceGroup(ServiceGroupCode, Company);
   useEffect(() => {
     clearErrors();
     if (method === "Create") {
@@ -158,28 +143,19 @@ export function CreateAssetGroup({
         "Company",
         `Company does not exist.`,
       );
-      addError(Code === "", "Code", `Code cannot be blank.`);
       addError(
-        collection.exists(),
-        "Code",
-        `Asset Group ${Code} already exist in Company ${Company}.`,
+        !ServiceGroups.exists(),
+        "ServiceGroup",
+        `Service Group does not exist.`,
       );
-      Gls.forEach((gl, g) => {
-        addError(
-          collection.company.exists() &&
-            !collection.company.existsGL(data[gl.code]),
-          gl.name,
-          `General Ledger ${
-            data[gl.code]
-          } does not exist in Company ${Company}.`,
-        );
-      });
     }
+    addError(!Units.unitExists(Unit), "Unit", "Unit does not exist.");
   }, [data]);
+
   return (
     <>
       <WindowTitle
-        title={`${method} Asset Group`}
+        title={`${method} Service`}
         menu={[
           <Conditional logic={method === "Create"}>
             <ConditionalButton
@@ -196,7 +172,7 @@ export function CreateAssetGroup({
               whileFalse={[() => showAlert("Messages exist. Please check.")]}
               whileTrue={[
                 () => showAlert(collection.update(data)),
-                () => openWindow(<ManageAssetGroup />),
+                () => openWindow(<ManageService />),
               ]}
             />
           </Conditional>,
@@ -213,7 +189,7 @@ export function CreateAssetGroup({
                 openConfirm(
                   "Data not saved will be lost.",
                   [],
-                  [() => openWindow(<ManageAssetGroup />)],
+                  [() => openWindow(<ManageService />)],
                 ),
             ]}
           />,
@@ -244,14 +220,6 @@ export function CreateAssetGroup({
           </Row>
           <Row>
             <Label label={"Code"} />
-            <Conditional logic={method === "Create"}>
-              <Input
-                value={Code}
-                process={(value) => changeData("", "Code", value)}
-                type={"text"}
-                maxLength={4}
-              />
-            </Conditional>
             <Conditional logic={method !== "Create"}>
               <label>{Code}</label>
             </Conditional>
@@ -263,53 +231,42 @@ export function CreateAssetGroup({
                 value={Description}
                 process={(value) => changeData("", "Description", value)}
                 type={"text"}
-                maxLength={4}
               />
             </Conditional>
             <Conditional logic={method === "View"}>
               <label>{Description}</label>
             </Conditional>
           </Row>
-          <Row>
-            <Label label={"Depreciable"} />
+          <Row overflow="visible">
+            <Label label={"Service Group"} />
             <Conditional logic={method === "Create"}>
-              <CheckBox
-                value={Depreciable}
-                process={(value) => changeData("", "Depreciable", value)}
+              <AutoSuggestInput
+                value={ServiceGroupCode}
+                process={(value) => changeData("", "ServiceGroupCode", value)}
+                placeholder={"Enter Service Group"}
+                suggestions={ServiceGroups.listAllFromCompany("Code")}
+                captions={ServiceGroups.listAllFromCompany("Description")}
               />
             </Conditional>
             <Conditional logic={method !== "Create"}>
-              <CheckBox value={Depreciable} />
+              <label>{ServiceGroupCode}</label>
             </Conditional>
           </Row>
-          <Conditional logic={method === "View"}>
-            {Gls.map((gl, g) => (
-              <Row overflow="visible" key={g}>
-                <Label label={gl.name} />
-                <label>{data[gl.code]}</label>
-              </Row>
-            ))}
-          </Conditional>
-          <Conditional logic={method !== "View"}>
-            {Gls.map((gl, g) => (
-              <Row overflow="visible">
-                <Label label={gl.name} />
-                <AutoSuggestInput
-                  value={data[gl.code]}
-                  process={(value) => changeData("", `${gl.code}`, value)}
-                  suggestions={glcollection.filterFromCompany(
-                    { Status: "Ready" },
-                    "Code",
-                  )}
-                  captions={glcollection.filterFromCompany(
-                    { Status: "Ready" },
-                    "Description",
-                  )}
-                  placeholder={"Enter General Ledger Code"}
-                />
-              </Row>
-            ))}
-          </Conditional>
+          <Row overflow="visible">
+            <Label label={"Unit"} />
+            <Conditional logic={method === "Create"}>
+              <AutoSuggestInput
+                value={Unit}
+                process={(value) => changeData("", "Unit", value)}
+                placeholder={"Enter Unit"}
+                suggestions={Units.list()}
+                captions={ListItems(Units.read(), "Description")}
+              />
+            </Conditional>
+            <Conditional logic={method !== "Create"}>
+              <label>{Unit}</label>
+            </Conditional>
+          </Row>
         </DisplayArea>
       </WindowContent>
     </>

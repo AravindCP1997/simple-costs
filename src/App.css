@@ -17,7 +17,7 @@
 }
 
 .home-title:hover {
-  transform: translate(-10px);
+  transform: translate(10px);
 }
 .menu:hover,
 .menu:focus {
@@ -43,17 +43,21 @@
   color: var(--blue);
   border-radius: 0px;
   transition: 0.5s;
-  font-size: 100%;
+  font-size: 16px;
 }
 
 .drawerButtonSelected {
   background: var(--bluet);
   color: white;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
 .drawerButton:hover,
 .drawerButton:focus {
   background: var(--goldt);
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
 .drawerButtonSelected:focus,
@@ -69,6 +73,7 @@
 .closeButton:hover,
 .closeButton:focus {
   background: var(--red);
+  border-radius: 0;
 }
 
 .icon {

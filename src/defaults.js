@@ -231,6 +231,7 @@ export const defaultWageType = {
 export const defaultEmployee = {
   Company: "",
   Code: "",
+  EmployeeGroupCode: "",
   Name: "",
   Address: "",
   PostalCode: "",
@@ -246,8 +247,65 @@ export const defaultEmployee = {
   OneTimeWages: [{ WT: "", Date: "", Amount: "" }],
   VariableWages: [{ WT: "", From: "", To: "", Amount: "" }],
   FixedWages: [{ WT: "", From: "", To: "", Amount: "" }],
+  TIN: "",
   TaxCode: [{ From: "", To: "", Code: "" }],
   Additions: [{ Year: "", Description: "", Amount: "" }],
   Deductions: [{ Year: "", Description: "", Amount: "" }],
+  BankAccounts: [{ Bank: "", SWIFT: "", Account: "", Confirm: "" }],
   Status: "Working",
+};
+
+export const defaultMaterialGroup = {
+  Company: "",
+  Code: "",
+  Description: "",
+  GLMat: "",
+  GLCoS: "",
+  GLRev: "",
+  GLWriteDown: "",
+};
+
+export const defaultMaterial = {
+  Company: "",
+  Code: "",
+  Description: "",
+  MaterialGroupCode: "",
+  Unit: "",
+};
+
+export const defaultServiceGroup = {
+  Company: "",
+  Code: "",
+  Description: "",
+  GLExp: "",
+  GLRev: "",
+};
+
+export const defaultService = {
+  Company: "",
+  Code: "",
+  Description: "",
+  ServiceGroupCode: "",
+  Unit: "",
+};
+
+export const defaultEmployeeGroup = {
+  Company: "",
+  Code: "",
+  Description: "",
+  GL: "",
+};
+
+export const defaultCustomerGroup = {
+  Company: "",
+  Code: "",
+  Description: "",
+  GL: "",
+};
+
+export const defaultVendorGroup = {
+  Company: "",
+  Code: "",
+  Description: "",
+  GL: "",
 };

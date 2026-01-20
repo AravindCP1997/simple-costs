@@ -20,7 +20,7 @@ import {
 import { useWindowType, useInterface } from "../useInterface";
 import useData from "../useData";
 import { useError } from "../useError";
-import { AssetGroup, CompanyCollection, GeneralLedger } from "../classes";
+import { CustomerGroup, GeneralLedger } from "../classes";
 import { Collection } from "../Database";
 import {
   FilteredList,
@@ -28,31 +28,31 @@ import {
   ListUniqueItems,
   rangeOverlap,
 } from "../functions";
-import { defaultAssetGroup } from "../defaults";
+import { defaultCustomerGroup } from "../defaults";
 
-export function ManageAssetGroup() {
+export function ManageCustomerGroup() {
   const [company, setcompany] = useState("");
   const [code, setcode] = useState("");
   const { openWindow, openConfirm, showAlert } = useInterface();
-  const collection = new AssetGroup(code, company);
+  const collection = new CustomerGroup(code, company);
 
   return (
     <>
       <WindowTitle
-        title={"Manage Asset Group"}
+        title={"Manage Customer Group"}
         menu={[
           <Button
             name="New"
-            functionsArray={[() => openWindow(<CreateAssetGroup />)]}
+            functionsArray={[() => openWindow(<CreateCustomerGroup />)]}
           />,
           <ConditionalButton
             name={"View"}
             result={collection.exists()}
-            whileFalse={[() => showAlert("Asset Group does not exist.")]}
+            whileFalse={[() => showAlert("Customer Group does not exist.")]}
             whileTrue={[
               () =>
                 openWindow(
-                  <CreateAssetGroup
+                  <CreateCustomerGroup
                     method="View"
                     initial={collection.getData()}
                   />,
@@ -62,11 +62,11 @@ export function ManageAssetGroup() {
           <ConditionalButton
             name={"Update"}
             result={collection.exists()}
-            whileFalse={[() => showAlert("Asset Group does not exist.")]}
+            whileFalse={[() => showAlert("Customer Group does not exist.")]}
             whileTrue={[
               () =>
                 openWindow(
-                  <CreateAssetGroup
+                  <CreateCustomerGroup
                     method="Update"
                     initial={collection.getData()}
                   />,
@@ -76,11 +76,11 @@ export function ManageAssetGroup() {
           <ConditionalButton
             name={"Copy"}
             result={collection.exists()}
-            whileFalse={[() => showAlert("Asset Group does not exist.")]}
+            whileFalse={[() => showAlert("Customer Group does not exist.")]}
             whileTrue={[
               () =>
                 openWindow(
-                  <CreateAssetGroup
+                  <CreateCustomerGroup
                     method="Create"
                     initial={{
                       ...collection.getData(),
@@ -105,11 +105,11 @@ export function ManageAssetGroup() {
             />
           </Row>
           <Row overflow="visible">
-            <Label label={"Asset Group"} />
+            <Label label={"Customer Group"} />
             <AutoSuggestInput
               value={code}
               process={(value) => setcode(value)}
-              placeholder={"Enter Asset Group"}
+              placeholder={"Enter Customer Group"}
               suggestions={collection.listAllFromCompany("Code")}
               captions={collection.listAllFromCompany("Description")}
             />
@@ -120,35 +120,16 @@ export function ManageAssetGroup() {
   );
 }
 
-export function CreateAssetGroup({
-  initial = defaultAssetGroup,
+export function CreateCustomerGroup({
+  initial = defaultCustomerGroup,
   method = "Create",
 }) {
   const { data, changeData, reset, setdata } = useData(initial);
   const { openWindow, openConfirm, showAlert } = useInterface();
   const { DisplayHidingError, addError, clearErrors, errorsExist } = useError();
-  const {
-    Company,
-    Code,
-    Description,
-    Depreciable,
-    GLAsset,
-    GLDep,
-    GLAccDep,
-    GLLossRet,
-    GLLossDisp,
-    GLGainDisp,
-    Status,
-  } = data;
-  const Gls = [
-    { code: "GLAsset", name: "General Ledger Asset" },
-    { code: "GLDep", name: "General Ledger Depreciation" },
-    { code: "GLAccDep", name: "General Ledger Accumulated Depreciation" },
-    { code: "GLLossRet", name: "General Ledger Loss on Retirement" },
-    { code: "GLLossDisp", name: "General Ledger Loss on Disposal" },
-    { code: "GLGainDisp", name: "General Ledger Gain on Disposal" },
-  ];
-  const collection = new AssetGroup(Code, Company);
+  const { Company, Code, Description, GL } = data;
+  const Gls = [{ code: "GL", name: "General Ledger Payables (net)" }];
+  const collection = new CustomerGroup(Code, Company);
   const glcollection = new GeneralLedger("", Company);
   useEffect(() => {
     clearErrors();
@@ -162,7 +143,7 @@ export function CreateAssetGroup({
       addError(
         collection.exists(),
         "Code",
-        `Asset Group ${Code} already exist in Company ${Company}.`,
+        `Customer Group ${Code} already exist in Company ${Company}.`,
       );
       Gls.forEach((gl, g) => {
         addError(
@@ -179,7 +160,7 @@ export function CreateAssetGroup({
   return (
     <>
       <WindowTitle
-        title={`${method} Asset Group`}
+        title={`${method} Customer Group`}
         menu={[
           <Conditional logic={method === "Create"}>
             <ConditionalButton
@@ -196,7 +177,7 @@ export function CreateAssetGroup({
               whileFalse={[() => showAlert("Messages exist. Please check.")]}
               whileTrue={[
                 () => showAlert(collection.update(data)),
-                () => openWindow(<ManageAssetGroup />),
+                () => openWindow(<ManageCustomerGroup />),
               ]}
             />
           </Conditional>,
@@ -213,7 +194,7 @@ export function CreateAssetGroup({
                 openConfirm(
                   "Data not saved will be lost.",
                   [],
-                  [() => openWindow(<ManageAssetGroup />)],
+                  [() => openWindow(<ManageCustomerGroup />)],
                 ),
             ]}
           />,
@@ -263,23 +244,10 @@ export function CreateAssetGroup({
                 value={Description}
                 process={(value) => changeData("", "Description", value)}
                 type={"text"}
-                maxLength={4}
               />
             </Conditional>
             <Conditional logic={method === "View"}>
               <label>{Description}</label>
-            </Conditional>
-          </Row>
-          <Row>
-            <Label label={"Depreciable"} />
-            <Conditional logic={method === "Create"}>
-              <CheckBox
-                value={Depreciable}
-                process={(value) => changeData("", "Depreciable", value)}
-              />
-            </Conditional>
-            <Conditional logic={method !== "Create"}>
-              <CheckBox value={Depreciable} />
             </Conditional>
           </Row>
           <Conditional logic={method === "View"}>

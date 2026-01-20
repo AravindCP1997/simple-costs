@@ -26,6 +26,7 @@ import {
   CompanyCollection,
   WageType,
   IncomeTaxCode,
+  EmployeeGroup,
 } from "../classes";
 import { Collection } from "../Database";
 import {
@@ -145,6 +146,7 @@ export function CreateEmployee({
     Company,
     Code,
     Name,
+    EmployeeGroupCode,
     Address,
     PostalCode,
     Country,
@@ -162,9 +164,12 @@ export function CreateEmployee({
     TaxCode,
     Additions,
     Deductions,
+    TIN,
+    BankAccounts,
     Status,
   } = data;
   const collection = new Employee(Code, Company);
+  const eg = new EmployeeGroup(EmployeeGroupCode, Company);
   const wagetypes = new WageType("", Company);
   useEffect(() => {
     clearErrors();
@@ -174,10 +179,23 @@ export function CreateEmployee({
         "Company",
         `Company does not exists`,
       );
+      addError(!eg.exists(), "EmployeeGroup", "Employee Group does not exist.");
       addError(Name === "", "Name", "Name cannot be blank.");
     }
     addError(Country === "", "Country", "Country cannot be blank.");
     addError(State === "", "State", "State cannot be blank.");
+    addError(DOB === "", "DOB", "Date of Birth cannot be blank.");
+    addError(DOJ === "", "DOJ", "Date of Joining cannot be blank.");
+    addError(
+      DOJ < DOB,
+      "DOJ",
+      "Date of Joining cannot be earlier than Date of Birth",
+    );
+    addError(
+      DOS !== "" && DOS < DOJ,
+      "DOS",
+      "Date of Separation cannot be earlier than Date of Joining",
+    );
   }, [data]);
 
   return (
@@ -228,7 +246,7 @@ export function CreateEmployee({
       />
       <WindowContent>
         <MultiDisplayArea
-          heads={["General", "Organisational", "Wages", "Taxation"]}
+          heads={["General", "Organisational", "Wages", "Taxation", "Banking"]}
           contents={[
             <Column overflow="visible">
               <Row overflow="visible">
@@ -256,6 +274,23 @@ export function CreateEmployee({
                 <Label label={"Code"} />
                 <Conditional logic={method !== "Create"}>
                   <label>{Code}</label>
+                </Conditional>
+              </Row>
+              <Row overflow="visible">
+                <Label label={"Employee Group"} />
+                <Conditional logic={method === "Create"}>
+                  <AutoSuggestInput
+                    value={EmployeeGroupCode}
+                    process={(value) =>
+                      changeData("", "EmployeeGroupCode", value)
+                    }
+                    placeholder={"Enter Employee Group"}
+                    suggestions={eg.listAllFromCompany("Code")}
+                    captions={eg.listAllFromCompany("Description")}
+                  />
+                </Conditional>
+                <Conditional logic={method !== "Create"}>
+                  <label>{EmployeeGroupCode}</label>
                 </Conditional>
               </Row>
               <Row>
@@ -395,6 +430,19 @@ export function CreateEmployee({
                 </Conditional>
                 <Conditional logic={method === "View"}>
                   <label>{DOS}</label>
+                </Conditional>
+              </Row>
+              <Row borderBottom="none">
+                <Label label={"Status"} />
+                <Conditional logic={method !== "View"}>
+                  <Option
+                    value={Status}
+                    process={(value) => changeData("", "Status", value)}
+                    options={["Working", "On hold", "Separated"]}
+                  />
+                </Conditional>
+                <Conditional logic={method === "View"}>
+                  <label>{Status}</label>
                 </Conditional>
               </Row>
             </Column>,
@@ -788,6 +836,19 @@ export function CreateEmployee({
               </Conditional>
             </Column>,
             <Column overflow="visible">
+              <Row>
+                <Label label={"Taxpayer Identification Number"} />
+                <Conditional logic={method !== "View"}>
+                  <Input
+                    value={TIN}
+                    process={(value) => changeData("", "TIN", value)}
+                    type={"text"}
+                  />
+                </Conditional>
+                <Conditional logic={method === "View"}>
+                  <label>{TIN}</label>
+                </Conditional>
+              </Row>
               <Conditional logic={method !== "View"}>
                 <Column overflow="visible">
                   <Row jc="left">
@@ -975,6 +1036,70 @@ export function CreateEmployee({
                     ])}
                   />
                 </Column>
+              </Conditional>
+            </Column>,
+            <Column>
+              <Conditional logic={method !== "View"}>
+                <Row jc="left">
+                  <Label label={"Bank Accounts"} />
+                  <Button
+                    name={"Add"}
+                    functionsArray={[
+                      () =>
+                        addItemtoArray(`BankAccounts`, {
+                          Bank: "",
+                          SWIFT: "",
+                          Account: "",
+                          Confirm: "",
+                        }),
+                    ]}
+                  />
+                </Row>
+                <Table
+                  columns={[
+                    "Bank",
+                    "SWIFT Code",
+                    "Account",
+                    "Re-enter Account",
+                    "",
+                  ]}
+                  rows={BankAccounts.map((account, a) => [
+                    <Input
+                      value={account.Bank}
+                      process={(value) =>
+                        changeData(`BankAccounts/${a}`, "Bank", value)
+                      }
+                      type={"text"}
+                    />,
+                    <Input
+                      value={account.SWIFT}
+                      process={(value) =>
+                        changeData(`BankAccounts/${a}`, "SWIFT", value)
+                      }
+                      type={"text"}
+                    />,
+                    <Input
+                      value={account.Account}
+                      process={(value) =>
+                        changeData(`BankAccounts/${a}`, "Account", value)
+                      }
+                      type={"text"}
+                    />,
+                    <Input
+                      value={account.Confirm}
+                      process={(value) =>
+                        changeData(`BankAccounts/${a}`, "Confirm", value)
+                      }
+                      type={"text"}
+                    />,
+                    <Button
+                      name={"-"}
+                      functionsArray={[
+                        () => deleteItemfromArray("BankAccounts", a),
+                      ]}
+                    />,
+                  ])}
+                />
               </Conditional>
             </Column>,
           ]}
