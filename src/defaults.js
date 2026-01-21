@@ -325,3 +325,70 @@ export const defaultBusinessTaxCode = {
   Description: "",
   Accounting: [{ BP: "", TType: "All", GL: "", Type: "Debit", Rate: 0 }],
 };
+
+export const defaultVendor = {
+  Company: "",
+  Code: "",
+  VendorGroupCode: "",
+  Name: "",
+  Address: "",
+  PostalCode: "",
+  Country: "",
+  State: "",
+  Email: "",
+  Phone: "",
+  CTIN: "",
+  BTIN: "",
+  CIN: "",
+  BankAccounts: [{ Bank: "", SWIFT: "", Account: "", Confirm: "" }],
+  Withholding: [{ Code: "", Exemption: 0, Remarks: "", Active: true }],
+  GroupKeys: [""],
+};
+
+export const defaultCustomer = {
+  Company: "",
+  Code: "",
+  CustomerGroupCode: "",
+  Name: "",
+  Address: "",
+  PostalCode: "",
+  Country: "",
+  State: "",
+  Email: "",
+  Phone: "",
+  CTIN: "",
+  BTIN: "",
+  CIN: "",
+  BankAccounts: [{ Bank: "", SWIFT: "", Account: "", Confirm: "" }],
+  Withholding: [{ Code: "", Exemption: 0, Remarks: "", Active: true }],
+  GroupKeys: [""],
+};
+
+export const defaultBankAccount = {
+  Company: "",
+  Code: "",
+  Bank: "",
+  Address: "",
+  PostalCode: "",
+  Country: "",
+  State: "",
+  Email: "",
+  Phone: "",
+  CompanyName: "",
+  SWIFT: "",
+  Account: "",
+  Confirm: "",
+  GL: "",
+  PC: "",
+  GroupKeys: [""],
+};
+
+export const defaultVirtualAccount = {
+  Company: "",
+  Code: "",
+  Account: "",
+  VAN: "",
+  Credit: "Customer",
+  Assignment: "",
+  ProfitCenter: "",
+};

@@ -1061,10 +1061,10 @@ export class BusinessTaxCode extends CompanyCollection {
 export class ExchangeRates extends CompanyCollection {
   constructor(currency, company, name = "ExchangeRates") {
     super(company, name);
-    this.currency = currency;
-    this.criteria = { Currency: this.currency };
+    this.currencycode = currency;
+    this.criteria = { Currency: this.currencycode };
     this.defaults = {
-      Currency: this.currency,
+      Currency: this.currencycode,
       Company: this.companycode,
       Rates: [{ From: "", To: "", Rate: "" }],
     };
@@ -1082,6 +1082,106 @@ export class ExchangeRates extends CompanyCollection {
     if (!this.exists()) {
       return super.add(data);
     }
+    return super.update(this.criteria, data);
+  }
+}
+
+export class Customer extends CompanyCollection {
+  constructor(code, company, name = "Customer") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Customer").From;
+    const Code = super.autoNumber(this.criteria, "Code", numberingStart);
+    super.add({ ...data, ["Code"]: Code });
+    return `Customer saved, Code: ${Code}`;
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    this.delete();
+    super.add(data);
+    return "Customer Updated";
+  }
+}
+
+export class Vendor extends CompanyCollection {
+  constructor(code, company, name = "Vendor") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Vendor").From;
+    const Code = super.autoNumber(this.criteria, "Code", numberingStart);
+    super.add({ ...data, ["Code"]: Code });
+    return `Vendor saved, Code: ${Code}`;
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    this.delete();
+    super.add(data);
+    return "Vendor Updated";
+  }
+}
+
+export class BankAccount extends CompanyCollection {
+  constructor(code, company, name = "BankAccount") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}
+
+export class VirtualAccount extends CompanyCollection {
+  constructor(code, company, name = "VirtualAccount") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
     return super.update(this.criteria, data);
   }
 }

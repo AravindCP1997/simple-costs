@@ -1101,6 +1101,25 @@ export function CreateEmployee({
                   ])}
                 />
               </Conditional>
+              <Conditional logic={method === "View"}>
+                <Row jc="left">
+                  <Label label={"Bank Accounts"} />
+                </Row>
+                <Table
+                  columns={[
+                    "Bank",
+                    "SWIFT Code",
+                    "Account",
+                    "Re-enter Account",
+                  ]}
+                  rows={BankAccounts.map((account, a) => [
+                    <label>{account.Bank}</label>,
+                    <label>{account.SWIFT}</label>,
+                    <label>{account.Account}</label>,
+                    <label>{account.Confirm}</label>,
+                  ])}
+                />
+              </Conditional>
             </Column>,
           ]}
         />

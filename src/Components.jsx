@@ -954,6 +954,8 @@ export function Row({
   padding = "0px",
   overflow = "auto",
   borderBottom = "2px solid var(--whitet)",
+  flexWrap = "nowrap",
+  width = "100%",
 }) {
   return (
     <div
@@ -965,9 +967,10 @@ export function Row({
         alignItems: ai,
         gap: gap,
         padding: padding,
-        width: "100%",
+        width,
         overflow: overflow,
         borderBottom,
+        flexWrap,
       }}
     >
       {children}

@@ -129,6 +129,8 @@ import {
   CreateBusinessTaxCode,
   ManageBusinessTaxCode,
 } from "./Transactions/BusinessTaxCode";
+import { ManageExchangeRates } from "./Transactions/ExchangeRates";
+import { CreateCustomer, ManageCustomer } from "./Transactions/Customer";
 
 const codes = [
   {
@@ -612,6 +614,22 @@ const codes = [
     subgroup: "Payables and Receivables",
   },
   {
+    code: "ccus",
+    screen: <Window />,
+    window: <CreateCustomer />,
+    name: "Create Customer",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
+    code: "mcus",
+    screen: <Window />,
+    window: <ManageCustomer />,
+    name: "Manage Customer",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
     code: "cbtc",
     screen: <Window />,
     window: <CreateBusinessTaxCode />,
@@ -640,6 +658,14 @@ const codes = [
     screen: <Window />,
     window: <ManageWithholdingTax />,
     name: "Manage Withholding Tax",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
+    code: "exr",
+    screen: <Window />,
+    window: <ManageExchangeRates />,
+    name: "Exchange Rates",
     group: "Control",
     subgroup: "Payables and Receivables",
   },
