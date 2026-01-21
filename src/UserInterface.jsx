@@ -138,6 +138,7 @@ import {
   ManageVirtualAccount,
 } from "./Transactions/VirtualAccount";
 import { FaGear, FaUser } from "react-icons/fa6";
+import { ManageLedgerAssignment } from "./Transactions/LedgerAssignment";
 
 const codes = [
   {
@@ -417,6 +418,14 @@ const codes = [
     screen: <Window />,
     window: <ManageGeneralLedger />,
     name: "Manage General Ledger",
+    group: "Control",
+    subgroup: "Financial Accounting",
+  },
+  {
+    code: "lst",
+    screen: <Window />,
+    window: <ManageLedgerAssignment />,
+    name: "Ledger Assignment",
     group: "Control",
     subgroup: "Financial Accounting",
   },

@@ -1185,3 +1185,26 @@ export class VirtualAccount extends CompanyCollection {
     return super.update(this.criteria, data);
   }
 }
+
+export class LedgerAssignment extends CompanyCollection {
+  constructor(company, name = "LedgerAssignment") {
+    super(company, name);
+    this.defaults = {
+      Company: this.companycode,
+      GLDisc: "",
+      GLIntC: "",
+      GLIntD: "",
+      GLForexG: "",
+      GLForexL: "",
+    };
+  }
+  exists() {
+    return super.exists({});
+  }
+  getData() {
+    if (!this.exists()) {
+      return this.defaults;
+    }
+    return super.getData({});
+  }
+}
