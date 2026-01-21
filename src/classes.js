@@ -1208,3 +1208,189 @@ export class LedgerAssignment extends CompanyCollection {
     return super.getData({});
   }
 }
+
+export class PurchaseOrder extends CompanyCollection {
+  constructor(code, company, name = "PurchaseOrder") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Purchase Order").From;
+    const Code = super.autoNumber(this.criteria, "Code", numberingStart);
+    super.add({ ...data, ["Code"]: Code });
+    return `Purchase Order saved, Number: ${Code}`;
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    this.delete();
+    super.add(data);
+    return "Purchase Order Updated";
+  }
+}
+
+export class SaleOrder extends CompanyCollection {
+  constructor(code, company, name = "SaleOrder") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Sale Order").From;
+    const Code = super.autoNumber(this.criteria, "Code", numberingStart);
+    super.add({ ...data, ["Code"]: Code });
+    return `Sale Order saved, Number: ${Code}`;
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    this.delete();
+    super.add(data);
+    return "Sale Order Updated";
+  }
+}
+
+export class StockTransportOrder extends CompanyCollection {
+  constructor(code, company, name = "StockTransportOrder") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Stock Transport Order").From;
+    const Code = super.autoNumber(this.criteria, "Code", numberingStart);
+    super.add({ ...data, ["Code"]: Code });
+    return `Stock Transport Order saved, Number: ${Code}`;
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    this.delete();
+    super.add(data);
+    return "Stock Transport Order Updated";
+  }
+}
+
+export class MaintenanceOrder extends CompanyCollection {
+  constructor(code, company, name = "MaintenanceOrder") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Maintenance Order").From;
+    const Code = super.autoNumber(this.criteria, "Code", numberingStart);
+    super.add({ ...data, ["Code"]: Code });
+    return `Maintenance Order saved, Number: ${Code}`;
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    this.delete();
+    super.add(data);
+    return "Maintenance Order Updated";
+  }
+}
+
+export class ProductionOrder extends CompanyCollection {
+  constructor(code, company, name = "ProductionOrder") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Production Order").From;
+    const Code = super.autoNumber(this.criteria, "Code", numberingStart);
+    super.add({ ...data, ["Code"]: Code });
+    return `Production Order saved, Number: ${Code}`;
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    this.delete();
+    super.add(data);
+    return "Production Order Updated";
+  }
+}
+
+export class ProcessOrder extends CompanyCollection {
+  constructor(code, company, name = "ProcessOrder") {
+    super(company, name);
+    this.code = code;
+    this.criteria = { Code: this.code };
+  }
+
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Process Order").From;
+    const Code = super.autoNumber(this.criteria, "Code", numberingStart);
+    super.add({ ...data, ["Code"]: Code });
+    return `Process Order saved, Number: ${Code}`;
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    this.delete();
+    super.add(data);
+    return "Process Order Updated";
+  }
+}

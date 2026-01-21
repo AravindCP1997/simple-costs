@@ -1,3 +1,5 @@
+import { Vendor } from "./classes";
+
 export const defaultChartofAccounts = {
   Code: "",
   Level: "Company",
@@ -390,5 +392,91 @@ export const defaultVirtualAccount = {
   VAN: "",
   Credit: "Customer",
   CreditAccount: "",
-  ProfitCenter: "",
+  PC: "",
+};
+
+export const defaultPurchaseOrder = {
+  Company: "",
+  Code: "",
+  Date: "",
+  VendorCode: "",
+  Description: "",
+  Items: [
+    {
+      Type: "Material",
+      Item: "",
+      Description: "",
+      Quantity: "",
+      Rate: "",
+      Value: "",
+      Due: "",
+      Location: "",
+      OrgAssignmentType: "CostCenter",
+      Assignment: "",
+      BTC: "",
+    },
+  ],
+};
+
+export const defaultSaleOrder = {
+  Company: "",
+  Code: "",
+  Date: "",
+  CustomerCode: "",
+  Description: "",
+  Items: [
+    {
+      Type: "Material",
+      Item: "",
+      Description: "",
+      Quantity: "",
+      Rate: "",
+      Value: "",
+      Due: "",
+      RevenueCenterCode: "",
+      BTC: "",
+    },
+  ],
+};
+
+export const defaultMaintenanceOrder = {
+  Company: "",
+  Code: "",
+  Date: "",
+  Description: "",
+  From: "",
+  To: "",
+  Activities: [
+    {
+      Description: "",
+      From: "",
+      To: "",
+      OrgAssignment: [{ Type: "CostCenter", Assignment: "", Share: "" }],
+    },
+  ],
+  BoM: [{ Type: "Material", Item: "", Quantity: "" }],
+};
+
+export const defaultProductionOrder = {
+  Company: "",
+  Code: "",
+  Plant: "",
+  Date: "",
+  From: "",
+  To: "",
+  Description: "",
+  Products: [{ Material: "", Quantity: "" }],
+  BoM: [{ Type: "Material", Item: "", Quantity: "" }],
+};
+
+export const defaultStockTransportOrder = {
+  Company: "",
+  Code: "",
+  VendorCode: "",
+  Date: "",
+  Description: "",
+  Transport: "",
+  Items: [
+    { Material: "", From: "", To: "", Quantity: "", Rate: "", Value: "" },
+  ],
 };
