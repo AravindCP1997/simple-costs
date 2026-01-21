@@ -389,6 +389,6 @@ export const defaultVirtualAccount = {
   Account: "",
   VAN: "",
   Credit: "Customer",
-  Assignment: "",
+  CreditAccount: "",
   ProfitCenter: "",
 };

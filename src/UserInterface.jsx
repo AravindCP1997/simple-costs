@@ -28,11 +28,8 @@ import {
   FaSearch,
   FaHome,
   FaArrowRight,
-  FaDesktop,
-  FaWindowClose,
-  FaUniversalAccess,
-  FaRegWindowClose,
-  FaWindowMinimize,
+  FaChild,
+  FaTimes,
 } from "react-icons/fa";
 import { ListItems, ListUniqueItems, clickButton } from "./functions";
 import { Scratch } from "./App";
@@ -131,6 +128,16 @@ import {
 } from "./Transactions/BusinessTaxCode";
 import { ManageExchangeRates } from "./Transactions/ExchangeRates";
 import { CreateCustomer, ManageCustomer } from "./Transactions/Customer";
+import { CreateVendor, ManageVendor } from "./Transactions/Vendor";
+import {
+  CreateBankAccount,
+  ManageBankAccount,
+} from "./Transactions/BankAccount";
+import {
+  CreateVirtualAccount,
+  ManageVirtualAccount,
+} from "./Transactions/VirtualAccount";
+import { FaGear, FaUser } from "react-icons/fa6";
 
 const codes = [
   {
@@ -630,6 +637,54 @@ const codes = [
     subgroup: "Payables and Receivables",
   },
   {
+    code: "cven",
+    screen: <Window />,
+    window: <CreateVendor />,
+    name: "Create Vendor",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
+    code: "mven",
+    screen: <Window />,
+    window: <ManageVendor />,
+    name: "Manage Vendor",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
+    code: "cbk",
+    screen: <Window />,
+    window: <CreateBankAccount />,
+    name: "Create Bank Account",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
+    code: "mbk",
+    screen: <Window />,
+    window: <ManageBankAccount />,
+    name: "Manage Bank Account",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
+    code: "cvan",
+    screen: <Window />,
+    window: <CreateVirtualAccount />,
+    name: "Create Virtual Account",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
+    code: "mvan",
+    screen: <Window />,
+    window: <ManageVirtualAccount />,
+    name: "Manage Virtual Account",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
     code: "cbtc",
     screen: <Window />,
     window: <CreateBusinessTaxCode />,
@@ -766,7 +821,7 @@ function FloatingWindow() {
               <FaArrowsAlt />
             </button>
             <button onClick={() => closeFloat()}>
-              <FaWindowClose />
+              <FaTimes />
             </button>
           </Row>
           <div style={contentStyle} className="floatingWindowContent">
@@ -962,8 +1017,10 @@ function SearchBar() {
   };
 
   const buttonStyle = {
-    borderRadius: "50%",
     aspectRatio: "1/1",
+    width: "100%",
+    border: "3px solid var(--bluet)",
+    borderRadius: "50%",
   };
 
   const insideButtonStyle = {
@@ -1003,7 +1060,7 @@ function SearchBar() {
         </div>
 
         <Button
-          name={<FaDesktop />}
+          name={<FaChild />}
           style={buttonStyle}
           functionsArray={[() => openFloat(<Accessibility />)]}
           setRef={(element) => addRef("Accessibility", element)}
@@ -1078,12 +1135,9 @@ export function Home() {
   };
 
   const titleStyle = {
-    borderBottom: "2px solid var(--bluet)",
-    width: "min(100%,400px)",
     textAlign: "left",
     cursor: "pointer",
     margin: "0",
-    padding: "10px 5px",
     color: "var(--blue)",
   };
 
@@ -1130,14 +1184,28 @@ export function Home() {
   };
   return (
     <div style={style}>
-      <div>
-        <h2
-          className="home-title"
-          style={titleStyle}
-          onClick={() => setscreen(<Drawer initial="System" />)}
-        >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          borderBottom: "2px solid var(--bluet)",
+          alignItems: "flex-end",
+          padding: "10px 5px",
+          width: "min(100%,400px)",
+        }}
+      >
+        <h2 className="home-title" style={titleStyle}>
           C O M P O U N D S
         </h2>
+        <div>
+          <FaGear
+            cursor={"Pointer"}
+            onClick={() => setscreen(<Drawer initial="System" />)}
+            padding="0px"
+            width={"100%"}
+          />
+        </div>
       </div>
       <div style={menusStyle}>
         <Menu name="Record" color="green" drawer="Record" />
@@ -1200,7 +1268,7 @@ export function Drawer({ initial = "Record" }) {
     justifyContent: "center",
     alignItems: "center",
     gap: "10px",
-    borderRadius: "15px",
+    borderRadius: "10%",
     border: "5px solid var(--whitet)",
     transition: "0.5s",
     cursor: "pointer",
