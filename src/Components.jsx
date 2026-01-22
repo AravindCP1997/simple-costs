@@ -458,13 +458,7 @@ export function MultiDisplayArea({ heads = [], contents = [] }) {
   return (
     <div className="multiDisplay">
       <div key={"Header"}>
-        <div
-          className="multiDisplayOptions"
-          style={{
-            background: blue ? "var(--lightbluet)" : "var(--whitet)",
-            border: "none",
-          }}
-        >
+        <div className="multiDisplayOptions">
           {heads.map((head, h) => (
             <div
               key={head}
@@ -476,6 +470,11 @@ export function MultiDisplayArea({ heads = [], contents = [] }) {
                   ? "multiDisplayOptionSelected"
                   : "multiDisplayOption"
               }
+              style={{
+                background: blue ? "var(--lightbluet)" : "var(--whitet)",
+                borderTopRightRadius: h === heads.length - 1 ? "10px" : "0",
+                borderTopLeftRadius: h === 0 ? "10px" : "0",
+              }}
             >
               <h4>{head}</h4>
             </div>

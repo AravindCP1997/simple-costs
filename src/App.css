@@ -120,7 +120,6 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  align-items: flex-start;
 }
 
 .multiDisplayOptions {
@@ -128,9 +127,8 @@
   flex-direction: row;
   justify-content: left;
   align-items: flex-end;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  overflow: hidden;
+  overflow: auto hidden;
+  width: 100%;
 }
 
 .multiDisplayOptionSelected,
@@ -140,8 +138,6 @@
   color: var(--bluet);
   transition: 0.5s;
   border-bottom: 5px solid transparent;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
   h4 {
     margin: 0;
   }
