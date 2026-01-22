@@ -139,6 +139,9 @@ import {
 } from "./Transactions/VirtualAccount";
 import { FaGear, FaUser } from "react-icons/fa6";
 import { ManageLedgerAssignment } from "./Transactions/LedgerAssignment";
+import { CreatePurchaseOrder } from "./Transactions/PurchaseOrder";
+import { PurchaseOrder } from "./classes";
+import { createPortal } from "react-dom";
 
 const codes = [
   {
@@ -734,6 +737,14 @@ const codes = [
     subgroup: "Payables and Receivables",
   },
   {
+    code: "po",
+    screen: <Window />,
+    window: <CreatePurchaseOrder />,
+    name: "Purchase Order",
+    group: "Control",
+    subgroup: "Controlling",
+  },
+  {
     code: "atc",
     screen: <Window />,
     window: <ManageAttendance />,
@@ -846,6 +857,7 @@ function Alert() {
   const {
     alert: { visible, message, type },
     closeAlert,
+    accessibility: { Font },
   } = useInterface();
 
   if (!visible) return null;
@@ -865,10 +877,11 @@ function Alert() {
     backdropFilter: "blur(30px)",
     display: "flex",
     flexDirection: "column",
+    fontFamily: Font,
   };
 
-  return (
-    <Overlay>
+  return createPortal(
+    <Overlay onClick={() => closeAlert()}>
       <div style={style}>
         <h3 style={{ margin: "0", textAlign: "center" }}>{type}</h3>
         <p style={{ margin: "0", textAlign: "center" }}>{message}</p>
@@ -876,7 +889,8 @@ function Alert() {
           <Button name="OK" functionsArray={[() => closeAlert()]} />
         </CenterFlex>
       </div>
-    </Overlay>
+    </Overlay>,
+    document.body,
   );
 }
 
@@ -914,7 +928,7 @@ function Confirm() {
         }}
       >
         <div style={style}>
-          <h3 style={{ margin: "0", textAlign: "center" }}>Are your sure?</h3>
+          <h3 style={{ margin: "0", textAlign: "center" }}>Are you sure?</h3>
           <p style={{ margin: "0", textAlign: "center" }}>{message}</p>
           <CenterFlex>
             <Button
@@ -939,7 +953,7 @@ function Prompt() {
 
   const style = {
     position: "fixed",
-    zIndex: "1005",
+    zIndex: "800",
     bottom: "20%",
     maxHeight: "60%",
     padding: "20px",

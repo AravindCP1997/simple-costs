@@ -1215,7 +1215,6 @@ export class PurchaseOrder extends CompanyCollection {
     this.code = code;
     this.criteria = { Code: this.code };
   }
-
   add(data) {
     const numberingStart = this.company
       .getData()

@@ -264,109 +264,100 @@ export function CreateBusinessTaxCode({
               <label>{Description}</label>
             </Conditional>
           </Row>
-          <Column overflow="visible">
-            <Conditional logic={method !== "View"}>
-              <Row jc="left">
-                <Label label={"Accounting"} />
+          <Conditional logic={method !== "View"}>
+            <Row jc="left">
+              <Label label={"Accounting"} />
+              <Button
+                name={"Add"}
+                functionsArray={[
+                  () =>
+                    addItemtoArray(`Accounting`, {
+                      BP: "",
+                      TType: "All",
+                      GL: "",
+                      Type: "Debit",
+                      Rate: 0,
+                    }),
+                ]}
+              />
+            </Row>
+            <Table
+              columns={[
+                "Business Place",
+                "Transaction Type",
+                "General Ledger",
+                "Debit/Credit",
+                "Rate",
+                "",
+              ]}
+              rows={Accounting.map((account, a) => [
+                <AutoSuggestInput
+                  value={account.BP}
+                  process={(value) =>
+                    changeData(`Accounting/${a}`, "BP", value)
+                  }
+                  suggestions={bp.listAllFromCompany("Code")}
+                  captions={bp.listAllFromCompany("Description")}
+                  placeholder={"Enter Business Place"}
+                />,
+                <Option
+                  value={account.TType}
+                  process={(value) =>
+                    changeData(`Accounting/${a}`, "TType", value)
+                  }
+                  options={["InterCountry", "InterState", "IntraState", "All"]}
+                />,
+                <AutoSuggestInput
+                  value={account.GL}
+                  process={(value) =>
+                    changeData(`Accounting/${a}`, "GL", value)
+                  }
+                  suggestions={glcollection.listAllFromCompany("Code")}
+                  captions={glcollection.listAllFromCompany("Description")}
+                  placeholder={"Enter General Ledger"}
+                />,
+                <Option
+                  value={account.Type}
+                  process={(value) =>
+                    changeData(`Accounting/${a}`, "Type", value)
+                  }
+                  options={["Debit", "Credit"]}
+                />,
+                <Input
+                  type={"number"}
+                  value={account.Rate}
+                  process={(value) =>
+                    changeData(`Accounting/${a}`, "Rate", value)
+                  }
+                />,
                 <Button
-                  name={"Add"}
-                  functionsArray={[
-                    () =>
-                      addItemtoArray(`Accounting`, {
-                        BP: "",
-                        TType: "All",
-                        GL: "",
-                        Type: "Debit",
-                        Rate: 0,
-                      }),
-                  ]}
-                />
-              </Row>
-              <Table
-                columns={[
-                  "Business Place",
-                  "Transaction Type",
-                  "General Ledger",
-                  "Debit/Credit",
-                  "Rate",
-                  "",
-                ]}
-                rows={Accounting.map((account, a) => [
-                  <AutoSuggestInput
-                    value={account.BP}
-                    process={(value) =>
-                      changeData(`Accounting/${a}`, "BP", value)
-                    }
-                    suggestions={bp.listAllFromCompany("Code")}
-                    captions={bp.listAllFromCompany("Description")}
-                    placeholder={"Enter Business Place"}
-                  />,
-                  <Option
-                    value={account.TType}
-                    process={(value) =>
-                      changeData(`Accounting/${a}`, "TType", value)
-                    }
-                    options={[
-                      "InterCountry",
-                      "InterState",
-                      "IntraState",
-                      "All",
-                    ]}
-                  />,
-                  <AutoSuggestInput
-                    value={account.GL}
-                    process={(value) =>
-                      changeData(`Accounting/${a}`, "GL", value)
-                    }
-                    suggestions={glcollection.listAllFromCompany("Code")}
-                    captions={glcollection.listAllFromCompany("Description")}
-                    placeholder={"Enter General Ledger"}
-                  />,
-                  <Option
-                    value={account.Type}
-                    process={(value) =>
-                      changeData(`Accounting/${a}`, "Type", value)
-                    }
-                    options={["Debit", "Credit"]}
-                  />,
-                  <Input
-                    type={"number"}
-                    value={account.Rate}
-                    process={(value) =>
-                      changeData(`Accounting/${a}`, "Rate", value)
-                    }
-                  />,
-                  <Button
-                    name={"-"}
-                    functionsArray={[
-                      () => deleteItemfromArray(`Accounting`, a),
-                    ]}
-                  />,
-                ])}
-              />
-            </Conditional>
-            <Conditional logic={method === "View"}>
-              <Row jc="left">
-                <Label label={"Accounting"} />
-              </Row>
-              <Table
-                columns={[
-                  "Business Place",
-                  "Transaction",
-                  "General Ledger",
-                  "Debit/ Credit",
-                  "Rate",
-                ]}
-                rows={Accounting.map((account, a) => [
-                  <label>{account.BP}</label>,
-                  <label>{account.TType}</label>,
-                  <label>{account.GL}</label>,
-                  <label>{account.Type}</label>,
-                  <label>{account.Rate}</label>,
-                ])}
-              />
-            </Conditional>
-          </Column>
+                  name={"-"}
+                  functionsArray={[() => deleteItemfromArray(`Accounting`, a)]}
+                />,
+              ])}
+            />
+          </Conditional>
+          <Conditional logic={method === "View"}>
+            <Row jc="left">
+              <Label label={"Accounting"} />
+            </Row>
+            <Table
+              columns={[
+                "Business Place",
+                "Transaction",
+                "General Ledger",
+                "Debit/ Credit",
+                "Rate",
+              ]}
+              rows={Accounting.map((account, a) => [
+                <label>{account.BP}</label>,
+                <label>{account.TType}</label>,
+                <label>{account.GL}</label>,
+                <label>{account.Type}</label>,
+                <label>{account.Rate}</label>,
+              ])}
+            />
+          </Conditional>
         </DisplayArea>
       </WindowContent>
     </>

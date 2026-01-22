@@ -216,7 +216,8 @@
 
 .tableContainer {
   padding: 5px;
-  overflow-y: visible;
+  overflow: auto;
+  padding-bottom: 30px;
 }
 
 .tableCell {

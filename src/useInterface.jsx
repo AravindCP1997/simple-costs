@@ -2,13 +2,14 @@ import { createContext, useContext, useState, useRef } from "react";
 import accessibilityData from "./accessibility.js";
 import { updateObject } from "./objects.js";
 import { Home, Window, Drawer } from "./UserInterface.jsx";
+import { Scratch } from "./App.jsx";
 
 const UserInterfaceContext = createContext({});
 
 export const useInterface = () => useContext(UserInterfaceContext);
 
 export const UserInterfaceProvider = ({ children }) => {
-  const [screen, setscreen] = useState(<Home />);
+  const [screen, setscreen] = useState(<Scratch />);
   const [window, setwindow] = useState({ visible: false, content: null });
   const openWindow = (content) => {
     setscreen(<Window />);

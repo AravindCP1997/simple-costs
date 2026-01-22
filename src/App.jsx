@@ -11,6 +11,7 @@ import {
   MultiDisplayArea,
   Input,
   Row,
+  HidingPrompt,
 } from "./Components";
 import UserInterface, { Home } from "./UserInterface";
 import { useState } from "react";
@@ -78,7 +79,6 @@ export function Scratch() {
             </Row>
           </Row>
         </DisplayArea>
-        {JSON.stringify(new LedgerAssignment("A").exists())}
       </WindowContent>
     </>
   );

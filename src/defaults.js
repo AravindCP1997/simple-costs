@@ -398,6 +398,7 @@ export const defaultVirtualAccount = {
 export const defaultPurchaseOrder = {
   Company: "",
   Code: "",
+  Status: "Draft",
   Date: "",
   VendorCode: "",
   Description: "",

@@ -233,12 +233,11 @@ export const AutoSuggestInput = ({
 
   const dropdownStyle = {
     position: "absolute",
-    background: "white",
     width: "100%",
+    background: "white",
     zIndex: "1550",
     borderBottomLeftRadius: "10px",
     borderBottomRightRadius: "10px",
-    overflow: "hidden",
     boxShadow: "0px 2px 10px -5px gray",
   };
 
@@ -423,6 +422,7 @@ export function DisplayArea({ children }) {
     borderRadius: "15px",
     padding: "10px",
     border: blue ? "5px solid var(--lightbluet)" : "5px solid var(--whitet)",
+    overflow: "visible",
   };
   return <div style={style}>{children}</div>;
 }
@@ -987,6 +987,7 @@ export function Column({
   padding = "0px",
   overflow = "auto",
   borderBottom = "2px solid var(--whitet)",
+  width = "100%",
 }) {
   return (
     <div
@@ -998,8 +999,8 @@ export function Column({
         alignItems: ac,
         gap: gap,
         padding: padding,
-        width: "100%",
-        overflow: overflow,
+        width,
+        overflow,
         borderBottom,
       }}
     >
@@ -1188,3 +1189,105 @@ export function Menu({ title, menu, arrange = "column" }) {
     </div>
   );
 }
+export const HidingPrompt = ({
+  title,
+  children,
+  menu = [],
+  buttonName = title,
+  onClose = [],
+  onSubmitSuccess = [],
+  onSubmitFail = [],
+  result = false,
+  submitLabel = "Submit",
+}) => {
+  const [isOpen, setOpen] = useState(false);
+  const {
+    accessibility: { Font },
+  } = useInterface();
+
+  const style = {
+    position: "fixed",
+    fontFamily: Font,
+    color: "var(--blue)",
+    width: "min(90%,600px)",
+    maxHeight: "90%",
+    overflow: "visible",
+    boxShadow: "0px 2px 10px -5px gray",
+    background: "var(--whitet)",
+    border: "5px solid var(--whitet)",
+    backdropFilter: "blur(30px)",
+    padding: "10px",
+    borderRadius: "15px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+    zIndex: 1010,
+  };
+
+  return (
+    <div>
+      <Button name={buttonName} functionsArray={[() => setOpen(true)]} />
+      {isOpen && (
+        <>
+          {createPortal(
+            <Overlay>
+              <FocusTrap
+                focusTrapOptions={{
+                  escapeDeactivates: false,
+                  clickOutsideDeactivates: true,
+                }}
+              >
+                <div style={style}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        borderBottom: "2px solid var(--bluet)",
+                        padding: "10px",
+                      }}
+                    >
+                      <h3 style={{ margin: 0 }}>{title}</h3>
+                      <Button
+                        name="Close"
+                        className={"closeButton"}
+                        functionsArray={[...onClose, () => setOpen(false)]}
+                      />
+                    </div>
+                    <div
+                      className="controlButtons"
+                      style={{
+                        borderBottom: "1px solid var(--bluet)",
+                      }}
+                    >
+                      <Button
+                        name={submitLabel}
+                        functionsArray={
+                          result
+                            ? [...onSubmitSuccess, () => setOpen(false)]
+                            : onSubmitFail
+                        }
+                      />
+                      {menu.map((control) => (
+                        <>{control}</>
+                      ))}
+                    </div>
+                  </div>
+                  {children}
+                </div>
+              </FocusTrap>
+            </Overlay>,
+            document.body,
+          )}
+        </>
+      )}
+    </div>
+  );
+};
