@@ -894,7 +894,7 @@ export function Input({
   value,
   type,
   maxLength,
-  process,
+  process = noop,
   keyDownHandler = noop,
   placeholder = "",
   setRef = noop,

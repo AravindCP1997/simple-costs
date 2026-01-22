@@ -444,10 +444,9 @@ export const defaultSaleOrder = {
 export const defaultMaintenanceOrder = {
   Company: "",
   Code: "",
+  Status: "Draft",
   Date: "",
   Description: "",
-  From: "",
-  To: "",
   Activities: [
     {
       Description: "",
@@ -456,29 +455,37 @@ export const defaultMaintenanceOrder = {
       OrgAssignment: [{ Type: "CostCenter", Assignment: "", Share: "" }],
     },
   ],
-  BoM: [{ Type: "Material", Item: "", Quantity: "" }],
 };
 
 export const defaultProductionOrder = {
   Company: "",
   Code: "",
-  Plant: "",
+  Status: "Draft",
+  PlantCode: "",
   Date: "",
-  From: "",
-  To: "",
   Description: "",
-  Products: [{ Material: "", Quantity: "" }],
-  BoM: [{ Type: "Material", Item: "", Quantity: "" }],
+  Products: [{ MaterialCode: "", Quantity: "" }],
+};
+
+export const defaultProcessOrder = {
+  Company: "",
+  Code: "",
+  Status: "Draft",
+  PlantCode: "",
+  Date: "",
+  Description: "",
+  Products: [{ MaterialCode: "", Quantity: "" }],
 };
 
 export const defaultStockTransportOrder = {
   Company: "",
   Code: "",
+  Status: "Draft",
   VendorCode: "",
   Date: "",
   Description: "",
   Transport: "",
   Items: [
-    { Material: "", From: "", To: "", Quantity: "", Rate: "", Value: "" },
+    { MaterialCode: "", From: "", To: "", Quantity: 0, Rate: 0, Value: 0 },
   ],
 };

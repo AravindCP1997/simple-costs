@@ -143,6 +143,9 @@ import { CreatePurchaseOrder } from "./Transactions/PurchaseOrder";
 import { PurchaseOrder } from "./classes";
 import { createPortal } from "react-dom";
 import { CreateSaleOrder } from "./Transactions/SaleOrder";
+import { CreateProductionOrder } from "./Transactions/ProductionOrder";
+import { CreateProcessOrder } from "./Transactions/ProcessOrder";
+import { CreateMaintenanceOrder } from "./Transactions/MaintenanceOrder";
 
 const codes = [
   {
@@ -754,6 +757,30 @@ const codes = [
     subgroup: "Controlling",
   },
   {
+    code: "prod",
+    screen: <Window />,
+    window: <CreateProductionOrder />,
+    name: "Production Order",
+    group: "Control",
+    subgroup: "Controlling",
+  },
+  {
+    code: "proc",
+    screen: <Window />,
+    window: <CreateProcessOrder />,
+    name: "Process Order",
+    group: "Control",
+    subgroup: "Controlling",
+  },
+  {
+    code: "mo",
+    screen: <Window />,
+    window: <CreateMaintenanceOrder />,
+    name: "Maintenance Order",
+    group: "Control",
+    subgroup: "Controlling",
+  },
+  {
     code: "atc",
     screen: <Window />,
     window: <ManageAttendance />,
@@ -1236,6 +1263,7 @@ export function Home() {
             onClick={() => setscreen(<Drawer initial="System" />)}
             padding="0px"
             width={"100%"}
+            color="var(--redt)"
           />
         </div>
       </div>
