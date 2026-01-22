@@ -128,7 +128,7 @@
   justify-content: left;
   align-items: flex-end;
   overflow: auto hidden;
-  width: 100%;
+  width: 80%;
 }
 
 .multiDisplayOptionSelected,
