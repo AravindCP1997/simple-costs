@@ -13,6 +13,7 @@ import {
 
 const useData = (defaults) => {
   const [data, setdata] = useState(defaults);
+  const processed = JSON.parse(JSON.stringify(data));
   const reset = () => setdata(defaults);
   const changeData = (path, key, value) => {
     setdata((prevdata) => updateObject(prevdata, path, key, value));
@@ -44,6 +45,7 @@ const useData = (defaults) => {
 
   return {
     data,
+    processed,
     reset,
     setdata,
     changeData,

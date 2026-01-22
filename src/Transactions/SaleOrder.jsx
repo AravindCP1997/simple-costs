@@ -22,10 +22,10 @@ import { useWindowType, useInterface } from "../useInterface";
 import useData from "../useData";
 import { useError } from "../useError";
 import {
-  PurchaseOrder,
-  Location,
+  SaleOrder,
+  RevenueCenter,
   CompanyCollection,
-  Vendor,
+  Customer,
   BusinessTaxCode,
 } from "../classes";
 import { Collection } from "../Database";
@@ -36,10 +36,10 @@ import {
   noop,
   rangeOverlap,
 } from "../functions";
-import { defaultPurchaseOrder } from "../defaults";
+import { defaultSaleOrder } from "../defaults";
 
-export function CreatePurchaseOrder({
-  initial = defaultPurchaseOrder,
+export function CreateSaleOrder({
+  initial = defaultSaleOrder,
   meth = "Create",
 }) {
   const {
@@ -47,10 +47,7 @@ export function CreatePurchaseOrder({
     changeData: changePrompt,
     reset: resetPrompt,
   } = useData({ company: "", code: "" });
-  const promptCollection = new PurchaseOrder(
-    promptData.code,
-    promptData.company,
-  );
+  const promptCollection = new SaleOrder(promptData.code, promptData.company);
   const [method, setmethod] = useState(meth);
   const {
     data,
@@ -63,7 +60,7 @@ export function CreatePurchaseOrder({
   } = useData(initial);
   const { openWindow, openConfirm, showAlert } = useInterface();
   const { DisplayHidingError, addError, clearErrors, errorsExist } = useError();
-  const { Company, Code, Date, VendorCode, Description, Items, Status } =
+  const { Company, Code, Date, CustomerCode, Description, Items, Status } =
     processed;
   Items.forEach((item, i) => {
     const Item = new CompanyCollection(Company, item.Type);
@@ -71,10 +68,9 @@ export function CreatePurchaseOrder({
       ? Item.getData({ Code: item.Item }).Description
       : "Not Available";
     item.Value = item.Quantity * item.Rate;
-    item.Type === "Material" ? (item.Assignment = "") : (item.Location = "");
   });
-  const collection = new PurchaseOrder(Code, Company);
-  const vendor = new Vendor(VendorCode, Company);
+  const collection = new SaleOrder(Code, Company);
+  const customer = new Customer(CustomerCode, Company);
   useEffect(() => {
     clearErrors();
     if (method !== "View") {
@@ -83,20 +79,11 @@ export function CreatePurchaseOrder({
         "Company",
         `Company '${Company}' does not exist.`,
       );
-      addError(!vendor.exists(), "Vendor", "Vendor does not exist.");
+      addError(!customer.exists(), "Customer", "Customer does not exist.");
       addError(
         Items.forEach((item, i) => {
-          const {
-            Type,
-            Item,
-            Quantity,
-            Rate,
-            Due,
-            Location,
-            OrgAssignmentType,
-            Assignment,
-            BTC,
-          } = item;
+          const { Type, Item, Quantity, Rate, Due, RevenueCenterCode, BTC } =
+            item;
           addError(
             !new CompanyCollection(Company, Type).exists({ Code: Item }),
             `Items/${i + 1}`,
@@ -108,32 +95,17 @@ export function CreatePurchaseOrder({
             `Business Tax Code '${BTC}' does not exist.`,
           );
           addError(
-            Type === "Material" && Location === "",
+            RevenueCenterCode === "",
             `Items/${i + 1}`,
-            "Material requires a Location",
+            "Revenue Center cannot be blank.",
           );
           addError(
-            Type === "Material" &&
-              Location !== "" &&
-              !new CompanyCollection(Company, "Location").exists({
-                Code: Location,
+            RevenueCenterCode !== "" &&
+              !new CompanyCollection(Company, "RevenueCenter").exists({
+                Code: RevenueCenterCode,
               }),
             `Items/${i + 1}`,
-            `Location ${Location} does not exist.`,
-          );
-          addError(
-            Type === "Service" && Assignment === "",
-            `Items/${i + 1}`,
-            "Service requires an Organisational Assignment",
-          );
-          addError(
-            Type === "Service" &&
-              Assignment !== "" &&
-              !new CompanyCollection(Company, OrgAssignmentType).exists({
-                Code: Assignment,
-              }),
-            `Items/${i + 1}`,
-            `${OrgAssignmentType} does not exist.`,
+            `Revenue Center ${RevenueCenterCode} does not exist.`,
           );
           addError(Due === "", `Items/${i + 1}`, "Due Date cannot be blank.");
         }),
@@ -143,14 +115,14 @@ export function CreatePurchaseOrder({
   return (
     <>
       <WindowTitle
-        title={`${method} Purchase Order`}
+        title={`${method} Sale Order`}
         menu={[
           <Conditional logic={method !== "Create"}>
             <Button
               name="Create"
               functionsArray={[
                 () => setmethod("Create"),
-                () => setdata(defaultPurchaseOrder),
+                () => setdata(defaultSaleOrder),
               ]}
             />
           </Conditional>,
@@ -159,7 +131,7 @@ export function CreatePurchaseOrder({
             result={promptCollection.exists()}
             title={"Open"}
             onClose={[() => resetPrompt()]}
-            onSubmitFail={[() => showAlert("Purchase order does not exist.")]}
+            onSubmitFail={[() => showAlert("Sale order does not exist.")]}
             onSubmitSuccess={[
               () => setdata(promptCollection.getData()),
               () =>
@@ -181,7 +153,7 @@ export function CreatePurchaseOrder({
               />
             </Row>
             <Row overflow="visible">
-              <Label label={"Purchase Order"} />
+              <Label label={"Sale Order"} />
               <AutoSuggestInput
                 value={promptData.code}
                 process={(value) => changePrompt("", "code", value)}
@@ -200,7 +172,7 @@ export function CreatePurchaseOrder({
                   showAlert(
                     collection.add({ ...processed, ["Status"]: "Ready" }),
                   ),
-                () => setdata(defaultPurchaseOrder),
+                () => setdata(defaultSaleOrder),
                 () => setmethod("Create"),
               ]}
             />
@@ -212,7 +184,7 @@ export function CreatePurchaseOrder({
               whileFalse={[() => showAlert("Company does not exist.")]}
               whileTrue={[
                 () => showAlert(collection.add(processed)),
-                () => setdata(defaultPurchaseOrder),
+                () => setdata(defaultSaleOrder),
                 () => setmethod("Create"),
               ]}
             />
@@ -227,7 +199,7 @@ export function CreatePurchaseOrder({
                   showAlert(
                     collection.update({ ...processed, ["Status"]: "Ready" }),
                   ),
-                () => setdata(defaultPurchaseOrder),
+                () => setdata(defaultSaleOrder),
                 () => setmethod("Create"),
               ]}
             />
@@ -239,7 +211,7 @@ export function CreatePurchaseOrder({
               whileFalse={[() => showAlert("Company does not exist.")]}
               whileTrue={[
                 () => showAlert(collection.update(processed)),
-                () => setdata(defaultPurchaseOrder),
+                () => setdata(defaultSaleOrder),
                 () => setmethod("Create"),
               ]}
             />
@@ -294,18 +266,18 @@ export function CreatePurchaseOrder({
             </Conditional>
           </Row>
           <Row overflow="visible">
-            <Label label={"Vendor"} />
+            <Label label={"Customer"} />
             <Conditional logic={method !== "View"}>
               <AutoSuggestInput
-                value={VendorCode}
-                process={(value) => changeData("", "VendorCode", value)}
-                placeholder={"Enter Vendor Code"}
-                suggestions={vendor.listAllFromCompany("Code")}
-                captions={vendor.listAllFromCompany("Name")}
+                value={CustomerCode}
+                process={(value) => changeData("", "CustomerCode", value)}
+                placeholder={"Enter Customer Code"}
+                suggestions={customer.listAllFromCompany("Code")}
+                captions={customer.listAllFromCompany("Name")}
               />
             </Conditional>
             <Conditional logic={method === "View"}>
-              <label>{VendorCode}</label>
+              <label>{CustomerCode}</label>
             </Conditional>
           </Row>
           <Row>
@@ -338,9 +310,7 @@ export function CreatePurchaseOrder({
                         Rate: "",
                         Value: "",
                         Due: "",
-                        Location: "",
-                        OrgAssignmentType: "CostCenter",
-                        Assignment: "",
+                        RevenueCenterCode: "",
                         BTC: "",
                       }),
                   ]}
@@ -356,9 +326,7 @@ export function CreatePurchaseOrder({
                   "Rate",
                   "Value",
                   "Due Date",
-                  "Location",
-                  "Organisational Assignment",
-                  "Assignment",
+                  "Revenue Center",
                   "Business Tax Code",
                   "",
                 ]}
@@ -407,43 +375,17 @@ export function CreatePurchaseOrder({
                     type={"date"}
                   />,
                   <AutoSuggestInput
-                    value={item.Location}
+                    value={item.RevenueCenterCode}
                     process={(value) =>
-                      changeData(`Items/${i}`, `Location`, value)
+                      changeData(`Items/${i}`, `RevenueCenterCode`, value)
                     }
                     suggestions={new CompanyCollection(
                       Company,
-                      "Location",
-                    ).listAllFromCompany("Code")}
-                    captions={new CompanyCollection(
-                      Company,
-                      "Location",
-                    ).listAllFromCompany("Description")}
-                  />,
-                  <Option
-                    value={item.OrgAssignmentType}
-                    process={(value) =>
-                      changeData(`Items/${i}`, `OrgAssignmentType`, value)
-                    }
-                    options={[
-                      "CostCenter",
-                      "Location",
-                      "Plant",
                       "RevenueCenter",
-                    ]}
-                  />,
-                  <AutoSuggestInput
-                    value={item.Assignment}
-                    process={(value) =>
-                      changeData(`Items/${i}`, `Assignment`, value)
-                    }
-                    suggestions={new CompanyCollection(
-                      Company,
-                      item.OrgAssignmentType,
                     ).listAllFromCompany("Code")}
                     captions={new CompanyCollection(
                       Company,
-                      item.OrgAssignmentType,
+                      "RevenueCenter",
                     ).listAllFromCompany("Description")}
                   />,
                   <AutoSuggestInput
@@ -479,9 +421,7 @@ export function CreatePurchaseOrder({
                   "Rate",
                   "Value",
                   "Due Date",
-                  "Location",
-                  "Organisational Assignment",
-                  "Assignment",
+                  "RevenueCenter",
                   "Business Tax Code",
                 ]}
                 rows={Items.map((item, i) => [
@@ -493,9 +433,7 @@ export function CreatePurchaseOrder({
                   <label>{item.Rate}</label>,
                   <label>{item.Value}</label>,
                   <label>{item.Due}</label>,
-                  <label>{item.Location}</label>,
-                  <label>{item.OrgAssignmentType}</label>,
-                  <label>{item.Assignment}</label>,
+                  <label>{item.RevenueCenter}</label>,
                   <label>{item.BTC}</label>,
                 ])}
               />

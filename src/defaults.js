@@ -422,6 +422,7 @@ export const defaultPurchaseOrder = {
 export const defaultSaleOrder = {
   Company: "",
   Code: "",
+  Status: "Draft",
   Date: "",
   CustomerCode: "",
   Description: "",

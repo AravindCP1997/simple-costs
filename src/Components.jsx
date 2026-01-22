@@ -236,6 +236,7 @@ export const AutoSuggestInput = ({
     width: "100%",
     background: "white",
     zIndex: "1550",
+    overflowX: "clip",
     borderBottomLeftRadius: "10px",
     borderBottomRightRadius: "10px",
     boxShadow: "0px 2px 10px -5px gray",
@@ -419,7 +420,7 @@ export function DisplayArea({ children }) {
     flexDirection: "column",
     gap: "5px",
     background: blue ? "var(--lightbluet)" : "var(--whitet)",
-    borderRadius: "15px",
+    borderRadius: "5px",
     padding: "10px",
     border: blue ? "5px solid var(--lightbluet)" : "5px solid var(--whitet)",
     overflow: "visible",
@@ -868,7 +869,7 @@ export function WindowContent({ children }) {
     flexDirection: "column",
     gap: "20px",
     width: "100%",
-    padding: "20px 10px",
+    padding: "10px 10px 10px 0px",
     height: "100%",
     overflow: "auto",
   };
@@ -1201,7 +1202,7 @@ export const HidingPrompt = ({
 }) => {
   const [isOpen, setOpen] = useState(false);
   const {
-    accessibility: { Font },
+    accessibility: { Background, Font },
   } = useInterface();
 
   const style = {
@@ -1212,7 +1213,7 @@ export const HidingPrompt = ({
     maxHeight: "90%",
     overflow: "visible",
     boxShadow: "0px 2px 10px -5px gray",
-    background: "var(--whitet)",
+    background: "var(--lightbluet)",
     border: "5px solid var(--whitet)",
     backdropFilter: "blur(30px)",
     padding: "10px",

@@ -142,6 +142,7 @@ import { ManageLedgerAssignment } from "./Transactions/LedgerAssignment";
 import { CreatePurchaseOrder } from "./Transactions/PurchaseOrder";
 import { PurchaseOrder } from "./classes";
 import { createPortal } from "react-dom";
+import { CreateSaleOrder } from "./Transactions/SaleOrder";
 
 const codes = [
   {
@@ -741,6 +742,14 @@ const codes = [
     screen: <Window />,
     window: <CreatePurchaseOrder />,
     name: "Purchase Order",
+    group: "Control",
+    subgroup: "Controlling",
+  },
+  {
+    code: "so",
+    screen: <Window />,
+    window: <CreateSaleOrder />,
+    name: "Sale Order",
     group: "Control",
     subgroup: "Controlling",
   },

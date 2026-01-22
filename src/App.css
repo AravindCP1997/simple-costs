@@ -212,13 +212,16 @@
 
 .tableContainer {
   padding: 5px;
-  overflow: auto;
-  padding-bottom: 30px;
+  overflow-x: auto;
+  overflow-y: clip;
+  height: fit-content;
+  padding-bottom: 40px;
 }
 
 .tableCell {
   border: 1px solid var(--bluet);
   text-align: center;
+  position: relative;
   h4 {
     margin: 0;
     min-width: 100px;
