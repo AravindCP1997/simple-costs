@@ -3,13 +3,14 @@ import accessibilityData from "./accessibility.js";
 import { updateObject } from "./objects.js";
 import { Home, Window, Drawer } from "./UserInterface.jsx";
 import { Scratch } from "./App.jsx";
+import authenticationData from "./authenticate.js";
 
 const UserInterfaceContext = createContext({});
 
 export const useInterface = () => useContext(UserInterfaceContext);
 
 export const UserInterfaceProvider = ({ children }) => {
-  const [screen, setscreen] = useState(<Scratch />);
+  const [screen, setscreen] = useState(<Home />);
   const [window, setwindow] = useState({ visible: false, content: null });
   const openWindow = (content) => {
     setscreen(<Window />);
@@ -86,6 +87,19 @@ export const UserInterfaceProvider = ({ children }) => {
     accessibilityData.save(accessibility);
   };
 
+  const [passcode, setpasscode] = useState(authenticationData.read().passcode);
+  const defaultpasscode = "iaravind_12";
+  const [authenticated, setauthenticated] = useState(
+    authenticationData.read().passcode === defaultpasscode,
+  );
+  const checkauthentication = () => {
+    setauthenticated(authenticationData.read().passcode);
+  };
+
+  const savepasscode = () => {
+    authenticationData.save({ passcode });
+  };
+
   const keyRefs = useRef({});
 
   const addRef = (key, element) => {
@@ -119,6 +133,12 @@ export const UserInterfaceProvider = ({ children }) => {
     changeAccessibility,
     resetAccessibility,
     saveAccessibility,
+    passcode,
+    setpasscode,
+    defaultpasscode,
+    authenticated,
+    checkauthentication,
+    savepasscode,
     keyRefs,
     addRef,
   };

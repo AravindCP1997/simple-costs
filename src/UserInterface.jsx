@@ -147,6 +147,7 @@ import { CreateProductionOrder } from "./Transactions/ProductionOrder";
 import { CreateProcessOrder } from "./Transactions/ProcessOrder";
 import { CreateMaintenanceOrder } from "./Transactions/MaintenanceOrder";
 import { CreateStockTransportOrder } from "./Transactions/StockTransportOrder";
+import { Authentication } from "./Transactions/Authentication";
 
 const codes = [
   {
@@ -1446,6 +1447,7 @@ function UserInterface() {
     floatingwindow,
     accessibility,
     resetAccessibility,
+    authenticated,
     keyRefs,
   } = useInterface();
 
@@ -1502,14 +1504,24 @@ function UserInterface() {
       onKeyDown={(e) => keyDownHandler(e)}
       tabIndex={0}
     >
-      <FloatingWindow />
-      <Confirm />
-      <Alert />
-      <Prompt />
-      <SearchBar />
-      <div className="screen" style={screenStyle}>
-        {screen}
-      </div>
+      {authenticated && (
+        <>
+          <FloatingWindow />
+          <Confirm />
+          <Alert />
+          <Prompt />
+          <SearchBar />
+          <div className="screen" style={screenStyle}>
+            {screen}
+          </div>
+        </>
+      )}
+      {!authenticated && (
+        <>
+          <Alert />
+          <Authentication />
+        </>
+      )}
     </div>
   );
 }
