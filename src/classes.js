@@ -1468,11 +1468,15 @@ export class AccountingDocument extends YearlyCompanyCollection {
       Company: this.companycode,
       Year: this.year,
       DocumentNo: this.documentNo,
+      DocumentDate: "",
       Text: "",
       AccountingDate: "",
       EntryDate: dateString(new Date()),
       TimeStamp: TimeStamp(),
       Entries: [this.defaultEntry()],
+      Reversed: false,
+      ReversalDocumentNo: "",
+      ReversalDate: "",
     };
   }
   prepared(data) {
@@ -1532,6 +1536,9 @@ export class MaterialDocument extends YearlyCompanyCollection {
       EntryDate: dateString(new Date()),
       TimeStamp: TimeStamp(),
       Movements: [this.defaultMovement()],
+      Reversed: false,
+      ReversalDocumentNo: "",
+      ReversalDate: "",
     };
   }
   prepared(data) {
