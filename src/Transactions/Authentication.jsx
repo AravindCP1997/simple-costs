@@ -40,7 +40,7 @@ export function Authentication() {
         width: "100%",
         background: "var(--redt)",
         color: "white",
-        backgroundImage: "url(src/assets/Favicon.png)",
+        backgroundImage: "url('./src/assets/Favicon.png')",
         backgroundSize: "90%",
         backgroundRepeat: "no-repeat",
       }}
