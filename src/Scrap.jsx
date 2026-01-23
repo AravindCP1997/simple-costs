@@ -177,7 +177,7 @@ function ObjectUI({ type, method }) {
 
   function updateObject() {
     const datapack = existingdata.map((item, index) =>
-      index == id ? masterdata : item
+      index == id ? masterdata : item,
     );
     saveData(datapack, collection);
     alert(`${object} Updated!`);
@@ -271,7 +271,7 @@ function ObjectUI({ type, method }) {
               new ControlObject(object, {
                 ...data,
                 [field["name"]]: e.target.value,
-              })
+              }),
             )
           }
           value={data[field["name"]]}
@@ -284,7 +284,7 @@ function ObjectUI({ type, method }) {
               new ControlObject(object, {
                 ...data,
                 [field["name"]]: e.target.value,
-              })
+              }),
             )
           }
           value={data[field["name"]]}
@@ -317,7 +317,7 @@ function ObjectUI({ type, method }) {
                           ...data[field["name"]],
                           [subfield["name"]]: e.target.value,
                         },
-                      })
+                      }),
                     )
                   }
                   value={data[field["name"]][subfield["name"]]}
@@ -333,7 +333,7 @@ function ObjectUI({ type, method }) {
                           ...data[field["name"]],
                           [subfield["name"]]: e.target.value,
                         },
-                      })
+                      }),
                     )
                   }
                   value={data[field["name"]][subfield["name"]]}
@@ -390,9 +390,9 @@ function ObjectUI({ type, method }) {
                                             ...item,
                                             [subfield["name"]]: e.target.value,
                                           }
-                                        : item
+                                        : item,
                                   ),
-                                })
+                                }),
                               )
                             }
                             type={subfield["type"]}
@@ -412,9 +412,9 @@ function ObjectUI({ type, method }) {
                                             ...item,
                                             [subfield["name"]]: e.target.value,
                                           }
-                                        : item
+                                        : item,
                                   ),
-                                })
+                                }),
                               )
                             }
                             value={data[field["name"]][index][subfield["name"]]}
@@ -446,7 +446,7 @@ function ObjectUI({ type, method }) {
                     ["id"]: data[field["name"]].length,
                   },
                 ],
-              })
+              }),
             )
           }
           className="blue"
@@ -494,7 +494,7 @@ function CRUDCollection() {
     setdata((prevdata) => ({
       ...prevdata,
       [field]: prevdata[field].map((item, i) =>
-        i === index ? { ...item, [subfield]: value } : item
+        i === index ? { ...item, [subfield]: value } : item,
       ),
     }));
   }
@@ -508,10 +508,10 @@ function CRUDCollection() {
           ? {
               ...item,
               [subfield]: item[subfield].map((subitem, ii) =>
-                ii == subindex ? { ...subitem, [subsubfield]: value } : subitem
+                ii == subindex ? { ...subitem, [subsubfield]: value } : subitem,
               ),
             }
-          : item
+          : item,
       ),
     }));
   }
@@ -541,7 +541,7 @@ function CRUDCollection() {
               ...item,
               [subfield]: [...item[subfield], defaults[field][0][subfield][0]],
             }
-          : item
+          : item,
       ),
     }));
   }
@@ -554,10 +554,10 @@ function CRUDCollection() {
           ? {
               ...item,
               [subfield]: item[subfield].filter(
-                (subitem, ii) => ii != subindex
+                (subitem, ii) => ii != subindex,
               ),
             }
-          : item
+          : item,
       ),
     }));
   }
@@ -667,7 +667,7 @@ function TransactionUI() {
     setdata((prevdata) => ({
       ...prevdata,
       [field]: prevdata[field].map((item, i) =>
-        i === index ? { ...item, [subfield]: value } : item
+        i === index ? { ...item, [subfield]: value } : item,
       ),
     }));
   }
@@ -681,10 +681,10 @@ function TransactionUI() {
           ? {
               ...item,
               [subfield]: item[subfield].map((subitem, ii) =>
-                ii == subindex ? { ...subitem, [subsubfield]: value } : subitem
+                ii == subindex ? { ...subitem, [subsubfield]: value } : subitem,
               ),
             }
-          : item
+          : item,
       ),
     }));
   }
@@ -714,7 +714,7 @@ function TransactionUI() {
               ...item,
               [subfield]: [...item[subfield], defaults[field][0][subfield][0]],
             }
-          : item
+          : item,
       ),
     }));
   }
@@ -727,10 +727,10 @@ function TransactionUI() {
           ? {
               ...item,
               [subfield]: item[subfield].filter(
-                (subitem, ii) => ii != subindex
+                (subitem, ii) => ii != subindex,
               ),
             }
-          : item
+          : item,
       ),
     }));
   }
@@ -894,8 +894,8 @@ function Costing() {
             to["To"],
             to["Ratio"],
             1 - selfRatio(Center, [...NotThrough, Center]),
-            [...NotThrough, Center]
-          )
+            [...NotThrough, Center],
+          ),
         );
       }
     }
@@ -929,7 +929,7 @@ function valuesChange(itemname, field, i, e) {
   const { value } = e.target;
   const prevvalues = [...query[itemname][field]];
   const newvalues = prevvalues.map((item, index) =>
-    i == index ? value : item
+    i == index ? value : item,
   );
   setquery((prevdata) => ({
     ...prevdata,
@@ -943,7 +943,7 @@ function rangesChange(itemname, field, i, j, e) {
   const prevrange = prevranges[i];
   const newrange = prevrange.map((item, index) => (j == index ? value : item));
   const newranges = prevranges.map((item, index) =>
-    i == index ? newrange : item
+    i == index ? newrange : item,
   );
   setquery((prevdata) => ({
     ...prevdata,
@@ -975,7 +975,7 @@ const buildTree = (data, parentId = null) => {
   const parents = array.filter(
     (item) =>
       (item["elementType"] === "index" && item["arrayId"] === parentId) ||
-      (item["elementType"] === "key" && item["key"] === parentId)
+      (item["elementType"] === "key" && item["key"] === parentId),
   );
   for (let i = 0; i < parents.length; i++) {
     let parent = parents[i];
@@ -985,7 +985,7 @@ const buildTree = (data, parentId = null) => {
         ["value"]: array.find(
           (item) =>
             item.elementType === "value" &&
-            (item["key"] === parent["id"] || item["arrayId"] === parent["id"])
+            (item["key"] === parent["id"] || item["arrayId"] === parent["id"]),
         ),
       };
     } else {
@@ -1002,9 +1002,9 @@ const Node = ({ node, setkey, setvalue, schema }) => {
     setkey((prevdata) =>
       JSONArray(
         ArrayJSON(prevdata).array.map((item) =>
-          item.id === id ? { ...item, ["name"]: value } : item
-        )
-      )
+          item.id === id ? { ...item, ["name"]: value } : item,
+        ),
+      ),
     );
   };
 
@@ -1012,8 +1012,8 @@ const Node = ({ node, setkey, setvalue, schema }) => {
     const { value } = e.target;
     setvalue((prevdata) =>
       prevdata.map((item) =>
-        item.id === id ? { ...item, [field]: value } : item
-      )
+        item.id === id ? { ...item, [field]: value } : item,
+      ),
     );
   };
 
@@ -1088,7 +1088,7 @@ const Node = ({ node, setkey, setvalue, schema }) => {
 
 const TreeInput = () => {
   const [key, setkey] = useState(
-    new CompanyCollection("1000", "Employee").getData({ Code: 201052 })
+    new CompanyCollection("1000", "Employee").getData({ Code: 201052 }),
   );
   const [value, setvalue] = useState([]);
   const treeStructure = buildTree(key);
@@ -1324,7 +1324,7 @@ function FocusableList({ items }) {
     } else if (event.key === "ArrowUp") {
       event.preventDefault(); // Prevent default browser scroll
       setFocusedIndex(
-        (prevIndex) => (prevIndex - 1 + items.length) % items.length
+        (prevIndex) => (prevIndex - 1 + items.length) % items.length,
       );
     }
   };
@@ -1361,7 +1361,7 @@ class Report {
         const documentData = Transaction.Accountingdoc(
           data["Company Code"],
           Number(data["Year"]),
-          Number(data["Document Number"])
+          Number(data["Document Number"]),
         ).document;
         defaults = documentData;
         break;
@@ -1461,11 +1461,11 @@ class Report {
           } else {
             if (
               !new IncomeTaxCode(data["Income Tax Code"]).yearExists(
-                data["Financial Year"]
+                data["Financial Year"],
               )
             ) {
               errors.push(
-                `Taxation for specified year not available in Income Tax Code: ${data["Income Tax Code"]}`
+                `Taxation for specified year not available in Income Tax Code: ${data["Income Tax Code"]}`,
               );
             }
           }
@@ -1476,15 +1476,15 @@ class Report {
           if (IT.yearExists(data["Financial Year"])) {
             result["Tax on Total Income"] = IT.tax(
               Number(result["Financial Year"]),
-              Number(result["Total Income"])
+              Number(result["Total Income"]),
             );
             result["Marginal Relief"] = IT.marginalRelief(
               result["Financial Year"],
-              result["Total Income"]
+              result["Total Income"],
             );
             result["Net Tax on Total Income"] = IT.netTax(
               Number(result["Financial Year"]),
-              Number(result["Total Income"])
+              Number(result["Total Income"]),
             );
           }
         }
@@ -1529,7 +1529,7 @@ class Report {
       };
       result["Register"] = new CompanyCollection(
         result["Company Code"],
-        collectionname[this.report]
+        collectionname[this.report],
       ).register();
       schema = [
         { name: "Company Code", datatype: "single", noteditable: true },
@@ -1743,7 +1743,7 @@ class Transaction {
           options: [
             "",
             ...new CompanyCollection(company, "AssetConstructionOrder").listAll(
-              "Code"
+              "Code",
             ),
           ],
         },
@@ -1754,7 +1754,7 @@ class Transaction {
           options: [
             "",
             ...new CompanyCollection(company, "MaintenanceOrder").listAll(
-              "Code"
+              "Code",
             ),
           ],
         },
@@ -1774,7 +1774,7 @@ class Transaction {
           options: [
             "",
             ...new CompanyCollection(company, "ProductionOrder").listAll(
-              "Code"
+              "Code",
             ),
           ],
         },
@@ -1832,7 +1832,7 @@ class Transaction {
                 ...item,
                 ["options"]: ["", "Asset", "Material", "General Ledger"],
               }
-            : item
+            : item,
         );
         noteditables.push(...["Debit/ Credit"]);
         if (["VendorCreditNote", "CustomerInvoice"].includes(this.type)) {
@@ -1841,7 +1841,7 @@ class Transaction {
       }
       if (
         ["Asset", "Bank Account", "Customer", "Material", "Vendor"].includes(
-          accType
+          accType,
         )
       ) {
         const collectionname = {
@@ -1859,11 +1859,11 @@ class Transaction {
                   "",
                   ...new CompanyCollection(
                     company,
-                    collectionname[itemData["Account Type"]]
+                    collectionname[itemData["Account Type"]],
                   ).listAll("Code"),
                 ],
               }
-            : item
+            : item,
         );
       } else if (accType === "General Ledger") {
         schema = schema.map((item) =>
@@ -1874,15 +1874,15 @@ class Transaction {
                   "",
                   ...new CompanyCollection(
                     company,
-                    "GeneralLedger"
+                    "GeneralLedger",
                   ).filteredList({ "Ledger Type": "General" }, "Code"),
                   ...new CompanyCollection(
                     company,
-                    "GeneralLedger"
+                    "GeneralLedger",
                   ).filteredList({ "Ledger Type": "Cost Element" }, "Code"),
                 ],
               }
-            : item
+            : item,
         );
       }
       if (!["General Ledger", "Material"].includes(accType)) {
@@ -1904,7 +1904,7 @@ class Transaction {
             "Purchase Order",
             "Sale Order",
             "Transport Order",
-          ]
+          ],
         );
       }
       if (
@@ -1925,13 +1925,13 @@ class Transaction {
       schema = schema.map((field) =>
         noteditables.includes(field["name"])
           ? { ...field, ["noteditable"]: true }
-          : field
+          : field,
       );
       blankfields.map((field) => (result[field] = ""));
       required.map((field) =>
         itemData[field] === ""
           ? errors.push(`At line item ${i + 1}, ${field} necessary.`)
-          : () => {}
+          : () => {},
       );
       itemData["Amount"] < 0
         ? errors.push(`At line item ${i + 1}, Amount negative.`)
@@ -1960,7 +1960,7 @@ class Transaction {
                 "",
                 ...new CompanyCollection(
                   company,
-                  "AssetConstructionOrder"
+                  "AssetConstructionOrder",
                 ).listAll("Code"),
               ],
             },
@@ -1977,10 +1977,10 @@ class Transaction {
               type: "date",
             },
             { name: "Text", datatype: "single", input: "input", type: "text" },
-          ]
+          ],
         );
         necessary.push(
-          ...["Asset Construction Order", "Posting Date", "Asset Value Date"]
+          ...["Asset Construction Order", "Posting Date", "Asset Value Date"],
         );
       }
       if (Transaction.AccountingTypes.includes(this.type)) {
@@ -2051,7 +2051,7 @@ class Transaction {
                     "",
                     ...new CompanyCollection(
                       company,
-                      "GeneralLedger"
+                      "GeneralLedger",
                     ).filteredList({ "Ledger Type": "Vendor" }, "Code"),
                   ],
                 },
@@ -2068,7 +2068,7 @@ class Transaction {
             necessary.map((field) =>
               data["Vendor Info"][field] === ""
                 ? errors.push(`Vendor ${field} necessary`)
-                : () => {}
+                : () => {},
             );
           }
           if (["CustomerInvoice", "CustomerCreditNote"].includes(this.type)) {
@@ -2083,7 +2083,7 @@ class Transaction {
                   options: [
                     "",
                     ...new CompanyCollection(company, "Customer").listAll(
-                      "Code"
+                      "Code",
                     ),
                   ],
                 },
@@ -2095,7 +2095,7 @@ class Transaction {
                     "",
                     ...new CompanyCollection(
                       company,
-                      "GeneralLedger"
+                      "GeneralLedger",
                     ).filteredList({ "Ledger Type": "Customer" }, "Code"),
                   ],
                 },
@@ -2111,20 +2111,20 @@ class Transaction {
             necessary.map((field) =>
               data["Customer Info"][field] === ""
                 ? errors.push(`Cusomer Info ${field} necessary`)
-                : () => {}
+                : () => {},
             );
           }
           schema.push({
             name: "Line Items",
             datatype: "collection",
             schema: data["Line Items"].map(
-              (item, i) => lineItemProcess(data, item, i).schema
+              (item, i) => lineItemProcess(data, item, i).schema,
             ),
           });
         }
         if (company !== "" && data["Posting Date"] !== "") {
           result["Year"] = new Company(company).PostingYear(
-            data["Posting Date"]
+            data["Posting Date"],
           );
         }
         result["Balance"] =
@@ -2132,24 +2132,24 @@ class Transaction {
             result["Line Items"],
             "Amount",
             ["Debit/ Credit"],
-            ["Debit"]
+            ["Debit"],
           ) -
           SumFieldIfs(
             result["Line Items"],
             "Amount",
             ["Debit/ Credit"],
-            ["Credit"]
+            ["Credit"],
           );
         result["Line Items"] = result["Line Items"].map(
-          (item, i) => lineItemProcess(data, item, i).output
+          (item, i) => lineItemProcess(data, item, i).output,
         );
         necessary = ["Company Code", "Posting Date", "Document Date"];
         necessary.map((field) =>
-          data[field] === "" ? errors.push(`${field} necessary`) : () => {}
+          data[field] === "" ? errors.push(`${field} necessary`) : () => {},
         );
         data["Balance"] !== 0 ? errors.push(`Balance not zero`) : () => {};
         data["Line Items"].map((item, i) =>
-          errors.push(...lineItemProcess(data, item, i).errors)
+          errors.push(...lineItemProcess(data, item, i).errors),
         );
         navigation = [
           {
@@ -2159,8 +2159,8 @@ class Transaction {
               alert(
                 new AccountingDocument(
                   data["Company Code"],
-                  data["Year"]
-                ).postDocument(data)
+                  data["Year"],
+                ).postDocument(data),
               ),
           },
         ];
@@ -2180,11 +2180,11 @@ class Transaction {
               input: "option",
               options: [""],
             },
-          ]
+          ],
         );
       }
       necessary.map((field) =>
-        data[field] === "" ? errors.push(`${field} necessary`) : () => {}
+        data[field] === "" ? errors.push(`${field} necessary`) : () => {},
       );
     }
 
@@ -2206,7 +2206,7 @@ class Transaction {
     const oldData = Transaction.Accountingdocuments;
     const documentnumberstart = Transaction.NewAccountingDocNo(company, year);
     const newEntries = listofdata.map((data, i) =>
-      this.generateAccountingEntry(data, documentnumberstart + i)
+      this.generateAccountingEntry(data, documentnumberstart + i),
     );
     const newData = [...oldData, ...newEntries];
     saveData(newData, "accountingdocuments");
@@ -2219,7 +2219,7 @@ class Transaction {
       (item) =>
         item["Company Code"] === company &&
         item["Year"] === Number(year) &&
-        item["Document Number"] === Number(documentno)
+        item["Document Number"] === Number(documentno),
     );
     const result = document !== undefined;
     return { document: document, result: result };
@@ -2355,7 +2355,7 @@ class CollectionQuery {
               "",
               ...new CompanyCollection(
                 data["Company Code"],
-                "Employee"
+                "Employee",
               ).listAll("Code"),
             ],
           },
@@ -2725,7 +2725,7 @@ class CollectionQuery {
     }
     if (this.method == "Create") {
       schema = schema.filter((field) =>
-        this.createRequirements.includes(field["name"])
+        this.createRequirements.includes(field["name"]),
       );
     }
     const missing = [];
@@ -2738,8 +2738,8 @@ class CollectionQuery {
       if (!new Collection(this.collection).exists(query)) {
         errors.push(
           `Record of ${this.collection} with ${JSON.stringify(
-            query
-          )} does not exist.`
+            query,
+          )} does not exist.`,
         );
       }
     } else if (this.method === "Create") {
@@ -2750,8 +2750,8 @@ class CollectionQuery {
         if (new Collection(this.collection).exists(query)) {
           errors.push(
             `Record of ${this.collection} with ${JSON.stringify(
-              query
-            )} already exists.`
+              query,
+            )} already exists.`,
           );
         }
       }
@@ -2763,7 +2763,7 @@ class CollectionQuery {
       Code: data["Employee"],
     }) == false
       ? errors.push(
-          `Employee with Code ${data["Employee"]} does not exist in Company ${data["Company Code"]}.`
+          `Employee with Code ${data["Employee"]} does not exist in Company ${data["Company Code"]}.`,
         )
       : () => {};
     missing.length > 0
@@ -2911,7 +2911,7 @@ class AccountingDocument {
     const data = AccountingDocument.database;
     const result = data.filter(
       (item) =>
-        item["Company Code"] === this.company && item["Year"] === this.year
+        item["Company Code"] === this.company && item["Year"] === this.year,
     );
     return result;
   }
@@ -2944,7 +2944,7 @@ class AccountingDocument {
     const list = [];
     data.forEach((item) => {
       const fields = Object.keys(item).filter(
-        (field) => field !== "Line Items"
+        (field) => field !== "Line Items",
       );
       const datapack = {};
       fields.map((field) => (datapack[field] = item[field]));
@@ -2961,10 +2961,10 @@ class AccountingDocument {
       result["General Ledger"] =
         asset.assetgroup.data["General Ledger  - Asset"];
       result["General Ledger Description"] = asset.assetgroup.GLData(
-        "General Ledger - Asset"
+        "General Ledger - Asset",
       ).data["Description"];
       result["Profit Center"] = asset.orgassignment(
-        data["Asset Value Date"]
+        data["Asset Value Date"],
       ).assignment.profitcenter.code;
     }
   }
@@ -3027,7 +3027,7 @@ class Asset extends CompanyCollection {
       valueInRange(new Date(date), [
         new Date(item["From"]),
         new Date(item["To"]),
-      ])
+      ]),
     );
     if (result) {
       const type = result["Assignment Type"];
@@ -3072,7 +3072,7 @@ class Asset extends CompanyCollection {
         (item) =>
           item["Account"] === this.code &&
           item["Transaction"] === "Cost" &&
-          new Date(item["Asset Value Date"]) <= new Date(date)
+          new Date(item["Asset Value Date"]) <= new Date(date),
       );
     const cost =
       SumFieldIfs(costdata, "Amount", ["Debit/ Credit"], ["Debit"]) -
@@ -3095,7 +3095,7 @@ class AssetConstructionOrder extends CompanyCollection {
     const result = data.filter(
       (item) =>
         item["Asset Construction Order"] === this.code &&
-        item["Posting Date"] <= date
+        item["Posting Date"] <= date,
     );
     const cost =
       SumFieldIfs(result, "Amount", ["Debit/ Credit"], ["Debit"]) -
@@ -3111,7 +3111,7 @@ class AssetConstructionOrder extends CompanyCollection {
         Asset: item["Asset"],
         Percentage: item["Percentage"],
         Amount: (cost * item["Percentage"]) / 100,
-      })
+      }),
     );
     return list;
   }
@@ -3169,7 +3169,7 @@ class Company extends Collection {
   CollectionRange(collection) {
     const settings = this.AccountSettings();
     const range = settings["Code Range"].filter(
-      (item) => item["Collection"] === collection
+      (item) => item["Collection"] === collection,
     )[0];
     const result = [range["From"], range["To"]];
     return result;
@@ -3187,7 +3187,7 @@ class Company extends Collection {
       new Date(date) <= new Date(time["To"]) &&
       new Date(date) >= new Date(time["From"])
         ? (result = true)
-        : () => {}
+        : () => {},
     );
     return result;
   }
@@ -3238,7 +3238,7 @@ class ChartOfAccounts {
   constructor(code) {
     this.code = code;
     this.data = ChartOfAccounts.allData.find(
-      (item) => item["Code"] == this.code
+      (item) => item["Code"] == this.code,
     );
   }
   range(group) {
@@ -3271,7 +3271,7 @@ class CostCenter extends CompanyCollection {
     this.data = super.getData({ Code: this.code });
     this.profitcenter = new ProfitCenter(
       this.data["Profit Center"],
-      this.company
+      this.company,
     );
   }
 }
@@ -3287,16 +3287,16 @@ class Employee extends CompanyCollection {
       valueInRange(new Date(date), [
         new Date(item["From"]),
         new Date(item["To"]),
-      ])
+      ]),
     );
     const fwages = this.data["Fixed Wages"].filter((item) =>
       valueInRange(new Date(date), [
         new Date(monthStructure(item["From Year"], item["From Month"]).start),
         new Date(monthStructure(item["To Year"], item["To Month"]).end),
-      ])
+      ]),
     );
     const owages = this.data["One Time Wages"].filter(
-      (item) => item["Date"] === date
+      (item) => item["Date"] === date,
     );
     return owages;
   }
@@ -3317,7 +3317,7 @@ class Location extends CompanyCollection {
     this.data = super.getData({ Code: this.code });
     this.profitcenter = new ProfitCenter(
       this.data["Profit Center"],
-      this.company
+      this.company,
     );
   }
 }
@@ -3329,7 +3329,7 @@ class Plant extends CompanyCollection {
     this.data = super.getData({ Code: this.code });
     this.profitcenter = new ProfitCenter(
       this.data["Profit Center"],
-      this.company
+      this.company,
     );
   }
 }
@@ -3349,7 +3349,7 @@ class RevenueCenter extends CompanyCollection {
     this.data = super.getData({ Code: this.code });
     this.profitcenter = new ProfitCenter(
       this.data["Profit Center"],
-      this.company
+      this.company,
     );
   }
 }
@@ -3375,18 +3375,18 @@ class Table {
       this.mandatory.map((field) =>
         item[field] == ""
           ? list.push(`Item ${i + 1} requires ${field}`)
-          : () => {}
-      )
+          : () => {},
+      ),
     );
     data.map((item) =>
       Count(item[this.key], ListItems(data, this.key)) > 1
         ? list.push(
             `${this.key} ${item[this.key]} exists ${Count(
               item[this.key],
-              ListItems(data, this.key)
-            )} times.`
+              ListItems(data, this.key),
+            )} times.`,
           )
-        : () => {}
+        : () => {},
     );
     const uniquelist = [...new Set(list)];
     return uniquelist;
@@ -3609,7 +3609,7 @@ class ReportQuery {
         !Transaction.Accountingdoc(
           data["Company Code"],
           data["Year"],
-          data["Document Number"]
+          data["Document Number"],
         ).result
           ? errors.push(`Document does not exist!`)
           : () => {};
@@ -3775,7 +3775,7 @@ class KB {
     const yearEnd = new Date(
       yearStart.getFullYear() + 1,
       yearStart.getMonth(),
-      0
+      0,
     );
     const result = `${yearEnd.getFullYear()}-${(yearEnd.getMonth() + 1)
       .toString()
@@ -3791,7 +3791,7 @@ const MultipleInput = ({ field, output, setdata }) => {
       [field["name"]]: {
         ...prevdata[field["name"]],
         [req]: prevdata[field["name"]][req].map((item, index) =>
-          i == index ? value : item
+          i == index ? value : item,
         ),
       },
     }));
@@ -3834,7 +3834,7 @@ const MultipleInput = ({ field, output, setdata }) => {
       [field["name"]]: {
         ...prevdata[field["name"]],
         [req]: prevdata[field["name"]][req].map((item, index) =>
-          i == index ? { ...item, [subfield]: value } : item
+          i == index ? { ...item, [subfield]: value } : item,
         ),
       },
     }));

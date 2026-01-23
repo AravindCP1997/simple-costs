@@ -24,11 +24,12 @@ import {
   GroupGeneralLedger,
   Holidays,
   LedgerAssignment,
+  MaterialDocument,
   ProfitCenter,
   Segments,
 } from "./classes";
 import { FaHome } from "react-icons/fa";
-import { dateInYear } from "./functions";
+import { dateInYear, dateString, TimeStamp } from "./functions";
 
 export function Scratch() {
   const { showAlert } = useInterface();
@@ -78,6 +79,9 @@ export function Scratch() {
               />
             </Row>
           </Row>
+          {JSON.stringify(
+            new MaterialDocument("", 2024, "ACP").prepared({ name: "Aravind" }),
+          )}
         </DisplayArea>
       </WindowContent>
     </>

@@ -129,10 +129,11 @@ export function CreateMaterialGroup({
   const { DisplayHidingError, addError, clearErrors, errorsExist } = useError();
   const { Company, Code, Description, GLMat, GLRev, GLCoS, GLWriteDown } = data;
   const Gls = [
-    { code: "GLMat", name: "General Ledger Material" },
-    { code: "GLCoS", name: "General Ledger Cost of Sales" },
-    { code: "GLRev", name: "General Ledger Revenue" },
-    { code: "GLWriteDown", name: "General Ledger Write Down" },
+    { code: "GLMat", name: "General Ledger - Material" },
+    { code: "GLCoS", name: "General Ledger - Cost of Sales" },
+    { code: "GLRev", name: "General Ledger - Revenue" },
+    { code: "GLWriteDown", name: "General Ledger - Write Down" },
+    { code: "GLClearing", name: "General Ledger - Clearing Receipts" },
   ];
   const collection = new MaterialGroup(Code, Company);
   const glcollection = new GeneralLedger("", Company);

@@ -129,8 +129,9 @@ export function CreateServiceGroup({
   const { DisplayHidingError, addError, clearErrors, errorsExist } = useError();
   const { Company, Code, Description, GLExp, GLRev } = data;
   const Gls = [
-    { code: "GLExp", name: "General Ledger Expense (Consumption)" },
-    { code: "GLRev", name: "General Ledger Revenue" },
+    { code: "GLExp", name: "General Ledger - Expense (Consumption)" },
+    { code: "GLRev", name: "General Ledger - Revenue" },
+    { code: "GLClearing", name: "General Ledger - Clearing Receipts" },
   ];
   const collection = new ServiceGroup(Code, Company);
   const glcollection = new GeneralLedger("", Company);

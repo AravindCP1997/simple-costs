@@ -146,6 +146,7 @@ import { CreateSaleOrder } from "./Transactions/SaleOrder";
 import { CreateProductionOrder } from "./Transactions/ProductionOrder";
 import { CreateProcessOrder } from "./Transactions/ProcessOrder";
 import { CreateMaintenanceOrder } from "./Transactions/MaintenanceOrder";
+import { CreateStockTransportOrder } from "./Transactions/StockTransportOrder";
 
 const codes = [
   {
@@ -777,6 +778,14 @@ const codes = [
     screen: <Window />,
     window: <CreateMaintenanceOrder />,
     name: "Maintenance Order",
+    group: "Control",
+    subgroup: "Controlling",
+  },
+  {
+    code: "sto",
+    screen: <Window />,
+    window: <CreateStockTransportOrder />,
+    name: "Stock Transport Order",
     group: "Control",
     subgroup: "Controlling",
   },

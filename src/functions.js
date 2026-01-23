@@ -428,6 +428,13 @@ export function dateString(date) {
   return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, 0)}-${date.getDate().toString().padStart(2, 0)}`;
 }
 
+export function TimeStamp() {
+  const date = new Date();
+  const ds = dateString(date);
+  const timestamp = `${ds}/${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+  return timestamp;
+}
+
 export function dateInYear(date, year, beginMonth) {
   const startDate = new Date(
     `${year}-${beginMonth.toString().padStart(2, 0)}-01`,

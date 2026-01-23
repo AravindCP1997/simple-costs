@@ -95,13 +95,16 @@ export const defaultCompany = {
   StartingYear: "",
   FYBeginning: "04",
   Numbering: [
+    { Item: "Accounting Document", From: 2000000 },
     { Item: "Asset", From: 100000 },
     { Item: "Asset Development Order", From: 100000 },
     { Item: "Bank Account", From: 100000 },
+    { Item: "Costing Document", From: 1600000 },
     { Item: "Customer", From: 100000 },
     { Item: "Employee", From: 100000 },
     { Item: "Maintenance Order", From: 100000 },
     { Item: "Material", From: 100000 },
+    { Item: "Material Document", From: 1200000 },
     { Item: "Process Order", From: 100000 },
     { Item: "Production Order", From: 100000 },
     { Item: "Purchase Order", From: 100000 },
@@ -265,6 +268,7 @@ export const defaultMaterialGroup = {
   GLCoS: "",
   GLRev: "",
   GLWriteDown: "",
+  GLClearing: "",
 };
 
 export const defaultMaterial = {
@@ -281,6 +285,7 @@ export const defaultServiceGroup = {
   Description: "",
   GLExp: "",
   GLRev: "",
+  GLClearing: "",
 };
 
 export const defaultService = {
@@ -484,8 +489,16 @@ export const defaultStockTransportOrder = {
   VendorCode: "",
   Date: "",
   Description: "",
-  Transport: "",
+  Transport: "Own",
   Items: [
-    { MaterialCode: "", From: "", To: "", Quantity: 0, Rate: 0, Value: 0 },
+    {
+      MaterialCode: "",
+      Description: "",
+      From: "",
+      To: "",
+      Quantity: 0,
+      Rate: 0,
+      Value: 0,
+    },
   ],
 };

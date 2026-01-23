@@ -10,7 +10,7 @@ export const sampleChartOfAccounts = {
     { Group: "Income", From: 300, To: 399 },
     { Group: "Expense", From: 400, To: 499 },
   ],
-  Status: "Draft",
+  Status: "Ready",
 };
 
 export const sampleFinancialStatementStructure = {
@@ -119,7 +119,7 @@ export const sampleFinancialStatementStructure = {
     { name: "Net Profit", altName: "Net Profit" },
     { name: "Net Loss", altName: "Net Loss" },
   ],
-  Status: "Draft",
+  Status: "Ready",
 };
 
 export const sampleGroupChartOfAccounts = {
@@ -131,7 +131,7 @@ export const sampleGroupChartOfAccounts = {
     { Group: "Income", From: 300, To: 399 },
     { Group: "Expense", From: 400, To: 499 },
   ],
-  Status: "Draft",
+  Status: "Ready",
 };
 
 export const sampleIncomeTaxCode = {
@@ -183,7 +183,7 @@ export const sampleIncomeTaxCode = {
       ],
     },
   ],
-  Status: "Draft",
+  Status: "Ready",
 };
 
 export const sampleInterestCode = {
@@ -191,7 +191,7 @@ export const sampleInterestCode = {
   Description: "Sample Interest Code",
   Compounding: "Daily",
   DaysinYear: 360,
-  Status: "Draft",
+  Status: "Ready",
 };
 
 export const samplePaymentTerms = {
@@ -199,7 +199,7 @@ export const samplePaymentTerms = {
   Description: "2/10 Net 30",
   Discount: [{ PaymentInDays: "10", Discount: "2" }],
   DueWithinDays: 30,
-  Status: "Draft",
+  Status: "Ready",
 };
 
 export const sampleCompany = {
@@ -219,13 +219,16 @@ export const sampleCompany = {
   StartingYear: 2025,
   FYBeginning: "04",
   Numbering: [
+    { Item: "Accounting Document", From: 2000000 },
     { Item: "Asset", From: 100000 },
     { Item: "Asset Development Order", From: 100000 },
     { Item: "Bank Account", From: 100000 },
+    { Item: "Costing Document", From: 1600000 },
     { Item: "Customer", From: 100000 },
     { Item: "Employee", From: 100000 },
     { Item: "Maintenance Order", From: 100000 },
     { Item: "Material", From: 100000 },
+    { Item: "Material Document", From: 1200000 },
     { Item: "Process Order", From: 100000 },
     { Item: "Production Order", From: 100000 },
     { Item: "Purchase Order", From: 100000 },
@@ -234,7 +237,7 @@ export const sampleCompany = {
     { Item: "Stock Transport Order", From: 100000 },
     { Item: "Vendor", From: 100000 },
   ],
-  Status: "Draft",
+  Status: "Ready",
 };
 
 export const sampleProfitCenter = {

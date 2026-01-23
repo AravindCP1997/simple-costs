@@ -3,11 +3,13 @@ import { Collection, Dictionary } from "./Database";
 import {
   dateInYear,
   datesInMonth,
+  dateString,
   existsInCollection,
   filterCollection,
   FilteredList,
   ListItems,
   newAutoNumber,
+  TimeStamp,
   valueInRange,
 } from "./functions";
 
@@ -1391,5 +1393,201 @@ export class ProcessOrder extends CompanyCollection {
     this.delete();
     super.add(data);
     return "Process Order Updated";
+  }
+}
+
+export class YearlyCompanyCollection extends CompanyCollection {
+  constructor(year, company, name) {
+    super(company, name);
+    this.year = year;
+    this.Yearcriteria = { Year: this.year };
+  }
+  loadFromCompany() {
+    return filterCollection(super.loadFromCompany(), this.Yearcriteria);
+  }
+  filtered(criteria) {
+    return filterCollection(this.loadFromCompany(), criteria);
+  }
+  getData(criteria) {
+    return this.filtered(criteria)[0];
+  }
+  exists(criteria) {
+    return existsInCollection(this.loadFromCompany(), criteria);
+  }
+  mergedCriteria(criteria) {
+    return super.mergedCriteria({ ...criteria, ...this.Yearcriteria });
+  }
+  delete(criteria) {
+    return super.delete(this.mergedCriteria(criteria));
+  }
+  update(criteria, data) {
+    return super.update(this.mergedCriteria(criteria), data);
+  }
+  autoNumber(criteria, field, start) {
+    return newAutoNumber(
+      this.loadFromCompany(),
+      this.mergedCriteria(criteria),
+      field,
+      start,
+    );
+  }
+}
+
+export class AccountingDocument extends YearlyCompanyCollection {
+  constructor(documentNo, year, company, name = "AccountingDocument") {
+    super(year, company, name);
+    this.documentNo = documentNo;
+    this.criteria = { DocumentNo: this.documentNo };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Accounting Document").From;
+    const Number = super.autoNumber(
+      this.criteria,
+      "DocumentNo",
+      numberingStart,
+    );
+    super.add({ ...this.prepared(data), ["DocumentNo"]: Number });
+    return `Accounting Document created, Number: ${Number}`;
+  }
+  defaultDocument() {
+    return {
+      Company: this.companycode,
+      Year: this.year,
+      DocumentNo: this.documentNo,
+      Text: "",
+      AccountingDate: "",
+      EntryDate: dateString(new Date()),
+      TimeStamp: TimeStamp(),
+      Entries: [this.defaultEntry()],
+    };
+  }
+  prepared(data) {
+    return { ...this.defaultDocument(), ...data };
+  }
+  defaultEntry() {
+    return {
+      Account: "",
+      Type: "Debit",
+      Amount: 0,
+      BTC: "",
+      Text: "",
+    };
+  }
+  preparedEntry(data) {
+    return { ...this.defaultEntry(), ...data };
+  }
+}
+
+export class MaterialDocument extends YearlyCompanyCollection {
+  constructor(documentNo, year, company, name = "MaterialDocument") {
+    super(year, company, name);
+    this.documentNo = documentNo;
+    this.criteria = { DocumentNo: this.documentNo };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Material Document").From;
+    const Number = super.autoNumber(
+      this.criteria,
+      "DocumentNo",
+      numberingStart,
+    );
+    super.add({ ...this.prepared(data), ["DocumentNo"]: Number });
+    return `Material Document created, Number: ${Number}`;
+  }
+  defaultDocument() {
+    return {
+      Company: this.companycode,
+      Year: this.year,
+      DocumentNo: this.documentNo,
+      Text: "",
+      ValueDate: "",
+      EntryDate: dateString(new Date()),
+      TimeStamp: TimeStamp(),
+      Movements: [this.defaultMovement()],
+    };
+  }
+  prepared(data) {
+    return { ...this.defaultDocument(), ...data };
+  }
+  defaultMovement() {
+    return {
+      Material: "",
+      Location: "",
+      Block: "Free",
+      Type: "In",
+      Quantity: 0,
+      PO: "",
+      POItem: "",
+      STO: "",
+      STOItem: "",
+      Proc: "",
+      ProcItem: "",
+      Prod: "",
+      ProdItem: "",
+      Text: "",
+    };
+  }
+  prepareMovement(data) {
+    return { ...this.defaultMovement(), data };
+  }
+}
+
+export class CostingDocument extends YearlyCompanyCollection {
+  constructor(documentNo, year, company, name = "CostingDocument") {
+    super(year, company, name);
+    this.documentNo = documentNo;
+    this.criteria = { DocumentNo: this.documentNo };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  delete() {
+    return super.delete(this.criteria);
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Costing Document").From;
+    const Number = super.autoNumber(
+      this.criteria,
+      "DocumentNo",
+      numberingStart,
+    );
+    super.add({ ...data, ["DocumentNo"]: Number });
+    return `Costing Document created, Number: ${Number}`;
   }
 }
