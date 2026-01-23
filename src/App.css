@@ -49,15 +49,11 @@
 .drawerButtonSelected {
   background: var(--bluet);
   color: white;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
 }
 
 .drawerButton:hover,
 .drawerButton:focus {
   background: var(--goldt);
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
 }
 
 .drawerButtonSelected:focus,
@@ -77,21 +73,22 @@
 }
 
 .icon {
-  box-shadow: -1px 2px 5px -1px gray;
+  box-shadow: -2px 2px 5px -1px gray;
+  border: 5px solid var(--whitet);
   p {
     background: var(--goldt);
     font-size: 80%;
     border-radius: 5px;
     padding: 5px;
     margin: 0;
-    opacity: 0.5;
+    opacity: 0.25;
     transition: 0.5s;
   }
 }
 
 .icon:hover,
 .icon:focus {
-  transform: translateY(-10px);
+  transform: translate(-10px);
 
   p {
     opacity: 1;
