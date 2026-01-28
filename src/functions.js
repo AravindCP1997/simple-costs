@@ -53,13 +53,13 @@ const ExistsDuplicates = (value, collection, key) => {
   return result;
 };
 
-function SumField(collection, field) {
+export function SumField(collection, field) {
   let subtotal = 0;
   collection.map((item) => (subtotal += parseFloat(item[field])));
   return subtotal;
 }
 
-function SumFieldIfs(collection, field, ranges, criteria) {
+export function SumFieldIfs(collection, field, ranges, criteria) {
   let subtotal = 0;
   for (let i = 0; i < collection.length; i++) {
     let logic = true;
@@ -411,7 +411,7 @@ export function existsInCollection(collection, criteria) {
 }
 
 export function newAutoNumber(collection, criteria, field, startNumber) {
-  let start = startNumber;
+  let start = startNumber - 1;
   do {
     start++;
   } while (existsInCollection(collection, { ...criteria, [field]: start }));
@@ -449,4 +449,24 @@ export function dateInYear(date, year, beginMonth) {
     dayNumber(dateString(endDate)),
   ]);
   return result;
+}
+
+export function refine(data, sample) {
+  const result = { ...data };
+  const required = Object.keys(sample);
+  const existing = Object.keys(data);
+  existing.forEach((key) => {
+    if (!required.includes(key)) {
+      delete result[key];
+    }
+  });
+  return result;
+}
+
+export function perform(whileTrue, logic = true, whileFalse = noop) {
+  if (logic) {
+    whileTrue();
+  } else {
+    whileFalse();
+  }
 }

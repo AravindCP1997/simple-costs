@@ -502,3 +502,24 @@ export const defaultStockTransportOrder = {
     },
   ],
 };
+
+export const defaultMaterialReceipt = {
+  Company: "",
+  Year: "",
+  AccYear: "",
+  TransactionNo: "",
+  MaterialDocNo: "",
+  AccountingDocNo: "",
+  ValueDate: "",
+  PostingDate: "",
+  LocationCode: "",
+  Text: "",
+  ConsignmentPO: "",
+  PO: "",
+  STO: "",
+  VendorCode: "",
+  POReceipts: [],
+  Consignments: [],
+  VendorReceipts: [],
+  STOReceipts: [],
+};

@@ -9,9 +9,14 @@ import {
   FilteredList,
   ListItems,
   newAutoNumber,
+  perform,
+  rangeOverlap,
+  refine,
+  SumFieldIfs,
   TimeStamp,
   valueInRange,
 } from "./functions";
+import { MaterialTable } from "./businessFunctions";
 
 export class IncomeTaxCode extends Collection {
   constructor(code, name = "IncomeTaxCode") {
@@ -409,6 +414,7 @@ export class Company extends Collection {
     super(name);
     this.code = code;
     this.criteria = { Code: this.code };
+    this.openperiods = new OpenPeriods(this.code);
   }
   getData() {
     return super.getData(this.criteria);
@@ -427,6 +433,12 @@ export class Company extends Collection {
   }
   dateInYear(date, year) {
     return dateInYear(date, year, this.getData().FYBeginning);
+  }
+  year(date) {
+    const givenDate = new Date(date);
+    const givenYear = givenDate.getFullYear();
+    const result = this.dateInYear(date, givenYear) ? givenYear : givenYear - 1;
+    return result;
   }
 }
 
@@ -453,6 +465,36 @@ export class OpenPeriods extends Collection {
       return super.add(data);
     }
     return super.update({ Company: this.Company }, data);
+  }
+  accountingOpen(date) {
+    const result = this.getData().Accounting.reduce(
+      (prevresult, period) =>
+        prevresult === false
+          ? valueInRange(date, [period.From, period.To])
+          : prevresult,
+      false,
+    );
+    return result;
+  }
+  costingOpen(date) {
+    const result = this.getData().Costing.reduce(
+      (prevresult, period) =>
+        prevresult === false
+          ? valueInRange(date, [period.From, period.To])
+          : prevresult,
+      false,
+    );
+    return result;
+  }
+  materialOpen(date) {
+    const result = this.getData().Material.reduce(
+      (prevresult, period) =>
+        prevresult === false
+          ? valueInRange(date, [period.From, period.To])
+          : prevresult,
+      false,
+    );
+    return result;
   }
 }
 
@@ -606,6 +648,9 @@ export class Location extends CompanyCollection {
   }
   update(data) {
     return super.update(this.criteria, data);
+  }
+  pc() {
+    return new ProfitCenter(this.getData().ProfitCenter, this.companycode);
   }
 }
 
@@ -907,6 +952,12 @@ export class Material extends CompanyCollection {
     this.delete();
     super.add(data);
     return "Material Updated";
+  }
+  group() {
+    return new MaterialGroup(
+      this.getData().MaterialGroupCode,
+      this.companycode,
+    );
   }
 }
 
@@ -1239,6 +1290,58 @@ export class PurchaseOrder extends CompanyCollection {
     super.add(data);
     return "Purchase Order Updated";
   }
+  ordered(item) {
+    const result = this.getData().Items[item - 1].Quantity;
+    return result;
+  }
+  inTransit(item) {
+    const result =
+      SumFieldIfs(
+        MaterialTable(),
+        "Quantity",
+        ["TransitType", "TransitOrder", "TransitItem", "Type", "Company"],
+        ["PurchaseOrder", this.code, item, "In", this.companycode],
+      ) -
+      SumFieldIfs(
+        MaterialTable(),
+        "Quantity",
+        ["TransitType", "TransitOrder", "TransitItem", "Type", "Company"],
+        ["PurchaseOrder", this.code, item, "Out", this.companycode],
+      );
+    return result;
+  }
+  delivered(item) {
+    const result =
+      SumFieldIfs(
+        MaterialTable(),
+        "Quantity",
+        ["ReceiptType", "ReceiptOrder", "ReceiptItem", "Type", "Company"],
+        ["PurchaseOrder", this.code, item, "In", this.companycode],
+      ) -
+      SumFieldIfs(
+        MaterialTable(),
+        "Quantity",
+        ["ReceiptType", "ReceiptOrder", "ReceiptItem", "Type", "Company"],
+        ["PurchaseOrder", this.code, item, "Out", this.companycode],
+      );
+    return result;
+  }
+  undispatched(item) {
+    const result =
+      this.ordered(item) - this.inTransit(item) - this.delivered(item);
+    return result;
+  }
+  summary() {
+    const result = this.getData().Items.map((item, i) => ({
+      ...item,
+      ...{
+        InTransit: this.inTransit(i + 1),
+        Delivered: this.delivered(i + 1),
+        Undispatched: this.undispatched(i + 1),
+      },
+    }));
+    return result;
+  }
 }
 
 export class SaleOrder extends CompanyCollection {
@@ -1300,6 +1403,58 @@ export class StockTransportOrder extends CompanyCollection {
     this.delete();
     super.add(data);
     return "Stock Transport Order Updated";
+  }
+  ordered(item) {
+    const result = this.getData().Items[item - 1].Quantity;
+    return result;
+  }
+  inTransit(item) {
+    const result =
+      SumFieldIfs(
+        MaterialTable(),
+        "Quantity",
+        ["TransitType", "TransitOrder", "TransitItem", "Type", "Company"],
+        ["StockTransportOrder", this.code, item, "In", this.companycode],
+      ) -
+      SumFieldIfs(
+        MaterialTable(),
+        "Quantity",
+        ["TransitType", "TransitOrder", "TransitItem", "Type", "Company"],
+        ["StockTransportOrder", this.code, item, "Out", this.companycode],
+      );
+    return result;
+  }
+  delivered(item) {
+    const result =
+      SumFieldIfs(
+        MaterialTable(),
+        "Quantity",
+        ["ReceiptType", "ReceiptOrder", "ReceiptItem", "Type", "Company"],
+        ["StockTransportOrder", this.code, item, "In", this.companycode],
+      ) -
+      SumFieldIfs(
+        MaterialTable(),
+        "Quantity",
+        ["ReceiptType", "ReceiptOrder", "ReceiptItem", "Type", "Company"],
+        ["StockTransportOrder", this.code, item, "Out", this.companycode],
+      );
+    return result;
+  }
+  undispatched(item) {
+    const result =
+      this.ordered(item) - this.inTransit(item) - this.delivered(item);
+    return result;
+  }
+  summary() {
+    const result = this.getData().Items.map((item, i) => ({
+      ...item,
+      ...{
+        InTransit: this.inTransit(i + 1),
+        Delivered: this.delivered(i + 1),
+        Undispatched: this.undispatched(i + 1),
+      },
+    }));
+    return result;
   }
 }
 
@@ -1399,7 +1554,7 @@ export class ProcessOrder extends CompanyCollection {
 export class YearlyCompanyCollection extends CompanyCollection {
   constructor(year, company, name) {
     super(company, name);
-    this.year = year;
+    this.year = Number(year);
     this.Yearcriteria = { Year: this.year };
   }
   loadFromCompany() {
@@ -1455,13 +1610,18 @@ export class AccountingDocument extends YearlyCompanyCollection {
     const numberingStart = this.company
       .getData()
       .Numbering.find((item) => item.Item === "Accounting Document").From;
-    const Number = super.autoNumber(
+    const DocumentNo = super.autoNumber(
       this.criteria,
       "DocumentNo",
       numberingStart,
     );
-    super.add({ ...this.prepared(data), ["DocumentNo"]: Number });
-    return `Accounting Document created, Number: ${Number}`;
+    const preparedData = { ...this.prepared(data), ...{ DocumentNo } };
+    super.add(preparedData);
+    const result = super.exists({ ...this.criteria, ...{ DocumentNo } });
+    return { result, DocumentNo };
+  }
+  update(data) {
+    super.update(this.criteria, data);
   }
   defaultDocument() {
     return {
@@ -1470,7 +1630,7 @@ export class AccountingDocument extends YearlyCompanyCollection {
       DocumentNo: this.documentNo,
       DocumentDate: "",
       Text: "",
-      AccountingDate: "",
+      PostingDate: "",
       EntryDate: dateString(new Date()),
       TimeStamp: TimeStamp(),
       Entries: [this.defaultEntry()],
@@ -1486,6 +1646,7 @@ export class AccountingDocument extends YearlyCompanyCollection {
     return {
       Account: "",
       Type: "Debit",
+      ProfitCenter: "",
       Amount: 0,
       BTC: "",
       Text: "",
@@ -1499,7 +1660,7 @@ export class AccountingDocument extends YearlyCompanyCollection {
 export class MaterialDocument extends YearlyCompanyCollection {
   constructor(documentNo, year, company, name = "MaterialDocument") {
     super(year, company, name);
-    this.documentNo = documentNo;
+    this.documentNo = Number(documentNo);
     this.criteria = { DocumentNo: this.documentNo };
   }
   exists() {
@@ -1518,13 +1679,18 @@ export class MaterialDocument extends YearlyCompanyCollection {
     const numberingStart = this.company
       .getData()
       .Numbering.find((item) => item.Item === "Material Document").From;
-    const Number = super.autoNumber(
+    const DocumentNo = super.autoNumber(
       this.criteria,
       "DocumentNo",
       numberingStart,
     );
-    super.add({ ...this.prepared(data), ["DocumentNo"]: Number });
-    return `Material Document created, Number: ${Number}`;
+    const preparedData = { ...this.prepared(data), ...{ DocumentNo } };
+    super.add(preparedData);
+    const result = super.exists({ ...this.criteria, ...{ DocumentNo } });
+    return { result, DocumentNo };
+  }
+  update(data) {
+    super.update(this.criteria, data);
   }
   defaultDocument() {
     return {
@@ -1542,28 +1708,38 @@ export class MaterialDocument extends YearlyCompanyCollection {
     };
   }
   prepared(data) {
-    return { ...this.defaultDocument(), ...data };
+    return {
+      ...this.defaultDocument(),
+      ...refine(data, this.defaultDocument()),
+      ["Movements"]: data.Movements.map((movement, m) =>
+        this.prepareMovement(movement),
+      ),
+    };
   }
   defaultMovement() {
     return {
-      Material: "",
-      Location: "",
+      MaterialCode: "",
+      LocationCode: "",
       Block: "Free",
       Type: "In",
       Quantity: 0,
-      PO: "",
-      POItem: "",
-      STO: "",
-      STOItem: "",
-      Proc: "",
-      ProcItem: "",
-      Prod: "",
-      ProdItem: "",
       Text: "",
+      ReserveType: "",
+      ReserveOrder: "",
+      ReserveItem: "",
+      ReceiptType: "",
+      ReceiptOrder: "",
+      ReceiptItem: "",
+      TransitType: "",
+      TransitOrder: "",
+      TransitItem: "",
     };
   }
   prepareMovement(data) {
-    return { ...this.defaultMovement(), data };
+    return {
+      ...this.defaultMovement(),
+      ...refine(data, this.defaultMovement()),
+    };
   }
 }
 
@@ -1596,5 +1772,101 @@ export class CostingDocument extends YearlyCompanyCollection {
     );
     super.add({ ...data, ["DocumentNo"]: Number });
     return `Costing Document created, Number: ${Number}`;
+  }
+}
+
+export class Transaction extends Collection {
+  constructor(company, year, number, type, name = "Transaction") {
+    super(name);
+    this.companycode = company;
+    this.company = new Company(this.companycode);
+    this.year = year;
+    this.number = number;
+    this.type = type;
+    this.criteria = {
+      Company: this.companycode,
+      Year: this.year,
+      TransactionNo: this.number,
+      Type: this.type,
+    };
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  add(data) {
+    const TransactionNo = newAutoNumber(
+      super.load() === null ? [] : super.load(),
+      this.criteria,
+      "TransactionNo",
+      1,
+    );
+    super.add({ ...data, ...{ TransactionNo, Type: this.type } });
+    const result = super.exists({ ...this.criteria, TransactionNo });
+    return { result, TransactionNo };
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+}
+
+export class MaterialReceipt extends Transaction {
+  constructor(
+    company,
+    year,
+    number,
+    accountingdoc,
+    materialdoc,
+    type = "MaterialReceipt",
+  ) {
+    super(company, year, number, type);
+    this.accountingdocNo = accountingdoc;
+    this.materialdocNo = materialdoc;
+    this.accountingdoc = new AccountingDocument(
+      this.accountingdocNo,
+      this.year,
+      this.companycode,
+    );
+    this.materialdoc = new MaterialDocument(
+      this.materialdocNo,
+      this.year,
+      this.companycode,
+    );
+  }
+  add(data, materialdata, accountingdata, Status = "Post") {
+    const postaccounts = this.accountingdoc.add({
+      ...accountingdata,
+      ...{ Status },
+    });
+    const postmaterial = this.materialdoc.add({
+      ...materialdata,
+      ...{ Status },
+    });
+    if (!postaccounts.result || !postmaterial.result) {
+      return "Some Error Occurred";
+    }
+    const result = super.add({
+      ...data,
+      ...{
+        AccountingDocNo: postaccounts.DocumentNo,
+        MaterialDocNo: postmaterial.DocumentNo,
+        Status,
+      },
+    });
+    if (!result.result) {
+      return "Some Error Occurred";
+    }
+    return `Material Receipt created Successfully.
+      Material Receipt No: ${result.TransactionNo}   
+      Accounting Document: ${postaccounts.DocumentNo}
+      Material Document: ${postmaterial.DocumentNo}
+      `;
+  }
+  update(data, materialdata, accountingdata, Status = "Post") {
+    this.materialdoc.update({ ...materialdata, ...{ Status } });
+    this.accountingdoc.update({ ...accountingdata, ...{ Status } });
+    super.update({ ...data, ...{ Status } });
   }
 }

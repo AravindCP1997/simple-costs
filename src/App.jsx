@@ -12,10 +12,12 @@ import {
   Input,
   Row,
   HidingPrompt,
+  HidingDisplay,
 } from "./Components";
 import UserInterface, { Home } from "./UserInterface";
 import { useState } from "react";
 import {
+  AccountingDocument,
   Asset,
   AssetGroup,
   Attendance,
@@ -25,11 +27,18 @@ import {
   Holidays,
   LedgerAssignment,
   MaterialDocument,
+  MaterialReceipt,
   ProfitCenter,
+  PurchaseOrder,
   Segments,
+  StockTransportOrder,
+  Transaction,
+  YearlyCompanyCollection,
 } from "./classes";
 import { FaHome } from "react-icons/fa";
-import { dateInYear, dateString, TimeStamp } from "./functions";
+import { dateInYear, dateString, perform, TimeStamp } from "./functions";
+import { MaterialTable } from "./businessFunctions";
+import { MaterialDocuments } from "./Transactions/MaterialDocuments";
 
 export function Scratch() {
   const { showAlert } = useInterface();
@@ -79,10 +88,33 @@ export function Scratch() {
               />
             </Row>
           </Row>
-          {JSON.stringify(
-            new MaterialDocument("", 2024, "ACP").prepared({ name: "Aravind" }),
-          )}
+          <Row>
+            <Button
+              name={"ADD Transaction"}
+              functionsArray={[
+                () => {
+                  const { result, TransactionNo } = new Transaction(
+                    "ABC",
+                    2025,
+                    "",
+                    "MG",
+                  ).add({
+                    Company: "ABC",
+                    Year: 2025,
+                    Type: "MG",
+                    name: "aravind",
+                  });
+                  perform(
+                    () => showAlert(TransactionNo),
+                    result,
+                    showAlert("Some error occurred!"),
+                  );
+                },
+              ]}
+            />
+          </Row>
         </DisplayArea>
+        {JSON.stringify(new MaterialReceipt("ABC", 2025, 4).exists())}
       </WindowContent>
     </>
   );

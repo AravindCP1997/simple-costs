@@ -148,6 +148,9 @@ import { CreateProcessOrder } from "./Transactions/ProcessOrder";
 import { CreateMaintenanceOrder } from "./Transactions/MaintenanceOrder";
 import { CreateStockTransportOrder } from "./Transactions/StockTransportOrder";
 import { Authentication } from "./Transactions/Authentication";
+import { MaterialDocuments } from "./Transactions/MaterialDocuments";
+import { CreateMaterialReceipt } from "./Transactions/MaterialReceipt";
+import { QueryMaterialDocument } from "./Transactions/MaterialDocument";
 
 const codes = [
   {
@@ -799,6 +802,22 @@ const codes = [
     subgroup: "Human Resources",
   },
   {
+    code: "mr",
+    screen: <Window />,
+    window: <CreateMaterialReceipt />,
+    name: "Material Receipt",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "vmd",
+    screen: <Window />,
+    window: <QueryMaterialDocument />,
+    name: "View Material Document",
+    group: "Report",
+    subgroup: "Materials and Services",
+  },
+  {
     code: "simtax",
     screen: <Window />,
     window: <IncomeTaxSimulate />,
@@ -1325,6 +1344,7 @@ export function Drawer({ initial = "Record" }) {
     display: "flex",
     flexDirection: "row",
     flexWrap: "wrap",
+    justifyContent: "left",
     overflow: "auto",
     gap: "0px",
     rowGap: "5px",
