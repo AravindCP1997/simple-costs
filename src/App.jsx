@@ -96,35 +96,6 @@ export function Scratch() {
               />
             </Row>
           </Row>
-          <Row>
-            <Button
-              name={"ADD Transaction"}
-              functionsArray={[
-                () => {
-                  const { result, TransactionNo } = new Transaction(
-                    "ABC",
-                    2025,
-                    "",
-                    "MG",
-                  ).add({
-                    Company: "ABC",
-                    Year: 2025,
-                    Type: "MG",
-                    name: "aravind",
-                  });
-                  perform(
-                    () => showAlert(TransactionNo),
-                    result,
-                    showAlert("Some error occurred!"),
-                  );
-                },
-              ]}
-            />
-          </Row>
-          <Selection value={data.loc} changeData={changeData} path={"loc"} />
-          {JSON.stringify(
-            filterBySelection(random, trimSelection(data.loc), "Name", false),
-          )}
         </DisplayArea>
       </WindowContent>
     </>

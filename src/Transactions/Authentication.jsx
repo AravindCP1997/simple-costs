@@ -46,6 +46,16 @@ export function Authentication() {
       }}
     >
       <Label
+        label={"C O M P O U N D S"}
+        style={{
+          color: "white",
+          marginLeft: "5px",
+          opacity: "0.5",
+          background: "var(--redt)",
+          width: "fit-content",
+        }}
+      />
+      <Label
         label={"Authentication"}
         style={{ fontWeight: "bold", textAlign: "center" }}
       />
@@ -54,11 +64,16 @@ export function Authentication() {
           value={passcode}
           process={(value) => setpasscode(value)}
           placeholder="Enter Passcode"
+          type={"password"}
         />
         <ConditionalButton
           name={"Login"}
           result={passcode === defaultpasscode}
-          whileTrue={[() => savepasscode(), () => checkauthentication()]}
+          whileTrue={[
+            () => savepasscode(),
+            () => checkauthentication(),
+            () => setpasscode(""),
+          ]}
           whileFalse={[() => showAlert("Incorrect Passcode. Please retry")]}
         />
       </Row>

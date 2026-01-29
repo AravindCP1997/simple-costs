@@ -625,3 +625,7 @@ export function filterBySelection(
 
   return result;
 }
+
+export const logout = () => {
+  localStorage.removeItem("Authentication");
+};

@@ -30,8 +30,9 @@ import {
   FaArrowRight,
   FaChild,
   FaTimes,
+  FaPowerOff,
 } from "react-icons/fa";
-import { ListItems, ListUniqueItems, clickButton } from "./functions";
+import { ListItems, ListUniqueItems, clickButton, logout } from "./functions";
 import { Scratch } from "./App";
 import { JSONEditor } from "./Transactions/JsonEditor";
 
@@ -1227,7 +1228,7 @@ function Accessibility() {
 }
 
 export function Home() {
-  const { setscreen } = useInterface();
+  const { setscreen, checkauthentication } = useInterface();
 
   const style = {
     borderRadius: "25px",
@@ -1305,9 +1306,12 @@ export function Home() {
           C O M P O U N D S
         </h2>
         <div>
-          <FaGear
+          <FaPowerOff
             cursor={"Pointer"}
-            onClick={() => setscreen(<Drawer initial="System" />)}
+            onClick={() => {
+              logout();
+              checkauthentication();
+            }}
             padding="0px"
             width={"100%"}
             color="var(--redt)"
