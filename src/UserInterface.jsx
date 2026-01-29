@@ -148,9 +148,10 @@ import { CreateProcessOrder } from "./Transactions/ProcessOrder";
 import { CreateMaintenanceOrder } from "./Transactions/MaintenanceOrder";
 import { CreateStockTransportOrder } from "./Transactions/StockTransportOrder";
 import { Authentication } from "./Transactions/Authentication";
-import { MaterialDocuments } from "./Transactions/MaterialDocuments";
+import { QueryMaterialMovements } from "./Transactions/MaterialMovements";
 import { CreateMaterialReceipt } from "./Transactions/MaterialReceipt";
 import { QueryMaterialDocument } from "./Transactions/MaterialDocument";
+import { QueryAccountingDocument } from "./Transactions/AccountingDocument";
 
 const codes = [
   {
@@ -818,6 +819,22 @@ const codes = [
     subgroup: "Materials and Services",
   },
   {
+    code: "mms",
+    screen: <Window />,
+    window: <QueryMaterialMovements />,
+    name: "Material Movements",
+    group: "Report",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "vad",
+    screen: <Window />,
+    window: <QueryAccountingDocument />,
+    name: "View Accounting Document",
+    group: "Report",
+    subgroup: "Financial Accounting",
+  },
+  {
     code: "simtax",
     screen: <Window />,
     window: <IncomeTaxSimulate />,
@@ -901,14 +918,16 @@ function FloatingWindow() {
     <WindowContext.Provider value="float">
       <Draggable nodeRef={nodeRef} handle=".drag">
         <div style={style} ref={nodeRef}>
-          <Row cn="floatTopbar" borderBottom="none">
-            <button className="drag">
-              <FaArrowsAlt />
-            </button>
-            <button onClick={() => closeFloat()}>
-              <FaTimes />
-            </button>
-          </Row>
+          <div>
+            <Row cn="floatTopbar" borderBottom="none">
+              <button className="drag">
+                <FaArrowsAlt />
+              </button>
+              <button onClick={() => closeFloat()}>
+                <FaTimes />
+              </button>
+            </Row>
+          </div>
           <div style={contentStyle} className="floatingWindowContent">
             {window}
           </div>

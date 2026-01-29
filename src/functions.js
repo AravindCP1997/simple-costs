@@ -470,3 +470,158 @@ export function perform(whileTrue, logic = true, whileFalse = noop) {
     whileFalse();
   }
 }
+
+export function trimArray(array) {
+  const result = [];
+  array.forEach((item, i) => {
+    if (item !== "") {
+      result.push(item.trim());
+    }
+  });
+  return result;
+}
+
+export function trimSelection(selection) {
+  const result = { List: [], ExclList: [], Range: [], ExclRange: [] };
+  result.List = trimArray(selection.List);
+  result.ExclList = trimArray(selection.ExclList);
+  selection.Range.forEach((range, r) => {
+    const [From, To] = range;
+    if (From !== "" && To !== "") {
+      result.Range.push(trimArray(range));
+    }
+    if (From !== "" && To === "") {
+      result.Range.push(trimArray([From, From]));
+    }
+    if (To !== "" && From === "") {
+      result.Range.push(trimArray([To, To]));
+    }
+  });
+  selection.ExclRange.forEach((range, r) => {
+    const [From, To] = range;
+    if (From !== "" && To !== "") {
+      result.ExclRange.push(trimArray(range));
+    }
+    if (From !== "" && To === "") {
+      result.ExclRange.push(trimArray([From, From]));
+    }
+    if (To !== "" && From === "") {
+      result.ExclRange.push(trimArray([To, To]));
+    }
+  });
+  return result;
+}
+
+export function convertArrayToNumber(array) {
+  return array.map((item) => Number(item));
+}
+
+export function changeCaseArray(array, lowercase = true) {
+  if (lowercase) {
+    return array.map((item) => item.toLowerCase());
+  }
+  return array.map((item) => item.toUpperCase());
+}
+
+export function filterBySelection(
+  collection,
+  selection,
+  field,
+  caseSensitive = false,
+  number = false,
+) {
+  const { List, ExclList, Range, ExclRange } = selection;
+  let listFiltered = [];
+  let exclListFiltered = [];
+  let rangeFiltered = [];
+  let exclRangeFiltered = [];
+
+  collection.forEach((item, i) => {
+    if (number) {
+      if (convertArrayToNumber(List).includes(Number(item[field]))) {
+        listFiltered.push(i);
+      }
+      if (convertArrayToNumber(ExclList).includes(Number(item[field]))) {
+        exclListFiltered.push(i);
+      }
+      Range.forEach((range) => {
+        const [From, To] = range;
+        if (
+          Number(item[field]) >= Number(From) &&
+          Number(item[field]) <= Number(To)
+        ) {
+          rangeFiltered.push(i);
+        }
+      });
+      ExclRange.forEach((range) => {
+        const [From, To] = range;
+        if (
+          Number(item[field]) >= Number(From) &&
+          Number(item[field]) <= Number(To)
+        ) {
+          exclRangeFiltered.push(i);
+        }
+      });
+    }
+    if (!number && caseSensitive) {
+      if (List.includes(item[field])) {
+        listFiltered.push(i);
+      }
+      if (ExclList.includes(item[field])) {
+        exclListFiltered.push(i);
+      }
+      Range.forEach((range) => {
+        const [From, To] = range;
+        if (item[field] >= From && item[field] <= To) {
+          rangeFiltered.push(i);
+        }
+      });
+      ExclRange.forEach((range) => {
+        const [From, To] = range;
+        if (item[field] >= From && item[field] <= To) {
+          exclRangeFiltered.push(i);
+        }
+      });
+    }
+    if (!number && !caseSensitive) {
+      if (changeCaseArray(List).includes(item[field].toLowerCase())) {
+        listFiltered.push(i);
+      }
+      if (changeCaseArray(ExclList).includes(item[field].toLowerCase())) {
+        exclListFiltered.push(i);
+      }
+      Range.forEach((range) => {
+        const [From, To] = range;
+        if (
+          item[field].toLowerCase() >= From.toLowerCase() &&
+          item[field].toLowerCase() <= To.toLowerCase()
+        ) {
+          rangeFiltered.push(i);
+        }
+      });
+      ExclRange.forEach((range) => {
+        const [From, To] = range;
+        if (
+          item[field].toLowerCase() >= From.toLowerCase() &&
+          item[field].toLowerCase() <= To.toLowerCase()
+        ) {
+          exclRangeFiltered.push(i);
+        }
+      });
+    }
+  });
+
+  const result =
+    List.length > 0 || Range.length > 0
+      ? collection.filter(
+          (item, i) =>
+            (listFiltered.includes(i) || rangeFiltered.includes(i)) &&
+            !(exclListFiltered.includes(i) || exclRangeFiltered.includes(i)),
+        )
+      : collection.filter(
+          (item, i) =>
+            !(exclListFiltered.includes(i) || exclRangeFiltered.includes(i)),
+        );
+
+  return result;
+}

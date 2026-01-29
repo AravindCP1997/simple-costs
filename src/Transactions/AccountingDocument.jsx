@@ -21,10 +21,10 @@ import {
 import { useWindowType, useInterface } from "../useInterface";
 import useData from "../useData";
 import { useError } from "../useError";
-import { Location, Material, MaterialDocument } from "../classes";
+import { AccountingDocument, GeneralLedger } from "../classes";
 import { noop } from "../functions";
 
-export function QueryMaterialDocument() {
+export function QueryAccountingDocument() {
   const { data, changeData } = useData({
     Company: "",
     Year: 0,
@@ -33,21 +33,23 @@ export function QueryMaterialDocument() {
   const { Company, Year, DocumentNo } = data;
   const { openWindow, showAlert } = useInterface();
 
-  const collection = new MaterialDocument(DocumentNo, Year, Company);
+  const collection = new AccountingDocument(DocumentNo, Year, Company);
 
   return (
     <>
       <WindowTitle
-        title={"View Material Document"}
+        title={"View Accounting Document"}
         menu={[
           <ConditionalButton
             name={"View"}
             result={collection.exists()}
-            whileFalse={[() => showAlert("Material Document does not exist.")]}
+            whileFalse={[
+              () => showAlert("Accounting Document does not exist."),
+            ]}
             whileTrue={[
               () =>
                 openWindow(
-                  <ViewMaterialDocument data={collection.getData()} />,
+                  <ViewAccountingDocument data={collection.getData()} />,
                 ),
             ]}
           />,
@@ -87,102 +89,72 @@ export function QueryMaterialDocument() {
   );
 }
 
-export function ViewMaterialDocument({ data }) {
+export function ViewAccountingDocument({ data }) {
   const { openWindow } = useInterface();
-  const float = useWindowType() === "float";
-  const { Company, ValueDate, Year, Text, EntryDate, Reversed, Movements } =
+  const { Company, PostingDate, Year, Text, EntryDate, Reversed, Entries } =
     data;
   return (
     <>
       <WindowTitle
-        title={"View Material Document"}
-        menu={
-          float
-            ? []
-            : [
-                <Button
-                  name="Other"
-                  functionsArray={[() => openWindow(<QueryMaterialDocument />)]}
-                />,
-              ]
-        }
+        title={"View Accounting Document"}
+        menu={[
+          <Button
+            name="Other"
+            functionsArray={[() => openWindow(<QueryAccountingDocument />)]}
+          />,
+        ]}
       />
       <WindowContent>
         <DisplayArea>
-          <Row>
+          <Row width="min(100%,400px)">
             <Label label={"Company"} />
             <label>{Company}</label>
           </Row>
-          <Row>
-            <Label label={"Value Date"} />
-            <label>{ValueDate}</label>
+          <Row width="min(100%,400px)">
+            <Label label={"Posting Date"} />
+            <label>{PostingDate}</label>
           </Row>
-          <Row>
+          <Row width="min(100%,400px)">
             <Label label={"Entry Date"} />
             <label>{EntryDate}</label>
           </Row>
-          <Row>
+          <Row width="min(100%,400px)">
             <Label label={"Year"} />
             <label>{Year}</label>
           </Row>
-          <Row jc="left">
+          <Row jc="left" width="min(100%,400px)">
             <Label label={"Reversed"} />
             <CheckBox value={Reversed} process={noop} />
           </Row>
-          <Row>
+          <Row width="min(100%,400px)">
             <Label label={"Text"} />
             <label>{Text}</label>
           </Row>
           <Column>
-            <Label label={"Movements"} />
+            <Label label={"Entries"} style={{ fontWeight: "bold" }} />
             <Table
               columns={[
-                "Material",
-                "Material Desc.",
-                "Location",
-                "Location Desc.",
-                "Block",
-                "Quantity",
+                "Account",
+                "Account Desc.",
                 "Type",
+                "Amount",
                 "Text",
-                "Receipt Type",
-                "Receipt Order",
-                "Receipt Item",
-                "Transit Type",
-                "Transit Order",
-                "Transit Item",
-                "Reserve Type",
-                "Reserve Order",
-                "Reserve Item",
+                "BTC",
+                "Profit Center",
               ]}
-              rows={Movements.map((item, i) => [
-                <label>{item.MaterialCode}</label>,
+              rows={Entries.map((entry, e) => [
+                <label>{entry.Account}</label>,
                 <label>
                   {
-                    new Material(item.MaterialCode, Company).getData()
+                    new GeneralLedger(entry.Account, Company).getData()
                       .Description
                   }
                 </label>,
-                <label>{item.LocationCode}</label>,
-                <label>
-                  {
-                    new Location(item.LocationCode, Company).getData()
-                      .Description
-                  }
-                </label>,
-                <label>{item.Block}</label>,
-                <label>{item.Quantity}</label>,
-                <label>{item.Type}</label>,
-                <label>{item.Text}</label>,
-                <label>{item.ReceiptType}</label>,
-                <label>{item.ReceiptOrder}</label>,
-                <label>{item.ReceiptItem}</label>,
-                <label>{item.TransitType}</label>,
-                <label>{item.TransitOrder}</label>,
-                <label>{item.TransitItem}</label>,
-                <label>{item.ReserveType}</label>,
-                <label>{item.ReserveOrder}</label>,
-                <label>{item.ReserveItem}</label>,
+                <label>{entry.Type}</label>,
+                <label>{entry.Amount}</label>,
+                <label>{entry.Text}</label>,
+                <label>{entry.BTC}</label>,
+                <label>{entry.ProfitCenter}</label>,
               ])}
             />
           </Column>

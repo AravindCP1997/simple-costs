@@ -13,6 +13,7 @@ import {
   Row,
   HidingPrompt,
   HidingDisplay,
+  Selection,
 } from "./Components";
 import UserInterface, { Home } from "./UserInterface";
 import { useState } from "react";
@@ -36,16 +37,23 @@ import {
   YearlyCompanyCollection,
 } from "./classes";
 import { FaHome } from "react-icons/fa";
-import { dateInYear, dateString, perform, TimeStamp } from "./functions";
+import {
+  dateInYear,
+  dateString,
+  filterBySelection,
+  perform,
+  TimeStamp,
+  trimSelection,
+} from "./functions";
 import { MaterialTable } from "./businessFunctions";
-import { MaterialDocuments } from "./Transactions/MaterialDocuments";
+import useData from "./useData";
+import { defaultSelection } from "./defaults";
 
 export function Scratch() {
   const { showAlert } = useInterface();
-  const [key, setkey] = useState("");
-  const [value, setvalue] = useState("");
-  const pc = new ProfitCenter("A", "ABC");
   const { setscreen } = useInterface();
+  const { data, changeData } = useData({ loc: defaultSelection });
+  const random = [{ Name: "Kohli" }, { Name: "Dhoni" }];
   return (
     <>
       <WindowTitle
@@ -113,8 +121,11 @@ export function Scratch() {
               ]}
             />
           </Row>
+          <Selection value={data.loc} changeData={changeData} path={"loc"} />
+          {JSON.stringify(
+            filterBySelection(random, trimSelection(data.loc), "Name", false),
+          )}
         </DisplayArea>
-        {JSON.stringify(new MaterialReceipt("ABC", 2025, 4).exists())}
       </WindowContent>
     </>
   );

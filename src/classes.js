@@ -1591,7 +1591,7 @@ export class YearlyCompanyCollection extends CompanyCollection {
 export class AccountingDocument extends YearlyCompanyCollection {
   constructor(documentNo, year, company, name = "AccountingDocument") {
     super(year, company, name);
-    this.documentNo = documentNo;
+    this.documentNo = Number(documentNo);
     this.criteria = { DocumentNo: this.documentNo };
   }
   exists() {
@@ -1869,4 +1869,13 @@ export class MaterialReceipt extends Transaction {
     this.accountingdoc.update({ ...accountingdata, ...{ Status } });
     super.update({ ...data, ...{ Status } });
   }
+}
+
+export class defaultSelection {
+  data = {
+    List: Array(20).fill(""),
+    ExclList: Array(20).fill(""),
+    Range: Array(20).fill(["", ""]),
+    ExclRange: Array(20).fill(["", ""]),
+  };
 }

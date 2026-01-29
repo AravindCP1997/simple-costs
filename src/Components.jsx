@@ -3,8 +3,14 @@ import { createPortal } from "react-dom";
 import { clickButton, isObject, noop } from "./functions";
 import { useInterface, useWindowType } from "./useInterface";
 import { FocusTrap } from "focus-trap-react";
-import { FaAngleUp, FaAngleDown, FaWindowClose } from "react-icons/fa";
+import {
+  FaAngleUp,
+  FaAngleDown,
+  FaWindowClose,
+  FaArrowCircleRight,
+} from "react-icons/fa";
 import exportFromJSON from "export-from-json";
+import { FaArrowRight } from "react-icons/fa6";
 
 export const Flex = ({ children, justify = "left", direction = "row" }) => {
   const style = {
@@ -1291,3 +1297,93 @@ export const HidingPrompt = ({
     </div>
   );
 };
+
+export function Selection({ value, path, changeData = noop }) {
+  const { List, ExclList, Range, ExclRange } = value;
+  return (
+    <Row width="fit-content">
+      <Input
+        value={Range[0][0]}
+        process={(value) => changeData(`${path}/Range/0`, 0, value)}
+        type={"text"}
+      />
+      <label>to</label>
+      <Input
+        value={Range[0][1]}
+        process={(value) => changeData(`${path}/Range/0`, 1, value)}
+        type={"text"}
+      />
+      <HidingDisplay title={"Multi Selection"} buttonName={<FaArrowRight />}>
+        <MultiDisplayArea
+          heads={["List", "Exclude List", "Range", "Exclude Range"]}
+          contents={[
+            <Column width="min(100%,250px)">
+              {List.map((item, i) => (
+                <Input
+                  key={i}
+                  value={List[i]}
+                  process={(value) => changeData(`${path}/List`, i, value)}
+                  type={"text"}
+                />
+              ))}
+            </Column>,
+            <Column width="min(100%,250px)">
+              {ExclList.map((item, i) => (
+                <Input
+                  key={i}
+                  value={ExclList[i]}
+                  process={(value) => changeData(`${path}/ExclList`, i, value)}
+                  type={"text"}
+                />
+              ))}
+            </Column>,
+            <Column>
+              {Range.map((item, i) => (
+                <Row key={i} jc="left" borderBottom="none">
+                  <Input
+                    key={0}
+                    value={Range[i][0]}
+                    process={(value) =>
+                      changeData(`${path}/Range/${i}`, 0, value)
+                    }
+                    type={"text"}
+                  />
+                  <Input
+                    key={1}
+                    value={Range[i][1]}
+                    process={(value) =>
+                      changeData(`${path}/Range/${i}`, 1, value)
+                    }
+                    type={"text"}
+                  />
+                </Row>
+              ))}
+            </Column>,
+            <Column>
+              {ExclRange.map((item, i) => (
+                <Row key={i} jc="left" borderBottom="none">
+                  <Input
+                    key={0}
+                    value={ExclRange[i][0]}
+                    process={(value) =>
+                      changeData(`${path}/ExclRange/${i}`, 0, value)
+                    }
+                    type={"text"}
+                  />
+                  <Input
+                    key={1}
+                    value={ExclRange[i][1]}
+                    process={(value) =>
+                      changeData(`${path}/ExclRange/${i}`, 1, value)
+                    }
+                    type={"text"}
+                  />
+                </Row>
+              ))}
+            </Column>,
+          ]}
+        />
+      </HidingDisplay>
+    </Row>
+  );
+}

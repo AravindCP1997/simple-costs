@@ -523,3 +523,10 @@ export const defaultMaterialReceipt = {
   VendorReceipts: [],
   STOReceipts: [],
 };
+
+export const defaultSelection = {
+  List: Array(20).fill(""),
+  ExclList: Array(20).fill(""),
+  Range: Array(20).fill(["", ""]),
+  ExclRange: Array(20).fill(["", ""]),
+};
