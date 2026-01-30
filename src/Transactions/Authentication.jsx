@@ -94,7 +94,13 @@ export function Authentication() {
           }}
         />
         <Row jc="left" borderBottom="none">
-          <Button name={"Clear Data"} />
+          <Button
+            name={"Clear Data"}
+            functionsArray={[
+              () => localStorage.clear(),
+              () => showAlert("All compounding data cleared."),
+            ]}
+          />
           <label
             style={{ textAlign: "center", opacity: "0.5", fontSize: "80%" }}
           >
