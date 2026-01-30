@@ -1387,3 +1387,13 @@ export function Selection({ value, path, changeData = noop }) {
     </Row>
   );
 }
+
+export function ConditionalDisplays({ displays = [[true, <p></p>]] }) {
+  return (
+    <div>
+      {displays.map((item, i) => (
+        <div key={i}>{item[0] && item[1]}</div>
+      ))}
+    </div>
+  );
+}

@@ -510,6 +510,7 @@ export const defaultMaterialReceipt = {
   TransactionNo: "",
   MaterialDocNo: "",
   AccountingDocNo: "",
+  ReceiptType: "Purchase Order",
   ValueDate: "",
   PostingDate: "",
   LocationCode: "",

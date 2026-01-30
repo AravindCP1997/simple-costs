@@ -125,10 +125,12 @@ export function ViewMaterialDocument({ data }) {
             <Label label={"Year"} />
             <label>{Year}</label>
           </Row>
-          <Row jc="left">
-            <Label label={"Reversed"} />
-            <CheckBox value={Reversed} process={noop} />
-          </Row>
+          <Conditional logic={Reversed}>
+            <Row jc="left">
+              <Label label={"Reversed"} />
+              <CheckBox value={Reversed} />
+            </Row>
+          </Conditional>
           <Row>
             <Label label={"Text"} />
             <label>{Text}</label>
@@ -137,25 +139,21 @@ export function ViewMaterialDocument({ data }) {
             <Label label={"Movements"} />
             <Table
               columns={[
+                "Movement Type",
                 "Material",
                 "Material Desc.",
                 "Location",
                 "Location Desc.",
                 "Block",
                 "Quantity",
-                "Type",
                 "Text",
-                "Receipt Type",
-                "Receipt Order",
-                "Receipt Item",
-                "Transit Type",
-                "Transit Order",
-                "Transit Item",
-                "Reserve Type",
-                "Reserve Order",
-                "Reserve Item",
+                "Purchase Order",
+                "Stock Transport Order",
+                "Item",
+                "Vendor",
               ]}
               rows={Movements.map((item, i) => [
+                <label>{item.MovementType}</label>,
                 <label>{item.MaterialCode}</label>,
                 <label>
                   {
@@ -165,24 +163,17 @@ export function ViewMaterialDocument({ data }) {
                 </label>,
                 <label>{item.LocationCode}</label>,
                 <label>
-                  {
+                  {new Location(item.LocationCode, Company).exists() &&
                     new Location(item.LocationCode, Company).getData()
-                      .Description
-                  }
+                      .Description}
                 </label>,
                 <label>{item.Block}</label>,
                 <label>{item.Quantity}</label>,
-                <label>{item.Type}</label>,
                 <label>{item.Text}</label>,
-                <label>{item.ReceiptType}</label>,
-                <label>{item.ReceiptOrder}</label>,
-                <label>{item.ReceiptItem}</label>,
-                <label>{item.TransitType}</label>,
-                <label>{item.TransitOrder}</label>,
-                <label>{item.TransitItem}</label>,
-                <label>{item.ReserveType}</label>,
-                <label>{item.ReserveOrder}</label>,
-                <label>{item.ReserveItem}</label>,
+                <label>{item.PurchaseOrder}</label>,
+                <label>{item.StockTransportOrder}</label>,
+                <label>{item.Item}</label>,
+                <label>{item.Vendor}</label>,
               ])}
             />
           </Column>

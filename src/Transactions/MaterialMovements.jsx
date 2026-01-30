@@ -162,20 +162,15 @@ export function MaterialMovements({ filter }) {
               "Year",
               "Value Date",
               "Document No.",
+              "Movement Type",
               "Location",
               "Material",
               "Quantity",
               "Block",
-              "Type",
-              "Reservation Type",
-              "Reservation Order",
-              "Reservation Item",
-              "Transit Type",
-              "Transit Order",
-              "Transit Item",
-              "Receipt Type",
-              "Receipt Order",
-              "Receipt Item",
+              "Purchase Order",
+              "Stock Transport Order",
+              "Vendor",
+              "Item",
             ]}
             rows={filtered.map((item, i) => [
               <label>{item.Company}</label>,
@@ -196,6 +191,7 @@ export function MaterialMovements({ filter }) {
                     ),
                 ]}
               />,
+              <label>{item.MovementType}</label>,
               <label>{item.LocationCode}</label>,
               <Button
                 name={item.MaterialCode}
@@ -214,16 +210,10 @@ export function MaterialMovements({ filter }) {
               />,
               <label>{item.Quantity}</label>,
               <label>{item.Block}</label>,
-              <label>{item.Type}</label>,
-              <label>{item.ReserveType}</label>,
-              <label>{item.ReserveOrder}</label>,
-              <label>{item.ReserveItem}</label>,
-              <label>{item.TransitType}</label>,
-              <label>{item.TransitOrder}</label>,
-              <label>{item.TransitItem}</label>,
-              <label>{item.ReceiptType}</label>,
-              <label>{item.ReceiptOrder}</label>,
-              <label>{item.ReceiptItem}</label>,
+              <label>{item.PurchaseOrder}</label>,
+              <label>{item.StockTransportOrder}</label>,
+              <label>{item.Vendor}</label>,
+              <label>{item.Item}</label>,
             ])}
           />
         </DisplayArea>

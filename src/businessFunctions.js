@@ -6,7 +6,7 @@ import { TimeStamp } from "./functions";
 export function MaterialTable() {
   const data = new Collection("MaterialDocument").load();
   if (data === null) {
-    return null;
+    return [];
   }
   const result = data.reduce(
     (initial, current) => [

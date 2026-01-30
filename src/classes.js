@@ -12,6 +12,7 @@ import {
   perform,
   rangeOverlap,
   refine,
+  SumField,
   SumFieldIfs,
   TimeStamp,
   valueInRange,
@@ -439,6 +440,24 @@ export class Company extends Collection {
     const givenYear = givenDate.getFullYear();
     const result = this.dateInYear(date, givenYear) ? givenYear : givenYear - 1;
     return result;
+  }
+  collection(name) {
+    return new CompanyCollection(this.code, name);
+  }
+  customer(code) {
+    return new Customer(code, this.code);
+  }
+  location(code) {
+    return new Location(code, this.code);
+  }
+  po(code) {
+    return new PurchaseOrder(code, this.code);
+  }
+  sto(code) {
+    return new StockTransportOrder(code, this.code);
+  }
+  vendor(code) {
+    return new Vendor(code, this.code);
   }
 }
 
@@ -1290,53 +1309,75 @@ export class PurchaseOrder extends CompanyCollection {
     super.add(data);
     return "Purchase Order Updated";
   }
+  items() {
+    if (!this.exists()) {
+      return [];
+    }
+    return this.getData().Items;
+  }
+  itemExists(item) {
+    return this.items().length >= item;
+  }
+  itemData(item) {
+    return this.items()[item - 1];
+  }
   ordered(item) {
-    const result = this.getData().Items[item - 1].Quantity;
+    const result = this.itemData(item).Quantity;
     return result;
+  }
+  materialMovements(items = [], movementTypes = []) {
+    return MaterialTable().filter(
+      (movement) =>
+        (items.includes(movement.Item) || items.length === 0) &&
+        (movementTypes.includes(movement.MovementType) ||
+          movementTypes.length === 0) &&
+        movement.Company === this.companycode &&
+        movement.PurchaseOrder === this.code,
+    );
   }
   inTransit(item) {
-    const result =
-      SumFieldIfs(
-        MaterialTable(),
-        "Quantity",
-        ["TransitType", "TransitOrder", "TransitItem", "Type", "Company"],
-        ["PurchaseOrder", this.code, item, "In", this.companycode],
-      ) -
-      SumFieldIfs(
-        MaterialTable(),
-        "Quantity",
-        ["TransitType", "TransitOrder", "TransitItem", "Type", "Company"],
-        ["PurchaseOrder", this.code, item, "Out", this.companycode],
-      );
+    const result = SumField(
+      this.materialMovements(
+        [item],
+        [
+          "Consignment Inwards Collection",
+          "Consignment Inwards Return",
+          "Consignment Inwards Cancellation",
+        ],
+      ),
+      "Quantity",
+    );
     return result;
   }
-  delivered(item) {
-    const result =
-      SumFieldIfs(
-        MaterialTable(),
-        "Quantity",
-        ["ReceiptType", "ReceiptOrder", "ReceiptItem", "Type", "Company"],
-        ["PurchaseOrder", this.code, item, "In", this.companycode],
-      ) -
-      SumFieldIfs(
-        MaterialTable(),
-        "Quantity",
-        ["ReceiptType", "ReceiptOrder", "ReceiptItem", "Type", "Company"],
-        ["PurchaseOrder", this.code, item, "Out", this.companycode],
-      );
+  receipt(item) {
+    const result = SumField(
+      this.materialMovements([item], ["Receipt"]),
+      "Quantity",
+    );
+    return result;
+  }
+  return(item) {
+    const result = SumField(
+      this.materialMovements([item], ["Return Outwards"]),
+      "Quantity",
+    );
     return result;
   }
   undispatched(item) {
     const result =
-      this.ordered(item) - this.inTransit(item) - this.delivered(item);
+      this.ordered(item) -
+      this.receipt(item) -
+      this.inTransit(item) +
+      this.return(item);
     return result;
   }
   summary() {
-    const result = this.getData().Items.map((item, i) => ({
-      ...item,
+    const result = this.items().map((item, i) => ({
+      ...this.itemData(i + 1),
       ...{
         InTransit: this.inTransit(i + 1),
-        Delivered: this.delivered(i + 1),
+        Delivered: this.receipt(i + 1),
+        Returned: this.return(i + 1),
         Undispatched: this.undispatched(i + 1),
       },
     }));
@@ -1404,53 +1445,70 @@ export class StockTransportOrder extends CompanyCollection {
     super.add(data);
     return "Stock Transport Order Updated";
   }
+  items() {
+    if (!this.exists()) {
+      return [];
+    }
+    return this.getData().Items;
+  }
+  itemExists(item) {
+    return this.items().length >= item;
+  }
+  itemData(item) {
+    return this.items()[item - 1];
+  }
   ordered(item) {
-    const result = this.getData().Items[item - 1].Quantity;
+    const result = this.itemData(item).Quantity;
+    return result;
+  }
+  materialMovements(items = [], movementTypes = []) {
+    return MaterialTable().filter(
+      (movement) =>
+        (items.includes(movement.Item) || items.length === 0) &&
+        (movementTypes.includes(movement.MovementType) ||
+          movementTypes.length === 0) &&
+        movement.Company === this.companycode &&
+        movement.StockTransportOrder === this.code,
+    );
+  }
+  dispatched(item) {
+    const result = SumField(
+      this.materialMovements([item], ["Stock Transfer Dispatch"]),
+      "Quantity",
+    );
+    return result;
+  }
+  delivered(item) {
+    const result = SumField(
+      this.materialMovements([item], ["Stock Transfer Delivery"]),
+      "Quantity",
+    );
+    return result;
+  }
+  loss(item) {
+    const result = SumField(
+      this.materialMovements([item], ["Stock Transfer Loss"]),
+      "Quantity",
+    );
     return result;
   }
   inTransit(item) {
     const result =
-      SumFieldIfs(
-        MaterialTable(),
-        "Quantity",
-        ["TransitType", "TransitOrder", "TransitItem", "Type", "Company"],
-        ["StockTransportOrder", this.code, item, "In", this.companycode],
-      ) -
-      SumFieldIfs(
-        MaterialTable(),
-        "Quantity",
-        ["TransitType", "TransitOrder", "TransitItem", "Type", "Company"],
-        ["StockTransportOrder", this.code, item, "Out", this.companycode],
-      );
-    return result;
-  }
-  delivered(item) {
-    const result =
-      SumFieldIfs(
-        MaterialTable(),
-        "Quantity",
-        ["ReceiptType", "ReceiptOrder", "ReceiptItem", "Type", "Company"],
-        ["StockTransportOrder", this.code, item, "In", this.companycode],
-      ) -
-      SumFieldIfs(
-        MaterialTable(),
-        "Quantity",
-        ["ReceiptType", "ReceiptOrder", "ReceiptItem", "Type", "Company"],
-        ["StockTransportOrder", this.code, item, "Out", this.companycode],
-      );
+      this.dispatched(item) - this.delivered(item) - this.loss(item);
     return result;
   }
   undispatched(item) {
-    const result =
-      this.ordered(item) - this.inTransit(item) - this.delivered(item);
+    const result = this.ordered(item) - this.dispatched(item);
     return result;
   }
   summary() {
-    const result = this.getData().Items.map((item, i) => ({
-      ...item,
+    const result = this.items().map((item, i) => ({
+      ...this.itemData(i + 1),
       ...{
-        InTransit: this.inTransit(i + 1),
+        Dispatched: this.dispatched(i + 1),
+        Loss: this.loss(i + 1),
         Delivered: this.delivered(i + 1),
+        InTransit: this.inTransit(i + 1),
         Undispatched: this.undispatched(i + 1),
       },
     }));
@@ -1718,21 +1776,16 @@ export class MaterialDocument extends YearlyCompanyCollection {
   }
   defaultMovement() {
     return {
+      MovementType: "",
       MaterialCode: "",
       LocationCode: "",
       Block: "Free",
-      Type: "In",
       Quantity: 0,
+      PurchaseOrder: "",
+      StockTransportOrder: "",
+      Item: "",
+      Vendor: "",
       Text: "",
-      ReserveType: "",
-      ReserveOrder: "",
-      ReserveItem: "",
-      ReceiptType: "",
-      ReceiptOrder: "",
-      ReceiptItem: "",
-      TransitType: "",
-      TransitOrder: "",
-      TransitItem: "",
     };
   }
   prepareMovement(data) {
@@ -1797,15 +1850,8 @@ export class Transaction extends Collection {
     return super.exists(this.criteria);
   }
   add(data) {
-    const TransactionNo = newAutoNumber(
-      super.load() === null ? [] : super.load(),
-      this.criteria,
-      "TransactionNo",
-      1,
-    );
-    super.add({ ...data, ...{ TransactionNo, Type: this.type } });
-    const result = super.exists({ ...this.criteria, TransactionNo });
-    return { result, TransactionNo };
+    super.add({ ...data, ...{ Type: this.type } });
+    return true;
   }
   update(data) {
     return super.update(this.criteria, data);
@@ -1852,16 +1898,16 @@ export class MaterialReceipt extends Transaction {
       ...{
         AccountingDocNo: postaccounts.DocumentNo,
         MaterialDocNo: postmaterial.DocumentNo,
+        TransactionNo: postmaterial.DocumentNo,
         Status,
       },
     });
-    if (!result.result) {
+    if (!result) {
       return "Some Error Occurred";
     }
     return `Material Receipt created Successfully.
-      Material Receipt No: ${result.TransactionNo}   
-      Accounting Document: ${postaccounts.DocumentNo}
-      Material Document: ${postmaterial.DocumentNo}
+      Material Receipt No: ${postmaterial.DocumentNo},
+      Accounting Document: ${postaccounts.DocumentNo}.
       `;
   }
   update(data, materialdata, accountingdata, Status = "Post") {
@@ -1869,13 +1915,4 @@ export class MaterialReceipt extends Transaction {
     this.accountingdoc.update({ ...accountingdata, ...{ Status } });
     super.update({ ...data, ...{ Status } });
   }
-}
-
-export class defaultSelection {
-  data = {
-    List: Array(20).fill(""),
-    ExclList: Array(20).fill(""),
-    Range: Array(20).fill(["", ""]),
-    ExclRange: Array(20).fill(["", ""]),
-  };
 }

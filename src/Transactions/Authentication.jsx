@@ -46,16 +46,6 @@ export function Authentication() {
       }}
     >
       <Label
-        label={"C O M P O U N D S"}
-        style={{
-          color: "white",
-          marginLeft: "5px",
-          opacity: "0.5",
-          background: "var(--redt)",
-          width: "fit-content",
-        }}
-      />
-      <Label
         label={"Authentication"}
         style={{ fontWeight: "bold", textAlign: "center" }}
       />
@@ -80,6 +70,38 @@ export function Authentication() {
       <label style={{ textAlign: "center", opacity: "0.5", fontSize: "80%" }}>
         Use Instagram ID of author.
       </label>
+
+      <div
+        style={{
+          position: "fixed",
+          bottom: "10px",
+          left: "5%",
+          height: "calc(100% - 20px)",
+          zIndex: 1000,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: "10px",
+        }}
+      >
+        <Label
+          label={"C O M P O U N D S"}
+          style={{
+            color: "white",
+            background: "var(--redt)",
+            width: "fit-content",
+          }}
+        />
+        <Row jc="left" borderBottom="none">
+          <Button name={"Clear Data"} />
+          <label
+            style={{ textAlign: "center", opacity: "0.5", fontSize: "80%" }}
+          >
+            Last updated 30.01.2026
+          </label>
+        </Row>
+      </div>
     </div>
   );
 }

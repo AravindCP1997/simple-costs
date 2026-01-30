@@ -18,6 +18,7 @@ import {
   HidingPrompt,
   Conditional,
   MultiDisplayArea,
+  ConditionalDisplays,
 } from "../Components";
 import { useWindowType, useInterface } from "../useInterface";
 import useData from "../useData";
@@ -43,6 +44,7 @@ import {
   ListUniqueItems,
   perform,
   rangeOverlap,
+  transformObject,
 } from "../functions";
 
 import { defaultMaterialReceipt } from "../defaults";
@@ -83,6 +85,7 @@ export function CreateMaterialReceipt({
     ValueDate,
     PostingDate,
     LocationCode,
+    ReceiptType,
     Text,
     PO,
     STO,
@@ -129,6 +132,19 @@ export function CreateMaterialReceipt({
       },
       collection.company.exists() && ValueDate !== "",
     );
+    perform(() => {
+      processed.POReceipts = [];
+    }, ReceiptType !== "Purchase Order");
+    perform(() => {
+      processed.Consignments = [];
+    }, ReceiptType !== "Purchase Order Consignment");
+    perform(() => {
+      processed.STOReceipts = [];
+    }, ReceiptType !== "Stock Transport Order");
+    perform(() => {
+      processed.VendorReceipts = [];
+    }, ReceiptType !== "Miscellaneous");
+
     [...STOReceipts, ...POReceipts, ...Consignments, ...VendorReceipts].forEach(
       (item, i) => {
         perform(
@@ -154,19 +170,18 @@ export function CreateMaterialReceipt({
         Value: Amount,
         Inspection,
         Remarks: Text,
-        PO: ReceiptOrder,
+        PO: PurchaseOrder,
       } = item;
       const material = new Material(MaterialCode, Company);
       MaterialData.Movements.push({
         MaterialCode,
         LocationCode,
         Block: Inspection === "Pending" ? "For Inspection" : "Free",
-        Type: "In",
         Quantity,
         Text,
-        ReceiptType: "PurchaseOrder",
-        ReceiptOrder,
-        ReceiptItem: No,
+        PurchaseOrder,
+        Item: No,
+        MovementType: "Receipt",
       });
       AccountsData.Entries.push(
         ...[
@@ -200,20 +215,33 @@ export function CreateMaterialReceipt({
         Value: Amount,
         Inspection,
         Remarks: Text,
-        ConsignmentPO: ReceiptOrder,
+        ConsignmentPO: PurchaseOrder,
       } = item;
       const material = new Material(MaterialCode, Company);
-      MaterialData.Movements.push({
-        MaterialCode,
-        LocationCode,
-        Block: Inspection === "Pending" ? "For Inspection" : "Free",
-        Type: "In",
-        Quantity,
-        Text,
-        ReceiptType: "Consignment",
-        ReceiptOrder,
-        ReceiptItem: No,
-      });
+      MaterialData.Movements.push(
+        ...[
+          {
+            MaterialCode,
+            LocationCode,
+            Block: Inspection === "Pending" ? "For Inspection" : "Free",
+            Quantity,
+            Text,
+            MovementType: "Receipt",
+            PurchaseOrder,
+            Item: No,
+          },
+          {
+            MaterialCode,
+            LocationCode,
+            Block: "In Transit",
+            Quantity: -Number(Quantity),
+            Text,
+            MovementType: "Consignment Inwards Clearing",
+            PurchaseOrder,
+            Item: No,
+          },
+        ],
+      );
       AccountsData.Entries.push(
         ...[
           {
@@ -244,7 +272,7 @@ export function CreateMaterialReceipt({
         No,
         Inspection,
         Remarks: Text,
-        STO: ReceiptOrder,
+        STO: StockTransportOrder,
       } = item;
       MaterialData.Movements.push(
         ...[
@@ -252,22 +280,20 @@ export function CreateMaterialReceipt({
             MaterialCode,
             LocationCode,
             Block: Inspection === "Pending" ? "For Inspection" : "Free",
-            Type: "In",
             Quantity,
             Text,
-            ReceiptType: "StockTransportOrder",
-            ReceiptOrder,
-            ReceiptItem: No,
+            StockTransportOrder,
+            Item: No,
+            MovementType: "Receipt",
           },
           {
             MaterialCode,
-            Quantity,
-            Type: "Out",
+            Quantity: -Number(Quantity),
             Block: "In Transit",
             Text,
-            TransitType: "StockTransportOrder",
-            TransitOrder: ReceiptOrder,
-            TransitItem: No,
+            StockTransportOrder,
+            Item: No,
+            MovementType: "Stock Transfer Delivery",
           },
         ],
       );
@@ -279,11 +305,9 @@ export function CreateMaterialReceipt({
         MaterialCode,
         LocationCode,
         Block: Inspection === "Pending" ? "For Inspection" : "Free",
-        Type: "In",
         Quantity,
         Text,
-        ReceiptType: "Vendor",
-        ReceiptOrder: VendorCode,
+        Vendor: VendorCode,
       });
       AccountsData.Entries.push(
         ...[
@@ -573,108 +597,151 @@ export function CreateMaterialReceipt({
               <label>{Text}</label>
             </Conditional>
           </Row>
-          <MultiDisplayArea
-            heads={["PO", "STO", "Consignment", "Misc."]}
-            contents={[
-              <Column>
-                <Row jc="left" borderBottom="none">
-                  <Label label={"Direct Receipts from Purchase Order"} />
-                </Row>
-                <Row jc="center" overflow="visible" borderBottom="none">
-                  <AutoSuggestInput
-                    value={PO}
-                    process={(value) => changeData("", "PO", value)}
-                    suggestions={po.listAllFromCompany("Code")}
-                    captions={po.listAllFromCompany("Description")}
-                    placeholder={"Enter PO Number"}
-                  />
-                  <ConditionalButton
-                    name={"Load"}
-                    result={po.exists()}
-                    whileFalse={[
-                      () => showAlert("Purchase Order does not exist"),
-                    ]}
-                    whileTrue={[
-                      () => {
-                        changeData("", "POReceipts", []);
-                        po.summary().forEach((item, i) => {
-                          const {
-                            Item: MaterialCode,
-                            Undispatched: Quantity,
-                            Rate,
-                            Description,
-                          } = item;
-                          addItemtoArray("POReceipts", {
-                            No: i + 1,
-                            MaterialCode,
-                            Quantity,
-                            Rate,
-                            Value: Quantity * Rate,
-                            Description,
-                            Remarks: "",
-                            Inspection: "Not Required",
-                            PO,
-                          });
-                        });
-                      },
-                      () => changeData("", "PO", ""),
-                    ]}
-                  />
-                </Row>
-                <Conditional logic={method !== "View"}>
+          <Row overflow="visible">
+            <Label label={"Receipt Type"} />
+            <Conditional logic={method !== "View"}>
+              <Option
+                value={ReceiptType}
+                process={(value) => changeData("", "ReceiptType", value)}
+                options={[
+                  "Purchase Order",
+                  "Purchase Order Consignment",
+                  "Stock Transport Order",
+                  "Miscellaneous",
+                ]}
+              />
+            </Conditional>
+            <Conditional logic={method === "View"}>
+              <label>{ReceiptType}</label>
+            </Conditional>
+          </Row>
+          <Column>
+            <Row jc="left" borderBottom="none">
+              <Label label={"Materials"} />
+              <Conditional
+                logic={method !== "View" && ReceiptType === "Miscellaneous"}
+              >
+                <Button
+                  name={"Add"}
+                  functionsArray={[
+                    () =>
+                      addItemtoArray(`VendorReceipts`, {
+                        MaterialCode: "",
+                        Description: "",
+                        Quantity: 0,
+                        Rate: 0,
+                        Value: 0,
+                        Inspection: "",
+                        Remarks: "",
+                      }),
+                  ]}
+                />
+              </Conditional>
+            </Row>
+            <ConditionalDisplays
+              displays={[
+                [
+                  ReceiptType === "Purchase Order" && method !== "View",
+                  <Column>
+                    <Row jc="center" overflow="visible" borderBottom="none">
+                      <AutoSuggestInput
+                        value={PO}
+                        process={(value) => changeData("", "PO", value)}
+                        suggestions={po.listAllFromCompany("Code")}
+                        captions={po.listAllFromCompany("Description")}
+                        placeholder={"Enter Purchase Order"}
+                      />
+                      <ConditionalButton
+                        name={"Load"}
+                        result={po.exists()}
+                        whileFalse={[
+                          () => showAlert("Purchase Order does not exist"),
+                        ]}
+                        whileTrue={[
+                          () => {
+                            changeData("", "POReceipts", []);
+                            changeData(
+                              "",
+                              "POReceipts",
+                              po.summary().map((item, i) =>
+                                transformObject(
+                                  item,
+                                  ["Rate", "Description"],
+                                  [
+                                    ["Item", "MaterialCode"],
+                                    ["Undispatched", "Quantity"],
+                                  ],
+                                  {
+                                    No: i + 1,
+                                    Value: item.Undispatched * item.Rate,
+                                    Remarks: "",
+                                    Inspection: "Not Required",
+                                    PO,
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                          () => changeData("", "PO", ""),
+                        ]}
+                      />
+                    </Row>
+                    <Table
+                      columns={[
+                        "PO",
+                        "Item No",
+                        "Material",
+                        "Item Description",
+                        "Quantity",
+                        "Rate",
+                        "Value",
+                        "Inspection",
+                        "Remarks",
+                        "",
+                      ]}
+                      rows={POReceipts.map((item, i) => [
+                        <label>{item.PO}</label>,
+                        <label>{item.No}</label>,
+                        <label>{item.MaterialCode}</label>,
+                        <label>{item.Description}</label>,
+                        <Input
+                          value={item.Quantity}
+                          process={(value) =>
+                            changeData(`POReceipts/${i}`, "Quantity", value)
+                          }
+                          type={"number"}
+                        />,
+                        <label>{item.Rate}</label>,
+                        <label>{item.Value}</label>,
+                        <Option
+                          value={item.Inspection}
+                          process={(value) =>
+                            changeData(`POReceipts/${i}`, "Inspection", value)
+                          }
+                          options={["Not Required", "Complete", "Pending"]}
+                        />,
+                        <Input
+                          value={item.Remarks}
+                          process={(value) =>
+                            changeData(`POReceipts/${i}`, "Remarks", value)
+                          }
+                          type={"text"}
+                        />,
+                        <Button
+                          name={"-"}
+                          functionsArray={[
+                            () => deleteItemfromArray("POReceipts", i),
+                          ]}
+                        />,
+                      ])}
+                    />
+                  </Column>,
+                ],
+                [
+                  ReceiptType === "Purchase Order" && method === "View",
                   <Table
                     columns={[
                       "PO",
-                      "Item No",
-                      "Material",
-                      "Item Description",
-                      "Quantity",
-                      "Rate",
-                      "Value",
-                      "Inspection",
-                      "Remarks",
-                      "",
-                    ]}
-                    rows={POReceipts.map((item, i) => [
-                      <label>{item.PO}</label>,
-                      <label>{item.No}</label>,
-                      <label>{item.MaterialCode}</label>,
-                      <label>{item.Description}</label>,
-                      <Input
-                        value={item.Quantity}
-                        process={(value) =>
-                          changeData(`POReceipts/${i}`, "Quantity", value)
-                        }
-                        type={"number"}
-                      />,
-                      <label>{item.Rate}</label>,
-                      <label>{item.Value}</label>,
-                      <Option
-                        value={item.Inspection}
-                        process={(value) =>
-                          changeData(`POReceipts/${i}`, "Inspection", value)
-                        }
-                        options={["Not Required", "Complete", "Pending"]}
-                      />,
-                      <Input
-                        value={item.Remarks}
-                        process={(value) =>
-                          changeData(`POReceipts/${i}`, "Remarks", value)
-                        }
-                        type={"text"}
-                      />,
-                      <Button
-                        name={"-"}
-                        functionsArray={[
-                          () => deleteItemfromArray("POReceipts", i),
-                        ]}
-                      />,
-                    ])}
-                  />
-                </Conditional>
-                <Conditional logic={method === "View"}>
-                  <Table
-                    columns={[
                       "Item No",
                       "Material",
                       "Item Description",
@@ -691,164 +758,112 @@ export function CreateMaterialReceipt({
                       <label>{item.Inspection}</label>,
                       <label>{item.Remarks}</label>,
                     ])}
-                  />
-                </Conditional>
-              </Column>,
-              <Column>
-                <Row jc="left" borderBottom="none">
-                  <Label label={"Stock Transport Order Items"} />
-                </Row>
-                <Row jc="center" overflow="visible" borderBottom="none">
-                  <AutoSuggestInput
-                    value={STO}
-                    process={(value) => changeData("", "STO", value)}
-                    suggestions={sto.listAllFromCompany("Code")}
-                    captions={sto.listAllFromCompany("Description")}
-                    placeholder={"Enter Stock Transport Order"}
-                  />
-                  <ConditionalButton
-                    name={"Load"}
-                    result={sto.exists()}
-                    whileFalse={[
-                      () => showAlert("Stock Transport Order does not exist"),
-                    ]}
-                    whileTrue={[
-                      () => {
-                        changeData("", "STOReceipts", []);
-                        sto.summary().forEach((item, i) => {
-                          const {
-                            MaterialCode,
-                            InTransit: Quantity,
-                            Rate,
-                            Description,
-                          } = item;
-                          addItemtoArray("STOReceipts", {
-                            No: i + 1,
-                            MaterialCode,
-                            Quantity,
-                            Rate,
-                            Value: Quantity * Rate,
-                            Description,
-                            Remarks: "",
-                            Inspection: "Not Required",
-                            STO,
-                          });
-                        });
-                      },
-                      () => changeData("", "STO", ""),
-                    ]}
-                  />
-                </Row>
-                <Conditional logic={method !== "View"}>
-                  <Table
-                    columns={[
-                      "STO",
-                      "Item No",
-                      "Material",
-                      "Item Description",
-                      "Quantity",
-                      "Rate",
-                      "Value",
-                      "Remarks",
-                      "",
-                    ]}
-                    rows={STOReceipts.map((item, i) => [
-                      <label>{item.STO}</label>,
-                      <label>{item.No}</label>,
-                      <label>{item.MaterialCode}</label>,
-                      <label>{item.Description}</label>,
-                      <Input
-                        value={item.Quantity}
+                  />,
+                ],
+                ,
+                [
+                  ReceiptType === "Purchase Order Consignment" &&
+                    method !== "View",
+                  <Column>
+                    <Row jc="center" overflow="visible" borderBottom="none">
+                      <AutoSuggestInput
+                        value={ConsignmentPO}
                         process={(value) =>
-                          changeData(`STOReceipts/${i}`, "Quantity", value)
+                          changeData("", "ConsignmentPO", value)
                         }
-                        type={"number"}
-                      />,
-                      <label>{item.Rate}</label>,
-                      <label>{item.Value}</label>,
-                      <Input
-                        value={item.Remarks}
-                        process={(value) =>
-                          changeData(`STOReceipts/${i}`, "Remarks", value)
-                        }
-                        type={"text"}
-                      />,
-                      <Button
-                        name={"-"}
-                        functionsArray={[
-                          () => deleteItemfromArray("STOReceipts", i),
+                        suggestions={consignment.listAllFromCompany("Code")}
+                        captions={consignment.listAllFromCompany("Description")}
+                        placeholder={"Enter Purchase Order"}
+                      />
+                      <ConditionalButton
+                        name={"Load"}
+                        result={consignment.exists()}
+                        whileFalse={[
+                          () => showAlert("Purchase Order does not exist"),
                         ]}
-                      />,
-                    ])}
-                  />
-                </Conditional>
-                <Conditional logic={method === "View"}>
-                  <Table
-                    columns={[
-                      "STO",
-                      "Item No",
-                      "Material",
-                      "Item Description",
-                      "Quantity",
-                      "Remarks",
-                    ]}
-                    rows={STOReceipts.map((item, i) => [
-                      <label>{item.STO}</label>,
-                      <label>{item.No}</label>,
-                      <label>{item.MaterialCode}</label>,
-                      <label>{item.Description}</label>,
-                      <label>{item.Quantity}</label>,
-                      <label>{item.Remarks}</label>,
-                    ])}
-                  />
-                </Conditional>
-              </Column>,
-              <Column>
-                <Row jc="left" borderBottom="none">
-                  <Label label={"Purchase Order Consignment"} />
-                </Row>
-                <Row jc="center" overflow="visible" borderBottom="none">
-                  <AutoSuggestInput
-                    value={ConsignmentPO}
-                    process={(value) => changeData("", "ConsignmentPO", value)}
-                    suggestions={consignment.listAllFromCompany("Code")}
-                    captions={consignment.listAllFromCompany("Description")}
-                    placeholder={"Enter Purchase Order"}
-                  />
-                  <ConditionalButton
-                    name={"Load"}
-                    result={consignment.exists()}
-                    whileFalse={[
-                      () => showAlert("Purchase Order does not exist"),
-                    ]}
-                    whileTrue={[
-                      () => {
-                        changeData("", "Consignments", []);
-                        consignment.summary().forEach((item, i) => {
-                          const {
-                            Item: MaterialCode,
-                            InTransit: Quantity,
-                            Rate,
-                            Description,
-                          } = item;
-                          addItemtoArray("Consignments", {
-                            No: i + 1,
-                            MaterialCode,
-                            Quantity,
-                            Rate,
-                            Value: Quantity * Rate,
-                            Description,
-                            Remarks: "",
-                            Inspection: "Not Required",
-                            ConsignmentPO,
-                          });
-                        });
-                      },
-                      () => changeData("", "ConsignmentPO", ""),
-                    ]}
-                  />
-                </Row>
-                <Conditional logic={method !== "View"}>
+                        whileTrue={[
+                          () => {
+                            changeData("", "Consignments", []);
+                            changeData(
+                              "",
+                              "Consignments",
+                              consignment.summary().map((item, i) =>
+                                transformObject(
+                                  item,
+                                  ["Rate", "Description"],
+                                  [
+                                    ["Item", "MaterialCode"],
+                                    ["InTransit", "Quantity"],
+                                  ],
+                                  {
+                                    No: i + 1,
+                                    Value: item.InTransit * item.Rate,
+                                    Remarks: "",
+                                    Inspection: "Not Required",
+                                    ConsignmentPO,
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                          () => changeData("", "ConsignmentPO", ""),
+                        ]}
+                      />
+                    </Row>
+                    <Table
+                      columns={[
+                        "PO",
+                        "Item No",
+                        "Material",
+                        "Item Description",
+                        "Quantity",
+                        "Rate",
+                        "Value",
+                        "Inspection",
+                        "Remarks",
+                        "",
+                      ]}
+                      rows={Consignments.map((item, i) => [
+                        <label>{item.ConsignmentPO}</label>,
+                        <label>{item.No}</label>,
+                        <label>{item.MaterialCode}</label>,
+                        <label>{item.Description}</label>,
+                        <Input
+                          value={item.Quantity}
+                          process={(value) =>
+                            changeData(`Consignments/${i}`, "Quantity", value)
+                          }
+                          type={"number"}
+                        />,
+                        <label>{item.Rate}</label>,
+                        <label>{item.Value}</label>,
+                        <Option
+                          value={item.Inspection}
+                          process={(value) =>
+                            changeData(`Consignments/${i}`, "Inspection", value)
+                          }
+                          options={["Not Required", "Complete", "Pending"]}
+                        />,
+                        <Input
+                          value={item.Remarks}
+                          process={(value) =>
+                            changeData(`Consignments/${i}`, "Remarks", value)
+                          }
+                          type={"text"}
+                        />,
+                        <Button
+                          name={"-"}
+                          functionsArray={[
+                            () => deleteItemfromArray("Consignments", i),
+                          ]}
+                        />,
+                      ])}
+                    />
+                  </Column>,
+                ],
+                [
+                  ReceiptType === "Purchase Order Consignment" &&
+                    method === "View",
                   <Table
                     columns={[
                       "PO",
@@ -856,171 +871,219 @@ export function CreateMaterialReceipt({
                       "Material",
                       "Item Description",
                       "Quantity",
-                      "Rate",
-                      "Value",
                       "Inspection",
                       "Remarks",
-                      "",
                     ]}
                     rows={Consignments.map((item, i) => [
                       <label>{item.ConsignmentPO}</label>,
                       <label>{item.No}</label>,
                       <label>{item.MaterialCode}</label>,
                       <label>{item.Description}</label>,
-                      <Input
-                        value={item.Quantity}
-                        process={(value) =>
-                          changeData(`Consignments/${i}`, "Quantity", value)
-                        }
-                        type={"number"}
-                      />,
-                      <label>{item.Rate}</label>,
-                      <label>{item.Value}</label>,
-                      <Option
-                        value={item.Inspection}
-                        process={(value) =>
-                          changeData(`Consignments/${i}`, "Inspection", value)
-                        }
-                        options={["Not Required", "Complete", "Pending"]}
-                      />,
-                      <Input
-                        value={item.Remarks}
-                        process={(value) =>
-                          changeData(`Consignments/${i}`, "Remarks", value)
-                        }
-                        type={"text"}
-                      />,
-                      <Button
-                        name={"-"}
-                        functionsArray={[
-                          () => deleteItemfromArray("Consignments", i),
-                        ]}
-                      />,
+                      <label>{item.Quantity}</label>,
+                      <label>{item.Inspection}</label>,
+                      <label>{item.Remarks}</label>,
                     ])}
-                  />
-                </Conditional>
-                <Conditional logic={method === "View"}>
+                  />,
+                ],
+                [
+                  ReceiptType === "Stock Transport Order" && method !== "View",
+                  <Column>
+                    <Row jc="center" overflow="visible" borderBottom="none">
+                      <AutoSuggestInput
+                        value={STO}
+                        process={(value) => changeData("", "STO", value)}
+                        suggestions={sto.listAllFromCompany("Code")}
+                        captions={sto.listAllFromCompany("Description")}
+                        placeholder={"Enter Stock Transport Order"}
+                      />
+                      <ConditionalButton
+                        name={"Load"}
+                        result={sto.exists()}
+                        whileFalse={[
+                          () =>
+                            showAlert("Stock Transport Order does not exist"),
+                        ]}
+                        whileTrue={[
+                          () => {
+                            changeData("", "STOReceipts", []);
+                            changeData(
+                              "",
+                              "STOReceipts",
+                              sto.summary().map((item, i) =>
+                                transformObject(
+                                  item,
+                                  ["MaterialCode", "Rate", "Description"],
+                                  [["InTransit", "Quantity"]],
+                                  {
+                                    No: i + 1,
+                                    Value: item.InTransit * item.Rate,
+                                    Inspection: "Not Required",
+                                    Remarks: "",
+                                    STO,
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                          () => changeData("", "STO", ""),
+                        ]}
+                      />
+                    </Row>
+                    <Conditional logic={method !== "View"}>
+                      <Table
+                        columns={[
+                          "STO",
+                          "Item No",
+                          "Material",
+                          "Item Description",
+                          "Quantity",
+                          "Rate",
+                          "Value",
+                          "Remarks",
+                          "",
+                        ]}
+                        rows={STOReceipts.map((item, i) => [
+                          <label>{item.STO}</label>,
+                          <label>{item.No}</label>,
+                          <label>{item.MaterialCode}</label>,
+                          <label>{item.Description}</label>,
+                          <Input
+                            value={item.Quantity}
+                            process={(value) =>
+                              changeData(`STOReceipts/${i}`, "Quantity", value)
+                            }
+                            type={"number"}
+                          />,
+                          <label>{item.Rate}</label>,
+                          <label>{item.Value}</label>,
+                          <Input
+                            value={item.Remarks}
+                            process={(value) =>
+                              changeData(`STOReceipts/${i}`, "Remarks", value)
+                            }
+                            type={"text"}
+                          />,
+                          <Button
+                            name={"-"}
+                            functionsArray={[
+                              () => deleteItemfromArray("STOReceipts", i),
+                            ]}
+                          />,
+                        ])}
+                      />
+                    </Conditional>
+                  </Column>,
+                ],
+                [
+                  ReceiptType === "Stock Transport Order" && method === "View",
                   <Table
                     columns={[
-                      "PO",
+                      "STO",
                       "Item No",
                       "Material",
                       "Item Description",
                       "Quantity",
-                      "Inspection",
                       "Remarks",
                     ]}
-                    rows={Consignments.map((item, i) => [
+                    rows={STOReceipts.map((item, i) => [
+                      <label>{item.STO}</label>,
                       <label>{item.No}</label>,
                       <label>{item.MaterialCode}</label>,
                       <label>{item.Description}</label>,
                       <label>{item.Quantity}</label>,
-                      <label>{item.Inspection}</label>,
                       <label>{item.Remarks}</label>,
                     ])}
-                  />
-                </Conditional>
-              </Column>,
-              <Column>
-                <Row overflow="visible">
-                  <Label label={"Vendor"} />
-                  <AutoSuggestInput
-                    value={VendorCode}
-                    process={(value) => changeData("", "VendorCode", value)}
-                    suggestions={vendor.listAllFromCompany("Code")}
-                    captions={vendor.listAllFromCompany("Name")}
-                    placeholder={"Enter Vendor Code"}
-                  />
-                </Row>
-                <Row jc="left" borderBottom="none">
-                  <Label label={"Receipts without Purchase Order"} />
-                  <Button
-                    name={"Add"}
-                    functionsArray={[
-                      () =>
-                        addItemtoArray(`VendorReceipts`, {
-                          MaterialCode: "",
-                          Description: "",
-                          Quantity: 0,
-                          Rate: 0,
-                          Value: 0,
-                          Inspection: "",
-                          Remarks: "",
-                        }),
-                    ]}
-                  />
-                </Row>
-                <Conditional logic={method !== "View"}>
-                  <Table
-                    columns={[
-                      "Material",
-                      "Item Description",
-                      "Quantity",
-                      "Rate (Est)",
-                      "Value (Est)",
-                      "Inspection",
-                      "Remarks",
-                      "",
-                    ]}
-                    rows={VendorReceipts.map((item, i) => [
+                  />,
+                ],
+                [
+                  ReceiptType === "Miscellaneous" && method !== "View",
+                  <Column>
+                    <Row overflow="visible" jc="left" borderBottom="none">
+                      <Label label={"Vendor"} />
                       <AutoSuggestInput
-                        value={item.MaterialCode}
-                        process={(value) =>
-                          changeData(
-                            `VendorReceipts/${i}`,
-                            "MaterialCode",
-                            value,
-                          )
-                        }
-                        suggestions={new CompanyCollection(
-                          Company,
-                          "Material",
-                        ).listAllFromCompany("Code")}
-                        captions={new CompanyCollection(
-                          Company,
-                          "Material",
-                        ).listAllFromCompany("Description")}
-                      />,
-                      <label>{item.Description}</label>,
-                      <Input
-                        value={item.Quantity}
-                        process={(value) =>
-                          changeData(`VendorReceipts/${i}`, "Quantity", value)
-                        }
-                        type={"number"}
-                      />,
-                      <Input
-                        value={item.Rate}
-                        process={(value) =>
-                          changeData(`VendorReceipts/${i}`, "Rate", value)
-                        }
-                        type={"number"}
-                      />,
-                      <label>{item.Value}</label>,
-                      <Option
-                        value={item.Inspection}
-                        process={(value) =>
-                          changeData(`VendorReceipts/${i}`, "Inspection", value)
-                        }
-                        options={["Not required", "Completed", "Pending"]}
-                      />,
-                      <Input
-                        value={item.Remarks}
-                        process={(value) =>
-                          changeData(`VendorReceipts/${i}`, "Remarks", value)
-                        }
-                        type={"text"}
-                      />,
-                      <Button
-                        name="-"
-                        functionsArray={[
-                          () => deleteItemfromArray(`VendorReceipts`, i),
-                        ]}
-                      />,
-                    ])}
-                  />
-                </Conditional>
-                <Conditional logic={method === "View"}>
+                        value={VendorCode}
+                        process={(value) => changeData("", "VendorCode", value)}
+                        suggestions={vendor.listAllFromCompany("Code")}
+                        captions={vendor.listAllFromCompany("Name")}
+                        placeholder={"Enter Vendor Code"}
+                      />
+                    </Row>
+                    <Table
+                      columns={[
+                        "Material",
+                        "Item Description",
+                        "Quantity",
+                        "Rate (Est)",
+                        "Value (Est)",
+                        "Inspection",
+                        "Remarks",
+                        "",
+                      ]}
+                      rows={VendorReceipts.map((item, i) => [
+                        <AutoSuggestInput
+                          value={item.MaterialCode}
+                          process={(value) =>
+                            changeData(
+                              `VendorReceipts/${i}`,
+                              "MaterialCode",
+                              value,
+                            )
+                          }
+                          suggestions={new CompanyCollection(
+                            Company,
+                            "Material",
+                          ).listAllFromCompany("Code")}
+                          captions={new CompanyCollection(
+                            Company,
+                            "Material",
+                          ).listAllFromCompany("Description")}
+                        />,
+                        <label>{item.Description}</label>,
+                        <Input
+                          value={item.Quantity}
+                          process={(value) =>
+                            changeData(`VendorReceipts/${i}`, "Quantity", value)
+                          }
+                          type={"number"}
+                        />,
+                        <Input
+                          value={item.Rate}
+                          process={(value) =>
+                            changeData(`VendorReceipts/${i}`, "Rate", value)
+                          }
+                          type={"number"}
+                        />,
+                        <label>{item.Value}</label>,
+                        <Option
+                          value={item.Inspection}
+                          process={(value) =>
+                            changeData(
+                              `VendorReceipts/${i}`,
+                              "Inspection",
+                              value,
+                            )
+                          }
+                          options={["Not required", "Completed", "Pending"]}
+                        />,
+                        <Input
+                          value={item.Remarks}
+                          process={(value) =>
+                            changeData(`VendorReceipts/${i}`, "Remarks", value)
+                          }
+                          type={"text"}
+                        />,
+                        <Button
+                          name="-"
+                          functionsArray={[
+                            () => deleteItemfromArray(`VendorReceipts`, i),
+                          ]}
+                        />,
+                      ])}
+                    />
+                  </Column>,
+                ],
+                [
+                  ReceiptType === "Miscellaneous" && method === "View",
                   <Table
                     columns={[
                       "Material",
@@ -1028,6 +1091,7 @@ export function CreateMaterialReceipt({
                       "Quantity",
                       "Remarks",
                       "Inspection",
+                      "Vendor",
                     ]}
                     rows={VendorReceipts.map((item, i) => [
                       <label>{item.MaterialCode}</label>,
@@ -1035,12 +1099,13 @@ export function CreateMaterialReceipt({
                       <label>{item.Quantity}</label>,
                       <label>{item.Inspection}</label>,
                       <label>{item.Remarks}</label>,
+                      <label>{VendorCode}</label>,
                     ])}
-                  />
-                </Conditional>
-              </Column>,
-            ]}
-          />
+                  />,
+                ],
+              ]}
+            />
+          </Column>
         </DisplayArea>
       </WindowContent>
     </>

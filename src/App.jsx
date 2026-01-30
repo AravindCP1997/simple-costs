@@ -14,6 +14,7 @@ import {
   HidingPrompt,
   HidingDisplay,
   Selection,
+  ConditionalDisplays,
 } from "./Components";
 import UserInterface, { Home } from "./UserInterface";
 import { useState } from "react";
@@ -43,6 +44,7 @@ import {
   filterBySelection,
   perform,
   TimeStamp,
+  transformObject,
   trimSelection,
 } from "./functions";
 import { MaterialTable } from "./businessFunctions";

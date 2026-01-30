@@ -865,7 +865,7 @@ export function Window() {
   }
 
   const style = {
-    width: "min(100%, 960px)",
+    width: "min(100%, 1200px)",
     display: "flex",
     flexDirection: "column",
     justifyContent: "top",
@@ -1508,7 +1508,7 @@ function UserInterface() {
     flexDirection: "column",
     justifyContent: "top",
     alignItems: "center",
-    backgroundSize: "20%",
+    backgroundSize: Background === "Tech" ? "20%" : "10%",
     backgroundColor: "var(--lightgray)",
     backgroundImage: `url('../${Background}.png')`,
     fontFamily: `${Font},'Arial', Tahoma, Geneva, Verdana, sans-serif`,

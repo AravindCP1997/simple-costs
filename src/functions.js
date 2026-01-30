@@ -626,6 +626,20 @@ export function filterBySelection(
   return result;
 }
 
+export function transformObject(
+  oldObject,
+  mergeKeys = [],
+  renamekeys = [],
+  mergeObject = {},
+) {
+  const result = {};
+  mergeKeys.forEach((key) => {
+    result[key] = oldObject[key];
+  });
+  renamekeys.forEach((key) => (result[key[1]] = oldObject[key[0]]));
+  return { ...result, ...mergeObject };
+}
+
 export const logout = () => {
   localStorage.removeItem("Authentication");
 };
