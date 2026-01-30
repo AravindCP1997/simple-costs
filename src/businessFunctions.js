@@ -34,22 +34,3 @@ export function MaterialTable() {
   );
   return result;
 }
-
-export function poReceipt(data, d) {
-  const {
-    Item: MaterialCode,
-    Description,
-    Undispatched: Quantity,
-    Rate,
-  } = data;
-  return {
-    No: d + 1,
-    MaterialCode,
-    Description,
-    Quantity,
-    Rate,
-    Value: Quantity * Rate,
-    Inspection: "Not Required",
-    Remarks: "",
-  };
-}

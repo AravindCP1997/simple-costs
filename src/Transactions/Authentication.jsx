@@ -74,9 +74,9 @@ export function Authentication() {
       <div
         style={{
           position: "fixed",
-          bottom: "10px",
-          left: "5%",
-          height: "calc(100% - 20px)",
+          bottom: "15px",
+          right: "10%",
+          height: "calc(100% - 30px)",
           zIndex: 1000,
           display: "flex",
           flexDirection: "column",
@@ -94,17 +94,10 @@ export function Authentication() {
           }}
         />
         <Row jc="left" borderBottom="none">
-          <Button
-            name={"Clear Data"}
-            functionsArray={[
-              () => localStorage.clear(),
-              () => showAlert("All compounding data cleared."),
-            ]}
-          />
           <label
             style={{ textAlign: "center", opacity: "0.5", fontSize: "80%" }}
           >
-            Last updated 30.01.2026
+            Last updated 31.01.2026
           </label>
         </Row>
       </div>

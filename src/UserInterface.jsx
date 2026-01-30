@@ -150,9 +150,9 @@ import { CreateMaintenanceOrder } from "./Transactions/MaintenanceOrder";
 import { CreateStockTransportOrder } from "./Transactions/StockTransportOrder";
 import { Authentication } from "./Transactions/Authentication";
 import { QueryMaterialMovements } from "./Transactions/MaterialMovements";
-import { CreateMaterialReceipt } from "./Transactions/MaterialReceipt";
 import { QueryMaterialDocument } from "./Transactions/MaterialDocument";
 import { QueryAccountingDocument } from "./Transactions/AccountingDocument";
+import { ConsignmentInwardsOriginPO } from "./Transactions/Material/M01";
 
 const codes = [
   {
@@ -804,10 +804,10 @@ const codes = [
     subgroup: "Human Resources",
   },
   {
-    code: "mr",
+    code: "m01",
     screen: <Window />,
-    window: <CreateMaterialReceipt />,
-    name: "Material Receipt",
+    window: <ConsignmentInwardsOriginPO />,
+    name: "Consignment Inwards Origin - PO",
     group: "Record",
     subgroup: "Materials and Services",
   },
@@ -1104,7 +1104,7 @@ function SearchBar() {
     maxWidth: "100%",
     gap: "10px",
     overflow: "visible",
-    border: "3px solid var(--whitet)",
+    border: "2px solid var(--bluet)",
     background: "var(--bluet)",
     borderTop: "none",
     borderBottomLeftRadius: "15px",

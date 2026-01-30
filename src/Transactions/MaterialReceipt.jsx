@@ -48,7 +48,6 @@ import {
 } from "../functions";
 
 import { defaultMaterialReceipt } from "../defaults";
-import { poReceipt } from "../businessFunctions";
 
 export function CreateMaterialReceipt({
   initial = defaultMaterialReceipt,

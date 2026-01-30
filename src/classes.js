@@ -5,6 +5,7 @@ import {
   datesInMonth,
   dateString,
   existsInCollection,
+  filterBySelection,
   filterCollection,
   FilteredList,
   ListItems,
@@ -18,6 +19,7 @@ import {
   valueInRange,
 } from "./functions";
 import { MaterialTable } from "./businessFunctions";
+import { defaultSelection } from "./defaults";
 
 export class IncomeTaxCode extends Collection {
   constructor(code, name = "IncomeTaxCode") {
@@ -449,6 +451,15 @@ export class Company extends Collection {
   }
   location(code) {
     return new Location(code, this.code);
+  }
+  material(code) {
+    return new Material(code, this.code);
+  }
+  materialdocument(documentNo, year) {
+    return new MaterialDocument(documentNo, year, this.code);
+  }
+  accountingdocument(documentNo, year) {
+    return new AccountingDocument(documentNo, year, this.code);
   }
   po(code) {
     return new PurchaseOrder(code, this.code);
@@ -1216,6 +1227,15 @@ export class Vendor extends CompanyCollection {
     super.add(data);
     return "Vendor Updated";
   }
+  materialMovements(movementTypes) {
+    return MaterialTable().filter(
+      (movement) =>
+        (movementTypes.includes(movement.MovementType) ||
+          movementTypes.length === 0) &&
+        movement.Company === this.companycode &&
+        movement.Vendor === this.code,
+    );
+  }
 }
 
 export class BankAccount extends CompanyCollection {
@@ -1698,12 +1718,14 @@ export class AccountingDocument extends YearlyCompanyCollection {
     };
   }
   prepared(data) {
-    return { ...this.defaultDocument(), ...data };
+    return {
+      ...refine(data, this.defaultDocument()),
+      ["Entries"]: data.Entries.map((entry, e) => this.preparedEntry(entry)),
+    };
   }
   defaultEntry() {
     return {
       Account: "",
-      Type: "Debit",
       ProfitCenter: "",
       Amount: 0,
       BTC: "",
@@ -1757,6 +1779,7 @@ export class MaterialDocument extends YearlyCompanyCollection {
       DocumentNo: this.documentNo,
       Text: "",
       ValueDate: "",
+      DocumentType: "",
       EntryDate: dateString(new Date()),
       TimeStamp: TimeStamp(),
       Movements: [this.defaultMovement()],
@@ -1786,6 +1809,10 @@ export class MaterialDocument extends YearlyCompanyCollection {
       Item: "",
       Vendor: "",
       Text: "",
+      MR: "",
+      MRItem: "",
+      MI: "",
+      MIItem: "",
     };
   }
   prepareMovement(data) {
@@ -1888,7 +1915,7 @@ export class MaterialReceipt extends Transaction {
     });
     const postmaterial = this.materialdoc.add({
       ...materialdata,
-      ...{ Status },
+      ...{ Status, DocumentType: "MaterialReceipt" },
     });
     if (!postaccounts.result || !postmaterial.result) {
       return "Some Error Occurred";
@@ -1914,5 +1941,37 @@ export class MaterialReceipt extends Transaction {
     this.materialdoc.update({ ...materialdata, ...{ Status } });
     this.accountingdoc.update({ ...accountingdata, ...{ Status } });
     super.update({ ...data, ...{ Status } });
+  }
+  receipts(items = []) {
+    const table = MaterialTable();
+    const result = table.filter(
+      (item) =>
+        item.DocumentNo === this.number &&
+        item.MovementType === "Receipt" &&
+        item.Company === this.companycode &&
+        (items.includes(item.Item) || items.length === 0),
+    );
+    return result;
+  }
+  records(items = [], movementTypes = []) {
+    const table = MaterialTable();
+    const result = table.filter(
+      (item) =>
+        item.Company === this.companycode &&
+        item.MR === this.number &&
+        (movementTypes.includes(item.MovementType) ||
+          movementTypes.length === 0) &&
+        (items.includes(item.Item) || items.length === 0),
+    );
+    return result;
+  }
+  received(item) {
+    return SumField(this.receipts([item]), "Quantity");
+  }
+  returned(item) {
+    return SumField(this.records([item], ["Return Outwards"]), "Quantity");
+  }
+  netReceived(item) {
+    return this.received(item) - this.returned(item);
   }
 }

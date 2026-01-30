@@ -122,10 +122,12 @@ export function ViewAccountingDocument({ data }) {
             <Label label={"Year"} />
             <label>{Year}</label>
           </Row>
-          <Row jc="left" width="min(100%,400px)">
-            <Label label={"Reversed"} />
-            <CheckBox value={Reversed} process={noop} />
-          </Row>
+          <Conditional logic={Reversed}>
+            <Row jc="left" width="min(100%,400px)">
+              <Label label={"Reversed"} />
+              <CheckBox value={Reversed} />
+            </Row>
+          </Conditional>
           <Row width="min(100%,400px)">
             <Label label={"Text"} />
             <label>{Text}</label>
