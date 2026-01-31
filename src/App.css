@@ -74,7 +74,7 @@
 
 .icon {
   border: 2px solid var(--bluet);
-  border-radius: 5px;
+  border-radius: 10px;
   p {
     background: var(--goldt);
     font-size: 80%;
@@ -88,7 +88,7 @@
 
 .icon:hover,
 .icon:focus {
-  transform: translate(-5px);
+  transform: scale(0.95) translateY(5px);
 
   p {
     opacity: 1;

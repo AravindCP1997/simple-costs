@@ -469,6 +469,9 @@ export class Company extends Collection {
   po(code) {
     return new PurchaseOrder(code, this.code);
   }
+  receiptForInspection(number, year) {
+    return new ReceiptForInspection(this.code, year, number);
+  }
   sto(code) {
     return new StockTransportOrder(code, this.code);
   }
@@ -1240,6 +1243,14 @@ export class Vendor extends CompanyCollection {
     ]);
     return result;
   }
+  receiptForInspection() {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["05"]),
+      filter("Vendor", "Number", [this.code]),
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+    ]);
+    return result;
+  }
 }
 
 export class BankAccount extends CompanyCollection {
@@ -1410,6 +1421,14 @@ export class PurchaseOrder extends CompanyCollection {
   consignmentInwards() {
     const result = filterByMultipleSelection(MaterialTable(), [
       filter("MovementType", "StringCaseInsensitive", ["01"]),
+      filter("PurchaseOrder", "Number", [this.code]),
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+    ]);
+    return result;
+  }
+  receiptForInspection() {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["05"]),
       filter("PurchaseOrder", "Number", [this.code]),
       filter("Company", "StringCaseInsensitive", [this.companycode]),
     ]);
@@ -2065,6 +2084,85 @@ export class ConsignmentInwards {
     return this.origins().map((item, i) => ({
       ...item,
       ["InTransit"]: this.inTransitQuantity(i + 1),
+    }));
+  }
+}
+
+export class ReceiptForInspection {
+  constructor(company, year, documentNo) {
+    this.company = company;
+    this.year = year;
+    this.documentNo = documentNo;
+  }
+  exists() {
+    return this.origins().length > 0;
+  }
+  origins() {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["05"]),
+      filter("Company", "StringCaseInsensitive", [this.company]),
+      filter("DocumentNo", "Number", [this.documentNo]),
+      filter("Year", "Number", [this.year]),
+    ]);
+    return result;
+  }
+  origin(item) {
+    return this.origins()[item - 1];
+  }
+  acceptance(item) {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["06"]),
+      filter("Company", "StringCaseInsensitive", [this.company]),
+      filter("RefDocNo", "Number", [this.documentNo]),
+      filter("RefYear", "Number", [this.year]),
+      filter("RefItem", "Number", [item]),
+    ]);
+    return result;
+  }
+  returns(item) {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["07"]),
+      filter("Company", "StringCaseInsensitive", [this.company]),
+      filter("RefDocNo", "Number", [this.documentNo]),
+      filter("RefYear", "Number", [this.year]),
+      filter("RefItem", "Number", [item]),
+    ]);
+    return result;
+  }
+  losses(item) {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["08"]),
+      filter("Company", "StringCaseInsensitive", [this.company]),
+      filter("RefDocNo", "Number", [this.documentNo]),
+      filter("RefYear", "Number", [this.year]),
+      filter("RefItem", "Number", [item]),
+    ]);
+    return result;
+  }
+  originQuantity(item) {
+    return this.origin(item).Quantity;
+  }
+  acceptanceQuantity(item) {
+    return SumField(this.acceptance(item), "Quantity");
+  }
+  lossQuantity(item) {
+    return SumField(this.losses(item), "Quantity");
+  }
+  returnQuantity(item) {
+    return SumField(this.returns(item), "Quantity");
+  }
+  inBlockQuantity(item) {
+    return (
+      this.originQuantity(item) -
+      this.acceptanceQuantity(item) -
+      this.lossQuantity(item) -
+      this.returnQuantity(item)
+    );
+  }
+  inBlock() {
+    return this.origins().map((item, i) => ({
+      ...item,
+      ["InBlock"]: this.inBlockQuantity(i + 1),
     }));
   }
 }

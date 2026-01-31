@@ -157,6 +157,11 @@ import { ConsignmentInwardsOriginVendor } from "./Transactions/Material/M01A";
 import { ConsignmentInwardsReceipt } from "./Transactions/Material/M02";
 import { ConsignmentInwardsReturn } from "./Transactions/Material/M03";
 import { ConsignmentInwardsLoss } from "./Transactions/Material/M04";
+import { ReceiptForInspectionPO } from "./Transactions/Material/M05";
+import { ReceiptForInspectionVendor } from "./Transactions/Material/M05A";
+import { InspectionAcceptance } from "./Transactions/Material/M06";
+import { ReturnsFromInspection } from "./Transactions/Material/M07";
+import { LossfromInspection } from "./Transactions/Material/M08";
 
 const codes = [
   {
@@ -848,6 +853,46 @@ const codes = [
     subgroup: "Materials and Services",
   },
   {
+    code: "m05",
+    screen: <Window />,
+    window: <ReceiptForInspectionPO />,
+    name: "Receipt for Inspection - PO",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m05a",
+    screen: <Window />,
+    window: <ReceiptForInspectionVendor />,
+    name: "Receipt for Inspection - Vendor",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m06",
+    screen: <Window />,
+    window: <InspectionAcceptance />,
+    name: "Inspection Acceptance",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m07",
+    screen: <Window />,
+    window: <ReturnsFromInspection />,
+    name: "Return from Inspection Block",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m08",
+    screen: <Window />,
+    window: <LossfromInspection />,
+    name: "Loss from Inspection Block",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
     code: "vmd",
     screen: <Window />,
     window: <QueryMaterialDocument />,
@@ -1403,11 +1448,11 @@ export function Drawer({ initial = "Record" }) {
     display: "flex",
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "left",
+    justifyContent: "center",
     overflow: "auto",
-    gap: "10px",
     height: "fit-content",
-    padding: "15px",
+    gap: "5px",
+    padding: "10px",
     width: "100%",
   };
 
