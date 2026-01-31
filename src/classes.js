@@ -1817,6 +1817,8 @@ export class MaterialDocument extends YearlyCompanyCollection {
       LocationCode: "",
       Block: "Free",
       Quantity: 0,
+      Rate: 0,
+      Value: 0,
       PurchaseOrder: "",
       StockTransportOrder: "",
       Item: "",
@@ -2013,7 +2015,7 @@ export class ConsignmentInwards {
     const result = filterByMultipleSelection(MaterialTable(), [
       filter("MovementType", "StringCaseInsensitive", ["02"]),
       filter("Company", "StringCaseInsensitive", [this.company]),
-      filter("RefDocument", "Number", [this.documentNo]),
+      filter("RefDocNo", "Number", [this.documentNo]),
       filter("RefYear", "Number", [this.year]),
       filter("RefItem", "Number", [item]),
     ]);
@@ -2023,7 +2025,7 @@ export class ConsignmentInwards {
     const result = filterByMultipleSelection(MaterialTable(), [
       filter("MovementType", "StringCaseInsensitive", ["03"]),
       filter("Company", "StringCaseInsensitive", [this.company]),
-      filter("RefDocument", "Number", [this.documentNo]),
+      filter("RefDocNo", "Number", [this.documentNo]),
       filter("RefYear", "Number", [this.year]),
       filter("RefItem", "Number", [item]),
     ]);
@@ -2033,7 +2035,7 @@ export class ConsignmentInwards {
     const result = filterByMultipleSelection(MaterialTable(), [
       filter("MovementType", "StringCaseInsensitive", ["04"]),
       filter("Company", "StringCaseInsensitive", [this.company]),
-      filter("RefDocument", "Number", [this.documentNo]),
+      filter("RefDocNo", "Number", [this.documentNo]),
       filter("RefYear", "Number", [this.year]),
       filter("RefItem", "Number", [item]),
     ]);

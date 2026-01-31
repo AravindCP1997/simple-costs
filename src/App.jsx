@@ -103,6 +103,9 @@ export function Scratch() {
             </Row>
           </Row>
         </DisplayArea>
+        {JSON.stringify(
+          new ConsignmentInwards("FACT", 2025, 1200000).returns(2),
+        )}
       </WindowContent>
     </>
   );

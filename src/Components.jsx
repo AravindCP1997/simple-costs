@@ -994,6 +994,7 @@ export function Column({
   overflow = "auto",
   borderBottom = "2px solid var(--whitet)",
   width = "100%",
+  bg = "none",
 }) {
   return (
     <div
@@ -1008,6 +1009,7 @@ export function Column({
         width,
         overflow,
         borderBottom,
+        background: bg,
       }}
     >
       {children}

@@ -73,22 +73,22 @@
 }
 
 .icon {
-  box-shadow: -2px 2px 5px -1px gray;
-  border: 5px solid var(--whitet);
+  border: 2px solid var(--bluet);
+  border-radius: 5px;
   p {
     background: var(--goldt);
     font-size: 80%;
     border-radius: 5px;
     padding: 5px;
     margin: 0;
-    opacity: 0.25;
+    opacity: 0.5;
     transition: 0.5s;
   }
 }
 
 .icon:hover,
 .icon:focus {
-  transform: translate(-10px);
+  transform: translate(-5px);
 
   p {
     opacity: 1;
@@ -220,6 +220,7 @@
   position: relative;
   text-align: center;
   width: min(100%, fit-content);
+  backdrop-filter: blur(5px);
   h4 {
     margin: 0;
     min-width: 100px;
@@ -228,6 +229,10 @@
     width: 100%;
     border-radius: 0;
     color: white;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
   }
   input,
   select {

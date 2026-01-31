@@ -29,7 +29,7 @@ export function ConsignmentInwardsOriginPO() {
     Location: "",
     Items: [],
   };
-  const { data, processed, changeData, deleteItemfromArray } =
+  const { data, processed, changeData, deleteItemfromArray, reset } =
     useData(defaults);
   const { showAlert, openWindow } = useInterface();
   const { errorsExist, DisplayHidingError, clearErrors, addError } = useError();
@@ -155,7 +155,7 @@ export function ConsignmentInwardsOriginPO() {
   return (
     <>
       <WindowTitle
-        title={"M01 - Consignment Inwards Origin - Against PO"}
+        title={"Consignment Inwards Origin - Against PO"}
         menu={[
           <ConditionalButton
             name={"Post"}
@@ -171,6 +171,7 @@ export function ConsignmentInwardsOriginPO() {
                 showAlert(`Post Success!
                     Material Document: ${matDocNo}
                     Accounting Document: ${accDocNo}`);
+                reset();
               },
             ]}
           />,

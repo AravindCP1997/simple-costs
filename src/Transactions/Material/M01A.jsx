@@ -39,8 +39,14 @@ export function ConsignmentInwardsOriginVendor() {
       },
     ],
   };
-  const { data, processed, changeData, deleteItemfromArray, addItemtoArray } =
-    useData(defaults);
+  const {
+    data,
+    processed,
+    changeData,
+    deleteItemfromArray,
+    addItemtoArray,
+    reset,
+  } = useData(defaults);
   const { showAlert, openWindow } = useInterface();
   const { errorsExist, DisplayHidingError, clearErrors, addError } = useError();
   const {
@@ -189,7 +195,7 @@ export function ConsignmentInwardsOriginVendor() {
   return (
     <>
       <WindowTitle
-        title={"M01A - Consignment Inwards Origin - Against Vendor"}
+        title={"Consignment Inwards Origin - Against Vendor"}
         menu={[
           <ConditionalButton
             name={"Post"}
@@ -205,6 +211,7 @@ export function ConsignmentInwardsOriginVendor() {
                 showAlert(`Post Success!
                     Material Document: ${matDocNo}
                     Accounting Document: ${accDocNo}`);
+                reset();
               },
             ]}
           />,

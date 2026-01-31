@@ -665,3 +665,7 @@ export function filter(
 ) {
   return { field, type, List, ExclList, ExclRange, Range };
 }
+
+export function isPositive(number) {
+  return number !== "" && number > 0;
+}

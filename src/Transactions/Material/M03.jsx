@@ -20,13 +20,15 @@ import {
 import { Company, ConsignmentInwards } from "../../classes";
 import { isPositive, perform, transformObject } from "../../functions";
 
-export function ConsignmentInwardsReceipt() {
+export function ConsignmentInwardsReturn() {
   const defaults = {
     CompanyCode: "",
     ValueDate: "",
     MatYear: "",
     Vendor: "",
     Location: "",
+    PostingDate: "",
+    AccYear: "",
     PO: "",
     ConsignmentNo: "",
     ConsignmentYear: "",
@@ -49,6 +51,8 @@ export function ConsignmentInwardsReceipt() {
     Location,
     Items,
     MatYear,
+    PostingDate,
+    AccYear,
     PO,
     ConsignmentNo,
     ConsignmentYear,
@@ -73,7 +77,22 @@ export function ConsignmentInwardsReceipt() {
       Movements: [],
     },
   );
+  const accData = transformObject(
+    processed,
+    ["PostingDate"],
+    [
+      ["CompanyCode", "Company"],
+      ["AccYear", "Year"],
+    ],
+    { Entries: [] },
+  );
   perform(() => {
+    perform(
+      () => {
+        processed.AccYear = company.year(PostingDate);
+      },
+      company.exists() && PostingDate !== "",
+    );
     perform(
       () => {
         processed.MatYear = company.year(ValueDate);
@@ -96,18 +115,33 @@ export function ConsignmentInwardsReceipt() {
             [
               "MaterialCode",
               "Quantity",
-              "Rate",
-              "Value",
               "PurchaseOrder",
               "Item",
               "Vendor",
+              "Rate",
+              "Value",
               "RefDocNo",
               "RefYear",
               "RefItem",
             ],
             [],
-            { LocationCode: Location, MovementType: "02", Block: "Free" },
+            { LocationCode: Location, MovementType: "03", Block: "Free" },
           ),
+        ],
+      );
+      accData.Entries.push(
+        ...[
+          transformObject(item, [], [["Remarks", "Text"]], {
+            Account: company.material(MaterialCode).group().getData().GLMat,
+            ProfitCenter: location.pc().code,
+            Amount: -Number(item.Value),
+          }),
+          transformObject(item, [], [["Remarks", "Text"]], {
+            Account: company.material(MaterialCode).group().getData()
+              .GLClearing,
+            ProfitCenter: location.pc().code,
+            Amount: Number(item.Value),
+          }),
         ],
       );
     });
@@ -140,7 +174,7 @@ export function ConsignmentInwardsReceipt() {
   return (
     <>
       <WindowTitle
-        title={"Consignment Inwards Receipt"}
+        title={"Consignment Inwards Return"}
         menu={[
           <ConditionalButton
             name={"Post"}
@@ -193,8 +227,20 @@ export function ConsignmentInwardsReceipt() {
             />
           </Row>
           <Row>
+            <Label label={"Posting Date"} />
+            <Input
+              value={PostingDate}
+              process={(value) => changeData("", "PostingDate", value)}
+              type="date"
+            />
+          </Row>
+          <Row>
             <Label label={"Material Year"} />
             <label>{MatYear}</label>
+          </Row>
+          <Row>
+            <Label label={"Accounting Year"} />
+            <label>{AccYear}</label>
           </Row>
           <Column overflow="visible" bg="var(--lightredt)" padding="10px">
             <Row jc="left" borderBottom="none">
@@ -245,7 +291,6 @@ export function ConsignmentInwardsReceipt() {
                                 item.Year,
                                 item.DocumentNo,
                               ).inTransitQuantity(item.No),
-                              Value: 0,
                             },
                           ),
                         ),
@@ -281,9 +326,9 @@ export function ConsignmentInwardsReceipt() {
                               "MaterialCode",
                               "LocationCode",
                               "PurchaseOrder",
-                              "Rate",
                               "Item",
                               "Vendor",
+                              "Rate",
                             ],
                             [
                               ["DocumentNo", "RefDocNo"],
@@ -297,7 +342,6 @@ export function ConsignmentInwardsReceipt() {
                                 item.Year,
                                 item.DocumentNo,
                               ).inTransitQuantity(item.No),
-                              Value: 0,
                             },
                           ),
                         ),
@@ -338,8 +382,8 @@ export function ConsignmentInwardsReceipt() {
                               "LocationCode",
                               "PurchaseOrder",
                               "Item",
-                              "Rate",
                               "Vendor",
+                              "Rate",
                             ],
                             [
                               ["DocumentNo", "RefDocNo"],
@@ -353,7 +397,6 @@ export function ConsignmentInwardsReceipt() {
                                 item.Year,
                                 item.DocumentNo,
                               ).inTransitQuantity(item.No),
-                              Value: 0,
                             },
                           ),
                         ),

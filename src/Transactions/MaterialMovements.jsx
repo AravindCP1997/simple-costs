@@ -160,11 +160,16 @@ export function MaterialMovements({ filter }) {
               "Location",
               "Material",
               "Quantity",
+              "Rate",
+              "Value",
               "Block",
               "Purchase Order",
               "Stock Transport Order",
               "Vendor",
               "Item",
+              "Ref. Doc.",
+              "Ref. Year",
+              "Ref. Item",
             ]}
             rows={filtered.map((item, i) => [
               <label>{item.Company}</label>,
@@ -203,11 +208,16 @@ export function MaterialMovements({ filter }) {
                 ]}
               />,
               <label>{item.Quantity}</label>,
+              <label>{item.Rate}</label>,
+              <label>{item.Value}</label>,
               <label>{item.Block}</label>,
               <label>{item.PurchaseOrder}</label>,
               <label>{item.StockTransportOrder}</label>,
               <label>{item.Vendor}</label>,
               <label>{item.Item}</label>,
+              <label>{item.RefDocNo}</label>,
+              <label>{item.RefYear}</label>,
+              <label>{item.RefItem}</label>,
             ])}
           />
         </DisplayArea>

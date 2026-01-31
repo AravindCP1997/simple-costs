@@ -141,7 +141,7 @@ import {
 import { FaGear, FaUser } from "react-icons/fa6";
 import { ManageLedgerAssignment } from "./Transactions/LedgerAssignment";
 import { CreatePurchaseOrder } from "./Transactions/PurchaseOrder";
-import { PurchaseOrder } from "./classes";
+import { ConsignmentInwards, PurchaseOrder } from "./classes";
 import { createPortal } from "react-dom";
 import { CreateSaleOrder } from "./Transactions/SaleOrder";
 import { CreateProductionOrder } from "./Transactions/ProductionOrder";
@@ -155,6 +155,8 @@ import { QueryAccountingDocument } from "./Transactions/AccountingDocument";
 import { ConsignmentInwardsOriginPO } from "./Transactions/Material/M01";
 import { ConsignmentInwardsOriginVendor } from "./Transactions/Material/M01A";
 import { ConsignmentInwardsReceipt } from "./Transactions/Material/M02";
+import { ConsignmentInwardsReturn } from "./Transactions/Material/M03";
+import { ConsignmentInwardsLoss } from "./Transactions/Material/M04";
 
 const codes = [
   {
@@ -830,6 +832,22 @@ const codes = [
     subgroup: "Materials and Services",
   },
   {
+    code: "m03",
+    screen: <Window />,
+    window: <ConsignmentInwardsReturn />,
+    name: "Consignment Inwards Return",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m04",
+    screen: <Window />,
+    window: <ConsignmentInwardsLoss />,
+    name: "Consignment Inwards Loss",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
     code: "vmd",
     screen: <Window />,
     window: <QueryMaterialDocument />,
@@ -1387,8 +1405,7 @@ export function Drawer({ initial = "Record" }) {
     flexWrap: "wrap",
     justifyContent: "left",
     overflow: "auto",
-    gap: "0px",
-    rowGap: "5px",
+    gap: "10px",
     height: "fit-content",
     padding: "15px",
     width: "100%",
@@ -1400,7 +1417,6 @@ export function Drawer({ initial = "Record" }) {
     justifyContent: "center",
     alignItems: "center",
     gap: "10px",
-    borderRadius: "10px",
     transition: "0.5s",
     cursor: "pointer",
     textAlign: "center",
