@@ -24,6 +24,7 @@ import {
   AssetGroup,
   Attendance,
   Company,
+  ConsignmentInwards,
   GeneralLedger,
   GroupGeneralLedger,
   Holidays,
@@ -35,12 +36,15 @@ import {
   Segments,
   StockTransportOrder,
   Transaction,
+  Vendor,
   YearlyCompanyCollection,
 } from "./classes";
 import { FaHome } from "react-icons/fa";
 import {
   dateInYear,
   dateString,
+  filter,
+  filterByMultipleSelection,
   filterBySelection,
   perform,
   TimeStamp,

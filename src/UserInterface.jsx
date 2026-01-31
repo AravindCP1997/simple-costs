@@ -153,6 +153,8 @@ import { QueryMaterialMovements } from "./Transactions/MaterialMovements";
 import { QueryMaterialDocument } from "./Transactions/MaterialDocument";
 import { QueryAccountingDocument } from "./Transactions/AccountingDocument";
 import { ConsignmentInwardsOriginPO } from "./Transactions/Material/M01";
+import { ConsignmentInwardsOriginVendor } from "./Transactions/Material/M01A";
+import { ConsignmentInwardsReceipt } from "./Transactions/Material/M02";
 
 const codes = [
   {
@@ -808,6 +810,22 @@ const codes = [
     screen: <Window />,
     window: <ConsignmentInwardsOriginPO />,
     name: "Consignment Inwards Origin - PO",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m01a",
+    screen: <Window />,
+    window: <ConsignmentInwardsOriginVendor />,
+    name: "Consignment Inwards Origin - Vendor",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m02",
+    screen: <Window />,
+    window: <ConsignmentInwardsReceipt />,
+    name: "Consignment Inwards Receipt",
     group: "Record",
     subgroup: "Materials and Services",
   },

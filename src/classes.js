@@ -5,6 +5,8 @@ import {
   datesInMonth,
   dateString,
   existsInCollection,
+  filter,
+  filterByMultipleSelection,
   filterBySelection,
   filterCollection,
   FilteredList,
@@ -445,6 +447,9 @@ export class Company extends Collection {
   }
   collection(name) {
     return new CompanyCollection(this.code, name);
+  }
+  consignmentInwards(number, year) {
+    return new ConsignmentInwards(this.code, year, number);
   }
   customer(code) {
     return new Customer(code, this.code);
@@ -1227,14 +1232,13 @@ export class Vendor extends CompanyCollection {
     super.add(data);
     return "Vendor Updated";
   }
-  materialMovements(movementTypes) {
-    return MaterialTable().filter(
-      (movement) =>
-        (movementTypes.includes(movement.MovementType) ||
-          movementTypes.length === 0) &&
-        movement.Company === this.companycode &&
-        movement.Vendor === this.code,
-    );
+  consignmentInwards() {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["01"]),
+      filter("Vendor", "Number", [this.code]),
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+    ]);
+    return result;
   }
 }
 
@@ -1401,6 +1405,14 @@ export class PurchaseOrder extends CompanyCollection {
         Undispatched: this.undispatched(i + 1),
       },
     }));
+    return result;
+  }
+  consignmentInwards() {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["01"]),
+      filter("PurchaseOrder", "Number", [this.code]),
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+    ]);
     return result;
   }
 }
@@ -1799,6 +1811,7 @@ export class MaterialDocument extends YearlyCompanyCollection {
   }
   defaultMovement() {
     return {
+      No: "",
       MovementType: "",
       MaterialCode: "",
       LocationCode: "",
@@ -1809,10 +1822,9 @@ export class MaterialDocument extends YearlyCompanyCollection {
       Item: "",
       Vendor: "",
       Text: "",
-      MR: "",
-      MRItem: "",
-      MI: "",
-      MIItem: "",
+      RefDocNo: "",
+      RefYear: "",
+      RefItem: "",
     };
   }
   prepareMovement(data) {
@@ -1973,5 +1985,84 @@ export class MaterialReceipt extends Transaction {
   }
   netReceived(item) {
     return this.received(item) - this.returned(item);
+  }
+}
+
+export class ConsignmentInwards {
+  constructor(company, year, documentNo) {
+    this.company = company;
+    this.year = year;
+    this.documentNo = documentNo;
+  }
+  exists() {
+    return this.origins().length > 0;
+  }
+  origins() {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["01"]),
+      filter("Company", "StringCaseInsensitive", [this.company]),
+      filter("DocumentNo", "Number", [this.documentNo]),
+      filter("Year", "Number", [this.year]),
+    ]);
+    return result;
+  }
+  origin(item) {
+    return this.origins()[item - 1];
+  }
+  receipts(item) {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["02"]),
+      filter("Company", "StringCaseInsensitive", [this.company]),
+      filter("RefDocument", "Number", [this.documentNo]),
+      filter("RefYear", "Number", [this.year]),
+      filter("RefItem", "Number", [item]),
+    ]);
+    return result;
+  }
+  returns(item) {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["03"]),
+      filter("Company", "StringCaseInsensitive", [this.company]),
+      filter("RefDocument", "Number", [this.documentNo]),
+      filter("RefYear", "Number", [this.year]),
+      filter("RefItem", "Number", [item]),
+    ]);
+    return result;
+  }
+  losses(item) {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["04"]),
+      filter("Company", "StringCaseInsensitive", [this.company]),
+      filter("RefDocument", "Number", [this.documentNo]),
+      filter("RefYear", "Number", [this.year]),
+      filter("RefItem", "Number", [item]),
+    ]);
+    return result;
+  }
+  originQuantity(item) {
+    return this.origin(item).Quantity;
+  }
+  receiptQuantity(item) {
+    return SumField(this.receipts(item), "Quantity");
+  }
+  lossQuantity(item) {
+    return SumField(this.losses(item), "Quantity");
+  }
+  returnQuantity(item) {
+    return SumField(this.returns(item), "Quantity");
+  }
+  inTransitQuantity(item) {
+    return (
+      this.originQuantity(item) -
+      this.receiptQuantity(item) -
+      this.lossQuantity(item) -
+      this.returnQuantity(item)
+    );
+  }
+  inTransits() {
+    return this.origins().map((item, i) => ({
+      ...item,
+      ["InTransit"]: this.inTransitQuantity(i + 1),
+    }));
   }
 }

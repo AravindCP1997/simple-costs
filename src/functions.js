@@ -482,7 +482,14 @@ export function trimArray(array) {
 }
 
 export function trimSelection(selection) {
-  const result = { List: [], ExclList: [], Range: [], ExclRange: [] };
+  const result = {
+    List: [],
+    ExclList: [],
+    Range: [],
+    ExclRange: [],
+    field: selection.field,
+    type: selection.type,
+  };
   result.List = trimArray(selection.List);
   result.ExclList = trimArray(selection.ExclList);
   selection.Range.forEach((range, r) => {
@@ -523,91 +530,87 @@ export function changeCaseArray(array, lowercase = true) {
   return array.map((item) => item.toUpperCase());
 }
 
-export function filterBySelection(
-  collection,
-  selection,
-  field,
-  caseSensitive = false,
-  number = false,
-) {
-  const { List, ExclList, Range, ExclRange } = selection;
+export function filterBySelection(collection, filter) {
+  const { List, ExclList, Range, ExclRange, field, type } = filter;
   let listFiltered = [];
   let exclListFiltered = [];
   let rangeFiltered = [];
   let exclRangeFiltered = [];
 
   collection.forEach((item, i) => {
-    if (number) {
-      if (convertArrayToNumber(List).includes(Number(item[field]))) {
-        listFiltered.push(i);
-      }
-      if (convertArrayToNumber(ExclList).includes(Number(item[field]))) {
-        exclListFiltered.push(i);
-      }
-      Range.forEach((range) => {
-        const [From, To] = range;
-        if (
-          Number(item[field]) >= Number(From) &&
-          Number(item[field]) <= Number(To)
-        ) {
-          rangeFiltered.push(i);
+    switch (type) {
+      case "StringCaseInsensitive":
+        if (changeCaseArray(List).includes(item[field].toLowerCase())) {
+          listFiltered.push(i);
         }
-      });
-      ExclRange.forEach((range) => {
-        const [From, To] = range;
-        if (
-          Number(item[field]) >= Number(From) &&
-          Number(item[field]) <= Number(To)
-        ) {
-          exclRangeFiltered.push(i);
+        if (changeCaseArray(ExclList).includes(item[field].toLowerCase())) {
+          exclListFiltered.push(i);
         }
-      });
-    }
-    if (!number && caseSensitive) {
-      if (List.includes(item[field])) {
-        listFiltered.push(i);
-      }
-      if (ExclList.includes(item[field])) {
-        exclListFiltered.push(i);
-      }
-      Range.forEach((range) => {
-        const [From, To] = range;
-        if (item[field] >= From && item[field] <= To) {
-          rangeFiltered.push(i);
+        Range.forEach((range) => {
+          const [From, To] = range;
+          if (
+            item[field].toLowerCase() >= From.toLowerCase() &&
+            item[field].toLowerCase() <= To.toLowerCase()
+          ) {
+            rangeFiltered.push(i);
+          }
+        });
+        ExclRange.forEach((range) => {
+          const [From, To] = range;
+          if (
+            item[field].toLowerCase() >= From.toLowerCase() &&
+            item[field].toLowerCase() <= To.toLowerCase()
+          ) {
+            exclRangeFiltered.push(i);
+          }
+        });
+        break;
+      case "StringCaseSensitive":
+        if (List.includes(item[field])) {
+          listFiltered.push(i);
         }
-      });
-      ExclRange.forEach((range) => {
-        const [From, To] = range;
-        if (item[field] >= From && item[field] <= To) {
-          exclRangeFiltered.push(i);
+        if (ExclList.includes(item[field])) {
+          exclListFiltered.push(i);
         }
-      });
-    }
-    if (!number && !caseSensitive) {
-      if (changeCaseArray(List).includes(item[field].toLowerCase())) {
-        listFiltered.push(i);
-      }
-      if (changeCaseArray(ExclList).includes(item[field].toLowerCase())) {
-        exclListFiltered.push(i);
-      }
-      Range.forEach((range) => {
-        const [From, To] = range;
-        if (
-          item[field].toLowerCase() >= From.toLowerCase() &&
-          item[field].toLowerCase() <= To.toLowerCase()
-        ) {
-          rangeFiltered.push(i);
+        Range.forEach((range) => {
+          const [From, To] = range;
+          if (item[field] >= From && item[field] <= To) {
+            rangeFiltered.push(i);
+          }
+        });
+        ExclRange.forEach((range) => {
+          const [From, To] = range;
+          if (item[field] >= From && item[field] <= To) {
+            exclRangeFiltered.push(i);
+          }
+        });
+        break;
+      case "Number":
+        if (convertArrayToNumber(List).includes(Number(item[field]))) {
+          listFiltered.push(i);
         }
-      });
-      ExclRange.forEach((range) => {
-        const [From, To] = range;
-        if (
-          item[field].toLowerCase() >= From.toLowerCase() &&
-          item[field].toLowerCase() <= To.toLowerCase()
-        ) {
-          exclRangeFiltered.push(i);
+        if (convertArrayToNumber(ExclList).includes(Number(item[field]))) {
+          exclListFiltered.push(i);
         }
-      });
+        Range.forEach((range) => {
+          const [From, To] = range;
+          if (
+            Number(item[field]) >= Number(From) &&
+            Number(item[field]) <= Number(To)
+          ) {
+            rangeFiltered.push(i);
+          }
+        });
+        ExclRange.forEach((range) => {
+          const [From, To] = range;
+          if (
+            Number(item[field]) >= Number(From) &&
+            Number(item[field]) <= Number(To)
+          ) {
+            exclRangeFiltered.push(i);
+          }
+        });
+        break;
     }
   });
 
@@ -623,6 +626,14 @@ export function filterBySelection(
             !(exclListFiltered.includes(i) || exclRangeFiltered.includes(i)),
         );
 
+  return result;
+}
+
+export function filterByMultipleSelection(collection, filters = []) {
+  let result = [...collection];
+  filters.forEach((filter) => {
+    result = filterBySelection(result, filter);
+  });
   return result;
 }
 
@@ -643,3 +654,14 @@ export function transformObject(
 export const logout = () => {
   localStorage.removeItem("Authentication");
 };
+
+export function filter(
+  field = "",
+  type = "StringCaseInsensitive",
+  List = [],
+  ExclList = [],
+  Range = [],
+  ExclRange = [],
+) {
+  return { field, type, List, ExclList, ExclRange, Range };
+}

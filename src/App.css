@@ -217,8 +217,9 @@
 
 .tableCell {
   border: 1px solid var(--bluet);
-  text-align: center;
   position: relative;
+  text-align: center;
+  width: min(100%, fit-content);
   h4 {
     margin: 0;
     min-width: 100px;
@@ -233,4 +234,27 @@
     width: 100%;
     height: 100%;
   }
+}
+
+.pseudoButton {
+  background: var(--bluet);
+  color: white;
+  border: 2px solid var(--bluet);
+  margin: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: 0.5s ease-in-out;
+}
+
+.pseudoButton:hover,
+.pseudoButton:focus {
+  background: var(--blue);
 }

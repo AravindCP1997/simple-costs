@@ -1400,8 +1400,8 @@ export function ConditionalDisplays({ displays = [[true, <p></p>]] }) {
 
 export function PsuedoButton({ name, onClick }) {
   return (
-    <label className="pseudoButton" onClick={(e) => onClick(e)}>
+    <div className="pseudoButton" onClick={(e) => onClick(e)}>
       {name}
-    </label>
+    </div>
   );
 }

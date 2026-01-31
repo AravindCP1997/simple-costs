@@ -75,14 +75,12 @@ export function Authentication() {
         style={{
           position: "fixed",
           bottom: "15px",
-          right: "10%",
+          right: "10px",
           height: "calc(100% - 30px)",
-          zIndex: 1000,
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: "10px",
+          justifyContent: "end",
         }}
       >
         <Label
@@ -95,9 +93,16 @@ export function Authentication() {
         />
         <Row jc="left" borderBottom="none">
           <label
-            style={{ textAlign: "center", opacity: "0.5", fontSize: "80%" }}
+            style={{
+              width: "100%",
+              textAlign: "right",
+              opacity: "0.3",
+              margin: "0",
+              fontSize: "80%",
+              padding: "5px 2px",
+            }}
           >
-            Last updated 31.01.2026
+            Pilot Ver. 31.01.2026
           </label>
         </Row>
       </div>

@@ -4,6 +4,7 @@ import { useInterface } from "../../useInterface";
 import { useError } from "../../useError";
 import {
   AutoSuggestInput,
+  Button,
   Column,
   ConditionalButton,
   DisplayArea,
@@ -15,21 +16,30 @@ import {
   WindowContent,
   WindowTitle,
 } from "../../Components";
-import { Company, MaterialDocument } from "../../classes";
+import { Company } from "../../classes";
 import { perform, transformObject } from "../../functions";
 
-export function ConsignmentInwardsOriginPO() {
+export function ConsignmentInwardsOriginVendor() {
   const defaults = {
     CompanyCode: "",
     ValueDate: "",
     AccYear: "",
     MatYear: "",
     PostingDate: "",
-    PO: "",
+    Vendor: "",
     Location: "",
-    Items: [],
+    Items: [
+      {
+        MaterialCode: "",
+        Description: "",
+        Quantity: "",
+        Rate: "",
+        Value: "",
+        Remarks: "",
+      },
+    ],
   };
-  const { data, processed, changeData, deleteItemfromArray } =
+  const { data, processed, changeData, deleteItemfromArray, addItemtoArray } =
     useData(defaults);
   const { showAlert, openWindow } = useInterface();
   const { errorsExist, DisplayHidingError, clearErrors, addError } = useError();
@@ -37,7 +47,7 @@ export function ConsignmentInwardsOriginPO() {
     CompanyCode,
     ValueDate,
     PostingDate,
-    PO,
+    Vendor,
     Location,
     Items,
     AccYear,
@@ -46,7 +56,7 @@ export function ConsignmentInwardsOriginPO() {
   const company = new Company(CompanyCode);
   const md = company.materialdocument("", MatYear);
   const ad = company.accountingdocument("", AccYear);
-  const po = company.po(PO);
+  const vendor = company.vendor(Vendor);
   const location = company.location(Location);
   const matData = transformObject(
     processed,
@@ -61,10 +71,10 @@ export function ConsignmentInwardsOriginPO() {
           item,
           ["MaterialCode", "Quantity", "Rate", "Value"],
           [
-            ["PO", "PurchaseOrder"],
             ["No", "Item"],
+            ["Remarks", "Text"],
           ],
-          { MovementType: "01", LocationCode: Location, No: i + 1 },
+          { MovementType: "01", LocationCode: Location, Vendor, No: i + 1 },
         ),
       ),
     },
@@ -92,18 +102,27 @@ export function ConsignmentInwardsOriginPO() {
       company.exists() && ValueDate !== "",
     );
     Items.forEach((item, i) => {
+      const { MaterialCode, Quantity, Rate } = item;
+      const material = company.material(MaterialCode);
       perform(
         () => {
-          item.Value = item.Quantity * item.Rate;
+          item.Value = Quantity * Rate;
         },
-        item.Quantity !== "" && item.Quantity > 0,
+        item.Quantity !== "" &&
+          item.Quantity > 0 &&
+          item.Rate !== "" &&
+          item.Rate > 0,
         () => {
           item.Value = 0;
         },
       );
+      perform(() => {
+        item.Description = material.group().getData().Description;
+      }, material.exists());
     });
     Items.forEach((item, i) => {
       const { MaterialCode } = item;
+      const material = company.material(MaterialCode);
       accData.Entries.push(
         ...[
           transformObject(
@@ -114,14 +133,17 @@ export function ConsignmentInwardsOriginPO() {
               ["Value", "Amount"],
             ],
             {
-              Account: company.material(MaterialCode).group().getData().GLMat,
-              ProfitCenter: location.pc().code,
+              Account: material.exists()
+                ? material.group().getData().GLMat
+                : "",
+              ProfitCenter: location.exists() ? location.pc().code : "",
             },
           ),
           transformObject(item, [], [["Remarks", "Text"]], {
-            Account: company.material(MaterialCode).group().getData()
-              .GLClearing,
-            ProfitCenter: location.pc().code,
+            Account: material.exists()
+              ? material.group().getData().GLClearing
+              : "",
+            ProfitCenter: location.exists() ? location.pc().code : "",
             Amount: -Number(item.Value),
           }),
         ],
@@ -137,17 +159,29 @@ export function ConsignmentInwardsOriginPO() {
       "PostingDate",
       "Posting Date not open.",
     );
+    addError(Items.length === 0, "Materials", "No materials added.");
+    addError(!vendor.exists(), "Vendor", "Vendor does not exist.");
     addError(
       company.exists() && !company.openperiods.materialOpen(ValueDate),
       "ValueDate",
       "Value Date not open.",
     );
     Items.forEach((item, i) => {
-      const { Quantity } = item;
+      const { MaterialCode, Quantity, Rate } = item;
+      addError(
+        !company.material(MaterialCode).exists(),
+        `Items/${i + 1}`,
+        "Material does not exist.",
+      );
       addError(
         Quantity === "" || Quantity <= 0,
         `Items/${i + 1}`,
         "Quantity shall be positive value.",
+      );
+      addError(
+        Rate === "" || Rate <= 0,
+        `Items/${i + 1}`,
+        "Rate shall be positive value.",
       );
     });
   }, [data]);
@@ -155,7 +189,7 @@ export function ConsignmentInwardsOriginPO() {
   return (
     <>
       <WindowTitle
-        title={"M01 - Consignment Inwards Origin - Against PO"}
+        title={"M01A - Consignment Inwards Origin - Against Vendor"}
         menu={[
           <ConditionalButton
             name={"Post"}
@@ -228,48 +262,26 @@ export function ConsignmentInwardsOriginPO() {
             <label>{AccYear}</label>
           </Row>
           <Column>
-            <Label label={"Materials"} />
-            <Row jc="left" borderBottom="none" overflow="visible">
-              <Label label={"Purchase Order"} />
+            <Row overflow="visible">
+              <Label label={"Vendor"} />
               <AutoSuggestInput
-                value={PO}
-                process={(value) => changeData("", "PO", value)}
-                suggestions={po.listAllFromCompany("Code")}
-                captions={po.listAllFromCompany("Description")}
+                value={Vendor}
+                process={(value) => changeData("", "Vendor", value)}
+                suggestions={vendor.listAllFromCompany("Code")}
+                captions={vendor.listAllFromCompany("Name")}
               />
-              <ConditionalButton
-                name={"Load"}
-                result={po.exists()}
-                whileFalse={[() => showAlert("Purchase Order does not exist.")]}
-                whileTrue={[
-                  () =>
-                    changeData(
-                      "",
-                      "Items",
-                      po.summary().map((item, i) =>
-                        transformObject(
-                          item,
-                          ["Rate", "Description"],
-                          [
-                            ["Item", "MaterialCode"],
-                            ["Undispatched", "Quantity"],
-                          ],
-                          {
-                            No: i + 1,
-                            Value: item.Undispatched * item.Rate,
-                            Remarks: "",
-                            PO,
-                          },
-                        ),
-                      ),
-                    ),
-                  () => changeData("", "PO", ""),
+            </Row>
+            <Row jc="left">
+              <Label label={"Materials"} />
+              <Button
+                name={"Add"}
+                functionsArray={[
+                  () => addItemtoArray("Items", defaults.Items[0]),
                 ]}
               />
             </Row>
             <Table
               columns={[
-                "PO",
                 "Item No",
                 "Material",
                 "Description",
@@ -280,9 +292,20 @@ export function ConsignmentInwardsOriginPO() {
                 "",
               ]}
               rows={Items.map((item, i) => [
-                <label>{item.PO}</label>,
-                <label>{item.No}</label>,
-                <label>{item.MaterialCode}</label>,
+                <label>{i + 1}</label>,
+                <AutoSuggestInput
+                  value={item.MaterialCode}
+                  process={(value) =>
+                    changeData(`Items/${i}`, "MaterialCode", value)
+                  }
+                  suggestions={company
+                    .material(item.MaterialCode)
+                    .listAllFromCompany("Code")}
+                  captions={company
+                    .material(item.MaterialCode)
+                    .listAllFromCompany("Description")}
+                  placeholder={"Material Code"}
+                />,
                 <label>{item.Description}</label>,
                 <Input
                   value={item.Quantity}
@@ -291,7 +314,11 @@ export function ConsignmentInwardsOriginPO() {
                   }
                   type="number"
                 />,
-                <label>{item.Rate}</label>,
+                <Input
+                  value={item.Rate}
+                  process={(value) => changeData(`Items/${i}`, "Rate", value)}
+                  type="number"
+                />,
                 <label>{item.Value}</label>,
                 <Input
                   value={item.Remarks}
@@ -301,7 +328,7 @@ export function ConsignmentInwardsOriginPO() {
                   type="text"
                 />,
                 <PsuedoButton
-                  name={"-"}
+                  name={""}
                   onClick={() => deleteItemfromArray(`Items`, i)}
                 />,
               ])}

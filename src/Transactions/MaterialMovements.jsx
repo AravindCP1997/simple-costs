@@ -23,7 +23,12 @@ import { useWindowType, useInterface } from "../useInterface";
 import { MaterialTable } from "../businessFunctions";
 import { defaultSelection } from "../defaults";
 import useData from "../useData";
-import { filterBySelection, perform, trimSelection } from "../functions";
+import {
+  filterByMultipleSelection,
+  filterBySelection,
+  perform,
+  trimSelection,
+} from "../functions";
 import { ViewMaterialDocument } from "./MaterialDocument";
 import { Material, MaterialDocument } from "../classes";
 import { CreateMaterial } from "./Material";
@@ -31,12 +36,12 @@ import { CreateMaterial } from "./Material";
 export function QueryMaterialMovements() {
   const { openWindow } = useInterface();
   const { data, processed, changeData } = useData({
-    Company: defaultSelection,
-    Year: defaultSelection,
-    DocumentNo: defaultSelection,
-    MaterialCode: defaultSelection,
-    LocationCode: defaultSelection,
-    ValueDate: defaultSelection,
+    Company: defaultSelection("Company"),
+    Year: defaultSelection("Year", "Number"),
+    DocumentNo: defaultSelection("DocumentNo", "Number"),
+    MaterialCode: defaultSelection("MaterialCode", "Number"),
+    LocationCode: defaultSelection("LocationCode"),
+    ValueDate: defaultSelection("ValueDate"),
   });
   const { Company, Year, DocumentNo, MaterialCode, LocationCode, ValueDate } =
     processed;
@@ -123,25 +128,14 @@ export function MaterialMovements({ filter }) {
   const data = MaterialTable();
   const { Company, Year, MaterialCode, LocationCode, ValueDate, DocumentNo } =
     filter;
-  let filtered = [...data];
-  filtered = filterBySelection(filtered, Company, "Company");
-  filtered = filterBySelection(filtered, Year, "Year", false, true);
-  filtered = filterBySelection(
-    filtered,
+  const filtered = filterByMultipleSelection(data, [
+    Company,
+    Year,
     MaterialCode,
-    "MaterialCode",
-    false,
-    true,
-  );
-  filtered = filterBySelection(filtered, ValueDate, "ValueDate", false);
-  filtered = filterBySelection(filtered, DocumentNo, "DocumentNo", false, true);
-  filtered = filterBySelection(
-    filtered,
     LocationCode,
-    "LocationCode",
-    false,
-    true,
-  );
+    ValueDate,
+    DocumentNo,
+  ]);
 
   return (
     <>
