@@ -175,6 +175,8 @@ import {
   ManageFreightGroup,
 } from "./Transactions/FreightGroup";
 import { MaterialIssueSTO } from "./Transactions/Material/M16";
+import { MaterialReceiptSTO } from "./Transactions/Material/M17";
+import { STOReturn } from "./Transactions/Material/M18";
 
 const codes = [
   {
@@ -990,6 +992,22 @@ const codes = [
     screen: <Window />,
     window: <MaterialIssueSTO />,
     name: "Material Issue - STO",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m17",
+    screen: <Window />,
+    window: <MaterialReceiptSTO />,
+    name: "Material Receipt - STO",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m18",
+    screen: <Window />,
+    window: <STOReturn />,
+    name: "Material Return - STO",
     group: "Record",
     subgroup: "Materials and Services",
   },

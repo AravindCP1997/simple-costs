@@ -484,6 +484,9 @@ export class Company extends Collection {
   sto(code) {
     return new StockTransportOrder(code, this.code);
   }
+  stoIssue(number, year) {
+    return new STOIssue(this.code, number, year);
+  }
   vendor(code) {
     return new Vendor(code, this.code);
   }
@@ -1637,6 +1640,14 @@ export class StockTransportOrder extends CompanyCollection {
   undispatchedByLocation(location) {
     return this.undispatched().filter((item) => item.From === location);
   }
+  allIssues() {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["16"]),
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+      filter("StockTransportOrder", "Number", [this.code]),
+    ]);
+    return result;
+  }
 }
 
 export class MaintenanceOrder extends CompanyCollection {
@@ -2234,7 +2245,7 @@ export class STOIssue {
     this.year = year;
   }
   exists() {
-    return this.items().length > 0;
+    return this.issues().length > 0;
   }
   issues() {
     const result = filterByMultipleSelection(MaterialTable(), [
@@ -2246,7 +2257,7 @@ export class STOIssue {
     return result;
   }
   issue(item) {
-    return this.items()[item - 1];
+    return this.issues()[item - 1];
   }
   receipts(item) {
     const result = filterByMultipleSelection(MaterialTable(), [

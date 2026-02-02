@@ -93,16 +93,6 @@ export function MaterialIssueSTO() {
               No: i + 1,
             },
           ),
-          transformObject(
-            item,
-            ["MaterialCode", "Rate", "Value", "Block"],
-            [["Remarks", "Text"]],
-            {
-              LocationCode: Location,
-              MovementType: "16",
-              Quantity: -Number(item.Quantity),
-            },
-          ),
         ],
       );
     });
@@ -230,6 +220,8 @@ export function MaterialIssueSTO() {
                             ["MaterialCode"],
                             [["Undispatched", "Quantity"]],
                             {
+                              STO,
+                              No: i + 1,
                               Remarks: "",
                               Block: "Free",
                               Balance: "",
@@ -258,7 +250,7 @@ export function MaterialIssueSTO() {
               ]}
               rows={Items.map((item, i) => [
                 <label>{item.STO}</label>,
-                <label>{i + 1}</label>,
+                <label>{item.No}</label>,
                 <label>{item.MaterialCode}</label>,
                 <label>{item.Description}</label>,
                 <Input
