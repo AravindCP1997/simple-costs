@@ -104,7 +104,6 @@ export function Scratch() {
               />
             </Row>
           </Row>
-          {JSON.stringify(new Company("FACT").sto(100000).allIssues())}
         </DisplayArea>
       </WindowContent>
     </>

@@ -466,6 +466,9 @@ export class Company extends Collection {
   materialdocument(documentNo, year) {
     return new MaterialDocument(documentNo, year, this.code);
   }
+  materialdelivery(number, year) {
+    return new MaterialDelivery(this.code, year, number);
+  }
   materialreceipt(number, year) {
     return new MaterialReceipt(this.code, year, number);
   }
@@ -480,6 +483,9 @@ export class Company extends Collection {
   }
   receiptForInspection(number, year) {
     return new ReceiptForInspection(this.code, year, number);
+  }
+  so(code) {
+    return new SaleOrder(code, this.code);
   }
   sto(code) {
     return new StockTransportOrder(code, this.code);
@@ -1245,6 +1251,14 @@ export class Customer extends CompanyCollection {
     super.add(data);
     return "Customer Updated";
   }
+  deliveries() {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["20"]),
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+      filter("Customer", "Number", [this.code]),
+    ]);
+    return result;
+  }
 }
 
 export class Vendor extends CompanyCollection {
@@ -1520,6 +1534,95 @@ export class SaleOrder extends CompanyCollection {
     this.delete();
     super.add(data);
     return "Sale Order Updated";
+  }
+  items() {
+    return this.getData().Items;
+  }
+  allIssues() {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["20"]),
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+      filter("SaleOrder", "Number", [this.code]),
+    ]);
+    return result;
+  }
+  issues(item) {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["20"]),
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+      filter("SaleOrder", "Number", [this.code]),
+      filter("Item", "Number", [item]),
+    ]);
+    return result;
+  }
+  delivery(item) {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["21"]),
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+      filter("SaleOrder", "Number", [this.code]),
+      filter("Item", "Number", [item]),
+    ]);
+    return result;
+  }
+  returns(item) {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["22"]),
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+      filter("SaleOrder", "Number", [this.code]),
+      filter("Item", "Number", [item]),
+    ]);
+    return result;
+  }
+  loss(item) {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["23"]),
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+      filter("SaleOrder", "Number", [this.code]),
+      filter("Item", "Number", [item]),
+    ]);
+    return result;
+  }
+  orderedQuantity(item) {
+    return this.items()[item - 1].Quantity;
+  }
+  issueQuantity(item) {
+    return SumField(this.issues(item), "Quantity");
+  }
+  deliveryQuantity(item) {
+    return SumField(this.delivery(item), "Quantity");
+  }
+  returnQuantity(item) {
+    return SumField(this.returns(item), "Quantity");
+  }
+  lossQuantity(item) {
+    return SumField(this.loss(item), "Quantity");
+  }
+  undispatchedQuantity(item) {
+    return (
+      this.orderedQuantity(item) -
+      this.issueQuantity(item) +
+      this.returnQuantity(item)
+    );
+  }
+  undispatched() {
+    return this.items().map((item, i) => ({
+      ...item,
+      ["Undispatched"]: this.undispatchedQuantity(i + 1),
+    }));
+  }
+  inTransitQuantity(item) {
+    return (
+      this.issueQuantity(item) -
+      this.returnQuantity(item) -
+      this.deliveryQuantity(item) -
+      this.lossQuantity(item)
+    );
+  }
+  inTransit() {
+    return this.items().map((item, i) => ({
+      ...item,
+      ["InTransit"]: this.inTransitQuantity(i + 1),
+    }));
   }
 }
 
@@ -1923,7 +2026,9 @@ export class MaterialDocument extends YearlyCompanyCollection {
       Value: 0,
       PurchaseOrder: "",
       StockTransportOrder: "",
+      SaleOrder: "",
       Item: "",
+      Customer: "",
       Vendor: "",
       Text: "",
       RefDocNo: "",
@@ -2308,5 +2413,53 @@ export class STOIssue {
       this.returnQuantity(item) -
       this.lossQuantity(item)
     );
+  }
+}
+
+export class MaterialDelivery {
+  constructor(company, year, documentNo) {
+    this.company = company;
+    this.year = year;
+    this.documentNo = documentNo;
+  }
+  exists() {
+    return this.items().length > 0;
+  }
+  items() {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["20"]),
+      filter("Company", "StringCaseInsensitive", [this.company]),
+      filter("DocumentNo", "Number", [this.documentNo]),
+      filter("Year", "Number", [this.year]),
+    ]);
+    return result;
+  }
+  issues(item) {
+    return this.items()[item - 1];
+  }
+  returns(item) {
+    const result = filterByMultipleSelection(MaterialTable(), [
+      filter("MovementType", "StringCaseInsensitive", ["21"]),
+      filter("Company", "StringCaseInsensitive", [this.company]),
+      filter("RefDocNo", "Number", [this.documentNo]),
+      filter("RefYear", "Number", [this.year]),
+      filter("RefItem", "Number", [item]),
+    ]);
+    return result;
+  }
+  issueQuantity(item) {
+    return this.issues(item).Quantity;
+  }
+  returnQuantity(item) {
+    return SumField(this.returns(item), "Quantity");
+  }
+  netIssueQuantity(item) {
+    return this.issueQuantity(item) - this.returnQuantity(item);
+  }
+  netIssues() {
+    return this.items().map((item, i) => ({
+      ...item,
+      ["NetIssue"]: this.netIssueQuantity(i + 1),
+    }));
   }
 }

@@ -177,6 +177,10 @@ import {
 import { MaterialIssueSTO } from "./Transactions/Material/M16";
 import { MaterialReceiptSTO } from "./Transactions/Material/M17";
 import { STOReturn } from "./Transactions/Material/M18";
+import { STOLoss } from "./Transactions/Material/M19";
+import { MaterialIssueCustomer } from "./Transactions/Material/M20A";
+import { MaterialIssueSO } from "./Transactions/Material/M20";
+import { ReturnInwards } from "./Transactions/Material/M21";
 
 const codes = [
   {
@@ -1008,6 +1012,38 @@ const codes = [
     screen: <Window />,
     window: <STOReturn />,
     name: "Material Return - STO",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m19",
+    screen: <Window />,
+    window: <STOLoss />,
+    name: "Material Loss - STO",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m20",
+    screen: <Window />,
+    window: <MaterialIssueSO />,
+    name: "Material Delivery SO",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m20a",
+    screen: <Window />,
+    window: <MaterialIssueCustomer />,
+    name: "Material Delivery to Customer",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m21",
+    screen: <Window />,
+    window: <ReturnInwards />,
+    name: "Return Inwards",
     group: "Record",
     subgroup: "Materials and Services",
   },
