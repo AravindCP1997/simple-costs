@@ -162,6 +162,19 @@ import { ReceiptForInspectionVendor } from "./Transactions/Material/M05A";
 import { InspectionAcceptance } from "./Transactions/Material/M06";
 import { ReturnsFromInspection } from "./Transactions/Material/M07";
 import { LossfromInspection } from "./Transactions/Material/M08";
+import { ReceiptPO } from "./Transactions/Material/M09";
+import { ReceiptVendor } from "./Transactions/Material/M09A";
+import { ReturnOutwards } from "./Transactions/Material/M10";
+import { MaterialLoss } from "./Transactions/Material/M11";
+import { MaterialDamage } from "./Transactions/Material/M12";
+import { ReserveMaterial } from "./Transactions/Material/M13";
+import { UnReserveMaterial } from "./Transactions/Material/M14";
+import { MaterialTransfer } from "./Transactions/Material/M15";
+import {
+  CreateFreightGroup,
+  ManageFreightGroup,
+} from "./Transactions/FreightGroup";
+import { MaterialIssueSTO } from "./Transactions/Material/M16";
 
 const codes = [
   {
@@ -589,6 +602,22 @@ const codes = [
     subgroup: "Materials and Services",
   },
   {
+    code: "cfg",
+    screen: <Window />,
+    window: <CreateFreightGroup />,
+    name: "Create Freight Group",
+    group: "Control",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "mfg",
+    screen: <Window />,
+    window: <ManageFreightGroup />,
+    name: "Manage Freight Group",
+    group: "Control",
+    subgroup: "Materials and Services",
+  },
+  {
     code: "cmat",
     screen: <Window />,
     window: <CreateMaterial />,
@@ -893,6 +922,78 @@ const codes = [
     subgroup: "Materials and Services",
   },
   {
+    code: "m09",
+    screen: <Window />,
+    window: <ReceiptPO />,
+    name: "PO Receipts",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m09a",
+    screen: <Window />,
+    window: <ReceiptVendor />,
+    name: "Receipts without PO",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m10",
+    screen: <Window />,
+    window: <ReturnOutwards />,
+    name: "Return Outwards",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m11",
+    screen: <Window />,
+    window: <MaterialLoss />,
+    name: "Material Loss",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m12",
+    screen: <Window />,
+    window: <MaterialDamage />,
+    name: "Material Damage",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m13",
+    screen: <Window />,
+    window: <ReserveMaterial />,
+    name: "Material Reservation",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m14",
+    screen: <Window />,
+    window: <UnReserveMaterial />,
+    name: "Material Unreservation",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m15",
+    screen: <Window />,
+    window: <MaterialTransfer />,
+    name: "Material Transfer",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m16",
+    screen: <Window />,
+    window: <MaterialIssueSTO />,
+    name: "Material Issue - STO",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
     code: "vmd",
     screen: <Window />,
     window: <QueryMaterialDocument />,
@@ -1174,6 +1275,7 @@ function SearchBar() {
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
+    paddingTop: "5px",
   };
 
   const style = {
@@ -1185,11 +1287,9 @@ function SearchBar() {
     maxWidth: "100%",
     gap: "10px",
     overflow: "visible",
-    border: "2px solid var(--bluet)",
-    background: "var(--bluet)",
     borderTop: "none",
-    borderBottomLeftRadius: "15px",
-    borderBottomRightRadius: "15px",
+    borderRadius: "10px",
+    background: "var(--bluet)",
   };
 
   const searchAreaStyle = {
@@ -1467,7 +1567,6 @@ export function Drawer({ initial = "Record" }) {
     textAlign: "center",
     aspectRatio: "1 / 1",
     padding: "10px",
-    backdropFilter: "blur(3px)",
   };
 
   const NavButton = ({ name }) => {

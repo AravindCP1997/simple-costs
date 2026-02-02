@@ -260,6 +260,15 @@ export const defaultEmployee = {
   Status: "Working",
 };
 
+export const defaultFreightGroup = {
+  Company: "",
+  Code: "",
+  Description: "",
+  Type: "Material Cost",
+  GLFreight: "",
+  GLClearing: "",
+};
+
 export const defaultMaterialGroup = {
   Company: "",
   Code: "",
@@ -499,6 +508,7 @@ export const defaultStockTransportOrder = {
       Quantity: 0,
       Rate: 0,
       Value: 0,
+      FreightGroup: "",
     },
   ],
 };

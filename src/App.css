@@ -73,15 +73,18 @@
 }
 
 .icon {
-  border: 2px solid var(--bluet);
   border-radius: 10px;
+  color: white;
+  background-color: var(--bluet);
+
   p {
-    background: var(--goldt);
+    background: white;
+    color: var(--blue);
     font-size: 80%;
     border-radius: 5px;
     padding: 5px;
     margin: 0;
-    opacity: 0.5;
+    opacity: 0.15;
     transition: 0.5s;
   }
 }
@@ -89,10 +92,13 @@
 .icon:hover,
 .icon:focus {
   transform: scale(0.95) translateY(5px);
-
   p {
     opacity: 1;
   }
+}
+
+.icon:focus {
+  background: var(--redt);
 }
 
 .controlButtons {

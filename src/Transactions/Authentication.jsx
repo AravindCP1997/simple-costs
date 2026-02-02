@@ -34,6 +34,7 @@ export function Authentication() {
     <div
       style={{
         display: "flex",
+        fontFamily: "Lexend",
         flexDirection: "column",
         justifyContent: "center",
         height: "100%",
@@ -76,7 +77,6 @@ export function Authentication() {
           position: "fixed",
           bottom: "15px",
           right: "10px",
-          height: "calc(100% - 30px)",
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
@@ -102,7 +102,7 @@ export function Authentication() {
               padding: "5px 2px",
             }}
           >
-            Pilot Ver. 31.01.2026
+            Pilot Ver. 02.02.2026
           </label>
         </Row>
       </div>

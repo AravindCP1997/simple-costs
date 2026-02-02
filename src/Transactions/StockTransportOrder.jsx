@@ -28,6 +28,7 @@ import {
   CompanyCollection,
   Vendor,
   VendorGroup,
+  FreightGroup,
 } from "../classes";
 
 import { defaultStockTransportOrder } from "../defaults";
@@ -87,7 +88,15 @@ export function CreateStockTransportOrder({
         `Vendor ${VendorCode} does not exist.`,
       );
       Items.forEach((item, i) => {
-        const { MaterialCode, From, To, Quantity, Rate, Value } = item;
+        const {
+          MaterialCode,
+          From,
+          To,
+          Quantity,
+          Rate,
+          Value,
+          FreightGroupCode,
+        } = item;
         addError(
           !new Material(MaterialCode, Company).exists(),
           `Items/${i + 1}`,
@@ -112,6 +121,12 @@ export function CreateStockTransportOrder({
           Rate === "" || Rate < 0,
           `Items/${i + 1}`,
           "Rate shall be a positive value.",
+        );
+        addError(
+          Transport === "Hired" &&
+            !new FreightGroup(FreightGroupCode, Company).exists(),
+          `Items/${i + 1}`,
+          "Freight Group does not exist.",
         );
       });
     }
@@ -331,6 +346,7 @@ export function CreateStockTransportOrder({
                         Quantity: 0,
                         Rate: 0,
                         Value: 0,
+                        FreightGroupCode: "",
                       }),
                   ]}
                 />
@@ -345,6 +361,7 @@ export function CreateStockTransportOrder({
                   "Quantity",
                   "Rate",
                   "Value",
+                  "Freight Group",
                   "",
                 ]}
                 rows={Items.map((item, i) => [
@@ -398,6 +415,21 @@ export function CreateStockTransportOrder({
                     process={(value) => changeData(`Items/${i}`, `Rate`, value)}
                   />,
                   <label>{item.Value}</label>,
+
+                  <AutoSuggestInput
+                    value={item.FreightGroupCode}
+                    process={(value) =>
+                      changeData(`Items/${i}`, "FreightGroupCode", value)
+                    }
+                    suggestions={new FreightGroup(
+                      "",
+                      Company,
+                    ).listAllFromCompany("Code")}
+                    captions={new FreightGroup("", Company).listAllFromCompany(
+                      "Description",
+                    )}
+                    placeholder={"Freight Group"}
+                  />,
                   <Button
                     name={"-"}
                     functionsArray={[() => deleteItemfromArray(`Items`, i)]}
@@ -419,6 +451,7 @@ export function CreateStockTransportOrder({
                   "Quantity",
                   "Rate",
                   "Value",
+                  "Freight Group",
                 ]}
                 rows={Items.map((item, i) => [
                   <label>{i + 1}</label>,
@@ -429,6 +462,7 @@ export function CreateStockTransportOrder({
                   <label>{item.Quantity}</label>,
                   <label>{item.Rate}</label>,
                   <label>{item.Value}</label>,
+                  <label>{item.FreightGroupCode}</label>,
                 ])}
               />
             </Conditional>

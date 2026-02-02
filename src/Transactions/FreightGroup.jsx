@@ -20,7 +20,7 @@ import {
 import { useWindowType, useInterface } from "../useInterface";
 import useData from "../useData";
 import { useError } from "../useError";
-import { MaterialGroup, GeneralLedger } from "../classes";
+import { FreightGroup, GeneralLedger } from "../classes";
 import { Collection } from "../Database";
 import {
   FilteredList,
@@ -28,31 +28,31 @@ import {
   ListUniqueItems,
   rangeOverlap,
 } from "../functions";
-import { defaultMaterialGroup } from "../defaults";
+import { defaultFreightGroup } from "../defaults";
 
-export function ManageMaterialGroup() {
+export function ManageFreightGroup() {
   const [company, setcompany] = useState("");
   const [code, setcode] = useState("");
   const { openWindow, openConfirm, showAlert } = useInterface();
-  const collection = new MaterialGroup(code, company);
+  const collection = new FreightGroup(code, company);
 
   return (
     <>
       <WindowTitle
-        title={"Manage Material Group"}
+        title={"Manage Freight Group"}
         menu={[
           <Button
             name="New"
-            functionsArray={[() => openWindow(<CreateMaterialGroup />)]}
+            functionsArray={[() => openWindow(<CreateFreightGroup />)]}
           />,
           <ConditionalButton
             name={"View"}
             result={collection.exists()}
-            whileFalse={[() => showAlert("Material Group does not exist.")]}
+            whileFalse={[() => showAlert("Freight Group does not exist.")]}
             whileTrue={[
               () =>
                 openWindow(
-                  <CreateMaterialGroup
+                  <CreateFreightGroup
                     method="View"
                     initial={collection.getData()}
                   />,
@@ -62,11 +62,11 @@ export function ManageMaterialGroup() {
           <ConditionalButton
             name={"Update"}
             result={collection.exists()}
-            whileFalse={[() => showAlert("Material Group does not exist.")]}
+            whileFalse={[() => showAlert("Freight Group does not exist.")]}
             whileTrue={[
               () =>
                 openWindow(
-                  <CreateMaterialGroup
+                  <CreateFreightGroup
                     method="Update"
                     initial={collection.getData()}
                   />,
@@ -76,11 +76,11 @@ export function ManageMaterialGroup() {
           <ConditionalButton
             name={"Copy"}
             result={collection.exists()}
-            whileFalse={[() => showAlert("Material Group does not exist.")]}
+            whileFalse={[() => showAlert("Freight Group does not exist.")]}
             whileTrue={[
               () =>
                 openWindow(
-                  <CreateMaterialGroup
+                  <CreateFreightGroup
                     method="Create"
                     initial={{
                       ...collection.getData(),
@@ -105,11 +105,11 @@ export function ManageMaterialGroup() {
             />
           </Row>
           <Row overflow="visible">
-            <Label label={"Material Group"} />
+            <Label label={"Freight Group"} />
             <AutoSuggestInput
               value={code}
               process={(value) => setcode(value)}
-              placeholder={"Enter Material Group"}
+              placeholder={"Enter Freight Group"}
               suggestions={collection.listAllFromCompany("Code")}
               captions={collection.listAllFromCompany("Description")}
             />
@@ -120,22 +120,19 @@ export function ManageMaterialGroup() {
   );
 }
 
-export function CreateMaterialGroup({
-  initial = defaultMaterialGroup,
+export function CreateFreightGroup({
+  initial = defaultFreightGroup,
   method = "Create",
 }) {
   const { data, changeData, reset, setdata } = useData(initial);
   const { openWindow, openConfirm, showAlert } = useInterface();
   const { DisplayHidingError, addError, clearErrors, errorsExist } = useError();
-  const { Company, Code, Description, GLMat, GLRev, GLCoS, GLWriteDown } = data;
+  const { Company, Code, Description, Type, GLFreight, GLClearing } = data;
   const Gls = [
-    { code: "GLMat", name: "General Ledger - Material" },
-    { code: "GLCoS", name: "General Ledger - Cost of Sales" },
-    { code: "GLRev", name: "General Ledger - Revenue" },
-    { code: "GLWriteDown", name: "General Ledger - Write Down" },
+    { code: "GLFreight", name: "General Ledger - Freight" },
     { code: "GLClearing", name: "General Ledger - Clearing Receipts" },
   ];
-  const collection = new MaterialGroup(Code, Company);
+  const collection = new FreightGroup(Code, Company);
   const glcollection = new GeneralLedger("", Company);
   useEffect(() => {
     clearErrors();
@@ -149,24 +146,24 @@ export function CreateMaterialGroup({
       addError(
         collection.exists(),
         "Code",
-        `Material Group ${Code} already exist in Company ${Company}.`,
+        `Freight Group ${Code} already exist in Company ${Company}.`,
       );
-      Gls.forEach((gl, g) => {
-        addError(
-          collection.company.exists() &&
-            !collection.company.existsGL(data[gl.code]),
-          gl.name,
-          `General Ledger ${
-            data[gl.code]
-          } does not exist in Company ${Company}.`,
-        );
-      });
+      addError(
+        Type === "Expense" && !collection.company.gl(GLFreight).exists(),
+        "GLFreight",
+        `General Ledger does not exist.`,
+      );
+      addError(
+        !collection.company.gl(GLClearing).exists(),
+        "GLClearing",
+        `General Ledger does not exist.`,
+      );
     }
   }, [data]);
   return (
     <>
       <WindowTitle
-        title={`${method} Material Group`}
+        title={`${method} Freight Group`}
         menu={[
           <Conditional logic={method === "Create"}>
             <ConditionalButton
@@ -183,7 +180,7 @@ export function CreateMaterialGroup({
               whileFalse={[() => showAlert("Messages exist. Please check.")]}
               whileTrue={[
                 () => showAlert(collection.update(data)),
-                () => openWindow(<ManageMaterialGroup />),
+                () => openWindow(<ManageFreightGroup />),
               ]}
             />
           </Conditional>,
@@ -200,7 +197,7 @@ export function CreateMaterialGroup({
                 openConfirm(
                   "Data not saved will be lost.",
                   [],
-                  [() => openWindow(<ManageMaterialGroup />)],
+                  [() => openWindow(<ManageFreightGroup />)],
                 ),
             ]}
           />,
@@ -236,6 +233,7 @@ export function CreateMaterialGroup({
                 value={Code}
                 process={(value) => changeData("", "Code", value)}
                 type={"text"}
+                maxLength={4}
               />
             </Conditional>
             <Conditional logic={method !== "Create"}>
@@ -253,6 +251,19 @@ export function CreateMaterialGroup({
             </Conditional>
             <Conditional logic={method === "View"}>
               <label>{Description}</label>
+            </Conditional>
+          </Row>
+          <Row>
+            <Label label={"Valuation Type"} />
+            <Conditional logic={method === "Create"}>
+              <Option
+                options={["Material Cost", "Expense"]}
+                value={Type}
+                process={(value) => changeData("", "Type", value)}
+              />
+            </Conditional>
+            <Conditional logic={method === "View"}>
+              <label>{Type}</label>
             </Conditional>
           </Row>
           <Conditional logic={method === "View"}>
