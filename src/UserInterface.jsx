@@ -141,7 +141,11 @@ import {
 import { FaGear, FaUser } from "react-icons/fa6";
 import { ManageLedgerAssignment } from "./Transactions/LedgerAssignment";
 import { CreatePurchaseOrder } from "./Transactions/PurchaseOrder";
-import { ConsignmentInwards, PurchaseOrder } from "./classes";
+import {
+  ConsignmentInwards,
+  ConsignmentOutwards,
+  PurchaseOrder,
+} from "./classes";
 import { createPortal } from "react-dom";
 import { CreateSaleOrder } from "./Transactions/SaleOrder";
 import { CreateProductionOrder } from "./Transactions/ProductionOrder";
@@ -181,6 +185,11 @@ import { STOLoss } from "./Transactions/Material/M19";
 import { MaterialIssueCustomer } from "./Transactions/Material/M20A";
 import { MaterialIssueSO } from "./Transactions/Material/M20";
 import { ReturnInwards } from "./Transactions/Material/M21";
+import { ConsignmentOutwardsOriginSO } from "./Transactions/Material/M22";
+import { ConsignmentOutwardsOriginCustomer } from "./Transactions/Material/M22A";
+import { ConsignmentOutwardsLoss } from "./Transactions/Material/M25";
+import { ConsignmentOutwardsReturn } from "./Transactions/Material/M24";
+import { ConsignmentOutwardsDelivery } from "./Transactions/Material/M23";
 
 const codes = [
   {
@@ -1044,6 +1053,46 @@ const codes = [
     screen: <Window />,
     window: <ReturnInwards />,
     name: "Return Inwards",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m22",
+    screen: <Window />,
+    window: <ConsignmentOutwardsOriginSO />,
+    name: "Consignment Outwards Origin- SO",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m22a",
+    screen: <Window />,
+    window: <ConsignmentOutwardsOriginCustomer />,
+    name: "Consignment Outwards Origin - Customer",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m23",
+    screen: <Window />,
+    window: <ConsignmentOutwardsDelivery />,
+    name: "Consignment Outwards Delivery",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m24",
+    screen: <Window />,
+    window: <ConsignmentOutwardsReturn />,
+    name: "Consignment Outwards Return",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m25",
+    screen: <Window />,
+    window: <ConsignmentOutwardsLoss />,
+    name: "Consignment Outwards Loss",
     group: "Record",
     subgroup: "Materials and Services",
   },
