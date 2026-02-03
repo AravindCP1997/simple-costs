@@ -30,6 +30,7 @@ export function Authentication() {
     showAlert,
     checkauthentication,
   } = useInterface();
+
   return (
     <div
       style={{
@@ -71,7 +72,6 @@ export function Authentication() {
       <label style={{ textAlign: "center", opacity: "0.5", fontSize: "80%" }}>
         Use Instagram ID of author.
       </label>
-
       <div
         style={{
           position: "fixed",
@@ -102,7 +102,7 @@ export function Authentication() {
               padding: "5px 2px",
             }}
           >
-            Pilot Ver. 02.02.2026
+            Pilot Ver. 03.02.2026
           </label>
         </Row>
       </div>

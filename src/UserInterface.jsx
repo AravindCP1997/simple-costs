@@ -190,6 +190,9 @@ import { ConsignmentOutwardsOriginCustomer } from "./Transactions/Material/M22A"
 import { ConsignmentOutwardsLoss } from "./Transactions/Material/M25";
 import { ConsignmentOutwardsReturn } from "./Transactions/Material/M24";
 import { ConsignmentOutwardsDelivery } from "./Transactions/Material/M23";
+import { MaterialIssueOrder } from "./Transactions/Material/M26";
+import { MaterialIssueUnit } from "./Transactions/Material/M27";
+import { MaterialIssueOthers } from "./Transactions/Material/M28";
 
 const codes = [
   {
@@ -1097,11 +1100,27 @@ const codes = [
     subgroup: "Materials and Services",
   },
   {
-    code: "vmd",
+    code: "m26",
     screen: <Window />,
-    window: <QueryMaterialDocument />,
-    name: "View Material Document",
-    group: "Report",
+    window: <MaterialIssueOrder />,
+    name: "Material Issue for Orders",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m27",
+    screen: <Window />,
+    window: <MaterialIssueUnit />,
+    name: "Material Issue for Units",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "m28",
+    screen: <Window />,
+    window: <MaterialIssueOthers />,
+    name: "Material Issue Others",
+    group: "Record",
     subgroup: "Materials and Services",
   },
   {
@@ -1111,14 +1130,6 @@ const codes = [
     name: "Material Movements",
     group: "Report",
     subgroup: "Materials and Services",
-  },
-  {
-    code: "vad",
-    screen: <Window />,
-    window: <QueryAccountingDocument />,
-    name: "View Accounting Document",
-    group: "Report",
-    subgroup: "Financial Accounting",
   },
   {
     code: "simtax",

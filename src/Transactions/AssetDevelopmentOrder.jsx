@@ -229,8 +229,8 @@ export function CreateAssetDevelopmentOrder({
             <Label label={"Description"} />
             <Conditional logic={method !== "View"}>
               <Input
-                value={Company}
-                process={(value) => changeData("", "Company", value)}
+                value={Description}
+                process={(value) => changeData("", "Description", value)}
                 type={"text"}
                 style={{ width: "100%" }}
               />

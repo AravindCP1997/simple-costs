@@ -481,8 +481,14 @@ export class Company extends Collection {
   accountingdocument(documentNo, year) {
     return new AccountingDocument(documentNo, year, this.code);
   }
+  pc(code) {
+    return new ProfitCenter(code, this.code);
+  }
   po(code) {
     return new PurchaseOrder(code, this.code);
+  }
+  processorder(code) {
+    return new ProcessOrder(code, this.code);
   }
   receiptForInspection(number, year) {
     return new ReceiptForInspection(this.code, year, number);
@@ -2045,6 +2051,7 @@ export class MaterialDocument extends YearlyCompanyCollection {
       RefDocNo: "",
       RefYear: "",
       RefItem: "",
+      Consumption: {},
     };
   }
   prepareMovement(data) {
