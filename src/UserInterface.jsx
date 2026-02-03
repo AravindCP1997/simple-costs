@@ -193,6 +193,7 @@ import { ConsignmentOutwardsDelivery } from "./Transactions/Material/M23";
 import { MaterialIssueOrder } from "./Transactions/Material/M26";
 import { MaterialIssueUnit } from "./Transactions/Material/M27";
 import { MaterialIssueOthers } from "./Transactions/Material/M28";
+import { ServiceReceiptVendor } from "./Transactions/Service/ServiceReceiptVendor";
 
 const codes = [
   {
@@ -1120,6 +1121,14 @@ const codes = [
     screen: <Window />,
     window: <MaterialIssueOthers />,
     name: "Material Issue Others",
+    group: "Record",
+    subgroup: "Materials and Services",
+  },
+  {
+    code: "srv",
+    screen: <Window />,
+    window: <ServiceReceiptVendor />,
+    name: "Service Receipt from Vendor",
     group: "Record",
     subgroup: "Materials and Services",
   },

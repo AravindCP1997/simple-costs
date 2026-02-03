@@ -493,6 +493,9 @@ export class Company extends Collection {
   receiptForInspection(number, year) {
     return new ReceiptForInspection(this.code, year, number);
   }
+  service(code) {
+    return new Service(code, this.code);
+  }
   so(code) {
     return new SaleOrder(code, this.code);
   }
@@ -1081,6 +1084,9 @@ export class Service extends CompanyCollection {
     this.delete();
     super.add(data);
     return "Service Updated";
+  }
+  group() {
+    return new ServiceGroup(this.getData().ServiceGroupCode, this.companycode);
   }
 }
 
