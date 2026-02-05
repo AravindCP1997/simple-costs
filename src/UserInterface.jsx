@@ -194,6 +194,7 @@ import { MaterialIssueOrder } from "./Transactions/Material/M26";
 import { MaterialIssueUnit } from "./Transactions/Material/M27";
 import { MaterialIssueOthers } from "./Transactions/Material/M28";
 import { ServiceReceiptVendor } from "./Transactions/Service/ServiceReceiptVendor";
+import { CreateVendorInvoice } from "./Transactions/PayablesandReceivables/VendorInvoice";
 
 const codes = [
   {
@@ -1131,6 +1132,14 @@ const codes = [
     name: "Service Receipt from Vendor",
     group: "Record",
     subgroup: "Materials and Services",
+  },
+  {
+    code: "v01",
+    screen: <Window />,
+    window: <CreateVendorInvoice />,
+    name: "Vendor Invoice",
+    group: "Record",
+    subgroup: "Payables and Receivables",
   },
   {
     code: "mms",

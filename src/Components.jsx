@@ -426,6 +426,7 @@ export function DisplayArea({ children }) {
     flexDirection: "column",
     gap: "5px",
     background: blue ? "var(--lightbluet)" : "var(--whitet)",
+    backdropFilter: "blur(5px)",
     borderRadius: "5px",
     padding: "10px",
     border: blue ? "5px solid var(--lightbluet)" : "5px solid var(--whitet)",
@@ -1406,4 +1407,16 @@ export function PsuedoButton({ name, onClick }) {
       {name}
     </div>
   );
+}
+
+export function ConditionalDisplay({
+  logic,
+  whileTrue = null,
+  whileFalse = null,
+}) {
+  if (logic) {
+    return <>{whileTrue}</>;
+  } else {
+    return <>{whileFalse}</>;
+  }
 }
