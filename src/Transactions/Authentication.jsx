@@ -102,7 +102,7 @@ export function Authentication() {
               padding: "5px 2px",
             }}
           >
-            Pilot Ver. 03.02.2026
+            Pilot Ver. 06.02.2026
           </label>
         </Row>
       </div>

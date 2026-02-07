@@ -134,7 +134,7 @@ export function CreateBusinessTaxCode({
   } = useData(initial);
   const { openWindow, openConfirm, showAlert } = useInterface();
   const { DisplayHidingError, addError, clearErrors, errorsExist } = useError();
-  const { Company, Code, Description, Accounting } = data;
+  const { Company, Code, Description, Accounting, TaxType } = data;
   const collection = new BusinessTaxCode(Code, Company);
   const glcollection = new GeneralLedger("", Company);
   const bp = new BusinessPlace("", Company);
@@ -264,6 +264,19 @@ export function CreateBusinessTaxCode({
               <label>{Description}</label>
             </Conditional>
           </Row>
+          <Row>
+            <Label label={"Tax Type"} />
+            <Conditional logic={method === "Create"}>
+              <Option
+                value={TaxType}
+                process={(value) => changeData("", "TaxType", value)}
+                options={["Output", "Input"]}
+              />
+            </Conditional>
+            <Conditional logic={method !== "Create"}>
+              <label>{TaxType}</label>
+            </Conditional>
+          </Row>
           <Conditional logic={method !== "View"}>
             <Row jc="left">
               <Label label={"Accounting"} />
@@ -271,23 +284,23 @@ export function CreateBusinessTaxCode({
                 name={"Add"}
                 functionsArray={[
                   () =>
-                    addItemtoArray(`Accounting`, {
-                      BP: "",
-                      TType: "All",
-                      GL: "",
-                      Type: "Debit",
-                      Rate: 0,
-                    }),
+                    addItemtoArray(
+                      `Accounting`,
+                      defaultBusinessTaxCode.Accounting[0],
+                    ),
                 ]}
               />
             </Row>
             <Table
               columns={[
                 "Business Place",
-                "Transaction Type",
                 "General Ledger",
                 "Debit/Credit",
                 "Rate",
+                "Inter Country",
+                "Inter State",
+                "Inter Region",
+                "Intra Region",
                 "",
               ]}
               rows={Accounting.map((account, a) => [
@@ -299,13 +312,6 @@ export function CreateBusinessTaxCode({
                   suggestions={bp.listAllFromCompany("Code")}
                   captions={bp.listAllFromCompany("Description")}
                   placeholder={"Enter Business Place"}
-                />,
-                <Option
-                  value={account.TType}
-                  process={(value) =>
-                    changeData(`Accounting/${a}`, "TType", value)
-                  }
-                  options={["InterCountry", "InterState", "IntraState", "All"]}
                 />,
                 <AutoSuggestInput
                   value={account.GL}
@@ -330,6 +336,30 @@ export function CreateBusinessTaxCode({
                     changeData(`Accounting/${a}`, "Rate", value)
                   }
                 />,
+                <CheckBox
+                  value={account.InterCountry}
+                  process={(value) =>
+                    changeData(`Accounting/${a}`, "InterCountry", value)
+                  }
+                />,
+                <CheckBox
+                  value={account.InterState}
+                  process={(value) =>
+                    changeData(`Accounting/${a}`, "InterState", value)
+                  }
+                />,
+                <CheckBox
+                  value={account.InterRegion}
+                  process={(value) =>
+                    changeData(`Accounting/${a}`, "InterRegion", value)
+                  }
+                />,
+                <CheckBox
+                  value={account.IntraRegion}
+                  process={(value) =>
+                    changeData(`Accounting/${a}`, "IntraRegion", value)
+                  }
+                />,
                 <Button
                   name={"-"}
                   functionsArray={[() => deleteItemfromArray(`Accounting`, a)]}
@@ -344,17 +374,23 @@ export function CreateBusinessTaxCode({
             <Table
               columns={[
                 "Business Place",
-                "Transaction",
                 "General Ledger",
                 "Debit/ Credit",
                 "Rate",
+                "Inter Country",
+                "Inter State",
+                "Inter Region",
+                "Intra Region",
               ]}
               rows={Accounting.map((account, a) => [
                 <label>{account.BP}</label>,
-                <label>{account.TType}</label>,
                 <label>{account.GL}</label>,
                 <label>{account.Type}</label>,
                 <label>{account.Rate}</label>,
+                <CheckBox value={account.InterCountry} />,
+                <CheckBox value={account.InterState} />,
+                <CheckBox value={account.InterRegion} />,
+                <CheckBox value={account.IntraRegion} />,
               ])}
             />
           </Conditional>

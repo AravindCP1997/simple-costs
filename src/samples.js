@@ -254,6 +254,7 @@ export const sampleBusinessPlace = {
   Description: "Sample Business Place",
   Address: "Street 01, New City",
   PostalCode: "000001",
+  RegionCode: "10",
   Country: "India",
   State: "Kerala",
   Email: "bp1@abc.com",

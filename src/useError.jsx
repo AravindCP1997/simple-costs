@@ -2,13 +2,14 @@ import { ListItems, ListUniqueItems } from "./functions";
 import { CollapsingDisplay, HidingDisplay, Label, Table } from "./Components";
 import { useState } from "react";
 
-export const useError = () => {
-  const [errors, seterrors] = useState(["Hi"]);
+export const useError = (calculatederrors = []) => {
+  const [errors, seterrors] = useState([]);
   const addError = (logic, path, error) => {
     if (logic) {
       seterrors((prevdata) => [...prevdata, { path, error }]);
     }
   };
+
   const clearErrors = () => seterrors([]);
 
   const errorsByPath = (path) => {
@@ -16,10 +17,12 @@ export const useError = () => {
     return ListUniqueItems(filtered, "error");
   };
 
-  const errorsExist = errors.length > 0;
+  const errorsExist = errors.length > 0 || calculatederrors.length > 0;
   const haveErrors = (path) => {
     return errorsByPath(path).length > 0;
   };
+
+  const mergedErrors = [...errors, ...calculatederrors];
 
   const DisplayError = () => {
     if (!errorsExist) {
@@ -28,7 +31,7 @@ export const useError = () => {
     return (
       <Table
         columns={["Path", "Error"]}
-        rows={errors.map((error) => [
+        rows={mergedErrors.map((error) => [
           <p>{error.path}</p>,
           <p>{error.error}</p>,
         ])}

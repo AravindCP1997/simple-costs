@@ -195,6 +195,7 @@ import { MaterialIssueUnit } from "./Transactions/Material/M27";
 import { MaterialIssueOthers } from "./Transactions/Material/M28";
 import { ServiceReceiptVendor } from "./Transactions/Service/ServiceReceiptVendor";
 import { CreateVendorInvoice } from "./Transactions/PayablesandReceivables/VendorInvoice";
+import { TableRegion } from "./Transactions/Region";
 
 const codes = [
   {
@@ -338,6 +339,14 @@ const codes = [
     screen: <Window />,
     window: <TableUnits />,
     name: "Table Units",
+    group: "Control",
+    subgroup: "Global",
+  },
+  {
+    code: "regn",
+    screen: <Window />,
+    window: <TableRegion />,
+    name: "Table Region",
     group: "Control",
     subgroup: "Global",
   },

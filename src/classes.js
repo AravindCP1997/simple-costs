@@ -20,7 +20,11 @@ import {
   TimeStamp,
   valueInRange,
 } from "./functions";
-import { MaterialTable } from "./businessFunctions";
+import {
+  BusinessTaxType,
+  BusinessTaxTypeByType,
+  MaterialTable,
+} from "./businessFunctions";
 import { defaultSelection } from "./defaults";
 
 export class IncomeTaxCode extends Collection {
@@ -414,6 +418,43 @@ export const Units = {
   },
 };
 
+export const Region = {
+  object: new Dictionary("Region"),
+  defaults: [
+    {
+      Code: "10",
+      Country: "India",
+      State: "Kerala",
+      Description: "Kerala State",
+    },
+  ],
+  sample: [
+    {
+      Code: "10",
+      Country: "India",
+      State: "Kerala",
+      Description: "Kerala State",
+    },
+  ],
+  read: function () {
+    const stored = this.object.load();
+    const result = stored === null ? this.defaults : stored;
+    return result;
+  },
+  save: function (data) {
+    return this.object.save(data);
+  },
+  list: function (field) {
+    return ListItems(this.read(), field);
+  },
+  exists: function (code) {
+    return this.list("Code").includes(code);
+  },
+  getData: function (code) {
+    return this.read().find((item) => item.Code === code);
+  },
+};
+
 export class Company extends Collection {
   constructor(code, name = "Company") {
     super(name);
@@ -444,6 +485,9 @@ export class Company extends Collection {
     const givenYear = givenDate.getFullYear();
     const result = this.dateInYear(date, givenYear) ? givenYear : givenYear - 1;
     return result;
+  }
+  bp(code) {
+    return new BusinessPlace(code, this.code);
   }
   collection(name) {
     return new CompanyCollection(this.code, name);
@@ -1207,6 +1251,33 @@ export class BusinessTaxCode extends CompanyCollection {
   }
   update(data) {
     return super.update(this.criteria, data);
+  }
+  accounting() {
+    return this.getData().Accounting;
+  }
+  accountingByTaxType(type, businessplace) {
+    return this.accounting().filter(
+      (item) => item[type] === true && item["BP"] === businessplace,
+    );
+  }
+  TaxType(BusinessPlaceRegion, SupplierRegion, PlaceofSupply) {
+    return BusinessTaxTypeByType(
+      this.getData().TaxTyoe,
+      BusinessPlaceRegion,
+      SupplierRegion,
+      PlaceofSupply,
+    );
+  }
+  taxAccounting(BusinessPlace, SupplierRegion, PlaceofSupply) {
+    const accounting = this.accountingByTaxType(
+      this.TaxType(
+        this.company.bp(BusinessPlace).getData().RegionCode,
+        SupplierRegion,
+        PlaceofSupply,
+      ),
+      BusinessPlace,
+    );
+    return accounting;
   }
 }
 
@@ -2566,3 +2637,16 @@ export class ConsignmentOutwards {
     }));
   }
 }
+
+export const EntryTypes = {
+  types: [
+    { C: "G1", A: "GeneralLedger", T: "D" },
+    { C: "G2", A: "GeneralLedger", T: "C" },
+  ],
+  list: function (field) {
+    return ListItems(this.types, field);
+  },
+  getField: function (code, field) {
+    return this.types.find((item) => item.C === code)[field];
+  },
+};

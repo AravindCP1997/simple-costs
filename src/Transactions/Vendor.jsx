@@ -21,7 +21,7 @@ import {
 import { useWindowType, useInterface } from "../useInterface";
 import useData from "../useData";
 import { useError } from "../useError";
-import { Vendor, VendorGroup, WithholdingTax } from "../classes";
+import { Vendor, VendorGroup, WithholdingTax, Region } from "../classes";
 import { Collection } from "../Database";
 import {
   FilteredList,
@@ -137,6 +137,7 @@ export function CreateVendor({ initial = defaultVendor, method = "Create" }) {
     VendorGroupCode,
     Address,
     PostalCode,
+    RegionCode,
     Country,
     State,
     Phone,
@@ -313,6 +314,21 @@ export function CreateVendor({ initial = defaultVendor, method = "Create" }) {
                 <Conditional logic={method === "View"}>
                   <label>{PostalCode}</label>
                 </Conditional>
+              </Row>
+              <Row overflow="visible">
+                <Label label={"Region"} />
+                <ConditionalDisplay
+                  logic={method !== "View"}
+                  whileFalse={<label>{RegionCode}</label>}
+                  whileTrue={
+                    <AutoSuggestInput
+                      value={RegionCode}
+                      process={(value) => changeData("", "RegionCode", value)}
+                      suggestions={Region.list("Code")}
+                      captions={Region.list("Description")}
+                    />
+                  }
+                />
               </Row>
               <Row>
                 <Label label={"Country"} />

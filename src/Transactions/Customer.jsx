@@ -17,11 +17,12 @@ import {
   HidingDisplay,
   Conditional,
   MultiDisplayArea,
+  ConditionalDisplay,
 } from "../Components";
 import { useWindowType, useInterface } from "../useInterface";
 import useData from "../useData";
 import { useError } from "../useError";
-import { Customer, CustomerGroup, WithholdingTax } from "../classes";
+import { Customer, CustomerGroup, WithholdingTax, Region } from "../classes";
 import { Collection } from "../Database";
 import {
   FilteredList,
@@ -143,6 +144,7 @@ export function CreateCustomer({
     CustomerGroupCode,
     Address,
     PostalCode,
+    RegionCode,
     Country,
     State,
     Phone,
@@ -323,6 +325,21 @@ export function CreateCustomer({
                 <Conditional logic={method === "View"}>
                   <label>{PostalCode}</label>
                 </Conditional>
+              </Row>
+              <Row overflow="visible">
+                <Label label={"Region"} />
+                <ConditionalDisplay
+                  logic={method !== "View"}
+                  whileFalse={<label>{RegionCode}</label>}
+                  whileTrue={
+                    <AutoSuggestInput
+                      value={RegionCode}
+                      process={(value) => changeData("", "RegionCode", value)}
+                      suggestions={Region.list("Code")}
+                      captions={Region.list("Description")}
+                    />
+                  }
+                />
               </Row>
               <Row>
                 <Label label={"Country"} />

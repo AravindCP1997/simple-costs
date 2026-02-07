@@ -17,14 +17,16 @@ import {
   ConditionalDisplays,
 } from "./Components";
 import UserInterface, { Home } from "./UserInterface";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AccountingDocument,
   Asset,
   AssetGroup,
   Attendance,
+  BusinessTaxCode,
   Company,
   ConsignmentInwards,
+  ExchangeRates,
   GeneralLedger,
   GroupGeneralLedger,
   Holidays,
@@ -34,6 +36,7 @@ import {
   MaterialReceipt,
   ProfitCenter,
   PurchaseOrder,
+  Region,
   Segments,
   StockTransportOrder,
   STOIssue,
@@ -53,15 +56,14 @@ import {
   transformObject,
   trimSelection,
 } from "./functions";
-import { MaterialTable } from "./businessFunctions";
+import { BusinessTaxType, MaterialTable } from "./businessFunctions";
 import useData from "./useData";
 import { defaultSelection } from "./defaults";
+import { useAccounting } from "./useAccounting";
 
 export function Scratch() {
   const { showAlert } = useInterface();
   const { setscreen } = useInterface();
-  const { data, changeData } = useData({ loc: defaultSelection });
-  const random = [{ Name: "Kohli" }, { Name: "Dhoni" }];
   return (
     <>
       <WindowTitle

@@ -19,7 +19,7 @@ import {
 import { useWindowType, useInterface } from "../useInterface";
 import useData from "../useData";
 import { useError } from "../useError";
-import { Company, BusinessPlace } from "../classes";
+import { Company, BusinessPlace, Region } from "../classes";
 import { Collection } from "../Database";
 import {
   FilteredList,
@@ -56,7 +56,7 @@ export function ManageBusinessPlace() {
                   <CreateBusinessPlace
                     method="View"
                     initial={collection.getData()}
-                  />
+                  />,
                 ),
             ]}
           />,
@@ -68,7 +68,7 @@ export function ManageBusinessPlace() {
             whileFalse={[
               () =>
                 showAlert(
-                  "Either the Business Place does not exist, or it is not in draft stage to be updated."
+                  "Either the Business Place does not exist, or it is not in draft stage to be updated.",
                 ),
             ]}
             whileTrue={[
@@ -77,7 +77,7 @@ export function ManageBusinessPlace() {
                   <CreateBusinessPlace
                     method="Update"
                     initial={collection.getData()}
-                  />
+                  />,
                 ),
             ]}
           />,
@@ -89,7 +89,7 @@ export function ManageBusinessPlace() {
             whileFalse={[
               () =>
                 showAlert(
-                  "Either the Business Place does not exist, or it is not in draft stage to be deleted."
+                  "Either the Business Place does not exist, or it is not in draft stage to be deleted.",
                 ),
             ]}
             whileTrue={[
@@ -101,7 +101,7 @@ export function ManageBusinessPlace() {
                     () => showAlert(collection.delete()),
                     () => setcode(""),
                     () => setcompany(""),
-                  ]
+                  ],
                 ),
             ]}
           />,
@@ -116,7 +116,7 @@ export function ManageBusinessPlace() {
                   <CreateBusinessPlace
                     method="Create"
                     initial={collection.getData()}
-                  />
+                  />,
                 ),
             ]}
           />,
@@ -171,6 +171,7 @@ export function CreateBusinessPlace({
     Phone,
     BTIN,
     Status,
+    RegionCode,
   } = data;
   const collection = new BusinessPlace(Code, Company);
   useEffect(() => {
@@ -179,15 +180,20 @@ export function CreateBusinessPlace({
       addError(
         !collection.company.exists(),
         "Company",
-        `Company does not exist.`
+        `Company does not exist.`,
       );
       addError(Code === "", "Code", `Code cannot be blank.`);
       addError(
         Code !== "" && collection.exists(),
         "Code",
-        `Business Place ${Code} already exists in Company ${Company}.`
+        `Business Place ${Code} already exists in Company ${Company}.`,
       );
     }
+    addError(
+      !Region.exists(RegionCode),
+      "RegionCode",
+      "Region does not exist.",
+    );
     addError(Country === "", "Country", `Country cannot be blank.`);
     addError(State === "", "State", `State cannot be blank.`);
   }, [data]);
@@ -225,11 +231,11 @@ export function CreateBusinessPlace({
                 placeholder={"Enter Company Code"}
                 suggestions={collection.company.filteredList(
                   { Status: "Ready" },
-                  "Code"
+                  "Code",
                 )}
                 captions={collection.company.filteredList(
                   { Status: "Ready" },
-                  "Name"
+                  "Name",
                 )}
               />
             </Row>
@@ -266,6 +272,15 @@ export function CreateBusinessPlace({
                 type={"text"}
               />
             </Row>
+            <Row overflow="visible">
+              <Label label={"Region"} />
+              <AutoSuggestInput
+                value={RegionCode}
+                process={(value) => changeData("", "RegionCode", value)}
+                suggestions={Region.list("Code")}
+                captions={Region.list("Description")}
+              />
+            </Row>
             <Row>
               <Label label={"Country"} />
               <Option
@@ -282,7 +297,7 @@ export function CreateBusinessPlace({
                 options={FilteredList(
                   StatesMaster,
                   { Country: Country },
-                  "State"
+                  "State",
                 )}
               />
             </Row>
@@ -380,6 +395,14 @@ export function CreateBusinessPlace({
               />
             </Row>
             <Row>
+              <Label label={"Region Code"} />
+              <Input
+                value={RegionCode}
+                process={(value) => changeData("", "RegionCode", value)}
+                type={"text"}
+              />
+            </Row>
+            <Row>
               <Label label={"Country"} />
               <Option
                 value={Country}
@@ -395,7 +418,7 @@ export function CreateBusinessPlace({
                 options={FilteredList(
                   StatesMaster,
                   { Country: Country },
-                  "State"
+                  "State",
                 )}
               />
             </Row>
@@ -479,6 +502,10 @@ export function CreateBusinessPlace({
             <Row>
               <Label label={"Postal Code"} />
               <label>{PostalCode}</label>
+            </Row>
+            <Row>
+              <Label label={"Postal Code"} />
+              <label>{RegionCode}</label>
             </Row>
             <Row>
               <Label label={"Country"} />

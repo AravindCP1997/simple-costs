@@ -10,6 +10,7 @@ import {
   ConditionalDisplay,
   ConditionalDisplays,
   DisplayArea,
+  HidingDisplay,
   Input,
   Label,
   MultiDisplayArea,
@@ -22,6 +23,7 @@ import {
 } from "../../Components";
 import { Company, Currencies, ExchangeRates, HSN } from "../../classes";
 import { ListItems, perform, transformObject } from "../../functions";
+import { useAccounting } from "../../useAccounting";
 
 export function CreateVendorInvoice({
   initial = {
@@ -69,7 +71,11 @@ export function CreateVendorInvoice({
     deleteItemfromArray,
   } = useData(initial);
   const { openWindow, showAlert } = useInterface();
-  const { errorsExist, DisplayHidingError, addError, clearErrors } = useError();
+
+  const { clearEntries, modify, addEntries, Preview, accountingErrors } =
+    useAccounting();
+  const { errorsExist, DisplayHidingError, addError, clearErrors, errors } =
+    useError(accountingErrors);
   const [method, setmethod] = useState(meth);
   const {
     CompanyCode,
@@ -88,19 +94,28 @@ export function CreateVendorInvoice({
   const company = new Company(CompanyCode);
   const vendor = company.vendor(Vendor);
   perform(() => {
-    perform(
-      () => {
-        processed.Year = company.year(PostingDate);
-      },
-      company.exists() && PostingDate !== "",
-    );
     if (vendor.exists()) {
       processed.VendorName = vendor.getData().Name;
     }
   });
+  useEffect(() => {
+    clearErrors();
+    clearEntries();
+    modify({ CompanyCode, PostingDate, ExchangeRate });
+    addEntries([
+      ...Costs.map((item) =>
+        transformObject(item, ["Amount", "BTC"], [["Element", "Account"]], {
+          EntryType: "G1",
+        }),
+      ),
+    ]);
+  }, [data]);
   return (
     <>
-      <WindowTitle title={"Vendor Invoice"} />
+      <WindowTitle
+        title={"Vendor Invoice"}
+        menu={[<Preview />, <DisplayHidingError />]}
+      />
       <WindowContent>
         <DisplayArea>
           <Row overflow="visible">

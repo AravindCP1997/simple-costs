@@ -145,6 +145,7 @@ export const defaultBusinessPlace = {
   Description: "",
   Address: "",
   PostalCode: "",
+  RegionCode: "",
   Country: "",
   State: "",
   Email: "",
@@ -339,7 +340,19 @@ export const defaultBusinessTaxCode = {
   Company: "",
   Code: "",
   Description: "",
-  Accounting: [{ BP: "", TType: "All", GL: "", Type: "Debit", Rate: 0 }],
+  TaxType: "Input",
+  Accounting: [
+    {
+      BP: "",
+      InterCountry: false,
+      InterState: false,
+      InterRegion: true,
+      IntraRegion: true,
+      GL: "",
+      Type: "Debit",
+      Rate: 0,
+    },
+  ],
 };
 
 export const defaultVendor = {
@@ -349,6 +362,7 @@ export const defaultVendor = {
   Name: "",
   Address: "",
   PostalCode: "",
+  RegionCode: "",
   Country: "",
   State: "",
   Email: "",
@@ -368,6 +382,7 @@ export const defaultCustomer = {
   Name: "",
   Address: "",
   PostalCode: "",
+  RegionCode: "",
   Country: "",
   State: "",
   Email: "",
