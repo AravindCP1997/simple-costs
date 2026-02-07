@@ -10,7 +10,13 @@ import {
   convertToValue,
   convertToObject,
 } from "./objects.js";
-import { AccountingDocument, Company } from "./classes.js";
+import {
+  AccountingDocument,
+  Company,
+  Currencies,
+  EntryTypes,
+  Region,
+} from "./classes.js";
 import { isPositive, perform, transformObject } from "./functions.js";
 import useData from "./useData.jsx";
 import {
@@ -21,7 +27,6 @@ import {
   Row,
   Table,
 } from "./Components.jsx";
-import { useError } from "./useError.jsx";
 
 export function useAccounting() {
   const defaults = {
@@ -29,6 +34,7 @@ export function useAccounting() {
     PostingDate: "",
     Year: "",
     DocumentDate: "",
+    DocumentNo: "",
     Reference: "",
     ExchangeRate: 1,
     Currency: "",
@@ -38,11 +44,17 @@ export function useAccounting() {
   const defaultEntry = {
     EntryType: "",
     Account: "",
+    Description: "",
     Amount: 0,
     AmountInLC: 0,
     BTC: "",
     PC: "",
     Text: "",
+    HSN: "",
+    BPlace: "",
+    BPartnerType: "",
+    BPartner: "",
+    PoS: "",
   };
   const { data, changeData, addItemtoArray } = useData(defaults);
 
@@ -65,7 +77,9 @@ export function useAccounting() {
       "CompanyCode",
       "PostingDate",
       "DocumentDate",
+      "DocumentNo",
       "Reference",
+      "Currency",
       "ExchangeRate",
       "Year",
     ],
@@ -93,20 +107,24 @@ export function useAccounting() {
             columns={[
               "Entry Type",
               "Account",
+              "Description",
               "Amount",
               "Amount in Local Currency",
               "BTC",
               "Profit Center",
               "Text",
+              "HSN",
             ]}
             rows={Entries.map((entry) => [
               <label>{entry.EntryType}</label>,
               <label>{entry.Account}</label>,
+              <label>{entry.Description}</label>,
               <label>{entry.Amount}</label>,
               <label>{entry.AmountInLC}</label>,
               <label>{entry.BTC}</label>,
               <label>{entry.PC}</label>,
               <label>{entry.Text}</label>,
+              <label>{entry.HSN}</label>,
             ])}
           />
         </Column>
@@ -118,11 +136,21 @@ export function useAccounting() {
     CompanyCode,
     PostingDate,
     DocumentDate,
+    DocumentNo,
+    Year,
+    Currency,
     Reference,
     ExchangeRate,
     Entries,
   } = data;
   const company = new Company(CompanyCode);
+  const document = new AccountingDocument(DocumentNo, Year, CompanyCode);
+  const create = () => {
+    const { result, DocumentNo } = document.add(processed);
+    if (result) {
+      processed.DocumentNo = DocumentNo;
+    }
+  };
   perform(
     () => {
       processed.Year = company.year(PostingDate);
@@ -132,6 +160,29 @@ export function useAccounting() {
   perform(() => {
     Entries.forEach((entry) => {
       processed.Entries.push({ ...defaultEntry, ...entry });
+    });
+    Entries.forEach((entry) => {
+      const { BTC, BPlace, BPartnerType, BPartner, PoS, Amount } = entry;
+      perform(
+        () => {
+          processed.Entries.push(
+            ...company
+              .btc(BTC)
+              .accounting(BPlace, BPartnerType, BPartner, PoS)
+              .map((item) =>
+                transformObject(defaultEntry, [], [], {
+                  Account: item.GL,
+                  Amount: (Number(item.Rate) * Amount) / 100,
+                  EntryType: item.Type === "Debit" ? "G1" : "G2",
+                }),
+              ),
+          );
+        },
+        company.btc(BTC).exists() &&
+          company.bp(BPlace).exists() &&
+          company.collection(BPartnerType).exists({ Code: BPartner }) &&
+          Region.exists(PoS),
+      );
     });
     processed.Entries.forEach((entry) => {
       perform(
@@ -143,30 +194,51 @@ export function useAccounting() {
           entry.AmountInLC = entry.Amount;
         },
       );
+      perform(
+        () => {
+          entry.Description = company
+            .collection(EntryTypes.getField(entry.EntryType, "A"))
+            .getData({ Code: entry.Account }).Description;
+        },
+        company
+          .collection(EntryTypes.getField(entry.EntryType, "A"))
+          .exists({ Code: entry.Account }),
+      );
     });
   });
 
   const accountingErrors = [];
-
   const addError = (logic, path, error) => {
     if (logic) {
       accountingErrors.push({ path, error });
     }
   };
 
-  addError(!company.exists(), "AccountingCompany", "Company does not exist.");
-  addError(
-    company.exists() &&
-      PostingDate !== "" &&
-      !company.openperiods.accountingOpen(PostingDate),
-    "PostingDate",
-    "Posting date not open.",
-  );
-  addError(
-    ExchangeRate < 0,
-    "ExchangeRate",
-    "Exchange rate cannot be negative.",
-  );
+  perform(() => {
+    addError(!company.exists(), "AccountingCompany", "Company does not exist.");
+    addError(
+      !Currencies.currencyExists(Currency),
+      "Currency",
+      "Currency does not exist.",
+    );
+    addError(
+      PostingDate === "",
+      "PostingDate",
+      "Posting Date cannot be blank.",
+    );
+    addError(
+      company.exists() &&
+        PostingDate !== "" &&
+        !company.openperiods.accountingOpen(PostingDate),
+      "PostingDate",
+      "Posting date not open.",
+    );
+    addError(
+      ExchangeRate < 0,
+      "ExchangeRate",
+      "Exchange rate cannot be negative.",
+    );
+  });
 
   return {
     modify,
@@ -175,5 +247,6 @@ export function useAccounting() {
     processed,
     Preview,
     accountingErrors,
+    create,
   };
 }

@@ -489,6 +489,9 @@ export class Company extends Collection {
   bp(code) {
     return new BusinessPlace(code, this.code);
   }
+  btc(code) {
+    return new BusinessTaxCode(code, this.code);
+  }
   collection(name) {
     return new CompanyCollection(this.code, name);
   }
@@ -1252,32 +1255,28 @@ export class BusinessTaxCode extends CompanyCollection {
   update(data) {
     return super.update(this.criteria, data);
   }
-  accounting() {
-    return this.getData().Accounting;
+  transactionType(businessplace, partnertype, partner, placeofsupply) {
+    const taxtype = this.getData().TaxType;
+    const bpRegionCode = this.company.bp(businessplace).getData().RegionCode;
+    const partnerRegionCode = this.company
+      .collection(partnertype)
+      .getData({ Code: partner }).RegionCode;
+    if (taxtype === "Output") {
+      return BusinessTaxType(bpRegionCode, placeofsupply);
+    } else {
+      return BusinessTaxType(partnerRegionCode, placeofsupply);
+    }
   }
-  accountingByTaxType(type, businessplace) {
-    return this.accounting().filter(
-      (item) => item[type] === true && item["BP"] === businessplace,
+  accounting(businessplace, partnertype, partner, placeofsupply) {
+    const transactionType = this.transactionType(
+      businessplace,
+      partnertype,
+      partner,
+      placeofsupply,
     );
-  }
-  TaxType(BusinessPlaceRegion, SupplierRegion, PlaceofSupply) {
-    return BusinessTaxTypeByType(
-      this.getData().TaxTyoe,
-      BusinessPlaceRegion,
-      SupplierRegion,
-      PlaceofSupply,
+    return this.getData().Accounting.filter(
+      (item) => item[transactionType] === true,
     );
-  }
-  taxAccounting(BusinessPlace, SupplierRegion, PlaceofSupply) {
-    const accounting = this.accountingByTaxType(
-      this.TaxType(
-        this.company.bp(BusinessPlace).getData().RegionCode,
-        SupplierRegion,
-        PlaceofSupply,
-      ),
-      BusinessPlace,
-    );
-    return accounting;
   }
 }
 
@@ -2640,8 +2639,24 @@ export class ConsignmentOutwards {
 
 export const EntryTypes = {
   types: [
-    { C: "G1", A: "GeneralLedger", T: "D" },
-    { C: "G2", A: "GeneralLedger", T: "C" },
+    {
+      C: "G1",
+      A: "GeneralLedger",
+      T: "D",
+      D: "Normal Debit to General Ledger",
+    },
+    {
+      C: "G2",
+      A: "GeneralLedger",
+      T: "C",
+      D: "Normal Credit to General Ledger",
+    },
+    {
+      C: "V1",
+      A: "Vendor",
+      T: "C",
+      D: "Normal Credit to Vendor",
+    },
   ],
   list: function (field) {
     return ListItems(this.types, field);

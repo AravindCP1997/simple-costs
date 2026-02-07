@@ -40,7 +40,7 @@ export function Authentication() {
         justifyContent: "center",
         height: "100%",
         width: "100%",
-        background: "var(--redt)",
+        background: "var(--blue)",
         color: "white",
         backgroundImage: `url('../Favicon.png')`,
         backgroundSize: "90%",
@@ -69,9 +69,6 @@ export function Authentication() {
           whileFalse={[() => showAlert("Incorrect Passcode. Please retry")]}
         />
       </Row>
-      <label style={{ textAlign: "center", opacity: "0.5", fontSize: "80%" }}>
-        Use Instagram ID of author.
-      </label>
       <div
         style={{
           position: "fixed",
@@ -102,7 +99,7 @@ export function Authentication() {
               padding: "5px 2px",
             }}
           >
-            Pilot Ver. 06.02.2026
+            Pilot Ver. 07.02.2026
           </label>
         </Row>
       </div>

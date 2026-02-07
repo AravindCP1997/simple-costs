@@ -196,6 +196,7 @@ import { MaterialIssueOthers } from "./Transactions/Material/M28";
 import { ServiceReceiptVendor } from "./Transactions/Service/ServiceReceiptVendor";
 import { CreateVendorInvoice } from "./Transactions/PayablesandReceivables/VendorInvoice";
 import { TableRegion } from "./Transactions/Region";
+import { TableEntryTypes } from "./Transactions/EntryTypes";
 
 const codes = [
   {
@@ -213,6 +214,14 @@ const codes = [
     name: "Accessibility",
     group: "System",
     subgroup: "General",
+  },
+  {
+    code: "enty",
+    screen: <Window />,
+    window: <TableEntryTypes />,
+    name: "Entry Types",
+    group: "System",
+    subgroup: "Info",
   },
   {
     code: "ccoa",
