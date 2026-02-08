@@ -55,6 +55,7 @@ export function useAccounting() {
     BPartnerType: "",
     BPartner: "",
     PoS: "",
+    WHT: [],
   };
   const { data, changeData, addItemtoArray } = useData(defaults);
 
@@ -169,13 +170,14 @@ export function useAccounting() {
             ...company
               .btc(BTC)
               .accounting(BPlace, BPartnerType, BPartner, PoS)
-              .map((item) =>
-                transformObject(defaultEntry, [], [], {
+              .map((item) => ({
+                ...defaultEntry,
+                ...{
                   Account: item.GL,
                   Amount: (Number(item.Rate) * Amount) / 100,
                   EntryType: item.Type === "Debit" ? "G1" : "G2",
-                }),
-              ),
+                },
+              })),
           );
         },
         company.btc(BTC).exists() &&
@@ -185,15 +187,28 @@ export function useAccounting() {
       );
     });
     processed.Entries.forEach((entry) => {
-      perform(
-        () => {
-          entry.AmountInLC = entry.Amount * ExchangeRate;
-        },
-        isPositive(ExchangeRate),
-        () => {
-          entry.AmountInLC = entry.Amount;
-        },
+      const { WHT, Amount, EntryType } = entry;
+      WHT.forEach((item) => {
+        const { Code, Base, Tax } = item;
+        const WHT = company.wht(Code);
+        perform(
+          () => {
+            const gl = WHT.getData().GL;
+            const et = EntryTypes.isDebit(EntryType) ? "G2" : "G1";
+            entry.Amount = entry.Amount - Tax;
+            processed.Entries.push({
+              ...defaultEntry,
+              ...{ Account: gl, Amount: Tax, EntryType: et },
+            });
+          },
+          WHT.exists() && Amount >= Tax,
+        );
+      });
+      processed.Entries = processed.Entries.filter(
+        (entry) => entry.Amount !== 0,
       );
+    });
+    processed.Entries.forEach((entry) => {
       perform(
         () => {
           entry.Description = company
@@ -203,6 +218,15 @@ export function useAccounting() {
         company
           .collection(EntryTypes.getField(entry.EntryType, "A"))
           .exists({ Code: entry.Account }),
+      );
+      perform(
+        () => {
+          entry.AmountInLC = entry.Amount * ExchangeRate;
+        },
+        isPositive(ExchangeRate),
+        () => {
+          entry.AmountInLC = entry.Amount;
+        },
       );
     });
   });

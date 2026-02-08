@@ -555,6 +555,9 @@ export class Company extends Collection {
   vendor(code) {
     return new Vendor(code, this.code);
   }
+  wht(code) {
+    return new WithholdingTax(code, this.code);
+  }
 }
 
 export class OpenPeriods extends Collection {
@@ -1405,6 +1408,25 @@ export class Vendor extends CompanyCollection {
       filter("Company", "StringCaseInsensitive", [this.companycode]),
     ]);
     return result;
+  }
+  autoCalcWithholding(amount) {
+    const taxes = this.getData().Withholding;
+    const list = [];
+    taxes.forEach((tax) => {
+      const { Code, Exemption, Active } = tax;
+      const wht = this.company.wht(Code);
+      const applicablerate =
+        (Number(wht.getData().Rate) * (1 - Number(Exemption) / 100)) / 100;
+      if (Active) {
+        list.push({
+          Code,
+          Description: wht.getData().Description,
+          Base: amount,
+          Tax: Math.round(amount * applicablerate),
+        });
+      }
+    });
+    return list;
   }
 }
 
@@ -2663,5 +2685,8 @@ export const EntryTypes = {
   },
   getField: function (code, field) {
     return this.types.find((item) => item.C === code)[field];
+  },
+  isDebit: function (code) {
+    return this.getField(code, "T") === "D";
   },
 };

@@ -5,6 +5,7 @@ import { useError } from "../../useError";
 import {
   AutoSuggestInput,
   Button,
+  CheckBox,
   Column,
   ConditionalButton,
   ConditionalDisplay,
@@ -21,49 +22,90 @@ import {
   WindowContent,
   WindowTitle,
 } from "../../Components";
-import { Company, Currencies, ExchangeRates, HSN, Region } from "../../classes";
-import { ListItems, perform, transformObject } from "../../functions";
+import {
+  Company,
+  Currencies,
+  ExchangeRates,
+  HSN,
+  Region,
+  Vendor,
+} from "../../classes";
+import {
+  ListItems,
+  noop,
+  perform,
+  SumField,
+  transformObject,
+} from "../../functions";
 import { useAccounting } from "../../useAccounting";
+import { defaultVendorInvoice } from "../../defaults";
+
+export function SetupVendorInvoice() {
+  const { openWindow, showAlert } = useInterface();
+  const [company, setcompany] = useState("");
+  const [vendor, setvendor] = useState("");
+  return (
+    <>
+      <WindowTitle
+        title={"Vendor Invoice"}
+        menu={[
+          <ConditionalButton
+            name={"Create"}
+            result={new Vendor(vendor, company).exists()}
+            whileFalse={[() => showAlert("Vendor does not exist in Company.")]}
+            whileTrue={[
+              () =>
+                openWindow(
+                  <CreateVendorInvoice
+                    initial={{
+                      ...defaultVendorInvoice,
+                      ...{
+                        CompanyCode: company,
+                        Vendor: vendor,
+                        Withholding: new Vendor(
+                          vendor,
+                          company,
+                        ).autoCalcWithholding(0),
+                      },
+                    }}
+                  />,
+                ),
+            ]}
+          />,
+        ]}
+      />
+      <WindowContent>
+        <DisplayArea>
+          <Row overflow="visible">
+            <Label label={"Company"} />
+            <AutoSuggestInput
+              value={company}
+              process={(value) => setcompany(value)}
+              suggestions={new Company(company).listAll("Code")}
+              captions={new Company(company).listAll("Name")}
+              placeholder={"Company Code"}
+            />
+          </Row>
+          <Row overflow="visible">
+            <Label label={"Vendor"} />
+            <AutoSuggestInput
+              value={vendor}
+              process={(value) => setvendor(value)}
+              suggestions={new Vendor(vendor, company).listAllFromCompany(
+                "Code",
+              )}
+              captions={new Vendor(vendor, company).listAllFromCompany("Name")}
+              placeholder={"Vendor Code"}
+            />
+          </Row>
+        </DisplayArea>
+      </WindowContent>
+    </>
+  );
+}
 
 export function CreateVendorInvoice({
-  initial = {
-    CompanyCode: "",
-    PostingDate: "",
-    Year: "",
-    Vendor: "",
-    VendorName: "",
-    Amount: 0,
-    BPlace: "",
-    BPartner: "",
-    PoS: "",
-    Text: "",
-    Currency: "",
-    ExchangeRate: "",
-    POBilling: [],
-    MRBilling: [],
-    Costs: [
-      {
-        Element: "",
-        Amount: 0,
-        ObjectType: "CostCenter",
-        Object: "",
-        From: "",
-        To: "",
-        Text: "",
-        BTC: "",
-        HSN: "",
-      },
-    ],
-    General: [
-      {
-        Ledger: "",
-        Amount: 0,
-        PC: "",
-        BTC: "",
-        HSN: "",
-      },
-    ],
-  },
+  initial = defaultVendorInvoice,
   meth = "Create",
 }) {
   const {
@@ -91,6 +133,8 @@ export function CreateVendorInvoice({
     ExchangeRate,
     Vendor,
     VendorName,
+    Withholding,
+    AutoCalculateWitholding,
     Amount,
     Year,
     Text,
@@ -105,12 +149,26 @@ export function CreateVendorInvoice({
     if (vendor.exists()) {
       processed.VendorName = vendor.getData().Name;
     }
+    if (AutoCalculateWitholding) {
+      processed.Withholding = company
+        .vendor(Vendor)
+        .autoCalcWithholding(
+          SumField(Costs, "Amount") + SumField(General, "Amount"),
+        );
+    }
   });
   useEffect(() => {
     clearErrors();
     clearEntries();
     modify({ CompanyCode, PostingDate, ExchangeRate, Currency });
-    addEntries([{ EntryType: "V1", Account: Vendor, Amount }]);
+    addEntries([
+      {
+        EntryType: "V1",
+        Account: Vendor,
+        Amount,
+        WHT: Withholding,
+      },
+    ]);
     addEntries([
       ...Costs.map((item) =>
         transformObject(
@@ -153,44 +211,12 @@ export function CreateVendorInvoice({
       <WindowContent>
         <DisplayArea>
           <MultiDisplayArea
-            heads={["General", "Partner"]}
+            heads={["General", "Partner", "Withholding"]}
             contents={[
               <Column overflow="visible" borderBottom="none">
                 <Row overflow="visible">
                   <Label label={"Company"} />
-                  <ConditionalDisplay
-                    logic={method === "Create"}
-                    whileTrue={
-                      <AutoSuggestInput
-                        value={CompanyCode}
-                        process={(value) =>
-                          changeData("", "CompanyCode", value)
-                        }
-                        placeholder={"Company Code"}
-                        suggestions={company.listAll("Code")}
-                        captions={company.listAll("Name")}
-                      />
-                    }
-                    whileFalse={<label>{CompanyCode}</label>}
-                  />
-                </Row>
-                <Row overflow="visible">
-                  <Label label={"Business Place"} />
-                  <ConditionalDisplay
-                    logic={method === "Create"}
-                    whileTrue={
-                      <AutoSuggestInput
-                        value={BPlace}
-                        process={(value) => changeData("", "BPlace", value)}
-                        placeholder={"Business Place"}
-                        suggestions={company.bp().listAllFromCompany("Code")}
-                        captions={company
-                          .bp()
-                          .listAllFromCompany("Description")}
-                      />
-                    }
-                    whileFalse={<label>{BPlace}</label>}
-                  />
+                  <label>{CompanyCode}</label>
                 </Row>
                 <Row overflow="visible">
                   <Label label={"Posting Date"} />
@@ -269,6 +295,24 @@ export function CreateVendorInvoice({
                   />
                 </Row>
                 <Row overflow="visible">
+                  <Label label={"Business Place"} />
+                  <ConditionalDisplay
+                    logic={method === "Create"}
+                    whileTrue={
+                      <AutoSuggestInput
+                        value={BPlace}
+                        process={(value) => changeData("", "BPlace", value)}
+                        placeholder={"Business Place"}
+                        suggestions={company.bp().listAllFromCompany("Code")}
+                        captions={company
+                          .bp()
+                          .listAllFromCompany("Description")}
+                      />
+                    }
+                    whileFalse={<label>{BPlace}</label>}
+                  />
+                </Row>
+                <Row overflow="visible">
                   <Label label={"Place of Supply"} />
                   <ConditionalDisplay
                     logic={method === "Create"}
@@ -288,19 +332,7 @@ export function CreateVendorInvoice({
               <Column borderBottom="none" overflow="visible">
                 <Row overflow="visible">
                   <Label label={"Vendor"} />
-                  <ConditionalDisplay
-                    logic={method === "Create"}
-                    whileTrue={
-                      <AutoSuggestInput
-                        value={Vendor}
-                        process={(value) => changeData("", "Vendor", value)}
-                        placeholder={"Vendor Code"}
-                        suggestions={vendor.listAll("Code")}
-                        captions={vendor.listAll("Name")}
-                      />
-                    }
-                    whileFalse={<label>{Vendor}</label>}
-                  />
+                  <label>{Vendor}</label>
                 </Row>
                 <Row overflow="visible">
                   <Label label={"Vendor Name"} />
@@ -322,6 +354,43 @@ export function CreateVendorInvoice({
                     whileFalse={<label>{BPartner}</label>}
                   />
                 </Row>
+              </Column>,
+              <Column borderBottom="none">
+                <Row jc="left" borderBottom="none">
+                  <Label label={"Withholding Tax"} />
+                  <CheckBox
+                    value={AutoCalculateWitholding}
+                    process={(value) =>
+                      changeData("", "AutoCalculateWitholding", value)
+                    }
+                  />
+                </Row>
+                <Table
+                  columns={[
+                    "Code",
+                    "Description",
+                    "Base Amount",
+                    "Tax Withheld",
+                  ]}
+                  rows={Withholding.map((item, i) => [
+                    <label>{item.Code}</label>,
+                    <label>{item.Description}</label>,
+                    <Input
+                      value={item.Base}
+                      process={(value) =>
+                        changeData(`Withholding/${i}`, "Base", value)
+                      }
+                      type={"number"}
+                    />,
+                    <Input
+                      value={item.Tax}
+                      process={(value) =>
+                        changeData(`Withholding/${i}`, "Tax", value)
+                      }
+                      type={"number"}
+                    />,
+                  ])}
+                />
               </Column>,
             ]}
           />

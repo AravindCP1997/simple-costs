@@ -24,6 +24,7 @@ import { WithholdingTax, GeneralLedger } from "../classes";
 import { Collection } from "../Database";
 import {
   FilteredList,
+  isPositive,
   ListItems,
   ListUniqueItems,
   rangeOverlap,
@@ -134,10 +135,9 @@ export function CreateWithholdingTax({
   } = useData(initial);
   const { openWindow, openConfirm, showAlert } = useInterface();
   const { DisplayHidingError, addError, clearErrors, errorsExist } = useError();
-  const { Company, Code, Description, ExemptionT, ExemptionA, Accounting } =
-    data;
+  const { Company, Code, Description, GL, Rate } = data;
   const collection = new WithholdingTax(Code, Company);
-  const glcollection = new GeneralLedger("", Company);
+  const glcollection = new GeneralLedger(GL, Company);
   useEffect(() => {
     clearErrors();
     if (method === "Create") {
@@ -153,28 +153,8 @@ export function CreateWithholdingTax({
         `Withholding Tax ${Code} already exist in Company ${Company}.`,
       );
     }
-    Accounting.forEach((account, a) => {
-      addError(
-        !new GeneralLedger(account.GL, Company).exists(),
-        `Accounting/${a + 1}`,
-        "General Ledger does not exist.",
-      );
-      addError(
-        account.Rate === "" || account.Rate < 0,
-        `Accounting/${a + 1}`,
-        "Rate shall be a non-negative value.",
-      );
-    });
-    addError(
-      ExemptionT === "" || ExemptionT < 0,
-      `ExemptionT`,
-      "Transactional Exemption Limit shall be a non-negative value.",
-    );
-    addError(
-      ExemptionA === "" || ExemptionA < 0,
-      `ExemptionA`,
-      "Aggregate Exemption Limit shall be a non-negative value.",
-    );
+    addError(!glcollection.exists(), "General Ledger does not exist.");
+    addError(!isPositive(Rate), "Rate", "Rate shall be a positive value.");
   }, [data]);
   return (
     <>
@@ -269,84 +249,34 @@ export function CreateWithholdingTax({
               <label>{Description}</label>
             </Conditional>
           </Row>
+          <Row overflow="visible">
+            <Label label={"General Ledger"} />
+            <Conditional logic={method === "Create"}>
+              <AutoSuggestInput
+                value={GL}
+                process={(value) => changeData("", "GL", value)}
+                placeholder={"General Ledger"}
+                suggestions={glcollection.listAllFromCompany("Code")}
+                captions={glcollection.listAllFromCompany("Description")}
+              />
+            </Conditional>
+            <Conditional logic={method !== "Create"}>
+              <label>{GL}</label>
+            </Conditional>
+          </Row>
           <Row>
-            <Label label={"Exmeption Limit - Transactional"} />
+            <Label label={"Rate"} />
             <Conditional logic={method !== "View"}>
               <Input
-                value={ExemptionT}
-                process={(value) => changeData("", "ExemptionT", value)}
+                value={Rate}
+                process={(value) => changeData("", "Rate", value)}
                 type={"number"}
               />
             </Conditional>
             <Conditional logic={method === "View"}>
-              <label>{ExemptionT}</label>
+              <label>{Rate}</label>
             </Conditional>
           </Row>
-          <Row>
-            <Label label={"Exemption Limit - Aggregate in Year"} />
-            <Conditional logic={method !== "View"}>
-              <Input
-                value={ExemptionA}
-                process={(value) => changeData("", "ExemptionA", value)}
-                type={"number"}
-              />
-            </Conditional>
-            <Conditional logic={method === "View"}>
-              <label>{ExemptionA}</label>
-            </Conditional>
-          </Row>
-          <Column overflow="visible">
-            <Conditional logic={method !== "View"}>
-              <Row jc="left">
-                <Label label={"Accounting"} />
-                <Button
-                  name={"Add"}
-                  functionsArray={[
-                    () => addItemtoArray(`Accounting`, { GL: "", Rate: 0 }),
-                  ]}
-                />
-              </Row>
-              <Table
-                columns={["General Ledger", "Rate", ""]}
-                rows={Accounting.map((account, a) => [
-                  <AutoSuggestInput
-                    value={account.GL}
-                    process={(value) =>
-                      changeData(`Accounting/${a}`, "GL", value)
-                    }
-                    suggestions={glcollection.listAllFromCompany("Code")}
-                    captions={glcollection.listAllFromCompany("Description")}
-                    placeholder={"Enter General Ledger"}
-                  />,
-                  <Input
-                    type={"number"}
-                    value={account.Rate}
-                    process={(value) =>
-                      changeData(`Accounting/${a}`, "Rate", value)
-                    }
-                  />,
-                  <Button
-                    name={"-"}
-                    functionsArray={[
-                      () => deleteItemfromArray(`Accounting`, a),
-                    ]}
-                  />,
-                ])}
-              />
-            </Conditional>
-            <Conditional logic={method === "View"}>
-              <Row jc="left">
-                <Label label={"Accounting"} />
-              </Row>
-              <Table
-                columns={["General Ledger", "Rate"]}
-                rows={Accounting.map((account, a) => [
-                  <label>{account.GL}</label>,
-                  <label>{account.Rate}</label>,
-                ])}
-              />
-            </Conditional>
-          </Column>
         </DisplayArea>
       </WindowContent>
     </>

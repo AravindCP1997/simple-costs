@@ -107,6 +107,7 @@ export function Scratch() {
             </Row>
           </Row>
         </DisplayArea>
+        {JSON.stringify(new Vendor(100002, "FACT").autoCalcWithholding(5000))}
       </WindowContent>
     </>
   );

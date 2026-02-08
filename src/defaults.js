@@ -331,9 +331,8 @@ export const defaultWithholdingTax = {
   Company: "",
   Code: "",
   Description: "",
-  ExemptionT: 0,
-  ExemptionA: 0,
-  Accounting: [{ GL: "", Rate: "" }],
+  GL: "",
+  Rate: "",
 };
 
 export const defaultBusinessTaxCode = {
@@ -559,4 +558,45 @@ export const defaultSelection = (field, type = "StringCaseInsensitive") => {
     field,
     type,
   };
+};
+
+export const defaultVendorInvoice = {
+  CompanyCode: "",
+  PostingDate: "",
+  Year: "",
+  Vendor: "",
+  VendorName: "",
+  Amount: 0,
+  Withholding: [],
+  AutoCalculateWitholding: true,
+  BPlace: "",
+  BPartner: "",
+  PoS: "",
+  Text: "",
+  Currency: "",
+  ExchangeRate: "",
+  POBilling: [],
+  MRBilling: [],
+  Costs: [
+    {
+      Element: "",
+      Amount: 0,
+      ObjectType: "CostCenter",
+      Object: "",
+      From: "",
+      To: "",
+      Text: "",
+      BTC: "",
+      HSN: "",
+    },
+  ],
+  General: [
+    {
+      Ledger: "",
+      Amount: 0,
+      PC: "",
+      BTC: "",
+      HSN: "",
+    },
+  ],
 };

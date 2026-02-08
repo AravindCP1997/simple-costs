@@ -194,7 +194,10 @@ import { MaterialIssueOrder } from "./Transactions/Material/M26";
 import { MaterialIssueUnit } from "./Transactions/Material/M27";
 import { MaterialIssueOthers } from "./Transactions/Material/M28";
 import { ServiceReceiptVendor } from "./Transactions/Service/ServiceReceiptVendor";
-import { CreateVendorInvoice } from "./Transactions/PayablesandReceivables/VendorInvoice";
+import {
+  CreateVendorInvoice,
+  SetupVendorInvoice,
+} from "./Transactions/PayablesandReceivables/VendorInvoice";
 import { TableRegion } from "./Transactions/Region";
 import { TableEntryTypes } from "./Transactions/EntryTypes";
 
@@ -1154,7 +1157,7 @@ const codes = [
   {
     code: "v01",
     screen: <Window />,
-    window: <CreateVendorInvoice />,
+    window: <SetupVendorInvoice />,
     name: "Vendor Invoice",
     group: "Record",
     subgroup: "Payables and Receivables",
