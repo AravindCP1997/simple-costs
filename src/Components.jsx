@@ -380,7 +380,7 @@ export function WindowTitle({ title, style = {}, menu = [] }) {
       style={{
         display: "flex",
         flexDirection: "column",
-        width: "min(100%,720px)",
+        width: "min(100%,960px)",
         color: windowType === "static" ? "var(--blue)" : "white",
       }}
     >
@@ -402,7 +402,7 @@ export function WindowTitle({ title, style = {}, menu = [] }) {
               windowType === "static"
                 ? "1px solid var(--bluet)"
                 : "1px solid var(--whitet)",
-            width: "min(100%,640px)",
+            width: "min(100%,960px)",
           }}
         >
           {menu.map((control) => (

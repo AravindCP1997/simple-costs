@@ -375,19 +375,31 @@ export function CreateVendorInvoice({
                   rows={Withholding.map((item, i) => [
                     <label>{item.Code}</label>,
                     <label>{item.Description}</label>,
-                    <Input
-                      value={item.Base}
-                      process={(value) =>
-                        changeData(`Withholding/${i}`, "Base", value)
+                    <ConditionalDisplay
+                      logic={AutoCalculateWitholding}
+                      whileFalse={
+                        <Input
+                          value={item.Base}
+                          process={(value) =>
+                            changeData(`Withholding/${i}`, "Base", value)
+                          }
+                          type={"number"}
+                        />
                       }
-                      type={"number"}
+                      whileTrue={<label>{item.Base}</label>}
                     />,
-                    <Input
-                      value={item.Tax}
-                      process={(value) =>
-                        changeData(`Withholding/${i}`, "Tax", value)
+                    <ConditionalDisplay
+                      logic={AutoCalculateWitholding}
+                      whileFalse={
+                        <Input
+                          value={item.Tax}
+                          process={(value) =>
+                            changeData(`Withholding/${i}`, "Tax", value)
+                          }
+                          type={"number"}
+                        />
                       }
-                      type={"number"}
+                      whileTrue={<label>{item.Tax}</label>}
                     />,
                   ])}
                 />

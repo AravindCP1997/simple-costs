@@ -40,7 +40,7 @@ export function Authentication() {
         justifyContent: "center",
         height: "100%",
         width: "100%",
-        background: "var(--blue)",
+        background: "var(--redt)",
         color: "white",
         backgroundImage: `url('../Favicon.png')`,
         backgroundSize: "90%",
@@ -84,7 +84,7 @@ export function Authentication() {
           label={"C O M P O U N D S"}
           style={{
             color: "white",
-            background: "var(--redt)",
+            background: "var(--bluet)",
             width: "fit-content",
           }}
         />
@@ -99,7 +99,7 @@ export function Authentication() {
               padding: "5px 2px",
             }}
           >
-            Pilot Ver. 07.02.2026
+            Pilot Ver. 10.02.2026
           </label>
         </Row>
       </div>

@@ -17,7 +17,7 @@ import {
   EntryTypes,
   Region,
 } from "./classes.js";
-import { isPositive, perform, transformObject } from "./functions.js";
+import { isPositive, perform, SumField, transformObject } from "./functions.js";
 import useData from "./useData.jsx";
 import {
   Button,
@@ -58,7 +58,6 @@ export function useAccounting() {
     WHT: [],
   };
   const { data, changeData, addItemtoArray } = useData(defaults);
-
   const modify = (data) => {
     Object.keys(data).forEach((key) => {
       changeData("", key, data[key]);
@@ -194,7 +193,7 @@ export function useAccounting() {
         perform(
           () => {
             const gl = WHT.getData().GL;
-            const et = EntryTypes.isDebit(EntryType) ? "G2" : "G1";
+            const et = EntryTypes.isDebit(EntryType) ? "G1" : "G2";
             entry.Amount = entry.Amount - Tax;
             processed.Entries.push({
               ...defaultEntry,
@@ -208,16 +207,30 @@ export function useAccounting() {
         (entry) => entry.Amount !== 0,
       );
     });
+
     processed.Entries.forEach((entry) => {
+      const { EntryType, Account } = entry;
+      const accountType = EntryTypes.getField(EntryType, "A");
+      const collection = company.collection(accountType);
+
       perform(
         () => {
-          entry.Description = company
-            .collection(EntryTypes.getField(entry.EntryType, "A"))
-            .getData({ Code: entry.Account }).Description;
+          const accountsData = collection.getData({ Code: Account });
+          entry.Description = accountsData.Description;
+          if (["Vendor", "Customer"].includes(accountType)) {
+            entry.Description = accountsData.Name;
+          }
         },
-        company
-          .collection(EntryTypes.getField(entry.EntryType, "A"))
-          .exists({ Code: entry.Account }),
+        collection.exists({ Code: entry.Account }),
+      );
+      perform(
+        () => {
+          entry.Amount = Math.abs(entry.Amount);
+        },
+        EntryTypes.isDebit(EntryType),
+        () => {
+          entry.Amount = -Math.abs(entry.Amount);
+        },
       );
       perform(
         () => {
@@ -261,6 +274,11 @@ export function useAccounting() {
       ExchangeRate < 0,
       "ExchangeRate",
       "Exchange rate cannot be negative.",
+    );
+    addError(
+      SumField(processed.Entries, "Amount") !== 0,
+      "Balance",
+      "Balance not zero.",
     );
   });
 
