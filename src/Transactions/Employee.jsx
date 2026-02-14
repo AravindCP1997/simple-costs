@@ -166,7 +166,7 @@ export function CreateEmployee({
     Deductions,
     TIN,
     BankAccounts,
-    Status,
+    Blocked,
   } = data;
   const collection = new Employee(Code, Company);
   const eg = new EmployeeGroup(EmployeeGroupCode, Company);
@@ -433,16 +433,18 @@ export function CreateEmployee({
                 </Conditional>
               </Row>
               <Row borderBottom="none">
-                <Label label={"Status"} />
+                <Label label={"Blocked"} />
                 <Conditional logic={method !== "View"}>
-                  <Option
-                    value={Status}
-                    process={(value) => changeData("", "Status", value)}
-                    options={["Working", "On hold", "Separated"]}
+                  <CheckBox
+                    value={Blocked}
+                    process={(value) => changeData("", "Blocked", value)}
                   />
                 </Conditional>
                 <Conditional logic={method === "View"}>
-                  <label>{Status}</label>
+                  <CheckBox
+                    value={Blocked}
+                    process={() => changeData("", "Blocked", Blocked)}
+                  />
                 </Conditional>
               </Row>
             </Column>,
@@ -873,14 +875,14 @@ export function CreateEmployee({
                         process={(value) =>
                           changeData(`TaxCode/${c}`, "From", value)
                         }
-                        type={"date"}
+                        type={"number"}
                       />,
                       <Input
                         value={code.To}
                         process={(value) =>
                           changeData(`TaxCode/${c}`, "To", value)
                         }
-                        type={"date"}
+                        type={"number"}
                       />,
                       <AutoSuggestInput
                         value={code.Code}

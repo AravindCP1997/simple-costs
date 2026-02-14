@@ -194,10 +194,6 @@ import { MaterialIssueOrder } from "./Transactions/Material/M26";
 import { MaterialIssueUnit } from "./Transactions/Material/M27";
 import { MaterialIssueOthers } from "./Transactions/Material/M28";
 import { ServiceReceiptVendor } from "./Transactions/Service/ServiceReceiptVendor";
-import {
-  CreateVendorInvoice,
-  SetupVendorInvoice,
-} from "./Transactions/PayablesandReceivables/VendorInvoice";
 import { TableRegion } from "./Transactions/Region";
 import { TableEntryTypes } from "./Transactions/EntryTypes";
 
@@ -1155,14 +1151,6 @@ const codes = [
     subgroup: "Materials and Services",
   },
   {
-    code: "v01",
-    screen: <Window />,
-    window: <SetupVendorInvoice />,
-    name: "Vendor Invoice",
-    group: "Record",
-    subgroup: "Payables and Receivables",
-  },
-  {
     code: "mms",
     screen: <Window />,
     window: <QueryMaterialMovements />,
@@ -1302,13 +1290,20 @@ function Alert() {
 
   return createPortal(
     <Overlay onClick={() => closeAlert()}>
-      <div style={style}>
-        <h3 style={{ margin: "0", textAlign: "center" }}>{type}</h3>
-        <p style={{ margin: "0", textAlign: "center" }}>{message}</p>
-        <CenterFlex>
-          <Button name="OK" functionsArray={[() => closeAlert()]} />
-        </CenterFlex>
-      </div>
+      <FocusTrap
+        focusTrapOptions={{
+          escapeDeactivates: false,
+          clickOutsideDeactivates: true,
+        }}
+      >
+        <div style={style}>
+          <h3 style={{ margin: "0", textAlign: "center" }}>{type}</h3>
+          <p style={{ margin: "0", textAlign: "center" }}>{message}</p>
+          <CenterFlex>
+            <Button name="OK" functionsArray={[() => closeAlert()]} />
+          </CenterFlex>
+        </div>
+      </FocusTrap>
     </Overlay>,
     document.body,
   );

@@ -555,6 +555,7 @@ export function CreateVendor({ initial = defaultVendor, method = "Create" }) {
                     functionsArray={[
                       () =>
                         addItemtoArray(`BankAccounts`, {
+                          ID: "",
                           Bank: "",
                           SWIFT: "",
                           Account: "",
@@ -565,6 +566,7 @@ export function CreateVendor({ initial = defaultVendor, method = "Create" }) {
                 </Row>
                 <Table
                   columns={[
+                    "ID",
                     "Bank",
                     "SWIFT Code",
                     "Account",
@@ -572,6 +574,14 @@ export function CreateVendor({ initial = defaultVendor, method = "Create" }) {
                     "",
                   ]}
                   rows={BankAccounts.map((account, a) => [
+                    <Input
+                      value={account.ID}
+                      process={(value) =>
+                        changeData(`BankAccounts/${a}`, "ID", value)
+                      }
+                      type={"text"}
+                      maxLength={4}
+                    />,
                     <Input
                       value={account.Bank}
                       process={(value) =>
@@ -615,12 +625,14 @@ export function CreateVendor({ initial = defaultVendor, method = "Create" }) {
                 </Row>
                 <Table
                   columns={[
+                    "ID",
                     "Bank",
                     "SWIFT Code",
                     "Account",
                     "Re-enter Account",
                   ]}
                   rows={BankAccounts.map((account, a) => [
+                    <label>{account.ID}</label>,
                     <label>{account.Bank}</label>,
                     <label>{account.SWIFT}</label>,
                     <label>{account.Account}</label>,

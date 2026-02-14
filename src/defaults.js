@@ -1,4 +1,4 @@
-import { Vendor } from "./classes";
+import { PaymentTerms, Vendor } from "./classes";
 
 export const defaultChartofAccounts = {
   Code: "",
@@ -258,7 +258,7 @@ export const defaultEmployee = {
   Additions: [{ Year: "", Description: "", Amount: "" }],
   Deductions: [{ Year: "", Description: "", Amount: "" }],
   BankAccounts: [{ Bank: "", SWIFT: "", Account: "", Confirm: "" }],
-  Status: "Working",
+  Blocked: false,
 };
 
 export const defaultFreightGroup = {
@@ -369,7 +369,7 @@ export const defaultVendor = {
   CTIN: "",
   BTIN: "",
   CIN: "",
-  BankAccounts: [{ Bank: "", SWIFT: "", Account: "", Confirm: "" }],
+  BankAccounts: [{ ID: "", Bank: "", SWIFT: "", Account: "", Confirm: "" }],
   Withholding: [{ Code: "", Exemption: 0, Remarks: "", Active: true }],
   GroupKeys: [""],
 };
@@ -389,7 +389,7 @@ export const defaultCustomer = {
   CTIN: "",
   BTIN: "",
   CIN: "",
-  BankAccounts: [{ Bank: "", SWIFT: "", Account: "", Confirm: "" }],
+  BankAccounts: [{ ID: "", Bank: "", SWIFT: "", Account: "", Confirm: "" }],
   Withholding: [{ Code: "", Exemption: 0, Remarks: "", Active: true }],
   GroupKeys: [""],
 };
@@ -575,6 +575,10 @@ export const defaultVendorInvoice = {
   Text: "",
   Currency: "",
   ExchangeRate: "",
+  TransactionDate: "",
+  PaymentTerms: "",
+  DueDate: "",
+  PartnerBank: "",
   POBilling: [],
   MRBilling: [],
   Costs: [

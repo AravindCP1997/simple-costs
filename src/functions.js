@@ -168,7 +168,7 @@ export function rangeOverlap(range1, range2) {
   return result;
 }
 
-function moveDate(date, years, months, days) {
+export function moveDate(date, years, months, days) {
   const olddate = new Date(date);
   const newdate = new Date(
     olddate.getFullYear() + years,
@@ -216,7 +216,7 @@ function numberDay(number) {
   return text;
 }
 
-function datesInPeriod(period) {
+export function datesInPeriod(period) {
   const [from, to] = period;
   const interval = dayNumber(to) - dayNumber(from);
   const list = [];
@@ -226,7 +226,7 @@ function datesInPeriod(period) {
   return list;
 }
 
-function daysInPeriod(period) {
+export function daysInPeriod(period) {
   const [from, to] = period;
   const interval = dayNumber(to) - dayNumber(from) + 1;
   return interval;
@@ -246,7 +246,7 @@ export function datesInMonth(year, month) {
   return list;
 }
 
-function daysInMonth(year, month) {
+export function daysInMonth(year, month) {
   const startDate = new Date(`${year}-${month}-01`);
   const endDate = new Date(
     startDate.getFullYear(),
@@ -668,4 +668,34 @@ export function filter(
 
 export function isPositive(number) {
   return number !== "" && number > 0;
+}
+
+export function year(date) {
+  return new Date(date).getFullYear();
+}
+
+export function month(date) {
+  return new Date(date).getMonth() + 1;
+}
+
+export function roundOff(number) {
+  return Math.round(number * 1000) / 1000;
+}
+
+export function monthEnd(year, month) {
+  return moveDate(`${year}-${month}-01`, 0, 1, -1);
+}
+
+export function monthBegin(year, month) {
+  return `${year}-${month.toString().padStart(2, 0)}-01`;
+}
+
+export function monthsInYear(Year, startingMonth) {
+  const startingDate = `${Year}-${startingMonth}-01`;
+  const list = [];
+  for (let i = 0; i < 12; i++) {
+    const date = moveDate(startingDate, 0, i, 0);
+    list.push([year(date), month(date)]);
+  }
+  return list;
 }

@@ -357,7 +357,12 @@ export const TableRow = ({ cells }) => {
   );
 };
 
-export function WindowTitle({ title, style = {}, menu = [] }) {
+export function WindowTitle({
+  title,
+  style = {},
+  menu = [],
+  closeTo = "Control",
+}) {
   const { closeWindow } = useInterface();
   const windowType = useWindowType();
 
@@ -390,7 +395,7 @@ export function WindowTitle({ title, style = {}, menu = [] }) {
           <Button
             className={"closeButton"}
             name={"Close"}
-            functionsArray={[() => closeWindow()]}
+            functionsArray={[() => closeWindow(closeTo)]}
           />
         </Conditional>
       </div>
@@ -1419,4 +1424,8 @@ export function ConditionalDisplay({
   } else {
     return <>{whileFalse}</>;
   }
+}
+
+export function JSONString({ data }) {
+  return <>{JSON.stringify(data)}</>;
 }

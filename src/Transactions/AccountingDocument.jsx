@@ -166,4 +166,3 @@ export function ViewAccountingDocument({ data }) {
   );
 }
 
-export function PreviewAccountingDocument({ data }) {}

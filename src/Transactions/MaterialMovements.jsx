@@ -67,6 +67,7 @@ export function QueryMaterialMovements() {
             ]}
           />,
         ]}
+        closeTo="Report"
       />
       <WindowContent>
         <DisplayArea>
@@ -147,6 +148,7 @@ export function MaterialMovements({ filter }) {
             functionsArray={[() => openWindow(<QueryMaterialMovements />)]}
           />,
         ]}
+        closeTo="Report"
       />
       <WindowContent>
         <DisplayArea>

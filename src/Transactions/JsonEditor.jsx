@@ -265,6 +265,7 @@ export const JSONEditor = ({ initial = [""] }) => {
             <p>{JSON.stringify(data, null, "\n")}</p>
           </HidingDisplay>,
         ]}
+        closeTo="Report"
       />
       <WindowContent>
         <DisplayArea>

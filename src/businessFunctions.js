@@ -52,15 +52,17 @@ export function BusinessTaxType(SupplierRegion, PlaceofSupply) {
   return result;
 }
 
-export function BusinessTaxTypeByType(
-  Type,
-  BusinessPlaceRegion,
-  SupplierRegion,
-  PlaceofSupply,
-) {
-  const result =
-    Type === "Output"
-      ? BusinessTaxType(BusinessPlaceRegion, PlaceofSupply)
-      : BusinessTaxType(SupplierRegion, PlaceofSupply);
+export function PostedRemunerationTable() {
+  const data = new Collection("RemunerationResult").load();
+  if (data === null) {
+    return [];
+  }
+  const result = [];
+  data.forEach((record) => {
+    const { Company, Year, Month, Employee, Wages } = record;
+    Wages.forEach((wageRecord) => {
+      result.push({ ...wageRecord, ...{ Company, Year, Employee, Month } });
+    });
+  });
   return result;
 }
