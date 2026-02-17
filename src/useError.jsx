@@ -1,5 +1,11 @@
 import { ListItems, ListUniqueItems } from "./functions";
-import { CollapsingDisplay, HidingDisplay, Label, Table } from "./Components";
+import {
+  CollapsingDisplay,
+  Column,
+  HidingDisplay,
+  Label,
+  Table,
+} from "./Components";
 import { useState } from "react";
 
 export const useError = (calculatederrors = []) => {
@@ -29,13 +35,15 @@ export const useError = (calculatederrors = []) => {
       return null;
     }
     return (
-      <Table
-        columns={["Path", "Error"]}
-        rows={mergedErrors.map((error) => [
-          <p>{error.path}</p>,
-          <p>{error.error}</p>,
-        ])}
-      />
+      <Column borderBottom="none">
+        <Table
+          columns={["Path", "Error"]}
+          rows={mergedErrors.map((error) => [
+            <p>{error.path}</p>,
+            <p>{error.error}</p>,
+          ])}
+        />
+      </Column>
     );
   };
 

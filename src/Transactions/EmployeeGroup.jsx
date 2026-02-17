@@ -128,7 +128,10 @@ export function CreateEmployeeGroup({
   const { openWindow, openConfirm, showAlert } = useInterface();
   const { DisplayHidingError, addError, clearErrors, errorsExist } = useError();
   const { Company, Code, Description, GL } = data;
-  const Gls = [{ code: "GL", name: "General Ledger Payables (net)" }];
+  const Gls = [
+    { code: "GL", name: "General Ledger Payables" },
+    { code: "GLWHT", name: "General Ledger Withholding Tax" },
+  ];
   const collection = new EmployeeGroup(Code, Company);
   const glcollection = new GeneralLedger("", Company);
   useEffect(() => {

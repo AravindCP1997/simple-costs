@@ -196,6 +196,11 @@ import { MaterialIssueOthers } from "./Transactions/Material/M28";
 import { ServiceReceiptVendor } from "./Transactions/Service/ServiceReceiptVendor";
 import { TableRegion } from "./Transactions/Region";
 import { TableEntryTypes } from "./Transactions/EntryTypes";
+import {
+  ManageRemunerationRun,
+  QueryRemunerationRun,
+} from "./Transactions/RemunerationRun";
+import { QueryRemunerationSlip } from "./Transactions/RemunerationSlip";
 
 const codes = [
   {
@@ -879,6 +884,30 @@ const codes = [
     subgroup: "Human Resources",
   },
   {
+    code: "remrun",
+    screen: <Window />,
+    window: <ManageRemunerationRun />,
+    name: "Remuneration Run",
+    group: "Record",
+    subgroup: "Human Resources",
+  },
+  {
+    code: "remslip",
+    screen: <Window />,
+    window: <QueryRemunerationSlip />,
+    name: "Remuneration Slip",
+    group: "Report",
+    subgroup: "Human Resources",
+  },
+  {
+    code: "remstatus",
+    screen: <Window />,
+    window: <QueryRemunerationRun />,
+    name: "Remuneration Run Staus",
+    group: "Report",
+    subgroup: "Human Resources",
+  },
+  {
     code: "m01",
     screen: <Window />,
     window: <ConsignmentInwardsOriginPO />,
@@ -1438,6 +1467,7 @@ function SearchBar() {
     borderTop: "none",
     borderRadius: "10px",
     background: "var(--bluet)",
+    border: "3px solid var(--whitet)",
   };
 
   const searchAreaStyle = {
@@ -1589,6 +1619,7 @@ export function Home() {
   const menuStyle = {
     aspectRatio: "1/1",
     borderRadius: "50%",
+    border: "5px solid var(--whitet)",
     width: "150px",
     display: "flex",
     flexDirection: "column",

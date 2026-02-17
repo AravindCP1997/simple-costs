@@ -19,7 +19,7 @@ import {
   MultiDisplayArea,
 } from "../Components";
 import { useWindowType, useInterface } from "../useInterface";
-import { FaInstagram } from "react-icons/fa";
+import { FaInstagram, FaPowerOff, FaSignInAlt } from "react-icons/fa";
 
 export function Authentication() {
   const {
@@ -43,8 +43,9 @@ export function Authentication() {
         background: "var(--redt)",
         color: "white",
         backgroundImage: `url('../Favicon.png')`,
-        backgroundSize: "90%",
+        backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
       }}
     >
       <Label
@@ -59,7 +60,7 @@ export function Authentication() {
           type={"password"}
         />
         <ConditionalButton
-          name={"Login"}
+          name={"Enter"}
           result={passcode === defaultpasscode}
           whileTrue={[
             () => savepasscode(),
@@ -75,31 +76,30 @@ export function Authentication() {
           bottom: "15px",
           right: "10px",
           display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          justifyContent: "end",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          width: "calc(100% - 20px)",
         }}
       >
         <Label
           label={"C O M P O U N D S"}
           style={{
             color: "white",
-            background: "var(--bluet)",
-            width: "fit-content",
+            background: "var(--redt)",
           }}
         />
-        <Row jc="left" borderBottom="none">
+        <Row jc="right" borderBottom="none" width="fit-content">
           <label
             style={{
-              width: "100%",
+              width: "fit-content",
               textAlign: "right",
-              opacity: "0.3",
+              opacity: "0.5",
               margin: "0",
-              fontSize: "80%",
               padding: "5px 2px",
             }}
           >
-            Pilot Ver. 14.02.2026
+            17 02 2026
           </label>
         </Row>
       </div>

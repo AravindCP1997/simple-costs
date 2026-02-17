@@ -66,3 +66,19 @@ export function PostedRemunerationTable() {
   });
   return result;
 }
+
+export function EmployeeTable() {
+  const data = new Collection("Employee").load();
+  if (data === null) {
+    return [];
+  }
+  const result = [];
+  data.forEach((employee) => {
+    result.push({
+      Employee: employee.Code,
+      Company: employee.Company,
+      Group: employee.EmployeeGroupCode,
+    });
+  });
+  return result;
+}

@@ -13,6 +13,7 @@ import {
   filterBySelection,
   filterCollection,
   FilteredList,
+  isFuture,
   ListItems,
   ListUniqueItems,
   month,
@@ -29,11 +30,13 @@ import {
   SumFieldIfs,
   TimeStamp,
   transformObject,
+  UniqueList,
   valueInRange,
   year,
 } from "./functions";
 import {
   BusinessTaxType,
+  EmployeeTable,
   MaterialTable,
   PostedRemunerationTable,
 } from "./businessFunctions";
@@ -981,6 +984,15 @@ export class Employee extends CompanyCollection {
     super.add(data);
     return "Employee Updated";
   }
+  orgUnit(date) {
+    const data = this.getData().OrgAssignment.find((item) =>
+      rangeOverlap([date, date], [item.From, item.To]),
+    );
+    if (data === undefined) {
+      return " / ";
+    }
+    return `${data.Type}/${data.Assignment}`;
+  }
   isOnBoard(date) {
     if (!this.exists()) {
       return false;
@@ -1003,6 +1015,15 @@ export class Employee extends CompanyCollection {
   }
   remunerationresult(year, month) {
     return new RemunerationResult(this.companycode, this.code, year, month);
+  }
+  remunerationcalc(year, month, calculatefrom = monthBegin(year, month)) {
+    return new RemunerationCalc(
+      this.companycode,
+      this.code,
+      year,
+      month,
+      calculatefrom,
+    );
   }
   variableWages(date) {
     const all = this.getData().VariableWages;
@@ -1051,7 +1072,10 @@ export class Employee extends CompanyCollection {
     if (!this.isOnBoard(date)) {
       return [];
     }
-    if (["Present", "Leave"].includes(this.attendance(date).Status)) {
+    if (
+      ["Present", "Leave"].includes(this.attendance(date).Status) ||
+      isFuture(date)
+    ) {
       list.push(...this.variableWages(date));
     }
     list.push(...this.onetimeWages(date), ...this.fixedWages(date));
@@ -1073,17 +1097,29 @@ export class Employee extends CompanyCollection {
     const data = filterByMultipleSelection(PostedRemunerationTable(), [
       filter("Company", "StringCaseInsensitive", [this.companycode]),
       filter("Employee", "Number", [this.code]),
+      filter(
+        "WT",
+        "StringCaseSensitive",
+        [],
+        ["NPAY", "WHT", "DUE", "RDUE", "PMT"],
+      ),
     ]);
     const filtered = data.filter((record) =>
       rangeOverlap([record.From, record.To], [date, date]),
     );
     return filtered;
   }
-  postedWage(WT, date) {
+  postedWage(WT, date, orgUnit) {
     const data = filterByMultipleSelection(PostedRemunerationTable(), [
       filter("Company", "StringCaseInsensitive", [this.companycode]),
       filter("Employee", "Number", [this.code]),
-      filter("WT", "StringCaseSensitive", [WT]),
+      filter(
+        "WT",
+        "StringCaseSensitive",
+        [WT],
+        ["NPAY", "WHT", "DUE", "RDUE", "PMT"],
+      ),
+      filter("OrgUnit", "StringCaseInsensitive", [orgUnit]),
     ]);
     let wage = 0;
     data.forEach((record) => {
@@ -1099,12 +1135,27 @@ export class Employee extends CompanyCollection {
       [...this.grossWages(date), ...this.postedWages(date)],
       "WT",
     );
+    const OrgUnits = UniqueList([
+      ...ListUniqueItems(this.postedWages(date), "OrgUnit"),
+      this.orgUnit(date),
+    ]);
     const list = [];
     WTs.forEach((WT) => {
-      list.push({
-        WT,
-        Date: date,
-        Amount: this.grossWage(WT, date) - this.postedWage(WT, date),
+      const type = new WageType(WT, this.companycode).getData().Type;
+      OrgUnits.forEach((unit) => {
+        const Amount =
+          (this.orgUnit(date) === unit ? this.grossWage(WT, date) : 0) -
+          (type === "Emolument"
+            ? this.postedWage(WT, date, unit)
+            : -this.postedWage(WT, date, unit));
+        if (Amount !== 0) {
+          list.push({
+            WT,
+            Date: date,
+            Amount,
+            OrgUnit: unit,
+          });
+        }
       });
     });
     return list;
@@ -1133,6 +1184,15 @@ export class Employee extends CompanyCollection {
       }
       return filtered.Amount;
     };
+    const unit = (WT, date) => {
+      const filtered = data.find(
+        (record) => record.WT === WT && record.Date === date,
+      );
+      if (filtered === undefined) {
+        return "";
+      }
+      return filtered.OrgUnit;
+    };
     const result = [];
     WTs.forEach((WT) => {
       const record = {
@@ -1140,17 +1200,22 @@ export class Employee extends CompanyCollection {
         To: dates[0],
         Amount: wage(WT, dates[0]),
         WT,
+        OrgUnit: unit(WT, dates[0]),
       };
-      let ref = wage(WT, dates[0]);
+      let refWage = wage(WT, dates[0]);
+      let refUnit = unit(WT, dates[0]);
       dates.forEach((date) => {
         if (date > record.From) {
           const daywage = wage(WT, date);
-          if (daywage !== ref) {
+          const dayUnit = unit(WT, date);
+          if (daywage !== refWage || dayUnit !== refUnit) {
             result.push({ ...record });
             record.From = date;
-            ref = 0 + daywage;
+            refWage = 0 + daywage;
+            refUnit = dayUnit.toString();
             record.To = date;
             record.Amount = daywage;
+            record.OrgUnit = dayUnit.toString();
           } else if (date === dates[dates.length - 1]) {
             record.Amount = record.Amount + daywage;
             record.To = date;
@@ -1162,76 +1227,23 @@ export class Employee extends CompanyCollection {
         }
       });
     });
-
-    const taxableWage = data.reduce((prevValue, currentValue) => {
-      const { WT, Amount } = currentValue;
-      const type = new WageType(WT, this.companycode);
-      if (type.taxable()) {
-        if (type.getData().Type === "Emolument") {
-          return prevValue + Amount;
-        } else {
-          return prevValue - Amount;
-        }
-      }
-    }, 0);
-    const yearlyTaxableWage =
-      taxableWage + this.restOfYearTaxableWage(year, month).taxableWage;
-    const taxableIncome =
-      yearlyTaxableWage + this.additions(year) - this.deductions(year);
-    const tax = this.tax(year, taxableIncome);
-    const taxRate = tax / yearlyTaxableWage;
-    const TDS =
-      (taxableWage +
-        this.restOfYearTaxableWage(year, month).postedTaxableWage) *
-        taxRate -
-      this.postedTDS(year);
-    result.push({
-      WT: "TWAGE",
-      Amount: roundOff(taxableWage),
-      From: monthBeginning,
-      To: endDate,
-    });
-    result.push({
-      WT: "WHT",
-      Amount: TDS,
-      From: monthBeginning,
-      To: endDate,
+    return result;
+  }
+  taxableWageSheet(year, month, calculateFrom = monthBegin(year, month)) {
+    const data = this.summarisedWageSheet(year, month, calculateFrom);
+    const result = [];
+    data.forEach((record) => {
+      const { WT, Amount } = record;
+      const wagetype = new WageType(WT, this.companycode);
+      const taxability = wagetype.taxable();
+      const type = wagetype.getData().Type;
+      const RevisedAmount = type === "Emolument" ? Amount : -Amount;
+      const Taxable = taxability ? RevisedAmount : 0;
+      result.push({ ...record, ...{ Taxable, Amount: RevisedAmount } });
     });
     return result;
   }
 
-  restOfYearTaxableWage(year, month) {
-    const months = this.company
-      .monthsInYear(this.company.year(`${year}-${month}-01`))
-      .filter((record) => !(record[0] === year && record[1] === month));
-
-    let postedTaxableWage = 0;
-    let forecastTaxableWage = 0;
-    months.forEach((record) => {
-      const [Year, Month] = record;
-      const rResult = this.remunerationresult(
-        Year.toString(),
-        Month.toString().padStart(2, 0),
-      );
-      if (rResult.exists()) {
-        postedTaxableWage += SumFieldIfs(
-          rResult.getData().Wages,
-          "Amount",
-          ["WT"],
-          ["TWAGE"],
-        );
-      } else {
-        forecastTaxableWage += SumFieldIfs(
-          this.summarisedForecastWageSheet(Year, Month),
-          "Amount",
-          ["WT"],
-          ["TWAGE"],
-        );
-      }
-    });
-    const taxableWage = postedTaxableWage + forecastTaxableWage;
-    return { taxableWage, postedTaxableWage, forecastTaxableWage };
-  }
   taxCode(year) {
     const filtered = this.getData().TaxCode.find((item) =>
       rangeOverlap([item.From, item.To], [year.toString(), year.toString()]),
@@ -1260,6 +1272,33 @@ export class Employee extends CompanyCollection {
       filter("Employee", "Number", [this.code]),
       filter("WT", "StringCaseInsensitive", ["WHT"]),
       filter("Year", "StringCaseInsensitive", [year]),
+    ]);
+    return SumField(data, "Amount");
+  }
+  postedTDSByOrgUnit(year, unit) {
+    const data = filterByMultipleSelection(PostedRemunerationTable(), [
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+      filter("Employee", "Number", [this.code]),
+      filter("WT", "StringCaseInsensitive", ["WHT"]),
+      filter("Year", "StringCaseInsensitive", [year]),
+      filter("OrgUnit", "StringCaseInsensitive", [unit]),
+    ]);
+    return SumField(data, "Amount");
+  }
+  postedDues() {
+    const data = filterByMultipleSelection(PostedRemunerationTable(), [
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+      filter("Employee", "Number", [this.code]),
+      filter("WT", "StringCaseInsensitive", ["DUE", "RDUE"]),
+    ]);
+    return SumField(data, "Amount");
+  }
+  postedDuesByOrgUnit(unit) {
+    const data = filterByMultipleSelection(PostedRemunerationTable(), [
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+      filter("Employee", "Number", [this.code]),
+      filter("WT", "StringCaseInsensitive", ["DUE", "RDUE"]),
+      filter("OrgUnit", "StringCaseInsensitive", [unit]),
     ]);
     return SumField(data, "Amount");
   }
@@ -2375,39 +2414,6 @@ export class YearlyCompanyCollection extends CompanyCollection {
   }
 }
 
-export class AccountingDocument extends YearlyCompanyCollection {
-  constructor(documentNo, year, company, name = "AccountingDocument") {
-    super(year, company, name);
-    this.documentNo = Number(documentNo);
-    this.criteria = { DocumentNo: this.documentNo };
-  }
-  exists() {
-    return super.exists(this.criteria);
-  }
-  getData() {
-    return super.getData(this.criteria);
-  }
-  delete() {
-    return super.delete(this.criteria);
-  }
-  update(data) {
-    return super.update(this.criteria, data);
-  }
-  add(data) {
-    const numberingStart = this.company
-      .getData()
-      .Numbering.find((item) => item.Item === "Accounting Document").From;
-    const DocumentNo = super.autoNumber(
-      this.criteria,
-      "DocumentNo",
-      numberingStart,
-    );
-    super.add({ ...data, ...{ DocumentNo } });
-    const result = true;
-    return { result, DocumentNo };
-  }
-}
-
 export class MaterialDocument extends YearlyCompanyCollection {
   constructor(documentNo, year, company, name = "MaterialDocument") {
     super(year, company, name);
@@ -3059,6 +3065,7 @@ export class RemunerationResult extends Collection {
     super(name);
     this.companycode = company;
     this.employeecode = employee;
+    this.employee = new Employee(this.employeecode, this.companycode);
     this.year = year;
     this.month = month;
     this.criteria = {
@@ -3071,8 +3078,8 @@ export class RemunerationResult extends Collection {
   exists() {
     return super.exists(this.criteria);
   }
-  add(data) {
-    super.add(data);
+  post(wages) {
+    super.add({ ...this.criteria, ["Wages"]: wages });
   }
   getData() {
     const result = super.getData(this.criteria);
@@ -3080,5 +3087,566 @@ export class RemunerationResult extends Collection {
   }
   delete() {
     super.delete(this.criteria);
+  }
+  slip() {
+    if (!this.exists() === null) {
+      return null;
+    }
+    const Wages = this.getData().Wages;
+    const EmployeeData = this.employee.getData();
+    const Wage = (WT) => {
+      return SumFieldIfs(Wages, "Amount", ["WT"], [WT]);
+    };
+    const Description = (WT) => {
+      return new WageType(WT, this.companycode).getData().Description;
+    };
+    const allWTs = ListUniqueItems(Wages, "WT");
+    const WTs = allWTs.filter(
+      (item) => !["WHT", "NPAY", "DUE", "RDUE", "PMT"].includes(item),
+    );
+    const Emoluments = WTs.filter(
+      (item) =>
+        new WageType(item, this.companycode).getData().Type === "Emolument",
+    );
+    const Deductions = WTs.filter(
+      (item) =>
+        new WageType(item, this.companycode).getData().Type === "Deduction",
+    );
+    const slipData = {};
+    slipData.Company = this.companycode;
+    slipData.Employee = this.employeecode;
+    slipData.Name = EmployeeData.Name;
+    slipData.Address = EmployeeData.Address;
+    slipData.Year = this.year;
+    slipData.Month = this.month;
+    slipData.Emoluments = Emoluments.map((WT) => ({
+      WT,
+      Amount: Wage(WT),
+      Description: Description(WT),
+    }));
+    slipData.Deductions = Deductions.map((WT) => ({
+      WT,
+      Amount: Wage(WT),
+      Description: Description(WT),
+    }));
+    slipData.Gross = SumField(slipData.Emoluments, "Amount");
+    slipData.TotalDeductions = SumField(slipData.Deductions, "Amount");
+    slipData.WithholdingTax = Wage("WHT");
+    slipData.NetPayable = Wage("NPAY");
+    slipData.Payment = Wage("PMT");
+    slipData.Balance = Wage("DUE");
+    slipData.Adjusted = Wage("RDUE");
+
+    return slipData;
+  }
+}
+
+export class RemunerationCalc {
+  constructor(
+    CompanyCode,
+    EmployeeCode,
+    Year,
+    Month,
+    CalculateFrom = monthBegin(Year, Month),
+  ) {
+    this.companycode = CompanyCode;
+    this.employeecode = EmployeeCode;
+    this.year = Year;
+    this.month = Month;
+    this.calculateFrom = CalculateFrom;
+    this.company = new Company(this.companycode);
+    this.employee = new Employee(this.employeecode, this.companycode);
+  }
+  wageSheet() {
+    return this.employee.taxableWageSheet(
+      this.year,
+      this.month,
+      this.calculateFrom,
+    );
+  }
+  orgUnits() {
+    return ListUniqueItems(this.wageSheet(), "OrgUnit");
+  }
+  taxableWage() {
+    return SumField(this.wageSheet(), "Taxable");
+  }
+  restOfYearTaxableWage() {
+    const months = this.company
+      .monthsInYear(this.company.year(`${this.year}-${this.month}-01`))
+      .filter(
+        (record) => !(record[0] === this.year && record[1] === this.month),
+      );
+
+    let postedTaxableWage = 0;
+    let forecastTaxableWage = 0;
+    months.forEach((record) => {
+      const [Year, Month] = record;
+      const rResult = this.employee.remunerationresult(
+        Year.toString(),
+        Month.toString().padStart(2, 0),
+      );
+      if (rResult.exists()) {
+        postedTaxableWage += SumFieldIfs(
+          rResult.getData().Wages,
+          "Amount",
+          ["WT"],
+          ["TWAGE"],
+        );
+      } else {
+        forecastTaxableWage += new RemunerationCalc(
+          this.companycode,
+          this.employeecode,
+          Year,
+          Month,
+        ).taxableWage();
+      }
+    });
+    const taxableWage = postedTaxableWage + forecastTaxableWage;
+    return { taxableWage, postedTaxableWage, forecastTaxableWage };
+  }
+  yearlyTaxableWage() {
+    return this.taxableWage() + this.restOfYearTaxableWage().taxableWage;
+  }
+  additions() {
+    return this.employee.additions(this.year);
+  }
+  deductions() {
+    return this.employee.deductions(this.year);
+  }
+  totalIncome() {
+    return this.yearlyTaxableWage() + this.additions() - this.deductions();
+  }
+  tax() {
+    return this.employee.tax(this.year, this.totalIncome());
+  }
+  taxRate() {
+    return this.tax() / this.yearlyTaxableWage();
+  }
+  withholdingTax() {
+    const postedWithHoldingTax = this.employee.postedTDS(this.year);
+    const calculatedWithHoldingTax =
+      (this.taxableWage() + this.restOfYearTaxableWage().postedTaxableWage) *
+      this.taxRate();
+    return calculatedWithHoldingTax - postedWithHoldingTax;
+  }
+  netWage() {
+    return SumField(this.wageSheet(), "Amount");
+  }
+  netPay() {
+    return this.netWage() - this.withholdingTax();
+  }
+  duesBalance() {
+    return this.employee.postedDues();
+  }
+  duesAdjustment() {
+    return Math.min(Math.max(this.netPay(), 0), this.duesBalance());
+  }
+  netForPayment() {
+    return this.netPay() - this.duesAdjustment();
+  }
+  payment() {
+    return Math.max(this.netForPayment(), 0);
+  }
+  due() {
+    return -(this.netForPayment() - this.payment());
+  }
+  netWageByOrgUnit() {
+    const units = ListUniqueItems(this.wageSheet(), "OrgUnit");
+    const result = [];
+    units.forEach((unit) => {
+      result.push({
+        OrgUnit: unit,
+        Amount: SumFieldIfs(this.wageSheet(), "Amount", ["OrgUnit"], [unit]),
+      });
+    });
+    return result;
+  }
+  netWageofOrgUnit(unit) {
+    return SumFieldIfs(this.wageSheet(), "Amount", ["OrgUnit"], [unit]);
+  }
+  taxableWageByOrgUnit() {
+    const units = ListUniqueItems(this.wageSheet(), "OrgUnit");
+    const result = [];
+    units.forEach((unit) => {
+      result.push({
+        OrgUnit: unit,
+        Taxable: SumFieldIfs(this.wageSheet(), "Taxable", ["OrgUnit"], [unit]),
+      });
+    });
+    return result;
+  }
+  taxableWageOfOrgUnit(unit) {
+    return SumFieldIfs(
+      this.taxableWageByOrgUnit(),
+      "Taxable",
+      ["OrgUnit"],
+      [unit],
+    );
+  }
+  restOfYearTaxableWageOfOrgUnit(unit) {
+    const months = this.company
+      .monthsInYear(this.company.year(`${this.year}-${this.month}-01`))
+      .filter(
+        (record) => !(record[0] === this.year && record[1] === this.month),
+      );
+    let postedTaxableWage = 0;
+    let forecastTaxableWage = 0;
+    months.forEach((record) => {
+      const [Year, Month] = record;
+      const rResult = this.employee.remunerationresult(
+        Year.toString(),
+        Month.toString().padStart(2, 0),
+      );
+      if (rResult.exists()) {
+        postedTaxableWage += SumFieldIfs(
+          rResult.getData().Wages,
+          "Amount",
+          ["WT", "OrgUnit"],
+          ["TWAGE", unit],
+        );
+      } else {
+        forecastTaxableWage += new RemunerationCalc(
+          this.companycode,
+          this.employeecode,
+          Year,
+          Month,
+        ).taxableWageOfOrgUnit(unit);
+      }
+    });
+    const taxableWage = postedTaxableWage + forecastTaxableWage;
+    return { taxableWage, postedTaxableWage, forecastTaxableWage };
+  }
+  whtOfOrgUnit(unit) {
+    const postedWithHoldingTax = this.employee.postedTDSByOrgUnit(
+      this.year,
+      unit,
+    );
+    const calculatedWithHoldingTax =
+      (this.taxableWageOfOrgUnit(unit) +
+        this.restOfYearTaxableWageOfOrgUnit(unit).postedTaxableWage) *
+      this.taxRate();
+    return calculatedWithHoldingTax - postedWithHoldingTax;
+  }
+  netPayOfOrgUnit(unit) {
+    return this.netWageofOrgUnit(unit) - this.whtOfOrgUnit(unit);
+  }
+  paymentByOrgUnit(unit) {
+    return (this.payment() * this.netPayOfOrgUnit(unit)) / this.netPay();
+  }
+  dueOfOrgUnit(unit) {
+    return (this.due() * this.netPayOfOrgUnit(unit)) / this.netPay();
+  }
+  dueBalanceOfOrgUnit(unit) {
+    return this.employee.postedDuesByOrgUnit(unit);
+  }
+  dueAdjustmentOfOrgUnit(unit) {
+    if (this.duesBalance() === 0) {
+      return 0;
+    }
+    return (
+      (this.duesAdjustment() / this.duesBalance()) *
+      this.dueBalanceOfOrgUnit(unit)
+    );
+  }
+  postingData() {
+    const result = [];
+    this.wageSheet().forEach((record) => {
+      result.push(
+        transformObject(record, ["WT", "Amount", "From", "To", "OrgUnit"]),
+      );
+    });
+    this.orgUnits().forEach((unit) => {
+      const From = monthEnd(this.year, this.month);
+      const To = From;
+      const OrgUnit = unit;
+      result.push(
+        ...[
+          {
+            OrgUnit,
+            WT: "NPAY",
+            From,
+            To,
+            Amount: this.netPayOfOrgUnit(unit),
+          },
+          {
+            OrgUnit,
+            WT: "RDUE",
+            From,
+            To,
+            Amount: this.dueAdjustmentOfOrgUnit(unit),
+          },
+          {
+            OrgUnit,
+            WT: "WHT",
+            From,
+            To,
+            Amount: this.whtOfOrgUnit(unit),
+          },
+          {
+            OrgUnit,
+            WT: "PMT",
+            From,
+            To,
+            Amount: this.paymentByOrgUnit(unit),
+          },
+          {
+            OrgUnit,
+            WT: "DUE",
+            From,
+            To,
+            Amount: this.dueOfOrgUnit(unit),
+          },
+        ],
+      );
+    });
+    const trimmed = result.filter((record) => record.Amount !== 0);
+    return trimmed;
+  }
+}
+
+export class RemunerationRun extends Collection {
+  constructor(company, year, month, batchId, name = "RemunerationRun") {
+    super(name);
+    this.companycode = company;
+    this.year = year;
+    this.month = month;
+    this.batchId = batchId;
+    this.criteria = {
+      Company: this.companycode,
+      Year: this.year,
+      Month: this.month,
+      BatchId: this.batchId,
+    };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  add(data) {
+    return super.add({ ...this.criteria, ...data });
+  }
+  run(calcFrom, employeeSelection, employeeGroupSelection) {
+    const allEmployees = EmployeeTable();
+    let filtered = [...allEmployees];
+    filtered = filterByMultipleSelection(filtered, [
+      employeeSelection,
+      employeeGroupSelection,
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+    ]);
+    const Status = [];
+    filtered.forEach((employee) => {
+      const { Employee: code } = employee;
+      const master = new Employee(code, this.companycode);
+      const rr = master.remunerationresult(this.year, this.month);
+      if (rr.exists()) {
+        Status.push({
+          Employee: code,
+          Status: "Failure",
+          Remarks: "Remuneration already posted for the month.",
+        });
+      } else if (master.isBlocked()) {
+        Status.push({
+          Employee: code,
+          Status: "Failure",
+          Remarks: "Employee Blocked.",
+        });
+      } else {
+        const calc = master.remunerationcalc(this.year, this.month, calcFrom);
+        rr.post(calc.postingData());
+        Status.push({
+          Employee: code,
+          Status: "Success",
+          Remarks: "",
+        });
+      }
+    });
+    this.add({ Status });
+    return Status;
+  }
+}
+
+export class RemunerationExpensePosting {
+  constructor(CompanyCode, Year, Month, DocumentDate) {
+    this.companycode = CompanyCode;
+    this.year = Year;
+    this.month = Month;
+    this.documentdate = DocumentDate;
+    this.company = new Company(this.companycode);
+  }
+  postedData() {
+    const data = filterByMultipleSelection(PostedRemunerationTable(), [
+      filter("Company", "StringCaseSensitive", [this.companycode]),
+      filter("Year", "StringCaseInsensitive", [this.year]),
+      filter("Month", "StringCaseInsensitive", [this.month]),
+    ]);
+    return data;
+  }
+  transformedData() {
+    return this.postedData().map((record) => {
+      const { OrgUnit, Employee: employeecode } = record;
+      const [Type, Code] = OrgUnit.split("/");
+      const unitMaster = new CompanyCollection(this.companycode, Type).getData({
+        Code,
+      });
+      const pc = unitMaster.ProfitCenter;
+      const employeemaster = new Employee(
+        employeecode,
+        this.companycode,
+      ).getData();
+      const eg = employeemaster.EmployeeGroupCode;
+      return { ...record, PC: pc, EG: eg };
+    });
+  }
+  wagesEntry() {
+    const data = this.transformedData().filter(
+      (item) =>
+        !["WHT", "NPAY", "TWAGE", "PMT", "DUE", "DUER"].includes(item.WT),
+    );
+    const WTs = ListUniqueItems(data, "WT");
+    const PCs = ListUniqueItems(data, "PC");
+    const result = [];
+    WTs.forEach((WT) => {
+      const master = new WageType(WT, this.companycode).getData();
+      const gl = master.GL;
+      PCs.forEach((PC) => {
+        const Amount = SumFieldIfs(data, "Amount", ["PC", "WT"], [PC, WT]);
+        result.push({
+          Account: gl,
+          PC,
+          Amount,
+          ET: Amount >= 0 ? "G1" : "G2",
+        });
+      });
+    });
+    return result;
+  }
+  payablesEntry() {
+    const result = [];
+    const data = this.transformedData();
+    const PCs = ListUniqueItems(data, "PC");
+    const EGs = ListUniqueItems(data, "EG");
+    PCs.forEach((PC) => {
+      EGs.forEach((EG) => {
+        const egmaster = new EmployeeGroup(EG, this.companycode).getData();
+        const payableGL = egmaster.GL;
+        const whtGL = egmaster.GLWHT;
+        const payable = SumFieldIfs(
+          this.transformedData(),
+          "Amount",
+          ["WT", "PC", "EG"],
+          ["NPAY", PC, EG],
+        );
+        const wht = SumFieldIfs(
+          this.transformedData(),
+          "Amount",
+          ["WT", "PC", "EG"],
+          ["WHT", PC, EG],
+        );
+        result.push(
+          ...[
+            {
+              Account: payableGL,
+              Amount: payable,
+              PC,
+              ET: payable >= 0 ? "G1" : "G2",
+            },
+            {
+              Account: whtGL,
+              Amount: wht,
+              PC,
+              ET: wht >= 0 ? "G2" : "G1",
+            },
+          ],
+        );
+      });
+    });
+    return result;
+  }
+  entry() {
+    return {
+      Company: this.companycode,
+      PostingDate: monthEnd(this.year, this.month),
+      DocumentDate: this.documentdate,
+      DocumentType: "SE",
+      DocumentCreationInfo: `${this.year}-${this.month}`,
+      Text: `Remuneration Expense Posting ${monthEnd(this.year, this.month)}`,
+      Entries: [...this.wagesEntry(), ...this.payablesEntry()],
+    };
+  }
+  costItems() {
+    const data = this.transformedData().filter(
+      (item) =>
+        !["WHT", "NPAY", "TWAGE", "PMT", "DUE", "DUER"].includes(item.WT),
+    );
+    const WTs = ListUniqueItems(data, "WT");
+    const Employees = ListUniqueItems(data, "Employee");
+    const CostElements = WTs.filter(
+      (item) =>
+        new WageType(item, this.companycode).getData().CostElement === true,
+    );
+    const result = [];
+    Employees.forEach((employee) => {
+      const wages = data.filter((item) => item.Employee === employee);
+      wages.forEach((wage) => {
+        const { WT, Amount, From, To } = wage;
+        if (CostElements.includes(WT)) {
+          const element = new WageType(WT, this.companycode).getData().GL;
+          result.push({
+            Element: element,
+            From,
+            To,
+            Amount,
+            ObjectType: "Employee",
+            Object: employee,
+          });
+        }
+      });
+    });
+    return result;
+  }
+  costEntry() {
+    return {
+      Company: this.companycode,
+      PostingDate: monthEnd(this.year, this.month),
+      Text: `Remuneration Expense Posting ${monthEnd(this.year, this.month)}`,
+      Entries: [...this.costItems()],
+    };
+  }
+}
+
+export class AccountingDocument extends CompanyCollection {
+  constructor(documentNo, year, company, name = "AccountingDocument") {
+    super(company, name);
+    this.documentNo = Number(documentNo);
+    this.year = year;
+    this.criteria = {
+      Company: this.companycode,
+      Year: this.year,
+      DocumentNo: this.documentNo,
+    };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  process(data) {
+    const { Company, PostingDate, DocumentDate, Entries } = data;
+  }
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Accounting Document").From;
+    const DocumentNo = super.autoNumber(
+      this.criteria,
+      "DocumentNo",
+      numberingStart,
+    );
+    super.add({ ...data, ...{ DocumentNo } });
+    const result = true;
+    return { result, DocumentNo };
   }
 }

@@ -699,3 +699,11 @@ export function monthsInYear(Year, startingMonth) {
   }
   return list;
 }
+
+export function isFuture(date) {
+  return new Date(date) > new Date();
+}
+
+export function UniqueList(list) {
+  return [...new Set(list)];
+}

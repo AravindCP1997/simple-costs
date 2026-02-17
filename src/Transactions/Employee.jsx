@@ -31,6 +31,7 @@ import {
 import { Collection } from "../Database";
 import {
   FilteredList,
+  isPositive,
   ListItems,
   ListUniqueItems,
   rangeOverlap,
@@ -196,6 +197,146 @@ export function CreateEmployee({
       "DOS",
       "Date of Separation cannot be earlier than Date of Joining",
     );
+
+    OrgAssignment.forEach((assignment, a) => {
+      const { From, To, Assignment, Type } = assignment;
+      const path = `OrgAssignment/${a + 1}`;
+      addError(
+        !new CompanyCollection(Company, Type).exists({ Code: Assignment }),
+        path,
+        `${Type} does not exist.`,
+      );
+      addError(
+        From === "" || To === "" || From > To,
+        path,
+        "Period not valid.",
+      );
+      OrgAssignment.forEach((assignmentTwo, aTwo) => {
+        const { From: FromTwo, To: ToTwo } = assignmentTwo;
+        if (aTwo > a) {
+          addError(
+            rangeOverlap([From, To], [FromTwo, ToTwo]),
+            path,
+            `Period overlap between ${a + 1} and ${aTwo + 1}`,
+          );
+        }
+      });
+    });
+
+    TaxCode.forEach((code, c) => {
+      const { From, To, Code } = code;
+      const master = new IncomeTaxCode(Code);
+      addError(
+        !master.exists(),
+        `IncomeTaxCode/${c + 1}`,
+        "Income Tax Code does not exist.",
+      );
+      addError(
+        !isPositive(From),
+        `IncomeTaxCode/${c + 1}`,
+        "From Year shall be a positive Integer",
+      );
+      addError(
+        !isPositive(To),
+        `IncomeTaxCode/${c + 1}`,
+        "To Year shall be a positive Integer",
+      );
+      addError(
+        From > To,
+        `IncomeTaxCode/${c + 1}`,
+        "From Year greater than To Year",
+      );
+    });
+    Additions.forEach((addition, a) => {
+      const { Year, Amount } = addition;
+      addError(
+        !isPositive(Year),
+        `AdditionalIncome/${a + 1}`,
+        "Year shall be positive integer.",
+      );
+      addError(
+        !isPositive(Amount),
+        `AdditionalIncome/${a + 1}`,
+        "Amount shall be positive.",
+      );
+    });
+    Deductions.forEach((deduction, a) => {
+      const { Year, Amount } = deduction;
+      addError(
+        !isPositive(Year),
+        `Deductions/${a + 1}`,
+        "Year shall be positive integer.",
+      );
+      addError(
+        !isPositive(Amount),
+        `Deductions/${a + 1}`,
+        "Amount shall be positive.",
+      );
+    });
+
+    VariableWages.forEach((wage, w) => {
+      const { WT, From, To, Amount } = wage;
+      const path = `VariableWages/${w + 1}`;
+      addError(
+        !new CompanyCollection(Company, "WageType").exists({ Code: WT }),
+        path,
+        "Wage Type does not exist.",
+      );
+      addError(!isPositive(Amount), path, "Amount shall be positive.");
+      addError(
+        From === "" || To === "" || From > To,
+        path,
+        "Period not valid.",
+      );
+      VariableWages.forEach((wagetwo, wtwo) => {
+        const { WT: WTTwo, From: FromTwo, To: ToTwo } = wagetwo;
+        if (wtwo > w && WT === WTTwo) {
+          addError(
+            rangeOverlap([From, To], [FromTwo, ToTwo]),
+            path,
+            `Period overlaps between ${w + 1} and ${wtwo + 1}`,
+          );
+        }
+      });
+    });
+
+    FixedWages.forEach((wage, w) => {
+      const { WT, From, To, Amount } = wage;
+      const path = `FixedWages/${w + 1}`;
+      addError(
+        !new CompanyCollection(Company, "WageType").exists({ Code: WT }),
+        path,
+        "Wage Type does not exist.",
+      );
+      addError(!isPositive(Amount), path, "Amount shall be positive.");
+      addError(
+        From === "" || To === "" || From > To,
+        path,
+        "Period not valid.",
+      );
+      FixedWages.forEach((wagetwo, wtwo) => {
+        const { WT: WTTwo, From: FromTwo, To: ToTwo } = wagetwo;
+        if (wtwo > w && WT === WTTwo) {
+          addError(
+            rangeOverlap([From, To], [FromTwo, ToTwo]),
+            path,
+            `Period overlaps between ${w + 1} and ${wtwo + 1}`,
+          );
+        }
+      });
+    });
+
+    OneTimeWages.forEach((wage, w) => {
+      const { WT, Amount, Date } = wage;
+      const path = `OneTimeWages/${w + 1}`;
+      addError(
+        !new CompanyCollection(Company, "WageType").exists({ Code: WT }),
+        path,
+        "Wage Type does not exist.",
+      );
+      addError(Date === "", path, "Date shall not be blank.");
+      addError(!isPositive(Amount), path, "Amount shall be positive.");
+    });
   }, [data]);
 
   return (

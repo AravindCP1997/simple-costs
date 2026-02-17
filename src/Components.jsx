@@ -94,7 +94,6 @@ export const HidingDisplay = ({
     color: "var(--blue)",
     width: "min(90%,600px)",
     maxHeight: "90%",
-    overflow: "auto",
     boxShadow: "0px 2px 10px -5px gray",
     background: "var(--whitet)",
     border: "5px solid var(--whitet)",
@@ -104,6 +103,7 @@ export const HidingDisplay = ({
     display: "flex",
     flexDirection: "column",
     gap: "10px",
+    overflow: "auto",
   };
 
   return (
@@ -156,7 +156,7 @@ export const HidingDisplay = ({
                       </div>
                     )}
                   </div>
-                  {children}
+                  <div style={{ overflow: "auto" }}>{children}</div>
                 </div>
               </FocusTrap>
             </Overlay>,

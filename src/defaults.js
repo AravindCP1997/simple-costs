@@ -232,6 +232,7 @@ export const defaultWageType = {
   Nature: "Variable",
   GL: "",
   Taxable: true,
+  CostElement: false,
 };
 
 export const defaultEmployee = {
@@ -254,10 +255,10 @@ export const defaultEmployee = {
   VariableWages: [{ WT: "", From: "", To: "", Amount: "" }],
   FixedWages: [{ WT: "", From: "", To: "", Amount: "" }],
   TIN: "",
-  TaxCode: [{ From: "", To: "", Code: "" }],
-  Additions: [{ Year: "", Description: "", Amount: "" }],
-  Deductions: [{ Year: "", Description: "", Amount: "" }],
-  BankAccounts: [{ Bank: "", SWIFT: "", Account: "", Confirm: "" }],
+  TaxCode: [],
+  Additions: [],
+  Deductions: [],
+  BankAccounts: [],
   Blocked: false,
 };
 
@@ -311,6 +312,7 @@ export const defaultEmployeeGroup = {
   Code: "",
   Description: "",
   GL: "",
+  GLWHT: "",
 };
 
 export const defaultCustomerGroup = {
@@ -603,4 +605,14 @@ export const defaultVendorInvoice = {
       HSN: "",
     },
   ],
+};
+
+export const defaultRemunerationRun = {
+  CompanyCode: "",
+  Year: "",
+  Month: "01",
+  BatchId: "",
+  CalcFrom: "",
+  Employees: defaultSelection("Employee", "Number"),
+  Groups: defaultSelection("Group", "StringCaseInsensitive"),
 };

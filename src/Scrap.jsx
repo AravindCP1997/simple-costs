@@ -3935,3 +3935,48 @@ const MultipleInput = ({ field, output, setdata }) => {
     </div>
   );
 };
+
+this.orgUnits().forEach((unit) => {
+  const From = monthEnd(this.year, this.month);
+  const To = From;
+  const OrgUnit = unit;
+  result.push(
+    ...[
+      {
+        OrgUnit,
+        WT: "NPAY",
+        From,
+        To,
+        Amount: this.netPayOfOrgUnit(unit),
+      },
+      {
+        OrgUnit,
+        WT: "RDUE",
+        From,
+        To,
+        Amount: this.dueAdjustmentOfOrgUnit(unit),
+      },
+      {
+        OrgUnit,
+        WT: "WHT",
+        From,
+        To,
+        Amount: this.whtOfOrgUnit(unit),
+      },
+      {
+        OrgUnit,
+        WT: "PMT",
+        From,
+        To,
+        Amount: this.paymentByOrgUnit(unit),
+      },
+      {
+        OrgUnit,
+        WT: "DUE",
+        From,
+        To,
+        Amount: this.dueOfOrgUnit(unit),
+      },
+    ],
+  );
+});

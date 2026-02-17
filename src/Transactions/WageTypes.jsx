@@ -135,7 +135,8 @@ export function CreateWageType({
   } = useData(initial);
   const { openWindow, openConfirm, showAlert } = useInterface();
   const { DisplayHidingError, addError, clearErrors, errorsExist } = useError();
-  const { Company, Code, Description, Type, Nature, GL, Taxable } = data;
+  const { Company, Code, Description, Type, Nature, GL, Taxable, CostElement } =
+    data;
   const collection = new WageType(Code, Company);
   const GLcollection = new GeneralLedger(GL, Company);
   useEffect(() => {
@@ -307,6 +308,18 @@ export function CreateWageType({
             </Conditional>
             <Conditional logic={method !== "Create"}>
               <CheckBox value={Taxable} />
+            </Conditional>
+          </Row>
+          <Row jc="left">
+            <Label label={"Cost Element"} />
+            <Conditional logic={method === "Create"}>
+              <CheckBox
+                value={CostElement}
+                process={(value) => changeData("", "CostElement", value)}
+              />
+            </Conditional>
+            <Conditional logic={method !== "Create"}>
+              <CheckBox value={CostElement} />
             </Conditional>
           </Row>
         </DisplayArea>
