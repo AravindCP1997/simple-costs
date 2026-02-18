@@ -43,6 +43,8 @@ import {
   Region,
   RemunerationCalc,
   RemunerationExpensePosting,
+  RemunerationOffcycleCalc,
+  RemunerationOffCycleResult,
   RemunerationResult,
   RemunerationRun,
   Segments,
@@ -124,6 +126,13 @@ export function Scratch() {
               />
             </Row>
           </Row>
+          <JSONString
+            data={new RemunerationOffCycleResult(
+              "FACT",
+              100000,
+              "2026-03-12",
+            ).slip()}
+          />
         </DisplayArea>
       </WindowContent>
     </>

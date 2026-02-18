@@ -254,6 +254,7 @@ export const defaultEmployee = {
   OneTimeWages: [{ WT: "", Date: "", Amount: "" }],
   VariableWages: [{ WT: "", From: "", To: "", Amount: "" }],
   FixedWages: [{ WT: "", From: "", To: "", Amount: "" }],
+  OffcycleWages: [{ WT: "", Date: "", Amount: "" }],
   TIN: "",
   TaxCode: [],
   Additions: [],
@@ -613,6 +614,8 @@ export const defaultRemunerationRun = {
   Month: "01",
   BatchId: "",
   CalcFrom: "",
+  OffCycle: false,
+  OffCycleDate: "",
   Employees: defaultSelection("Employee", "Number"),
   Groups: defaultSelection("Group", "StringCaseInsensitive"),
 };

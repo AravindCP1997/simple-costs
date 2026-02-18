@@ -161,6 +161,7 @@ export function CreateEmployee({
     OrgAssignment,
     OneTimeWages,
     VariableWages,
+    OffcycleWages,
     FixedWages,
     TaxCode,
     Additions,
@@ -329,6 +330,17 @@ export function CreateEmployee({
     OneTimeWages.forEach((wage, w) => {
       const { WT, Amount, Date } = wage;
       const path = `OneTimeWages/${w + 1}`;
+      addError(
+        !new CompanyCollection(Company, "WageType").exists({ Code: WT }),
+        path,
+        "Wage Type does not exist.",
+      );
+      addError(Date === "", path, "Date shall not be blank.");
+      addError(!isPositive(Amount), path, "Amount shall be positive.");
+    });
+    OffcycleWages.forEach((wage, w) => {
+      const { WT, Amount, Date } = wage;
+      const path = `OffcycleWages/${w + 1}`;
       addError(
         !new CompanyCollection(Company, "WageType").exists({ Code: WT }),
         path,
@@ -933,6 +945,56 @@ export function CreateEmployee({
                     ])}
                   />
                 </Column>
+                <Column overflow="visible">
+                  <Row jc="left">
+                    <Label label={"Off-cycle Wages"} />
+                    <Button
+                      name="Add"
+                      functionsArray={[
+                        () =>
+                          addItemtoArray("OffcycleWages", {
+                            WT: "",
+                            Date: "",
+                            Amount: "",
+                          }),
+                      ]}
+                    />
+                  </Row>
+                  <Table
+                    columns={["Wage Type", "Date", "Amount", ""]}
+                    rows={OffcycleWages.map((wage, w) => [
+                      <AutoSuggestInput
+                        value={wage.WT}
+                        process={(value) =>
+                          changeData(`OffcycleWages/${w}`, "WT", value)
+                        }
+                        suggestions={wagetypes.listAllFromCompany("Code")}
+                        captions={wagetypes.listAllFromCompany("Description")}
+                        placeholder={"Enter Wage Type"}
+                      />,
+                      <Input
+                        value={wage.Date}
+                        process={(value) =>
+                          changeData(`OffcycleWages/${w}`, "Date", value)
+                        }
+                        type={"date"}
+                      />,
+                      <Input
+                        value={wage.Amount}
+                        process={(value) =>
+                          changeData(`OffcycleWages/${w}`, "Amount", value)
+                        }
+                        type={"number"}
+                      />,
+                      <Button
+                        name="-"
+                        functionsArray={[
+                          () => deleteItemfromArray(`OffcycleWages`, w),
+                        ]}
+                      />,
+                    ])}
+                  />
+                </Column>
               </Conditional>
               <Conditional logic={method === "View"}>
                 <Column overflow="visible">
@@ -970,6 +1032,19 @@ export function CreateEmployee({
                   <Table
                     columns={["Wage Type", "Date", "Amount"]}
                     rows={OneTimeWages.map((wage, w) => [
+                      <label>{wage.WT}</label>,
+                      <label>{wage.Date}</label>,
+                      <label>{wage.Amount}</label>,
+                    ])}
+                  />
+                </Column>
+                <Column>
+                  <Row jc="left">
+                    <Label label={"Off-cycle Wages"} />
+                  </Row>
+                  <Table
+                    columns={["Wage Type", "Date", "Amount"]}
+                    rows={OffcycleWages.map((wage, w) => [
                       <label>{wage.WT}</label>,
                       <label>{wage.Date}</label>,
                       <label>{wage.Amount}</label>,

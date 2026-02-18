@@ -1016,6 +1016,9 @@ export class Employee extends CompanyCollection {
   remunerationresult(year, month) {
     return new RemunerationResult(this.companycode, this.code, year, month);
   }
+  remunerationoffcycleresult(date) {
+    return new RemunerationOffCycleResult(this.companycode, this.code, date);
+  }
   remunerationcalc(year, month, calculatefrom = monthBegin(year, month)) {
     return new RemunerationCalc(
       this.companycode,
@@ -1024,6 +1027,9 @@ export class Employee extends CompanyCollection {
       month,
       calculatefrom,
     );
+  }
+  remunerationoffcyclecalc(date) {
+    return new RemunerationOffcycleCalc(this.companycode, this.code, date);
   }
   variableWages(date) {
     const all = this.getData().VariableWages;
@@ -1066,6 +1072,60 @@ export class Employee extends CompanyCollection {
       transformObject(wagetype, ["WT", "Amount"], [], { Date: date }),
     );
     return result;
+  }
+  offcycleWages(date) {
+    const all = this.getData().OffcycleWages;
+    const filtered = all.filter((item) => item.Date === date);
+    const result = filtered.map((wagetype) =>
+      transformObject(wagetype, ["WT", "Amount"], [], { Date: date }),
+    );
+    return result;
+  }
+  offcycleWageSheet(date) {
+    const data = this.offcycleWages(date);
+    const result = [];
+    data.forEach((record) => {
+      const { WT, Amount } = record;
+      const wagetype = new WageType(WT, this.companycode);
+      const taxability = wagetype.taxable();
+      const type = wagetype.getData().Type;
+      const RevisedAmount = type === "Emolument" ? Amount : -Amount;
+      const Taxable = taxability ? RevisedAmount : 0;
+      result.push({
+        ...record,
+        ...{ Taxable, Amount: RevisedAmount, OrgUnit: this.orgUnit(date) },
+      });
+    });
+    return result;
+  }
+  taxableWages(year) {
+    const months = this.company.monthsInYear(year);
+    let postedTaxableWage = 0;
+    let forecastTaxableWage = 0;
+    months.forEach((record) => {
+      const [Year, Month] = record;
+      const rResult = this.remunerationresult(
+        Year.toString(),
+        Month.toString().padStart(2, 0),
+      );
+      if (rResult.exists()) {
+        postedTaxableWage += SumFieldIfs(
+          rResult.getData().Wages,
+          "Amount",
+          ["WT"],
+          ["TWAGE"],
+        );
+      } else {
+        forecastTaxableWage += new RemunerationCalc(
+          this.companycode,
+          this.code,
+          Year,
+          Month,
+        ).taxableWage();
+      }
+    });
+    const taxableWage = postedTaxableWage + forecastTaxableWage;
+    return { taxableWage, postedTaxableWage, forecastTaxableWage };
   }
   grossWages(date) {
     const list = [];
@@ -3078,6 +3138,18 @@ export class RemunerationResult extends Collection {
   exists() {
     return super.exists(this.criteria);
   }
+  previousResult() {
+    const date = moveDate(monthBegin(this.year, this.month), 0, -1, 0);
+    const pyear = year(date);
+    const pmonth = month(date);
+    const presult = new RemunerationResult(
+      this.companycode,
+      this.employeecode,
+      pyear,
+      pmonth,
+    );
+    return presult;
+  }
   post(wages) {
     super.add({ ...this.criteria, ["Wages"]: wages });
   }
@@ -3648,5 +3720,246 @@ export class AccountingDocument extends CompanyCollection {
     super.add({ ...data, ...{ DocumentNo } });
     const result = true;
     return { result, DocumentNo };
+  }
+}
+
+export class RemunerationOffcycleCalc {
+  constructor(
+    CompanyCode,
+    EmployeeCode,
+    Date,
+    Year = year(Date),
+    Month = month(Date),
+  ) {
+    this.companycode = CompanyCode;
+    this.employeecode = EmployeeCode;
+    this.date = Date;
+    this.year = Year;
+    this.month = Month;
+    this.company = new Company(this.companycode);
+    this.employee = new Employee(this.employeecode, this.companycode);
+  }
+  wagesheet() {
+    return this.employee.offcycleWageSheet(this.date);
+  }
+  taxableWage() {
+    return SumField(this.wagesheet(), "Taxable");
+  }
+  taxableIncome() {
+    return (
+      this.employee.taxableWages(this.year).taxableWage +
+      this.taxableWage() +
+      this.employee.additions(this.year) -
+      this.employee.deductions(this.year)
+    );
+  }
+  tax() {
+    return this.employee.tax(this.year, this.taxableIncome());
+  }
+  taxrate() {
+    return this.tax() / (this.taxableIncome() + this.taxableWage());
+  }
+  wht() {
+    return this.taxableWage() * this.taxrate();
+  }
+  netwages() {
+    return SumField(this.wagesheet(), "Amount");
+  }
+  netpay() {
+    return this.netwages() - this.wht();
+  }
+  payment() {
+    return Math.max(this.netpay(), 0);
+  }
+  due() {
+    return -(this.netpay() - this.payment());
+  }
+  postingData() {
+    const result = [];
+    this.wagesheet().forEach((record) => {
+      result.push(
+        transformObject(record, ["WT", "Amount", "OrgUnit"], [], {
+          From: record.Date,
+          To: record.Date,
+        }),
+      );
+    });
+    result.push(
+      ...[
+        {
+          WT: "WHT",
+          Amount: this.wht(),
+          OrgUnit: this.employee.orgUnit(this.date),
+          From: this.date,
+          To: this.date,
+        },
+        {
+          WT: "NPAY",
+          Amount: this.netpay(),
+          OrgUnit: this.employee.orgUnit(this.date),
+          From: this.date,
+          To: this.date,
+        },
+        {
+          WT: "PMT",
+          Amount: this.payment(),
+          OrgUnit: this.employee.orgUnit(this.date),
+          From: this.date,
+          To: this.date,
+        },
+        {
+          WT: "DUE",
+          Amount: this.due(),
+          OrgUnit: this.employee.orgUnit(this.date),
+          From: this.date,
+          To: this.date,
+        },
+      ],
+    );
+    const trimmed = result.filter((record) => record.Amount !== 0);
+    return trimmed;
+  }
+}
+
+export class RemunerationOffCycleResult extends Collection {
+  constructor(company, employee, date, name = "RemunerationResult") {
+    super(name);
+    this.companycode = company;
+    this.employeecode = employee;
+    this.employee = new Employee(this.employeecode, this.companycode);
+    this.date = date;
+    this.year = year(this.date);
+    this.month = month(this.date);
+    this.criteria = {
+      Company: this.companycode,
+      Employee: this.employeecode,
+      Date: this.date,
+      Year: this.year,
+      Month: this.month,
+      Type: "Offcycle",
+    };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  post(wages) {
+    super.add({ ...this.criteria, ["Wages"]: wages });
+  }
+  getData() {
+    const result = super.getData(this.criteria);
+    return result;
+  }
+  delete() {
+    super.delete(this.criteria);
+  }
+  slip() {
+    if (!this.exists() === null) {
+      return null;
+    }
+    const Wages = this.getData().Wages;
+    const EmployeeData = this.employee.getData();
+    const Wage = (WT) => {
+      return SumFieldIfs(Wages, "Amount", ["WT"], [WT]);
+    };
+    const Description = (WT) => {
+      return new WageType(WT, this.companycode).getData().Description;
+    };
+    const allWTs = ListUniqueItems(Wages, "WT");
+    const WTs = allWTs.filter(
+      (item) => !["WHT", "NPAY", "DUE", "RDUE", "PMT"].includes(item),
+    );
+    const Emoluments = WTs.filter(
+      (item) =>
+        new WageType(item, this.companycode).getData().Type === "Emolument",
+    );
+    const Deductions = WTs.filter(
+      (item) =>
+        new WageType(item, this.companycode).getData().Type === "Deduction",
+    );
+    const slipData = {};
+    slipData.Company = this.companycode;
+    slipData.Employee = this.employeecode;
+    slipData.Name = EmployeeData.Name;
+    slipData.Address = EmployeeData.Address;
+    slipData.Year = this.year;
+    slipData.Month = this.month;
+    slipData.Emoluments = Emoluments.map((WT) => ({
+      WT,
+      Amount: Wage(WT),
+      Description: Description(WT),
+    }));
+    slipData.Deductions = Deductions.map((WT) => ({
+      WT,
+      Amount: Wage(WT),
+      Description: Description(WT),
+    }));
+    slipData.Gross = SumField(slipData.Emoluments, "Amount");
+    slipData.TotalDeductions = SumField(slipData.Deductions, "Amount");
+    slipData.WithholdingTax = Wage("WHT");
+    slipData.NetPayable = Wage("NPAY");
+    slipData.Payment = Wage("PMT");
+    slipData.Balance = Wage("DUE");
+    slipData.Adjusted = Wage("RDUE");
+    return slipData;
+  }
+}
+
+export class RemunerationOffcycleRun extends Collection {
+  constructor(company, date, name = "RemunerationRun") {
+    super(name);
+    this.companycode = company;
+    this.date = date;
+    this.criteria = {
+      Company: this.companycode,
+      Date: this.date,
+      Type: "OffCycle",
+    };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  add(data) {
+    return super.add({ ...this.criteria, ...data });
+  }
+  run(employeeSelection, employeeGroupSelection) {
+    const allEmployees = EmployeeTable();
+    let filtered = [...allEmployees];
+    filtered = filterByMultipleSelection(filtered, [
+      employeeSelection,
+      employeeGroupSelection,
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+    ]);
+    const Status = [];
+    filtered.forEach((employee) => {
+      const { Employee: code } = employee;
+      const master = new Employee(code, this.companycode);
+      const rr = master.remunerationoffcycleresult(this.date);
+      if (rr.exists()) {
+        Status.push({
+          Employee: code,
+          Status: "Failure",
+          Remarks: "Remuneration already posted for the Off-cycle date.",
+        });
+      } else if (master.isBlocked()) {
+        Status.push({
+          Employee: code,
+          Status: "Failure",
+          Remarks: "Employee Blocked.",
+        });
+      } else {
+        const calc = master.remunerationoffcyclecalc(this.date);
+        rr.post(calc.postingData());
+        Status.push({
+          Employee: code,
+          Status: "Success",
+          Remarks: "",
+        });
+      }
+    });
+    this.add({ Status });
+    return Status;
   }
 }

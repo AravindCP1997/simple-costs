@@ -18,17 +18,25 @@ import {
   Conditional,
   MultiDisplayArea,
   Selection,
+  ConditionalDisplay,
 } from "../Components";
 import { useWindowType, useInterface } from "../useInterface";
 import useData from "../useData";
 import { useError } from "../useError";
-import { Company, RemunerationResult, RemunerationRun } from "../classes";
+import {
+  Company,
+  RemunerationOffCycleResult,
+  RemunerationOffcycleRun,
+  RemunerationResult,
+  RemunerationRun,
+} from "../classes";
 import { Collection } from "../Database";
 import {
   FilteredList,
   ListItems,
   ListUniqueItems,
   monthBegin,
+  monthEnd,
   rangeOverlap,
   trimSelection,
 } from "../functions";
@@ -40,31 +48,52 @@ export function ManageRemunerationRun() {
   const { data, processed, changeData, reset } = useData(
     defaultRemunerationRun,
   );
-  const { CompanyCode, Year, Month, BatchId, CalcFrom, Employees, Groups } =
-    data;
+  const {
+    CompanyCode,
+    Year,
+    Month,
+    BatchId,
+    CalcFrom,
+    Employees,
+    Groups,
+    OffCycle,
+    OffCycleDate,
+  } = data;
   const { addError, DisplayHidingError, clearErrors, errorsExist } = useError();
   const company = new Company(CompanyCode);
-  const rr = new RemunerationRun(CompanyCode, Year, Month, BatchId);
+  const rr = OffCycle
+    ? new RemunerationOffcycleRun(CompanyCode, OffCycleDate)
+    : new RemunerationRun(CompanyCode, Year, Month, BatchId);
   useEffect(() => {
     clearErrors();
     addError(!company.exists(), "Company", "Company does not exist.");
-    addError(
-      rr.exists(),
-      "BatchID",
-      "Remuneration Run with same batch ID already exists.",
-    );
-    addError(BatchId === "", "BatchID", "Batch ID cannot be blank.");
-    addError(Year === "", "Year", "Year cannot be blank.");
-    addError(
-      CalcFrom === "",
-      "Calc From",
-      `'Calculate from' date cannot be blank.`,
-    );
-    addError(
-      Year !== "" && CalcFrom > monthBegin(Year, Month),
-      "Calc From",
-      `'Calculate From' date cannot be later than month beginning.`,
-    );
+    if (!OffCycle) {
+      addError(
+        rr.exists(),
+        "BatchID",
+        "Remuneration Run with same batch ID already exists.",
+      );
+      addError(BatchId === "", "BatchID", "Batch ID cannot be blank.");
+      addError(Year === "", "Year", "Year cannot be blank.");
+      addError(
+        CalcFrom === "",
+        "Calc From",
+        `'Calculate from' date cannot be blank.`,
+      );
+      addError(
+        Year !== "" && CalcFrom > monthBegin(Year, Month),
+        "Calc From",
+        `'Calculate From' date cannot be later than month beginning.`,
+      );
+    }
+    if (OffCycle) {
+      addError(
+        rr.exists(),
+        "Date",
+        "Remuneration already run on the Off-cycle Date.",
+      );
+      addError(OffCycleDate === "", "OffCycleDate", "Date cannot be blank.");
+    }
   }, [data]);
   return (
     <>
@@ -82,12 +111,22 @@ export function ManageRemunerationRun() {
                   [],
                   [
                     () => {
-                      rr.run(
-                        CalcFrom,
-                        trimSelection(Employees),
-                        trimSelection(Groups),
+                      OffCycle
+                        ? rr.run(
+                            trimSelection(Employees),
+                            trimSelection(Groups),
+                          )
+                        : rr.run(
+                            CalcFrom,
+                            trimSelection(Employees),
+                            trimSelection(Groups),
+                          );
+                      openWindow(
+                        <RemunerationRunStatus
+                          data={rr.getData()}
+                          offcycle={OffCycle}
+                        />,
                       );
-                      openWindow(<RemunerationRunStatus data={rr.getData()} />);
                       reset();
                     },
                   ],
@@ -112,53 +151,6 @@ export function ManageRemunerationRun() {
             />
           </Row>
           <Row overflow="visible">
-            <Label label={"Year"} />
-            <Input
-              value={Year}
-              process={(value) => changeData("", "Year", value)}
-              type={"number"}
-              placeholder={"Year"}
-            />
-          </Row>
-          <Row overflow="visible">
-            <Label label={"Month"} />
-            <Option
-              value={Month}
-              process={(value) => changeData("", "Month", value)}
-              options={[
-                "01",
-                "02",
-                "03",
-                "04",
-                "05",
-                "06",
-                "07",
-                "08",
-                "09",
-                "10",
-                "11",
-                "12",
-              ]}
-            />
-          </Row>
-          <Row overflow="visible">
-            <Label label={"Batch Id"} />
-            <Input
-              value={BatchId}
-              process={(value) => changeData("", "BatchId", value)}
-              type={"text"}
-              maxLength={4}
-            />
-          </Row>
-          <Row overflow="visible">
-            <Label label={"Calculate From"} />
-            <Input
-              value={CalcFrom}
-              process={(value) => changeData("", "CalcFrom", value)}
-              type={"date"}
-            />
-          </Row>
-          <Row overflow="visible">
             <Label label={"Employees"} />
             <Selection
               value={Employees}
@@ -170,6 +162,81 @@ export function ManageRemunerationRun() {
             <Label label={"Employee Groups"} />
             <Selection value={Groups} changeData={changeData} path={"Groups"} />
           </Row>
+
+          <Column
+            borderBottom="none"
+            bg={OffCycle ? "none" : "var(--lightbluet)"}
+            padding="5px"
+          >
+            <Row overflow="visible">
+              <Label label={"Year"} />
+              <Input
+                value={Year}
+                process={(value) => changeData("", "Year", value)}
+                type={"number"}
+                placeholder={"Year"}
+              />
+            </Row>
+            <Row overflow="visible">
+              <Label label={"Month"} />
+              <Option
+                value={Month}
+                process={(value) => changeData("", "Month", value)}
+                options={[
+                  "01",
+                  "02",
+                  "03",
+                  "04",
+                  "05",
+                  "06",
+                  "07",
+                  "08",
+                  "09",
+                  "10",
+                  "11",
+                  "12",
+                ]}
+              />
+            </Row>
+            <Row overflow="visible">
+              <Label label={"Batch Id"} />
+              <Input
+                value={BatchId}
+                process={(value) => changeData("", "BatchId", value)}
+                type={"text"}
+                maxLength={4}
+              />
+            </Row>
+            <Row overflow="visible">
+              <Label label={"Calculate From"} />
+              <Input
+                value={CalcFrom}
+                process={(value) => changeData("", "CalcFrom", value)}
+                type={"date"}
+              />
+            </Row>
+          </Column>
+          <Column
+            borderBottom="none"
+            bg={OffCycle ? "var(--lightbluet)" : "none"}
+            padding="5px"
+          >
+            <Row jc="left">
+              <Label label="Off Cycle Run" />
+              <CheckBox
+                value={OffCycle}
+                process={(value) => changeData("", "OffCycle", value)}
+              />
+            </Row>
+            <Row overflow="visible">
+              <Label label={"Off Cycle Date"} />
+              <Input
+                value={OffCycleDate}
+                process={(value) => changeData("", "OffCycleDate", value)}
+                type={"date"}
+              />
+            </Row>
+          </Column>
         </DisplayArea>
       </WindowContent>
     </>
@@ -183,10 +250,14 @@ export function QueryRemunerationRun() {
     Year: "",
     Month: "",
     BatchId: "",
+    OffCycle: false,
+    OffCycleDate: "",
   });
-  const { CompanyCode, Year, Month, BatchId } = data;
+  const { CompanyCode, Year, Month, BatchId, OffCycle, OffCycleDate } = data;
   const company = new Company(CompanyCode);
-  const rr = new RemunerationRun(CompanyCode, Year, Month, BatchId);
+  const rr = OffCycle
+    ? new RemunerationOffcycleRun(CompanyCode, OffCycleDate)
+    : new RemunerationRun(CompanyCode, Year, Month, BatchId);
   return (
     <>
       <WindowTitle
@@ -197,7 +268,13 @@ export function QueryRemunerationRun() {
             result={rr.exists()}
             whileFalse={[() => showAlert("Remuneration Run does not exist.")]}
             whileTrue={[
-              () => openWindow(<RemunerationRunStatus data={rr.getData()} />),
+              () =>
+                openWindow(
+                  <RemunerationRunStatus
+                    data={rr.getData()}
+                    offcycle={OffCycle}
+                  />,
+                ),
             ]}
           />,
         ]}
@@ -214,53 +291,80 @@ export function QueryRemunerationRun() {
               placeholder={"Company Code"}
             />
           </Row>
-          <Row overflow="visible">
-            <Label label={"Year"} />
-            <Input
-              value={Year}
-              process={(value) => changeData("", "Year", value)}
-              type={"number"}
-              placeholder={"Year"}
-            />
-          </Row>
-          <Row overflow="visible">
-            <Label label={"Month"} />
-            <Option
-              value={Month}
-              process={(value) => changeData("", "Month", value)}
-              options={[
-                "01",
-                "02",
-                "03",
-                "04",
-                "05",
-                "06",
-                "07",
-                "08",
-                "09",
-                "10",
-                "11",
-                "12",
-              ]}
-            />
-          </Row>
-          <Row overflow="visible">
-            <Label label={"Batch Id"} />
-            <Input
-              value={BatchId}
-              process={(value) => changeData("", "BatchId", value)}
-              type={"text"}
-              maxLength={4}
-            />
-          </Row>
+          <Column
+            borderBottom="none"
+            bg={OffCycle ? "none" : "var(--lightbluet)"}
+            padding="5px"
+          >
+            <Row overflow="visible">
+              <Label label={"Year"} />
+              <Input
+                value={Year}
+                process={(value) => changeData("", "Year", value)}
+                type={"number"}
+                placeholder={"Year"}
+              />
+            </Row>
+            <Row overflow="visible">
+              <Label label={"Month"} />
+              <Option
+                value={Month}
+                process={(value) => changeData("", "Month", value)}
+                options={[
+                  "01",
+                  "02",
+                  "03",
+                  "04",
+                  "05",
+                  "06",
+                  "07",
+                  "08",
+                  "09",
+                  "10",
+                  "11",
+                  "12",
+                ]}
+              />
+            </Row>
+            <Row overflow="visible">
+              <Label label={"Batch Id"} />
+              <Input
+                value={BatchId}
+                process={(value) => changeData("", "BatchId", value)}
+                type={"text"}
+                maxLength={4}
+              />
+            </Row>
+          </Column>
+          <Column
+            borderBottom="none"
+            bg={OffCycle ? "var(--lightbluet)" : "none"}
+            padding="5px"
+          >
+            <Row jc="left">
+              <Label label="Off Cycle Run" />
+              <CheckBox
+                value={OffCycle}
+                process={(value) => changeData("", "OffCycle", value)}
+              />
+            </Row>
+            <Row overflow="visible">
+              <Label label={"Off Cycle Date"} />
+              <Input
+                value={OffCycleDate}
+                process={(value) => changeData("", "OffCycleDate", value)}
+                type={"date"}
+              />
+            </Row>
+          </Column>
         </DisplayArea>
       </WindowContent>
     </>
   );
 }
 
-export function RemunerationRunStatus({ data }) {
-  const { Company, Year, Month, BatchId, Status } = data;
+export function RemunerationRunStatus({ data, offcycle = false }) {
+  const { Company, Year, Month, BatchId, Date: OffCycleDate, Status } = data;
   const { openWindow } = useInterface();
   return (
     <>
@@ -279,18 +383,33 @@ export function RemunerationRunStatus({ data }) {
             <Label label={"Company"} />
             <label>{Company}</label>
           </Row>
-          <Row>
-            <Label label={"Year"} />
-            <label>{Year}</label>
-          </Row>
-          <Row>
-            <Label label={"Month"} />
-            <label>{Month}</label>
-          </Row>
-          <Row>
-            <Label label={"Batch ID"} />
-            <label>{BatchId}</label>
-          </Row>
+          <ConditionalDisplay
+            logic={offcycle}
+            whileFalse={
+              <>
+                <Row>
+                  <Label label={"Year"} />
+                  <label>{Year}</label>
+                </Row>
+                <Row>
+                  <Label label={"Month"} />
+                  <label>{Month}</label>
+                </Row>
+                <Row>
+                  <Label label={"Batch ID"} />
+                  <label>{BatchId}</label>
+                </Row>
+              </>
+            }
+            whileTrue={
+              <>
+                <Row>
+                  <Label label={"Off-cycle Date"} />
+                  <label>{OffCycleDate}</label>
+                </Row>
+              </>
+            }
+          />
           <Column>
             <Label label={"Status"} />
             <Table
@@ -308,12 +427,25 @@ export function RemunerationRunStatus({ data }) {
                           () =>
                             openWindow(
                               <RemunerationSlip
-                                data={new RemunerationResult(
-                                  Company,
-                                  employee.Employee,
-                                  Year,
-                                  Month,
-                                ).slip()}
+                                data={
+                                  offcycle
+                                    ? new RemunerationOffCycleResult(
+                                        Company,
+                                        employee.Employee,
+                                        OffCycleDate,
+                                      ).slip()
+                                    : new RemunerationResult(
+                                        Company,
+                                        employee.Employee,
+                                        Year,
+                                        Month,
+                                      ).slip()
+                                }
+                                date={
+                                  offcycle
+                                    ? OffCycleDate
+                                    : monthEnd(Year, Month)
+                                }
                               />,
                             ),
                         ]}
