@@ -59,9 +59,12 @@ export function PostedRemunerationTable() {
   }
   const result = [];
   data.forEach((record) => {
-    const { Company, Year, Month, Employee, Wages } = record;
+    const { Company, Year, Month, Employee, Wages, Type, Date } = record;
     Wages.forEach((wageRecord) => {
-      result.push({ ...wageRecord, ...{ Company, Year, Employee, Month } });
+      result.push({
+        ...wageRecord,
+        ...{ Company, Year, Employee, Month, Type, Date },
+      });
     });
   });
   return result;

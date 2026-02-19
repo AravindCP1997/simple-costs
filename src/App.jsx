@@ -38,6 +38,7 @@ import {
   MaterialDocument,
   MaterialReceipt,
   PaymentTerms,
+  ProcessAccountingDocument,
   ProfitCenter,
   PurchaseOrder,
   Region,
@@ -80,10 +81,12 @@ import {
 } from "./businessFunctions";
 import useData from "./useData";
 import { defaultSelection } from "./defaults";
+import { useAccounting } from "./useAccounting";
 
 export function Scratch() {
   const { showAlert } = useInterface();
   const { setscreen } = useInterface();
+
   return (
     <>
       <WindowTitle

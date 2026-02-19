@@ -201,6 +201,7 @@ import {
   QueryRemunerationRun,
 } from "./Transactions/RemunerationRun";
 import { QueryRemunerationSlip } from "./Transactions/RemunerationSlip";
+import { QueryRemunerationTable } from "./Transactions/PostedRemunerationTable";
 
 const codes = [
   {
@@ -904,6 +905,14 @@ const codes = [
     screen: <Window />,
     window: <QueryRemunerationRun />,
     name: "Remuneration Run Staus",
+    group: "Report",
+    subgroup: "Human Resources",
+  },
+  {
+    code: "rmt",
+    screen: <Window />,
+    window: <QueryRemunerationTable />,
+    name: "Remuneration Table",
     group: "Report",
     subgroup: "Human Resources",
   },

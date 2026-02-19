@@ -452,7 +452,7 @@ export function dateInYear(date, year, beginMonth) {
 }
 
 export function refine(data, sample) {
-  const result = { ...data };
+  const result = JSON.parse(JSON.stringify(data));
   const required = Object.keys(sample);
   const existing = Object.keys(data);
   existing.forEach((key) => {
