@@ -202,6 +202,7 @@ import {
 } from "./Transactions/RemunerationRun";
 import { QueryRemunerationSlip } from "./Transactions/RemunerationSlip";
 import { QueryRemunerationTable } from "./Transactions/PostedRemunerationTable";
+import { ManageRemunerationExpensePosting } from "./Transactions/RemunerationExpensePost";
 
 const codes = [
   {
@@ -885,7 +886,7 @@ const codes = [
     subgroup: "Human Resources",
   },
   {
-    code: "remrun",
+    code: "rem_run",
     screen: <Window />,
     window: <ManageRemunerationRun />,
     name: "Remuneration Run",
@@ -893,7 +894,15 @@ const codes = [
     subgroup: "Human Resources",
   },
   {
-    code: "remslip",
+    code: "rem_exp",
+    screen: <Window />,
+    window: <ManageRemunerationExpensePosting />,
+    name: "Remuneration Expense Posting",
+    group: "Record",
+    subgroup: "Human Resources",
+  },
+  {
+    code: "rem_slip",
     screen: <Window />,
     window: <QueryRemunerationSlip />,
     name: "Remuneration Slip",
@@ -901,7 +910,7 @@ const codes = [
     subgroup: "Human Resources",
   },
   {
-    code: "remstatus",
+    code: "rem_status",
     screen: <Window />,
     window: <QueryRemunerationRun />,
     name: "Remuneration Run Staus",
@@ -909,7 +918,7 @@ const codes = [
     subgroup: "Human Resources",
   },
   {
-    code: "rmt",
+    code: "rem_table",
     screen: <Window />,
     window: <QueryRemunerationTable />,
     name: "Remuneration Table",

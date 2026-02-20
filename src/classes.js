@@ -1305,7 +1305,6 @@ export class Employee extends CompanyCollection {
     });
     return result;
   }
-
   taxCode(year) {
     const filtered = this.getData().TaxCode.find((item) =>
       rangeOverlap([item.From, item.To], [year.toString(), year.toString()]),
@@ -1320,6 +1319,12 @@ export class Employee extends CompanyCollection {
   }
   deductions(year) {
     return SumFieldIfs(this.getData().Deductions, "Amount", ["Year"], [year]);
+  }
+  standarddeduction(year, taxableWage) {
+    const taxcode = this.taxCode(year);
+    if (taxcode.exists() && taxcode.yearExists(year)) {
+      return taxcode.standardDeduction(year, taxableWage);
+    }
   }
   tax(year, income) {
     const taxcode = this.taxCode(year);
@@ -2567,38 +2572,6 @@ export class MaterialDocument extends YearlyCompanyCollection {
   }
 }
 
-export class CostingDocument extends YearlyCompanyCollection {
-  constructor(documentNo, year, company, name = "CostingDocument") {
-    super(year, company, name);
-    this.documentNo = documentNo;
-    this.criteria = { DocumentNo: this.documentNo };
-  }
-  exists() {
-    return super.exists(this.criteria);
-  }
-  getData() {
-    return super.getData(this.criteria);
-  }
-  delete() {
-    return super.delete(this.criteria);
-  }
-  update(data) {
-    return super.update(this.criteria, data);
-  }
-  add(data) {
-    const numberingStart = this.company
-      .getData()
-      .Numbering.find((item) => item.Item === "Costing Document").From;
-    const Number = super.autoNumber(
-      this.criteria,
-      "DocumentNo",
-      numberingStart,
-    );
-    super.add({ ...data, ["DocumentNo"]: Number });
-    return `Costing Document created, Number: ${Number}`;
-  }
-}
-
 export class Transaction extends Collection {
   constructor(company, year, number, type, name = "Transaction") {
     super(name);
@@ -3073,42 +3046,28 @@ export const EntryTypes = {
       A: "Asset",
       T: "D",
       D: "Increase Carrying Amount of Asset",
+      O: "A2",
     },
     {
       C: "A2",
       A: "Asset",
       T: "C",
       D: "Decrease Carrying Amount of Asset",
-    },
-    {
-      C: "A3",
-      A: "Asset",
-      T: "C",
-      D: "Depreciation",
-    },
-    {
-      C: "A4",
-      A: "Asset",
-      T: "D",
-      D: "Depreciation Reversal",
+      O: "A1",
     },
     {
       C: "G1",
       A: "GeneralLedger",
       T: "D",
       D: "Normal Debit to General Ledger",
+      O: "G2",
     },
     {
       C: "G2",
       A: "GeneralLedger",
       T: "C",
       D: "Normal Credit to General Ledger",
-    },
-    {
-      C: "V1",
-      A: "Vendor",
-      T: "C",
-      D: "Normal Credit to Vendor",
+      O: "G1",
     },
   ],
   list: function (field) {
@@ -3119,6 +3078,9 @@ export const EntryTypes = {
   },
   isDebit: function (code) {
     return this.getField(code, "T") === "D";
+  },
+  opposite: function (code) {
+    return this.getField(code, "O");
   },
 };
 
@@ -3286,17 +3248,26 @@ export class RemunerationCalc {
   yearlyTaxableWage() {
     return this.taxableWage() + this.restOfYearTaxableWage().taxableWage;
   }
+  taxyear() {
+    return this.company.year(monthBegin(this.year, this.month));
+  }
+  standardDeduction() {
+    return this.employee.standarddeduction(
+      this.taxyear(),
+      this.yearlyTaxableWage(),
+    );
+  }
   additions() {
-    return this.employee.additions(this.year);
+    return this.employee.additions(this.taxyear());
   }
   deductions() {
-    return this.employee.deductions(this.year);
+    return this.employee.deductions(this.taxyear());
   }
   totalIncome() {
     return this.yearlyTaxableWage() + this.additions() - this.deductions();
   }
   tax() {
-    return this.employee.tax(this.year, this.totalIncome());
+    return this.employee.tax(this.taxyear(), this.totalIncome());
   }
   taxRate() {
     return this.tax() / this.yearlyTaxableWage();
@@ -3546,21 +3517,52 @@ export class RemunerationRun extends Collection {
   }
 }
 
-export class RemunerationExpensePosting {
-  constructor(CompanyCode, Year, Month, DocumentDate) {
+export class RemunerationExpensePosting extends Collection {
+  constructor(CompanyCode, Year, Month) {
+    super("RemunerationExpensePosting");
     this.companycode = CompanyCode;
     this.year = Year;
     this.month = Month;
-    this.documentdate = DocumentDate;
     this.company = new Company(this.companycode);
+    this.criteria = {
+      Company: this.companycode,
+      Year: this.year,
+      Month: this.month,
+      Type: "Regular",
+    };
+  }
+  FY() {
+    return this.company.year(monthEnd(this.year, this.month));
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  posted() {
+    if (!this.exists()) {
+      return false;
+    }
+    return this.getData().Posted;
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  add(data) {
+    return super.add({ ...this.criteria, ...data });
+  }
+  update(data) {
+    return super.update(this.criteria, data);
   }
   postedData() {
     const data = filterByMultipleSelection(PostedRemunerationTable(), [
       filter("Company", "StringCaseSensitive", [this.companycode]),
       filter("Year", "StringCaseSensitive", [this.year]),
       filter("Month", "StringCaseSensitive", [this.month]),
+      filter("Type", "StringCaseSensitive", ["Regular"]),
     ]);
     return data;
+  }
+  dataExists() {
+    return this.postedData().length > 0;
   }
   transformedData() {
     return this.postedData().map((record) => {
@@ -3647,7 +3649,7 @@ export class RemunerationExpensePosting {
     return {
       Company: this.companycode,
       PostingDate: monthEnd(this.year, this.month),
-      DocumentDate: this.documentdate,
+      DocumentDate: monthEnd(this.year, this.month),
       DocumentType: "SE",
       CreationInfo: `${this.year}-${this.month}`,
       Currency: this.company.getData().Currency,
@@ -3657,6 +3659,9 @@ export class RemunerationExpensePosting {
   }
   processAccountingDocument() {
     return new ProcessAccountingDocument(this.entry(), this.companycode);
+  }
+  processCostingDocument() {
+    return new ProcessCostingDocument(this.costEntry(), this.companycode);
   }
   costItems() {
     const data = this.transformedData().filter(
@@ -3693,9 +3698,31 @@ export class RemunerationExpensePosting {
     return {
       Company: this.companycode,
       PostingDate: monthEnd(this.year, this.month),
+      Currency: this.company.getData().Currency,
       Text: `Remuneration Expense Posting ${monthEnd(this.year, this.month)}`,
       Entries: [...this.costItems()],
     };
+  }
+  post() {
+    const { DocumentNo: AccountingDocument } =
+      this.processAccountingDocument().add();
+    const { DocumentNo: CostingDocument } = this.processCostingDocument().add();
+    this.add({ AccountingDocument, Posted: true, CostingDocument });
+  }
+  accountingDocument() {
+    const { AccountingDocument: AccDocNo, CostingDocument: CostDocNo } =
+      this.getData();
+    return new AccountingDocument(this.companycode, AccDocNo, this.FY());
+  }
+  costingDocument() {
+    const { AccountingDocument: AccDocNo, CostingDocument: CostDocNo } =
+      this.getData();
+    return new CostingDocument(this.companycode, CostDocNo, this.FY());
+  }
+  reverse() {
+    this.accountingDocument().reverse(monthEnd(this.year, this.month));
+    this.costingDocument().reverse(monthEnd(this.year, this.month));
+    this.update({ AccountingDocument: "", CostingDocument: "", Posted: false });
   }
 }
 
@@ -3815,7 +3842,7 @@ export class RemunerationOffCycleResult extends Collection {
       Date: this.date,
       Year: this.year,
       Month: this.month,
-      Type: "Offcycle",
+      Type: "OffCycle",
     };
   }
   exists() {
@@ -3943,6 +3970,219 @@ export class RemunerationOffcycleRun extends Collection {
   }
 }
 
+export class RemunerationOffcycleExpensePosting extends Collection {
+  constructor(
+    CompanyCode,
+    OffCycleDate,
+    Year = year(OffCycleDate),
+    Month = month(OffCycleDate),
+  ) {
+    super("RemunerationExpensePosting");
+    this.companycode = CompanyCode;
+    this.year = Year;
+    this.month = Month;
+    this.date = OffCycleDate;
+    this.company = new Company(this.companycode);
+    this.criteria = {
+      Company: this.companycode,
+      Date: this.date,
+      Type: "OffCycle",
+    };
+  }
+  FY() {
+    return this.company.year(this.date);
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  posted() {
+    if (!this.exists()) {
+      return false;
+    }
+    return this.getData().Posted;
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  add(data) {
+    return super.add({ ...this.criteria, ...data });
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+  postedData() {
+    const data = filterByMultipleSelection(PostedRemunerationTable(), [
+      filter("Company", "StringCaseSensitive", [this.companycode]),
+      filter("Date", "StringCaseSensitive", [this.date]),
+      filter("Type", "StringCaseSensitive", ["OffCycle"]),
+    ]);
+    return data;
+  }
+  dataExists() {
+    return this.postedData().length > 0;
+  }
+  transformedData() {
+    return this.postedData().map((record) => {
+      const { OrgUnit, Employee: employeecode } = record;
+      const [Type, Code] = OrgUnit.split("/");
+      const unitMaster = new CompanyCollection(this.companycode, Type).getData({
+        Code,
+      });
+      const pc = unitMaster.ProfitCenter;
+      const employeemaster = new Employee(
+        employeecode,
+        this.companycode,
+      ).getData();
+      const eg = employeemaster.EmployeeGroupCode;
+      return { ...record, PC: pc, EG: eg };
+    });
+  }
+  wagesEntry() {
+    const data = this.transformedData().filter(
+      (item) =>
+        !["WHT", "NPAY", "TWAGE", "PMT", "DUE", "DUER"].includes(item.WT),
+    );
+    const WTs = ListUniqueItems(data, "WT");
+    const PCs = ListUniqueItems(data, "PC");
+    const result = [];
+    WTs.forEach((WT) => {
+      const master = new WageType(WT, this.companycode).getData();
+      const gl = master.GL;
+      PCs.forEach((PC) => {
+        const Amount = SumFieldIfs(data, "Amount", ["PC", "WT"], [PC, WT]);
+        result.push({
+          Account: gl,
+          PC,
+          Amount,
+          ET: Amount >= 0 ? "G1" : "G2",
+        });
+      });
+    });
+    return result;
+  }
+  payablesEntry() {
+    const result = [];
+    const data = this.transformedData();
+    const PCs = ListUniqueItems(data, "PC");
+    const EGs = ListUniqueItems(data, "EG");
+    PCs.forEach((PC) => {
+      EGs.forEach((EG) => {
+        const egmaster = new EmployeeGroup(EG, this.companycode).getData();
+        const payableGL = egmaster.GL;
+        const whtGL = egmaster.GLWHT;
+        const payable = SumFieldIfs(
+          this.transformedData(),
+          "Amount",
+          ["WT", "PC", "EG"],
+          ["NPAY", PC, EG],
+        );
+        const wht = SumFieldIfs(
+          this.transformedData(),
+          "Amount",
+          ["WT", "PC", "EG"],
+          ["WHT", PC, EG],
+        );
+        result.push(
+          ...[
+            {
+              Account: payableGL,
+              Amount: payable,
+              PC,
+              ET: payable >= 0 ? "G1" : "G2",
+            },
+            {
+              Account: whtGL,
+              Amount: wht,
+              PC,
+              ET: wht >= 0 ? "G2" : "G1",
+            },
+          ],
+        );
+      });
+    });
+    return result;
+  }
+  entry() {
+    return {
+      Company: this.companycode,
+      PostingDate: monthEnd(this.year, this.month),
+      DocumentDate: this.date,
+      DocumentType: "SE",
+      CreationInfo: `${this.date}`,
+      Currency: this.company.getData().Currency,
+      Text: `Remuneration Expense Posting ${this.date}`,
+      Entries: [...this.wagesEntry(), ...this.payablesEntry()],
+    };
+  }
+  processAccountingDocument() {
+    return new ProcessAccountingDocument(this.entry(), this.companycode);
+  }
+  processCostingDocument() {
+    return new ProcessCostingDocument(this.costEntry(), this.companycode);
+  }
+  costItems() {
+    const data = this.transformedData().filter(
+      (item) =>
+        !["WHT", "NPAY", "TWAGE", "PMT", "DUE", "DUER"].includes(item.WT),
+    );
+    const WTs = ListUniqueItems(data, "WT");
+    const Employees = ListUniqueItems(data, "Employee");
+    const CostElements = WTs.filter(
+      (item) =>
+        new WageType(item, this.companycode).getData().CostElement === true,
+    );
+    const result = [];
+    Employees.forEach((employee) => {
+      const wages = data.filter((item) => item.Employee === employee);
+      wages.forEach((wage) => {
+        const { WT, Amount, From, To } = wage;
+        if (CostElements.includes(WT)) {
+          const element = new WageType(WT, this.companycode).getData().GL;
+          result.push({
+            Element: element,
+            From,
+            To,
+            Amount,
+            ObjectType: "Employee",
+            Object: employee,
+          });
+        }
+      });
+    });
+    return result;
+  }
+  costEntry() {
+    return {
+      Company: this.companycode,
+      PostingDate: this.date,
+      Currency: this.company.getData().Currency,
+      Text: `Remuneration Expense Posting ${this.date}`,
+      Entries: [...this.costItems()],
+    };
+  }
+  post() {
+    const { DocumentNo: AccountingDocument } =
+      this.processAccountingDocument().add();
+    const { DocumentNo: CostingDocument } = this.processCostingDocument().add();
+    this.add({ AccountingDocument, Posted: true, CostingDocument });
+  }
+  accountingDocument() {
+    const { AccountingDocument: AccDocNo, CostingDocument: CostDocNo } =
+      this.getData();
+    return new AccountingDocument(this.companycode, AccDocNo, this.FY());
+  }
+  costingDocument() {
+    const { AccountingDocument: AccDocNo, CostingDocument: CostDocNo } =
+      this.getData();
+    return new CostingDocument(this.companycode, CostDocNo, this.FY());
+  }
+  reverse() {
+    this.accountingDocument().reverse(this.date);
+    this.costingDocument().reverse(this.date);
+    this.update({ AccountingDocument: "", CostingDocument: "", Posted: false });
+  }
+}
+
 export class AccountingDocument extends CompanyCollection {
   constructor(company, documentNo, year, name = "AccountingDocument") {
     super(company, name);
@@ -3979,6 +4219,25 @@ export class AccountingDocument extends CompanyCollection {
   update(data) {
     this.delete();
     super.save(data);
+  }
+  reversalData(PostingDate) {
+    const data = this.getData();
+    return {
+      ...data,
+      ...{
+        PostingDate,
+        Entries: data.Entries.forEach((entry) => ({
+          ...entry,
+          ["ET"]: EntryTypes.opposite(entry.ET),
+        })),
+      },
+    };
+  }
+  reverse(PostingDate) {
+    return new ProcessAccountingDocument(
+      this.reversaldata(PostingDate),
+      this.companycode,
+    ).update();
   }
 }
 
@@ -4077,9 +4336,160 @@ export class ProcessAccountingDocument {
     return new AccountingDocument(this.companycode, DocumentNo, Year);
   }
   add() {
-    return this.accountingDocument().add(this.processed);
+    return this.accountingDocument().add(this.processed());
   }
   update() {
-    return this.accountingDocument().update(this.processed);
+    return this.accountingDocument().update(this.processed());
+  }
+}
+
+export class CostingDocument extends CompanyCollection {
+  constructor(company, documentNo, year, name = "CostingDocument") {
+    super(company, name);
+    this.documentNo = Number(documentNo);
+    this.year = year;
+    this.criteria = {
+      Company: this.companycode,
+      Year: this.year,
+      DocumentNo: this.documentNo,
+    };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  add(data) {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Costing Document").From;
+    const DocumentNo = super.autoNumber(
+      this.criteria,
+      "DocumentNo",
+      numberingStart,
+    );
+    super.add({ ...this.criteria, ...data, ...{ DocumentNo } });
+    const result = true;
+    return { result, DocumentNo };
+  }
+  delete() {
+    super.delete(this.criteria);
+  }
+  update(data) {
+    this.delete();
+    super.save(data);
+  }
+  reversalData(PostingDate) {
+    const data = this.getData();
+    return {
+      ...data,
+      ...{
+        PostingDate,
+        Costs: data.Costs.forEach((cost) => ({
+          ...cost,
+          ["Amount"]: -cost.Amount,
+        })),
+      },
+    };
+  }
+  reverse(PostingDate) {
+    return new ProcessAccountingDocument(
+      this.reversaldata(PostingDate),
+      this.companycode,
+    ).update();
+  }
+}
+
+export class ProcessCostingDocument {
+  constructor(data = {}, company = data.Company) {
+    this.data = data;
+    this.company = new Company(company);
+    this.companycode = company;
+  }
+  defaultData() {
+    return {
+      Company: this.companycode,
+      PostingDate: "",
+      DocumentNo: "",
+      Year: "",
+      Text: "",
+      CreationInfo: "",
+      Currency: "",
+      ExchangeRate: 1,
+      Entries: [],
+    };
+  }
+  defaultEntry() {
+    return {
+      Element: "",
+      Amount: 0,
+      AmountInLC: 0,
+      ObjectType: "CostCenter",
+      Object: "",
+      From: "",
+      To: "",
+    };
+  }
+  year() {
+    const { PostingDate } = this.data;
+    if (PostingDate === "" || !this.company.exists()) {
+      return "";
+    }
+    return this.company.year(this.data.PostingDate);
+  }
+  preprocessed() {
+    return refine({ ...this.defaultData(), ...this.data }, this.defaultData());
+  }
+  exchangeRate() {
+    return this.preprocessed().ExchangeRate;
+  }
+  processed() {
+    const data = this.preprocessed();
+    data.Year = this.year();
+    const { Entries } = data;
+    data.Entries = [];
+    data.Entries = Entries.map((entry) => this.processedEntry(entry));
+    return data;
+  }
+  processedEntry(entry) {
+    const data = refine(
+      { ...this.defaultEntry(), ...entry },
+      this.defaultEntry(),
+    );
+    const ER = this.exchangeRate();
+    const { Element, Amount, ObjectType, Object } = data;
+    data.AmountInLC = Amount * ER;
+    return data;
+  }
+  errors() {
+    const list = [];
+    const addError = (logic, path, error) => {
+      if (logic) {
+        list.push({ path, error });
+      }
+    };
+    const { PostingDate } = this.processed();
+    addError(PostingDate === "", "PostingDate", "Posting Date blank.");
+    addError(
+      this.company.exists() &&
+        !this.company.openperiods.costingOpen(PostingDate),
+      "PostingDate",
+      "Posting Date not open.",
+    );
+    return list;
+  }
+  errorsExist() {
+    return this.errors().length > 0;
+  }
+  costingDocument() {
+    const { DocumentNo, Year } = this.processed;
+    return new CostingDocument(this.companycode, DocumentNo, Year);
+  }
+  add() {
+    return this.costingDocument().add(this.processed());
+  }
+  update() {
+    return this.costingDocument().update(this.processed());
   }
 }

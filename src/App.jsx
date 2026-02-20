@@ -45,6 +45,7 @@ import {
   RemunerationCalc,
   RemunerationExpensePosting,
   RemunerationOffcycleCalc,
+  RemunerationOffcycleExpensePosting,
   RemunerationOffCycleResult,
   RemunerationResult,
   RemunerationRun,
