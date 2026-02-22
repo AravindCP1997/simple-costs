@@ -154,6 +154,9 @@ export function DisplayRemunerationTable({ filter }) {
               "From",
               "To",
               "Amount",
+              "Bank",
+              "Account",
+              "SWIFT Code",
             ]}
             rows={filtered.map((item, i) => [
               <label>{item.Company}</label>,
@@ -168,6 +171,9 @@ export function DisplayRemunerationTable({ filter }) {
               <label>{item.From}</label>,
               <label>{item.To}</label>,
               <label>{item.Amount}</label>,
+              <label>{item.Bank}</label>,
+              <label>{item.Account}</label>,
+              <label>{item.SWIFT}</label>,
             ])}
           />
         </DisplayArea>

@@ -168,6 +168,7 @@ export function CreateEmployee({
     Deductions,
     TIN,
     BankAccounts,
+    SelectedBank,
     Blocked,
   } = data;
   const collection = new Employee(Code, Company);
@@ -1275,6 +1276,7 @@ export function CreateEmployee({
                 </Row>
                 <Table
                   columns={[
+                    "Select",
                     "Bank",
                     "SWIFT Code",
                     "Account",
@@ -1282,6 +1284,10 @@ export function CreateEmployee({
                     "",
                   ]}
                   rows={BankAccounts.map((account, a) => [
+                    <CheckBox
+                      value={SelectedBank === a}
+                      process={() => changeData("", "SelectedBank", a)}
+                    />,
                     <Input
                       value={account.Bank}
                       process={(value) =>
@@ -1313,7 +1319,12 @@ export function CreateEmployee({
                     <Button
                       name={"-"}
                       functionsArray={[
-                        () => deleteItemfromArray("BankAccounts", a),
+                        () => {
+                          deleteItemfromArray("BankAccounts", a);
+                          if (SelectedBank === a) {
+                            changeData("", "SelectedBank", 0);
+                          }
+                        },
                       ]}
                     />,
                   ])}

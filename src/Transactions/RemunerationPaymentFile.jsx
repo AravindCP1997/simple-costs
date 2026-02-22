@@ -25,12 +25,8 @@ import useData from "../useData";
 import { useError } from "../useError";
 import {
   Company,
-  RemunerationOffCycleResult,
-  RemunerationOffcycleRun,
-  RemunerationResult,
-  RemunerationRun,
-  RemunerationExpensePosting,
-  RemunerationOffcycleExpensePosting,
+  RemunerationPayment,
+  RemunerationOffcyclePayment,
 } from "../classes";
 import { Collection } from "../Database";
 import {
@@ -42,8 +38,39 @@ import {
   rangeOverlap,
   trimSelection,
 } from "../functions";
+import { defaultSelection } from "../defaults";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
-export function ManageRemunerationExpensePosting() {
+const downloadFile = async (data) => {
+  const wb = new ExcelJS.Workbook();
+  const sheet = wb.addWorksheet("Payment File");
+  sheet.columns = [
+    { header: "Payee", key: "payee", width: 30 },
+    { header: "Amount", key: "amount", width: 30 },
+    { header: "Bank", key: "bank", width: 30 },
+    { header: "Account", key: "account", width: 30 },
+    { header: "SWIFT", key: "swift", width: 30 },
+  ];
+  data.forEach((record) => {
+    const { Payee, Amount, SWIFT, Bank, Account } = record;
+    sheet.addRow({
+      payee: Payee,
+      amount: Amount,
+      bank: Bank,
+      account: Account,
+      swift: SWIFT,
+    });
+  });
+
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  saveAs(blob, "PaymentFile.xlsx");
+};
+
+export function QueryRemunerationPayment() {
   const { showAlert, openConfirm, openWindow } = useInterface();
   const { data, processed, changeData, reset } = useData({
     CompanyCode: "",
@@ -51,58 +78,53 @@ export function ManageRemunerationExpensePosting() {
     Month: "01",
     OffCycle: false,
     OffCycleDate: "",
+    BatchId: "",
   });
-  const { CompanyCode, Year, Month, OffCycle, OffCycleDate } = data;
-  const { addError, DisplayHidingError, clearErrors, errorsExist } = useError();
+  const { CompanyCode, Year, Month, OffCycle, OffCycleDate, BatchId } = data;
   const company = new Company(CompanyCode);
-  const rr = OffCycle
-    ? new RemunerationOffcycleExpensePosting(CompanyCode, OffCycleDate)
-    : new RemunerationExpensePosting(CompanyCode, Year, Month);
-  useEffect(() => {
-    clearErrors();
-    addError(!company.exists(), "Company", "Company does not exist.");
-    addError(
-      rr.posted(),
-      "Selection",
-      "Expense already posted for the period.",
-    );
-    if (OffCycle) {
-      addError(OffCycleDate === "", "OffCycleDate", "Date cannot be blank.");
-    }
-    if (!OffCycle) {
-      addError(Year === "", "Year", "Year cannot be blank.");
-    }
-  }, [data]);
+  const rp = OffCycle
+    ? new RemunerationOffcyclePayment(
+        CompanyCode,
+        OffCycleDate,
+        BatchId,
+        "",
+        "",
+        "",
+      )
+    : new RemunerationPayment(CompanyCode, Year, Month, BatchId, "", "", "");
   return (
     <>
       <WindowTitle
-        title={"Remuneration Expense Posting"}
+        title={"Remuneration Payment File"}
         menu={[
           <ConditionalButton
-            name={"Post"}
-            result={!errorsExist}
-            whileFalse={[() => showAlert("Messages exist. Please check!")]}
+            name={"Display"}
+            result={rp.exists()}
+            whileFalse={[
+              () => showAlert("Payment run does not exist. Please check!"),
+            ]}
             whileTrue={[
               () => {
-                showAlert(rr.post());
+                openWindow(
+                  <DisplayPaymentFile data={rp.getData().PaymentFile} />,
+                );
               },
               () => reset(),
             ]}
           />,
-          <Conditional logic={rr.posted()}>
-            <Button
-              name={"Reverse"}
-              functionsArray={[
-                () =>
-                  openConfirm(
-                    "This action will reverse the expense document.",
-                    [],
-                    [() => rr.reverse()],
-                  ),
-              ]}
-            />
-          </Conditional>,
-          <DisplayHidingError />,
+          <ConditionalButton
+            name={"Download"}
+            result={rp.exists()}
+            whileFalse={[
+              () => showAlert("Payment run does not exist. Please check!"),
+            ]}
+            whileTrue={[
+              () => {
+                downloadFile(rp.getData().PaymentFile);
+              },
+              () => reset(),
+            ]}
+          />,
           <Button name={"Reset"} functionsArray={[() => reset()]} />,
         ]}
       />
@@ -116,6 +138,15 @@ export function ManageRemunerationExpensePosting() {
               suggestions={company.listAll("Code")}
               captions={company.listAll("Name")}
               placeholder={"Company Code"}
+            />
+          </Row>
+          <Row overflow="visible">
+            <Label label={"Batch ID"} />
+            <Input
+              value={BatchId}
+              process={(value) => changeData("", "BatchId", value)}
+              type={"text"}
+              maxLength={6}
             />
           </Row>
           <Column
@@ -174,6 +205,43 @@ export function ManageRemunerationExpensePosting() {
                 type={"date"}
               />
             </Row>
+          </Column>
+        </DisplayArea>
+      </WindowContent>
+    </>
+  );
+}
+
+export function DisplayPaymentFile({ data }) {
+  const { openWindow } = useInterface();
+  return (
+    <>
+      <WindowTitle
+        title={"Payment File"}
+        menu={[
+          <Button
+            name={"Back"}
+            functionsArray={[() => openWindow(<QueryRemunerationPayment />)]}
+          />,
+          <Button
+            name={"Download"}
+            functionsArray={[() => downloadFile(data)]}
+          />,
+        ]}
+      />
+      <WindowContent>
+        <DisplayArea>
+          <Column>
+            <Table
+              columns={["Payee", "Amount", "Bank", "Account", "SWIFT Code"]}
+              rows={data.map((record) => [
+                <label>{record.Payee}</label>,
+                <label>{record.Amount}</label>,
+                <label>{record.Bank}</label>,
+                <label>{record.Account}</label>,
+                <label>{record.SWIFT}</label>,
+              ])}
+            />
           </Column>
         </DisplayArea>
       </WindowContent>

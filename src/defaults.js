@@ -260,6 +260,7 @@ export const defaultEmployee = {
   Additions: [],
   Deductions: [],
   BankAccounts: [],
+  SelectedBank: 0,
   Blocked: false,
 };
 

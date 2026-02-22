@@ -25,12 +25,8 @@ import useData from "../useData";
 import { useError } from "../useError";
 import {
   Company,
-  RemunerationOffCycleResult,
-  RemunerationOffcycleRun,
-  RemunerationResult,
-  RemunerationRun,
-  RemunerationExpensePosting,
-  RemunerationOffcycleExpensePosting,
+  RemunerationPayment,
+  RemunerationOffcyclePayment,
 } from "../classes";
 import { Collection } from "../Database";
 import {
@@ -42,8 +38,9 @@ import {
   rangeOverlap,
   trimSelection,
 } from "../functions";
+import { defaultSelection } from "../defaults";
 
-export function ManageRemunerationExpensePosting() {
+export function ManageRemunerationPayment() {
   const { showAlert, openConfirm, openWindow } = useInterface();
   const { data, processed, changeData, reset } = useData({
     CompanyCode: "",
@@ -51,21 +48,68 @@ export function ManageRemunerationExpensePosting() {
     Month: "01",
     OffCycle: false,
     OffCycleDate: "",
+    PostingDate: "",
+    Employees: defaultSelection("Employee", "Number"),
+    Bank: "",
+    BatchId: "",
   });
-  const { CompanyCode, Year, Month, OffCycle, OffCycleDate } = data;
+  const {
+    CompanyCode,
+    Year,
+    Month,
+    OffCycle,
+    OffCycleDate,
+    Employees,
+    PostingDate,
+    Bank,
+    BatchId,
+  } = data;
   const { addError, DisplayHidingError, clearErrors, errorsExist } = useError();
   const company = new Company(CompanyCode);
-  const rr = OffCycle
-    ? new RemunerationOffcycleExpensePosting(CompanyCode, OffCycleDate)
-    : new RemunerationExpensePosting(CompanyCode, Year, Month);
+  const rp = OffCycle
+    ? new RemunerationOffcyclePayment(
+        CompanyCode,
+        OffCycleDate,
+        BatchId,
+        PostingDate,
+        trimSelection(Employees),
+        Bank,
+      )
+    : new RemunerationPayment(
+        CompanyCode,
+        Year,
+        Month,
+        BatchId,
+        PostingDate,
+        trimSelection(Employees),
+        Bank,
+      );
   useEffect(() => {
     clearErrors();
     addError(!company.exists(), "Company", "Company does not exist.");
     addError(
-      rr.posted(),
-      "Selection",
-      "Expense already posted for the period.",
+      rp.exists(),
+      "Batch",
+      "Payment batch already exists for the period.",
     );
+    addError(
+      !company.collection("BankAccount").exists({ Code: Bank }),
+      "Bank",
+      "Bank Account does not exist.",
+    );
+    addError(
+      PostingDate === "",
+      "PostingDate",
+      "Posting Date cannot be blank.",
+    );
+    addError(
+      company.exists() &&
+        PostingDate !== "" &&
+        !company.openperiods.accountingOpen(PostingDate),
+      "PostingDate",
+      "Posting Date not open.",
+    );
+    addError(BatchId === "", "BatchID", "Batch ID cannot be blank.");
     if (OffCycle) {
       addError(OffCycleDate === "", "OffCycleDate", "Date cannot be blank.");
     }
@@ -76,32 +120,19 @@ export function ManageRemunerationExpensePosting() {
   return (
     <>
       <WindowTitle
-        title={"Remuneration Expense Posting"}
+        title={"Remuneration Payment Posting"}
         menu={[
           <ConditionalButton
-            name={"Post"}
+            name={"Run"}
             result={!errorsExist}
             whileFalse={[() => showAlert("Messages exist. Please check!")]}
             whileTrue={[
               () => {
-                showAlert(rr.post());
+                showAlert(rp.post());
               },
               () => reset(),
             ]}
           />,
-          <Conditional logic={rr.posted()}>
-            <Button
-              name={"Reverse"}
-              functionsArray={[
-                () =>
-                  openConfirm(
-                    "This action will reverse the expense document.",
-                    [],
-                    [() => rr.reverse()],
-                  ),
-              ]}
-            />
-          </Conditional>,
           <DisplayHidingError />,
           <Button name={"Reset"} functionsArray={[() => reset()]} />,
         ]}
@@ -116,6 +147,45 @@ export function ManageRemunerationExpensePosting() {
               suggestions={company.listAll("Code")}
               captions={company.listAll("Name")}
               placeholder={"Company Code"}
+            />
+          </Row>
+          <Row overflow="visible">
+            <Label label={"Posting Date"} />
+            <Input
+              value={PostingDate}
+              process={(value) => changeData("", "PostingDate", value)}
+              type={"date"}
+            />
+          </Row>
+          <Row overflow="visible">
+            <Label label={"Batch ID"} />
+            <Input
+              value={BatchId}
+              process={(value) => changeData("", "BatchId", value)}
+              type={"text"}
+              maxLength={6}
+            />
+          </Row>
+          <Row overflow="visible">
+            <Label label={"Employees"} />
+            <Selection
+              value={Employees}
+              path={"Employees"}
+              changeData={changeData}
+            />
+          </Row>
+          <Row overflow="visible">
+            <Label label={"Company Bank"} />
+            <AutoSuggestInput
+              value={Bank}
+              process={(value) => changeData("", "Bank", value)}
+              suggestions={company
+                .collection("BankAccount")
+                .listAllFromCompany("Code")}
+              captions={company
+                .collection("BankAccount")
+                .listAllFromCompany("Name")}
+              placeholder={"Bank Code"}
             />
           </Row>
           <Column

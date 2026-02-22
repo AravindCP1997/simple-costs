@@ -203,6 +203,9 @@ import {
 import { QueryRemunerationSlip } from "./Transactions/RemunerationSlip";
 import { QueryRemunerationTable } from "./Transactions/PostedRemunerationTable";
 import { ManageRemunerationExpensePosting } from "./Transactions/RemunerationExpensePost";
+import { ManageRemunerationPayment } from "./Transactions/RemunerationPaymentRun";
+import { QueryRemunerationPayment } from "./Transactions/RemunerationPaymentFile";
+import { HumanResources } from "./Transactions/HumanResources";
 
 const codes = [
   {
@@ -220,6 +223,14 @@ const codes = [
     name: "Accessibility",
     group: "System",
     subgroup: "General",
+  },
+  {
+    code: "hr",
+    screen: <Window />,
+    window: <HumanResources />,
+    name: "Human Resources",
+    group: "System",
+    subgroup: "Knowledge Base",
   },
   {
     code: "enty",
@@ -902,10 +913,26 @@ const codes = [
     subgroup: "Human Resources",
   },
   {
+    code: "rem_pay",
+    screen: <Window />,
+    window: <ManageRemunerationPayment />,
+    name: "Remuneration Payment",
+    group: "Record",
+    subgroup: "Human Resources",
+  },
+  {
     code: "rem_slip",
     screen: <Window />,
     window: <QueryRemunerationSlip />,
     name: "Remuneration Slip",
+    group: "Report",
+    subgroup: "Human Resources",
+  },
+  {
+    code: "rem_payfile",
+    screen: <Window />,
+    window: <QueryRemunerationPayment />,
+    name: "Remuneration Payment File",
     group: "Report",
     subgroup: "Human Resources",
   },

@@ -40,7 +40,7 @@ export function Authentication() {
         justifyContent: "center",
         height: "100%",
         width: "100%",
-        background: "var(--grayt)",
+        background: "var(--lightgrayt)",
         color: "white",
         backgroundImage: `url('../Favicon.png')`,
         backgroundSize: "contain",
@@ -97,9 +97,10 @@ export function Authentication() {
               opacity: "0.5",
               margin: "0",
               padding: "5px 2px",
+              color: "var(--red)",
             }}
           >
-            20 02 2026
+            22 02 2026
           </label>
         </Row>
       </div>

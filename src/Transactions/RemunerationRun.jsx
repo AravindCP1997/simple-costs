@@ -85,6 +85,11 @@ export function ManageRemunerationRun() {
         "Calc From",
         `'Calculate From' date cannot be later than month beginning.`,
       );
+      addError(
+        rr.expensePosting().posted(),
+        "Period",
+        "Expense has already been posted for the period, or off-cycle date.",
+      );
     }
     if (OffCycle) {
       addError(
@@ -413,46 +418,11 @@ export function RemunerationRunStatus({ data, offcycle = false }) {
           <Column>
             <Label label={"Status"} />
             <Table
-              columns={["Employee", "Status", "Remarks", "Slip"]}
+              columns={["Employee", "Status", "Remarks"]}
               rows={Status.map((employee) => [
                 <label>{employee.Employee}</label>,
                 <label>{employee.Status}</label>,
                 <label>{employee.Remarks}</label>,
-                <label>
-                  {employee.Status === "Success" && (
-                    <>
-                      <Button
-                        name={"View"}
-                        functionsArray={[
-                          () =>
-                            openWindow(
-                              <RemunerationSlip
-                                data={
-                                  offcycle
-                                    ? new RemunerationOffCycleResult(
-                                        Company,
-                                        employee.Employee,
-                                        OffCycleDate,
-                                      ).slip()
-                                    : new RemunerationResult(
-                                        Company,
-                                        employee.Employee,
-                                        Year,
-                                        Month,
-                                      ).slip()
-                                }
-                                date={
-                                  offcycle
-                                    ? OffCycleDate
-                                    : monthEnd(Year, Month)
-                                }
-                              />,
-                            ),
-                        ]}
-                      />
-                    </>
-                  )}
-                </label>,
               ])}
             />
           </Column>

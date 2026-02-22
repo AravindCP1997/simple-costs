@@ -103,6 +103,24 @@ export function QueryRemunerationSlip() {
                 ),
             ]}
           />,
+          <Conditional logic={rr.exists()}>
+            <ConditionalButton
+              name={"Delete Result"}
+              result={!rr.expensePosting().posted()}
+              whileFalse={[
+                () =>
+                  showAlert(
+                    "Reversal not possible. Expense document has already been posted.",
+                  ),
+              ]}
+              whileTrue={[
+                () => {
+                  showAlert(rr.delete());
+                  reset();
+                },
+              ]}
+            />
+          </Conditional>,
           <Button name={"Reset"} functionsArray={[() => reset()]} />,
         ]}
       />

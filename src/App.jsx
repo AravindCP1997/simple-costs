@@ -46,7 +46,10 @@ import {
   RemunerationExpensePosting,
   RemunerationOffcycleCalc,
   RemunerationOffcycleExpensePosting,
+  RemunerationOffcyclePayment,
   RemunerationOffCycleResult,
+  RemunerationOffcycleRun,
+  RemunerationPayment,
   RemunerationResult,
   RemunerationRun,
   Segments,
@@ -79,6 +82,7 @@ import {
   EmployeeTable,
   MaterialTable,
   PostedRemunerationTable,
+  RemunerationPaymentTable,
 } from "./businessFunctions";
 import useData from "./useData";
 import { defaultSelection } from "./defaults";

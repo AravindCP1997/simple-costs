@@ -59,11 +59,13 @@ export function PostedRemunerationTable() {
   }
   const result = [];
   data.forEach((record) => {
-    const { Company, Year, Month, Employee, Wages, Type, Date } = record;
+    const { Company, Year, Month, Employee, Wages, Type, Date, BankAccount } =
+      record;
+    const { Account, SWIFT, Bank } = BankAccount;
     Wages.forEach((wageRecord) => {
       result.push({
         ...wageRecord,
-        ...{ Company, Year, Employee, Month, Type, Date },
+        ...{ Company, Year, Employee, Month, Type, Date, Account, SWIFT, Bank },
       });
     });
   });
@@ -81,6 +83,24 @@ export function EmployeeTable() {
       Employee: employee.Code,
       Company: employee.Company,
       Group: employee.EmployeeGroupCode,
+    });
+  });
+  return result;
+}
+
+export function RemunerationPaymentTable() {
+  const data = new Collection("RemunerationPayment").load();
+  if (data === null) {
+    return [];
+  }
+  const result = [];
+  data.forEach((record) => {
+    const { Company, Year, Month, Type, Date, PaymentData } = record;
+    PaymentData.forEach((paymentrecord) => {
+      result.push({
+        ...paymentrecord,
+        ...{ Company, Year, Month, Type, Date },
+      });
     });
   });
   return result;

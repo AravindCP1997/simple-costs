@@ -39,6 +39,7 @@ import {
   EmployeeTable,
   MaterialTable,
   PostedRemunerationTable,
+  RemunerationPaymentTable,
 } from "./businessFunctions";
 import { defaultSelection } from "./defaults";
 
@@ -498,6 +499,11 @@ export class Company extends Collection {
   existsGL(gl) {
     return new GeneralLedger(gl, this.code).exists();
   }
+  isHoliday(date) {
+    const year = this.year(date);
+    const holidays = new Holidays(year, this.code);
+    return holidays.isHoliday(date);
+  }
   dateInYear(date, year) {
     return dateInYear(date, year, this.getData().FYBeginning);
   }
@@ -505,10 +511,13 @@ export class Company extends Collection {
     const givenDate = new Date(date);
     const givenYear = givenDate.getFullYear();
     const result = this.dateInYear(date, givenYear) ? givenYear : givenYear - 1;
-    return result;
+    return result.toString();
   }
   monthsInYear(year) {
     return monthsInYear(year, this.getData().FYBeginning);
+  }
+  bank(code) {
+    return new BankAccount(code, this.companycode);
   }
   bp(code) {
     return new BusinessPlace(code, this.code);
@@ -984,6 +993,15 @@ export class Employee extends CompanyCollection {
     super.add(data);
     return "Employee Updated";
   }
+  bankExists() {
+    return this.getData().BankAccounts.length > 0;
+  }
+  selectedBank() {
+    const data = this.getData();
+    if (this.bankExists()) {
+      return data.BankAccounts[data.SelectedBank];
+    }
+  }
   orgUnit(date) {
     const data = this.getData().OrgAssignment.find((item) =>
       rangeOverlap([date, date], [item.From, item.To]),
@@ -1134,7 +1152,8 @@ export class Employee extends CompanyCollection {
     }
     if (
       ["Present", "Leave"].includes(this.attendance(date).Status) ||
-      isFuture(date)
+      isFuture(date) ||
+      this.company.isHoliday(date)
     ) {
       list.push(...this.variableWages(date));
     }
@@ -3116,8 +3135,8 @@ export class RemunerationResult extends Collection {
     );
     return presult;
   }
-  post(wages) {
-    super.add({ ...this.criteria, ["Wages"]: wages });
+  post(Wages, BankAccount) {
+    super.add({ ...this.criteria, ...{ Wages, BankAccount } });
   }
   getData() {
     const result = super.getData(this.criteria);
@@ -3176,6 +3195,13 @@ export class RemunerationResult extends Collection {
     slipData.Adjusted = Wage("RDUE");
 
     return slipData;
+  }
+  expensePosting() {
+    return new RemunerationExpensePosting(
+      this.companycode,
+      this.year,
+      this.month,
+    );
   }
 }
 
@@ -3502,9 +3528,18 @@ export class RemunerationRun extends Collection {
           Status: "Failure",
           Remarks: "Employee Blocked.",
         });
+      } else if (!master.bankExists()) {
+        Status.push({
+          Employee: code,
+          Status: "Failure",
+          Remarks: "Bank Account not maintained in Employee Master.",
+        });
       } else {
         const calc = master.remunerationcalc(this.year, this.month, calcFrom);
-        rr.post(calc.postingData());
+        rr.post(
+          calc.postingData(),
+          transformObject(master.selectedBank(), ["Bank", "SWIFT", "Account"]),
+        );
         Status.push({
           Employee: code,
           Status: "Success",
@@ -3514,6 +3549,13 @@ export class RemunerationRun extends Collection {
     });
     this.add({ Status });
     return Status;
+  }
+  expensePosting() {
+    return new RemunerationExpensePosting(
+      this.companycode,
+      this.year,
+      this.month,
+    );
   }
 }
 
@@ -3848,8 +3890,8 @@ export class RemunerationOffCycleResult extends Collection {
   exists() {
     return super.exists(this.criteria);
   }
-  post(wages) {
-    super.add({ ...this.criteria, ["Wages"]: wages });
+  post(Wages, BankAccount) {
+    super.add({ ...this.criteria, ...{ Wages, BankAccount } });
   }
   getData() {
     const result = super.getData(this.criteria);
@@ -3908,6 +3950,9 @@ export class RemunerationOffCycleResult extends Collection {
     slipData.Adjusted = Wage("RDUE");
     return slipData;
   }
+  expensePosting() {
+    return new RemunerationOffcycleExpensePosting(this.companycode, this.date);
+  }
 }
 
 export class RemunerationOffcycleRun extends Collection {
@@ -3929,6 +3974,9 @@ export class RemunerationOffcycleRun extends Collection {
   }
   add(data) {
     return super.add({ ...this.criteria, ...data });
+  }
+  expensePosting() {
+    return new RemunerationOffcycleExpensePosting(this.companycode, this.date);
   }
   run(employeeSelection, employeeGroupSelection) {
     const allEmployees = EmployeeTable();
@@ -3955,9 +4003,18 @@ export class RemunerationOffcycleRun extends Collection {
           Status: "Failure",
           Remarks: "Employee Blocked.",
         });
+      } else if (!master.bankExists()) {
+        Status.push({
+          Employee: code,
+          Status: "Failure",
+          Remarks: "Bank Account not maintained in Employee Master.",
+        });
       } else {
         const calc = master.remunerationoffcyclecalc(this.date);
-        rr.post(calc.postingData());
+        rr.post(
+          calc.postingData(),
+          transformObject(master.selectedBank(), ["Bank", "SWIFT", "Account"]),
+        );
         Status.push({
           Employee: code,
           Status: "Success",
@@ -4165,6 +4222,7 @@ export class RemunerationOffcycleExpensePosting extends Collection {
       this.processAccountingDocument().add();
     const { DocumentNo: CostingDocument } = this.processCostingDocument().add();
     this.add({ AccountingDocument, Posted: true, CostingDocument });
+    return `Post Success!, Accounting Document: ${AccountingDocument}; Costing Document: ${CostingDocument}`;
   }
   accountingDocument() {
     const { AccountingDocument: AccDocNo, CostingDocument: CostDocNo } =
@@ -4180,6 +4238,7 @@ export class RemunerationOffcycleExpensePosting extends Collection {
     this.accountingDocument().reverse(this.date);
     this.costingDocument().reverse(this.date);
     this.update({ AccountingDocument: "", CostingDocument: "", Posted: false });
+    return `Successfully Reversed!`;
   }
 }
 
@@ -4226,7 +4285,7 @@ export class AccountingDocument extends CompanyCollection {
       ...data,
       ...{
         PostingDate,
-        Entries: data.Entries.forEach((entry) => ({
+        Entries: data.Entries.map((entry) => ({
           ...entry,
           ["ET"]: EntryTypes.opposite(entry.ET),
         })),
@@ -4234,8 +4293,12 @@ export class AccountingDocument extends CompanyCollection {
     };
   }
   reverse(PostingDate) {
-    return new ProcessAccountingDocument(
-      this.reversaldata(PostingDate),
+    const { DocumentNo: ReversalDocumentNo } = new ProcessAccountingDocument(
+      this.reversalData(PostingDate),
+      this.companycode,
+    ).add();
+    new ProcessAccountingDocument(
+      { ...this.getData(), ...{ Reversed: true, ReversalDocumentNo } },
       this.companycode,
     ).update();
   }
@@ -4292,9 +4355,7 @@ export class ProcessAccountingDocument {
     data.Year = this.year();
     const { Entries } = data;
     data.Entries = [];
-    data.Entries = Entries.map((entry) =>
-      this.processedEntry(entry, data.ExchangeRate),
-    );
+    data.Entries = Entries.map((entry) => this.processedEntry(entry));
     return data;
   }
   processedEntry(entry) {
@@ -4304,9 +4365,7 @@ export class ProcessAccountingDocument {
     );
     const ER = this.exchangeRate();
     const { ET, Amount, BTC } = data;
-    entry.Amount = EntryTypes.isDebit(ET)
-      ? Math.abs(Amount)
-      : -Math.abs(Amount);
+    data.Amount = EntryTypes.isDebit(ET) ? Math.abs(Amount) : -Math.abs(Amount);
     data.AmountInLC = Amount * ER;
     return data;
   }
@@ -4386,16 +4445,20 @@ export class CostingDocument extends CompanyCollection {
       ...data,
       ...{
         PostingDate,
-        Costs: data.Costs.forEach((cost) => ({
-          ...cost,
-          ["Amount"]: -cost.Amount,
+        Entries: data.Entries.forEach((entry) => ({
+          ...entry,
+          ["Amount"]: -entry.Amount,
         })),
       },
     };
   }
   reverse(PostingDate) {
-    return new ProcessAccountingDocument(
-      this.reversaldata(PostingDate),
+    const { DocumentNo: ReversalDocumentNo } = new ProcessCostingDocument(
+      this.reversalData(PostingDate),
+      this.companycode,
+    ).add();
+    new ProcessCostingDocument(
+      { ...this.getData(), ...{ Reversed: true, ReversalDocumentNo } },
       this.companycode,
     ).update();
   }
@@ -4491,5 +4554,418 @@ export class ProcessCostingDocument {
   }
   update() {
     return this.costingDocument().update(this.processed());
+  }
+}
+
+export class RemunerationPayment extends Collection {
+  constructor(
+    company,
+    year,
+    month,
+    batchId,
+    postingdate,
+    employees,
+    bankAccount,
+  ) {
+    super("RemunerationPayment");
+    this.companycode = company;
+    this.company = new Company(this.companycode);
+    this.year = year;
+    this.month = month;
+    this.batchId = batchId;
+    this.postingdate = postingdate;
+    this.employees = employees;
+    this.bankAccount = bankAccount;
+    this.criteria = {
+      Company: this.companycode,
+      Year: this.year,
+      Month: this.month,
+      BatchId: this.batchId,
+      Type: "Regular",
+    };
+  }
+  FY() {
+    return this.company.year(monthEnd(this.year, this.month));
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  add(data) {
+    return super.add({ ...this.criteria, ...data });
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+  bankMaster() {
+    return new BankAccount(this.bankAccount, this.companycode).getData();
+  }
+  payableData() {
+    return filterByMultipleSelection(PostedRemunerationTable(), [
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+      filter("Year", "Number", [this.year]),
+      filter("Month", "StringCaseInsensitive", [this.month]),
+      filter("WT", "StringCaseInsensitive", ["PMT"]),
+      filter("Type", "StringCaseInsensitive", ["Regular"]),
+      this.employees,
+    ]);
+  }
+  payable(Employee, OrgUnit) {
+    return SumFieldIfs(
+      this.payableData(),
+      "Amount",
+      ["Employee", "OrgUnit"],
+      [Employee, OrgUnit],
+    );
+  }
+  paidData() {
+    return filterByMultipleSelection(RemunerationPaymentTable(), [
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+      filter("Year", "Number", [this.year]),
+      filter("Month", "StringCaseInsensitive", [this.month]),
+      filter("Type", "StringCaseInsensitive", ["Regular"]),
+      this.employees,
+    ]);
+  }
+  paid(Employee, OrgUnit) {
+    return SumFieldIfs(
+      this.paidData(),
+      "Amount",
+      ["Employee", "OrgUnit"],
+      [Employee, OrgUnit],
+    );
+  }
+  netPayable(Employee, OrgUnit) {
+    return this.payable(Employee, OrgUnit) - this.paid(Employee, OrgUnit);
+  }
+  netPayableData() {
+    const Employees = ListUniqueItems(
+      [...this.payableData(), ...this.paidData()],
+      "Employee",
+    );
+    const Units = ListUniqueItems(
+      [...this.payableData(), ...this.paidData()],
+      "OrgUnit",
+    );
+    const result = [];
+    Employees.forEach((employee) => {
+      const employeemaster = new Employee(employee, this.companycode).getData();
+      const EG = employeemaster.EmployeeGroupCode;
+      Units.forEach((unit) => {
+        const [Type, Unit] = unit.split("/");
+        const unitMaster = new CompanyCollection(
+          this.companycode,
+          Type,
+        ).getData({
+          Code: Unit,
+        });
+        const PC = unitMaster.ProfitCenter;
+        result.push({
+          Employee: employee,
+          OrgUnit: unit,
+          Amount: this.netPayable(employee, unit),
+          EG,
+          PC,
+        });
+      });
+    });
+    const trimmed = result.filter((record) => record.Amount !== 0);
+    return trimmed;
+  }
+  accountingEntry() {
+    const data = this.netPayableData();
+    const PCs = ListUniqueItems(data, "PC");
+    const EGs = ListUniqueItems(data, "EG");
+    const Entries = [];
+    PCs.forEach((PC) => {
+      EGs.forEach((EG) => {
+        const EGmaster = new EmployeeGroup(EG, this.companycode).getData();
+        const PayableGL = EGmaster.GL;
+        const Amount = SumFieldIfs(
+          this.netPayableData(),
+          "Amount",
+          ["EG", "PC"],
+          [EG, PC],
+        );
+        Entries.push(
+          ...[
+            {
+              ET: Amount >= 0 ? "G1" : "G2",
+              Account: PayableGL,
+              Amount,
+              PC,
+              Text: `Remuneration Payment ${monthEnd(this.year, this.month)}`,
+            },
+            {
+              ET: Amount >= 0 ? "G2" : "G1",
+              Account: this.bankMaster().GL,
+              Amount,
+              PC,
+              Text: `Remuneration Payment ${monthEnd(this.year, this.month)}`,
+            },
+          ],
+        );
+      });
+    });
+    return {
+      Company: this.companycode,
+      PostingDate: this.postingdate,
+      Currency: this.company.getData().Currency,
+      Text: `Remuneration Payment - Regular Batch - ${this.batchId} Date ${monthEnd(this.year, this.month)}`,
+      Entries,
+    };
+  }
+  paymentFile() {
+    const data = this.netPayableData();
+    const Employees = ListUniqueItems(data, "Employee");
+    const result = [];
+    Employees.forEach((employee) => {
+      const { Bank, Account, SWIFT } = this.payableData().find(
+        (record) => record.Employee === employee,
+      );
+      result.push({
+        Payee: employee,
+        Amount: SumFieldIfs(
+          this.netPayableData(),
+          "Amount",
+          ["Employee"],
+          [employee],
+        ),
+        Bank,
+        Account,
+        SWIFT,
+      });
+    });
+    return result;
+  }
+  processAccountingDocument() {
+    return new ProcessAccountingDocument(
+      this.accountingEntry(),
+      this.companycode,
+    );
+  }
+  post() {
+    const { DocumentNo } = this.processAccountingDocument().add();
+    return this.add({
+      PaymentFile: this.paymentFile(),
+      PaymentData: this.netPayableData(),
+      AccountingDocument: DocumentNo,
+    });
+  }
+  accountingDocument() {
+    return new AccountingDocument(
+      this.companycode,
+      this.getData().AccountingDocument,
+      this.FY(),
+    );
+  }
+  reverse(postingDate) {
+    this.accountingDocument().reverse(postingDate);
+    this.update({
+      Reversed: true,
+    });
+  }
+}
+
+export class RemunerationOffcyclePayment extends Collection {
+  constructor(company, date, batchId, postingdate, employees, bankAccount) {
+    super("RemunerationPayment");
+    this.companycode = company;
+    this.company = new Company(this.companycode);
+    this.date = date;
+    this.year = year(this.date);
+    this.month = month(this.date);
+    this.batchId = batchId;
+    this.postingdate = postingdate;
+    this.employees = employees;
+    this.bankAccount = bankAccount;
+    this.criteria = {
+      Company: this.companycode,
+      Date: this.date,
+      BatchId: this.batchId,
+      Type: "OffCycle",
+    };
+  }
+  FY() {
+    return this.company.year(this.date);
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  add(data) {
+    return super.add({ ...this.criteria, ...data });
+  }
+  update(data) {
+    return super.update(this.criteria, data);
+  }
+  bankMaster() {
+    return new BankAccount(this.bankAccount, this.companycode).getData();
+  }
+  payableData() {
+    return filterByMultipleSelection(PostedRemunerationTable(), [
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+      filter("Date", "StringCaseInsensitive", [this.date]),
+      filter("WT", "StringCaseInsensitive", ["PMT"]),
+      filter("Type", "StringCaseInsensitive", ["OffCycle"]),
+      this.employees,
+    ]);
+  }
+  payable(Employee, OrgUnit) {
+    return SumFieldIfs(
+      this.payableData(),
+      "Amount",
+      ["Employee", "OrgUnit"],
+      [Employee, OrgUnit],
+    );
+  }
+  paidData() {
+    return filterByMultipleSelection(RemunerationPaymentTable(), [
+      filter("Company", "StringCaseInsensitive", [this.companycode]),
+      filter("Date", "StringCaseInsensitive", [this.date]),
+      filter("Type", "StringCaseInsensitive", ["OffCycle"]),
+      this.employees,
+    ]);
+  }
+  paid(Employee, OrgUnit) {
+    return SumFieldIfs(
+      this.paidData(),
+      "Amount",
+      ["Employee", "OrgUnit"],
+      [Employee, OrgUnit],
+    );
+  }
+  netPayable(Employee, OrgUnit) {
+    return this.payable(Employee, OrgUnit) - this.paid(Employee, OrgUnit);
+  }
+  netPayableData() {
+    const Employees = ListUniqueItems(
+      [...this.payableData(), ...this.paidData()],
+      "Employee",
+    );
+    const Units = ListUniqueItems(
+      [...this.payableData(), ...this.paidData()],
+      "OrgUnit",
+    );
+    const result = [];
+    Employees.forEach((employee) => {
+      const employeemaster = new Employee(employee, this.companycode).getData();
+      const EG = employeemaster.EmployeeGroupCode;
+      Units.forEach((unit) => {
+        const [Type, Unit] = unit.split("/");
+        const unitMaster = new CompanyCollection(
+          this.companycode,
+          Type,
+        ).getData({
+          Code: Unit,
+        });
+        const PC = unitMaster.ProfitCenter;
+        result.push({
+          Employee: employee,
+          OrgUnit: unit,
+          Amount: this.netPayable(employee, unit),
+          EG,
+          PC,
+        });
+      });
+    });
+    const trimmed = result.filter((record) => record.Amount !== 0);
+    return trimmed;
+  }
+  accountingEntry() {
+    const data = this.netPayableData();
+    const PCs = ListUniqueItems(data, "PC");
+    const EGs = ListUniqueItems(data, "EG");
+    const Entries = [];
+    PCs.forEach((PC) => {
+      EGs.forEach((EG) => {
+        const EGmaster = new EmployeeGroup(EG, this.companycode).getData();
+        const PayableGL = EGmaster.GL;
+        const Amount = SumFieldIfs(
+          this.netPayableData(),
+          "Amount",
+          ["EG", "PC"],
+          [EG, PC],
+        );
+        Entries.push(
+          ...[
+            {
+              ET: Amount >= 0 ? "G1" : "G2",
+              Account: PayableGL,
+              Amount,
+              PC,
+              Text: `Remuneration Payment ${monthEnd(this.year, this.month)}`,
+            },
+            {
+              ET: Amount >= 0 ? "G2" : "G1",
+              Account: this.bankMaster().GL,
+              Amount,
+              PC,
+              Text: `Remuneration Payment ${monthEnd(this.year, this.month)}`,
+            },
+          ],
+        );
+      });
+    });
+    return {
+      Company: this.companycode,
+      PostingDate: this.postingdate,
+      DocumentDate: this.date,
+      Currency: this.company.getData().Currency,
+      Text: `Remuneration Payment Off-cycle - Batch ${this.batchId} Date ${this.date}`,
+      Entries,
+    };
+  }
+  paymentFile() {
+    const data = this.netPayableData();
+    const Employees = ListUniqueItems(data, "Employee");
+    const result = [];
+    Employees.forEach((employee) => {
+      const { Bank, Account, SWIFT } = this.payableData().find(
+        (record) => record.Employee === employee,
+      );
+      result.push({
+        Payee: employee,
+        Amount: SumFieldIfs(
+          this.netPayableData(),
+          "Amount",
+          ["Employee"],
+          [employee],
+        ),
+        Bank,
+        Account,
+        SWIFT,
+      });
+    });
+    return result;
+  }
+  processAccountingDocument() {
+    return new ProcessAccountingDocument(
+      this.accountingEntry(),
+      this.companycode,
+    );
+  }
+  post() {
+    const { DocumentNo } = this.processAccountingDocument().add();
+    return this.add({
+      PaymentFile: this.paymentFile(),
+      PaymentData: this.netPayableData(),
+      AccountingDocument: DocumentNo,
+    });
+  }
+  accountingDocument() {
+    return new AccountingDocument(
+      this.companycode,
+      this.getData().AccountingDocument,
+      this.FY(),
+    );
+  }
+  reverse(postingDate) {
+    this.accountingDocument().reverse(postingDate);
+    this.update({ Reversed: true });
   }
 }
