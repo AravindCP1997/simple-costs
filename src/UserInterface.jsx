@@ -206,6 +206,9 @@ import { ManageRemunerationExpensePosting } from "./Transactions/RemunerationExp
 import { ManageRemunerationPayment } from "./Transactions/RemunerationPaymentRun";
 import { QueryRemunerationPayment } from "./Transactions/RemunerationPaymentFile";
 import { HumanResources } from "./Transactions/HumanResources";
+import { DeleteRemunerationResult } from "./Transactions/DeleteRemunerationResult";
+import { ReverseRemunerationExpensePosting } from "./Transactions/RemunerationExpensePostReverse";
+import { ReverseRemunerationPayment } from "./Transactions/RemunerationPaymentReverse";
 
 const codes = [
   {
@@ -905,6 +908,14 @@ const codes = [
     subgroup: "Human Resources",
   },
   {
+    code: "rem_dlt",
+    screen: <Window />,
+    window: <DeleteRemunerationResult />,
+    name: "Delete Remuneration Result",
+    group: "Record",
+    subgroup: "Human Resources",
+  },
+  {
     code: "rem_exp",
     screen: <Window />,
     window: <ManageRemunerationExpensePosting />,
@@ -913,10 +924,26 @@ const codes = [
     subgroup: "Human Resources",
   },
   {
+    code: "rem_exp_rev",
+    screen: <Window />,
+    window: <ReverseRemunerationExpensePosting />,
+    name: "Reverse Remuneration Expense Posting",
+    group: "Record",
+    subgroup: "Human Resources",
+  },
+  {
     code: "rem_pay",
     screen: <Window />,
     window: <ManageRemunerationPayment />,
     name: "Remuneration Payment",
+    group: "Record",
+    subgroup: "Human Resources",
+  },
+  {
+    code: "rem_pay_rev",
+    screen: <Window />,
+    window: <ReverseRemunerationPayment />,
+    name: "Remuneration Payment Reversal",
     group: "Record",
     subgroup: "Human Resources",
   },

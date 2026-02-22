@@ -1031,6 +1031,39 @@ export class Employee extends CompanyCollection {
       .getData()
       .Attendance.find((item) => item.Date === date);
   }
+  isPresent(date) {
+    return ["Present", "Leave"].includes(this.attendance(date).Status);
+  }
+  isHoliday(date) {
+    if (!this.company.isHoliday(date)) {
+      return false;
+    }
+    let backdate = moveDate(date, 0, 0, -1);
+    let frontdate = moveDate(date, 0, 0, 1);
+    let backEnd = false;
+    let frontEnd = false;
+    while (true) {
+      if (this.isPresent(frontdate)) {
+        frontEnd = true;
+        break;
+      } else if (this.company.isHoliday(frontdate)) {
+        frontdate = moveDate(frontdate, 0, 0, 1);
+      } else {
+        break;
+      }
+    }
+    while (true) {
+      if (this.isPresent(backdate)) {
+        backEnd = true;
+        break;
+      } else if (this.company.isHoliday(backdate)) {
+        backdate = moveDate(backdate, 0, 0, -1);
+      } else {
+        break;
+      }
+    }
+    return frontEnd === true && backEnd === true;
+  }
   remunerationresult(year, month) {
     return new RemunerationResult(this.companycode, this.code, year, month);
   }
@@ -1150,11 +1183,7 @@ export class Employee extends CompanyCollection {
     if (!this.isOnBoard(date)) {
       return [];
     }
-    if (
-      ["Present", "Leave"].includes(this.attendance(date).Status) ||
-      isFuture(date) ||
-      this.company.isHoliday(date)
-    ) {
+    if (this.isPresent(date) || isFuture(date) || this.isHoliday(date)) {
       list.push(...this.variableWages(date));
     }
     list.push(...this.onetimeWages(date), ...this.fixedWages(date));
@@ -4277,7 +4306,7 @@ export class AccountingDocument extends CompanyCollection {
   }
   update(data) {
     this.delete();
-    super.save(data);
+    super.add(data);
   }
   reversalData(PostingDate) {
     const data = this.getData();
@@ -4445,7 +4474,7 @@ export class CostingDocument extends CompanyCollection {
       ...data,
       ...{
         PostingDate,
-        Entries: data.Entries.forEach((entry) => ({
+        Entries: data.Entries.map((entry) => ({
           ...entry,
           ["Amount"]: -entry.Amount,
         })),
@@ -4580,6 +4609,7 @@ export class RemunerationPayment extends Collection {
       Company: this.companycode,
       Year: this.year,
       Month: this.month,
+      Date: "",
       BatchId: this.batchId,
       Type: "Regular",
     };
@@ -4752,6 +4782,7 @@ export class RemunerationPayment extends Collection {
       PaymentFile: this.paymentFile(),
       PaymentData: this.netPayableData(),
       AccountingDocument: DocumentNo,
+      Reversed: false,
     });
   }
   accountingDocument() {
@@ -4761,11 +4792,15 @@ export class RemunerationPayment extends Collection {
       this.FY(),
     );
   }
+  reversed() {
+    if (!this.exists()) {
+      return true;
+    }
+    return this.getData().Reversed;
+  }
   reverse(postingDate) {
     this.accountingDocument().reverse(postingDate);
-    this.update({
-      Reversed: true,
-    });
+    this.update({ ...this.getData(), ["Reversed"]: true });
   }
 }
 
@@ -4784,6 +4819,8 @@ export class RemunerationOffcyclePayment extends Collection {
     this.criteria = {
       Company: this.companycode,
       Date: this.date,
+      Year: "",
+      Month: "",
       BatchId: this.batchId,
       Type: "OffCycle",
     };
@@ -4955,6 +4992,7 @@ export class RemunerationOffcyclePayment extends Collection {
       PaymentFile: this.paymentFile(),
       PaymentData: this.netPayableData(),
       AccountingDocument: DocumentNo,
+      Reversed: false,
     });
   }
   accountingDocument() {
@@ -4964,8 +5002,14 @@ export class RemunerationOffcyclePayment extends Collection {
       this.FY(),
     );
   }
+  reversed() {
+    if (!this.exists()) {
+      return true;
+    }
+    return this.getData().Reversed;
+  }
   reverse(postingDate) {
     this.accountingDocument().reverse(postingDate);
-    this.update({ Reversed: true });
+    this.update({ ...this.getData(), ["Reversed"]: true });
   }
 }

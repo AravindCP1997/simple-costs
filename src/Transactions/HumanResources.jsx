@@ -35,7 +35,7 @@ import {
 export function HumanResources() {
   return (
     <>
-      <WindowTitle title={"Human Resources"} closeTo="Report" />
+      <WindowTitle title={"Human Resources"} closeTo="System" />
       <WindowContent>
         <DisplayArea>
           <Label
@@ -46,8 +46,8 @@ export function HumanResources() {
             The core steps involved in the human resources process-flow include:
             <ul>
               <li>
-                Calculation of remuneration of employees, for a period (month
-                end) or an interim date (off-cycle date),
+                Calculation of remuneration of employees, for a period (month)
+                or an interim date (off-cycle date),
               </li>
               <li>
                 Recognising expense and liability in financial accounts for the
@@ -179,11 +179,11 @@ export function HumanResources() {
               />
               <p>
                 Organisational units which are also cost objects. Locations hold
-                materials. Plants manufacture or assemble goods and services.
-                Revenue centers generate revenue through sale of goods and
-                services. Cost centers are residual category of organisational
-                units which are not Locations, Plants or Revenue Centers, but
-                consume goods and services.
+                materials. Plants manufacture or assemble goods. Revenue centers
+                generate revenue through sale of goods and services. Cost
+                centers are residual category of organisational units which are
+                not Locations, Plants or Revenue Centers, but consume goods and
+                services.
               </p>
             </Column>
           </Column>
