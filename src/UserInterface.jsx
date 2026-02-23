@@ -980,6 +980,14 @@ const codes = [
     subgroup: "Human Resources",
   },
   {
+    code: "accdoc",
+    screen: <Window />,
+    window: <QueryAccountingDocument />,
+    name: "Accounting Document",
+    group: "Report",
+    subgroup: "Financial Accounting",
+  },
+  {
     code: "m01",
     screen: <Window />,
     window: <ConsignmentInwardsOriginPO />,

@@ -33,7 +33,7 @@ export function QueryAccountingDocument() {
   const { Company, Year, DocumentNo } = data;
   const { openWindow, showAlert } = useInterface();
 
-  const collection = new AccountingDocument(DocumentNo, Year, Company);
+  const collection = new AccountingDocument(Company, Number(DocumentNo), Year);
 
   return (
     <>
@@ -49,7 +49,7 @@ export function QueryAccountingDocument() {
             whileTrue={[
               () =>
                 openWindow(
-                  <ViewAccountingDocument data={collection.getData()} />,
+                  <ViewAccountingDocument initial={collection.getData()} />,
                 ),
             ]}
           />,
@@ -89,23 +89,103 @@ export function QueryAccountingDocument() {
   );
 }
 
-export function ViewAccountingDocument({ data }) {
-  const { openWindow } = useInterface();
-  const { Company, PostingDate, Year, Text, EntryDate, Reversed, Entries } =
-    data;
+export function ViewAccountingDocument({ initial }) {
+  const { openWindow, showAlert } = useInterface();
+  const [data, setdata] = useState(initial);
+  const {
+    Company,
+    PostingDate,
+    DocumentNo,
+    DocumentType,
+    Year,
+    Text,
+    EntryDate,
+    Reversed,
+    Entries,
+    TimeStamp,
+  } = data;
+  const {
+    data: promptData,
+    changeData,
+    reset,
+  } = useData({
+    Company: "",
+    Year: 0,
+    DocumentNo: "",
+  });
+  const promptDoc = new AccountingDocument(
+    promptData.Company,
+    Number(promptData.DocumentNo),
+    promptData.Year,
+  );
   return (
     <>
       <WindowTitle
         title={"View Accounting Document"}
         menu={[
-          <Button
-            name="Other"
-            functionsArray={[() => openWindow(<QueryAccountingDocument />)]}
-          />,
+          <HidingPrompt
+            title={"Open Accounting Document"}
+            buttonName={"Other"}
+            result={promptDoc.exists()}
+            onSubmitFail={[
+              () => showAlert("Accounting Document does not exist."),
+            ]}
+            onSubmitSuccess={[() => setdata(promptDoc.getData())]}
+            onClose={[() => reset()]}
+          >
+            <Row overflow="visible">
+              <Label label={"Company"} />
+              <AutoSuggestInput
+                value={promptData.Company}
+                process={(value) => changeData("", "Company", value)}
+                placeholder={"Enter Company Code"}
+                suggestions={promptDoc.company.listAll("Code")}
+                captions={promptDoc.company.listAll("Name")}
+              />
+            </Row>
+            <Row>
+              <Label label={"Year"} />
+              <Input
+                value={promptData.Year}
+                process={(value) => changeData("", "Year", value)}
+                type={"number"}
+              />
+            </Row>
+            <Row>
+              <Label label={"Document Number"} />
+              <Input
+                value={promptData.DocumentNo}
+                process={(value) => changeData("", "DocumentNo", value)}
+                type={"number"}
+              />
+            </Row>
+          </HidingPrompt>,
+          <HidingDisplay title={"Info"}>
+            <Row>
+              <Label label={"Entry Date"} />
+              <label>{EntryDate}</label>
+            </Row>
+            <Row>
+              <Label label={"Time Stamp"} />
+              <label>{TimeStamp}</label>
+            </Row>
+          </HidingDisplay>,
         ]}
       />
       <WindowContent>
         <DisplayArea>
+          <Row width="min(100%,400px)">
+            <Label label={"Document Number"} />
+            <label>{DocumentNo}</label>
+          </Row>
+          <Row width="min(100%,400px)">
+            <Label label={"Document Type"} />
+            <label>{DocumentType}</label>
+          </Row>
+          <Row width="min(100%,400px)">
+            <Label label={"Year"} />
+            <label>{Year}</label>
+          </Row>
           <Row width="min(100%,400px)">
             <Label label={"Company"} />
             <label>{Company}</label>
@@ -113,14 +193,6 @@ export function ViewAccountingDocument({ data }) {
           <Row width="min(100%,400px)">
             <Label label={"Posting Date"} />
             <label>{PostingDate}</label>
-          </Row>
-          <Row width="min(100%,400px)">
-            <Label label={"Entry Date"} />
-            <label>{EntryDate}</label>
-          </Row>
-          <Row width="min(100%,400px)">
-            <Label label={"Year"} />
-            <label>{Year}</label>
           </Row>
           <Conditional logic={Reversed}>
             <Row jc="left" width="min(100%,400px)">
@@ -136,27 +208,24 @@ export function ViewAccountingDocument({ data }) {
             <Label label={"Entries"} style={{ fontWeight: "bold" }} />
             <Table
               columns={[
+                "Entry Type",
                 "Account",
-                "Account Desc.",
-                "Type",
                 "Amount",
+                "Amount in Local Currency",
                 "Text",
                 "BTC",
+                "HSN",
                 "Profit Center",
               ]}
               rows={Entries.map((entry, e) => [
+                <label>{entry.ET}</label>,
                 <label>{entry.Account}</label>,
-                <label>
-                  {
-                    new GeneralLedger(entry.Account, Company).getData()
-                      .Description
-                  }
-                </label>,
-                <label>{entry.Type}</label>,
                 <label>{entry.Amount}</label>,
+                <label>{entry.AmountInLC}</label>,
                 <label>{entry.Text}</label>,
                 <label>{entry.BTC}</label>,
-                <label>{entry.ProfitCenter}</label>,
+                <label>{entry.HSN}</label>,
+                <label>{entry.PC}</label>,
               ])}
             />
           </Column>
@@ -165,4 +234,3 @@ export function ViewAccountingDocument({ data }) {
     </>
   );
 }
-

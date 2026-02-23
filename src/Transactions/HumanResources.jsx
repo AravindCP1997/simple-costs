@@ -31,8 +31,10 @@ import {
   rangeOverlap,
   trimSelection,
 } from "../functions";
+import { ManageRemunerationRun } from "./RemunerationRun";
 
 export function HumanResources() {
+  const { openWindow } = useInterface();
   return (
     <>
       <WindowTitle title={"Human Resources"} closeTo="System" />
@@ -166,10 +168,9 @@ export function HumanResources() {
             <Column borderBottom="none" bg="var(--lightgreent)" padding="5px">
               <Label label={"Profit Center"} style={{ fontWeight: "bold" }} />
               <p>
-                Performance reporting unit within a company. Holds one-to-many
-                relationships with Cost Centers, Locations, Plants and Revenue
-                Centers. Every general ledger entry is attributed to a Profit
-                Center.
+                Performance reporting unit within a company. Clusters Cost
+                Centers, Locations, Plants and Revenue Centers. Every general
+                ledger entry is attributed to a Profit Center.
               </p>
             </Column>
             <Column borderBottom="none" bg="var(--lightbluet)" padding="5px">
@@ -186,6 +187,33 @@ export function HumanResources() {
                 services.
               </p>
             </Column>
+          </Column>
+          <Column borderBottom="none">
+            <Label label={"Transactions"} style={{ fontWeight: "bold" }} />
+            <ul>
+              <li>'REM_RUN': Calculate and store remuneration results.</li>
+              <li>
+                'REM_EXP': Recognise expense and liabiility from calculated
+                remuneration results.
+              </li>
+              <li>
+                'REM_PAY': Generate payment files and recognise payment in
+                financial accounts.
+              </li>
+              <li>'REM_EXP_REV': Reverse expense recognition.</li>
+              <li>'REM_PAY_REV': Reverse payment.</li>
+            </ul>
+          </Column>
+          <Column borderBottom="none">
+            <Label label={"Reports"} style={{ fontWeight: "bold" }} />
+            <ul>
+              <li>
+                'REM_SLIP': View remuneration slip from calculated result.
+              </li>
+              <li>'REM_STATUS': View status of a remuneration run.</li>
+              <li>'REM_PAYFILE': View and download generated payment file.</li>
+              <li>'REM_TABLE': View all calculated remuneration.</li>
+            </ul>
           </Column>
         </DisplayArea>
       </WindowContent>
