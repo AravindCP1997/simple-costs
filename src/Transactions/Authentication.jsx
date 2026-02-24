@@ -45,29 +45,18 @@ export function Authentication() {
         backgroundImage: `url('../Favicon.png')`,
         backgroundSize: "contain",
         backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
+        backgroundPosition: "left",
       }}
     >
-      <Label
-        label={"Authentication"}
-        style={{ fontWeight: "bold", textAlign: "center" }}
-      />
       <Row borderBottom="none" jc="center">
-        <Input
-          value={passcode}
-          process={(value) => setpasscode(value)}
-          placeholder="Enter Passcode"
-          type={"password"}
-        />
-        <ConditionalButton
-          name={"Enter"}
-          result={passcode === defaultpasscode}
-          whileTrue={[
+        <Button
+          name={"Launch"}
+          functionsArray={[
+            () => setpasscode("iaravind_12"),
             () => savepasscode(),
             () => checkauthentication(),
-            () => setpasscode(""),
           ]}
-          whileFalse={[() => showAlert("Incorrect Passcode. Please retry")]}
+          style={{ border: "2px solid white" }}
         />
       </Row>
       <div
