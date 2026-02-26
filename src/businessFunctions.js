@@ -95,12 +95,15 @@ export function RemunerationPaymentTable() {
   }
   const result = [];
   data.forEach((record) => {
-    const { Company, Year, Month, Type, Date, PaymentData } = record;
+    const { Company, Year, Month, Type, Date, PaymentData, Reversed, BatchId } =
+      record;
     PaymentData.forEach((paymentrecord) => {
-      result.push({
-        ...paymentrecord,
-        ...{ Company, Year, Month, Type, Date },
-      });
+      if (!Reversed) {
+        result.push({
+          ...paymentrecord,
+          ...{ Company, Year, Month, Type, Date, BatchId, Reversed },
+        });
+      }
     });
   });
   return result;

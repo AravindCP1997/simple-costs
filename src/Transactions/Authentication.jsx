@@ -45,7 +45,7 @@ export function Authentication() {
         backgroundImage: `url('../Favicon.png')`,
         backgroundSize: "contain",
         backgroundRepeat: "no-repeat",
-        backgroundPosition: "left",
+        backgroundPosition: "center",
       }}
     >
       <Row borderBottom="none" jc="center">

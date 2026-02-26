@@ -209,6 +209,7 @@ import { HumanResources } from "./Transactions/HumanResources";
 import { DeleteRemunerationResult } from "./Transactions/DeleteRemunerationResult";
 import { ReverseRemunerationExpensePosting } from "./Transactions/RemunerationExpensePostReverse";
 import { ReverseRemunerationPayment } from "./Transactions/RemunerationPaymentReverse";
+import { QueryRemunerationPaymentTable } from "./Transactions/RemunerationPaymentTable";
 
 const codes = [
   {
@@ -976,6 +977,14 @@ const codes = [
     screen: <Window />,
     window: <QueryRemunerationTable />,
     name: "Remuneration Table",
+    group: "Report",
+    subgroup: "Human Resources",
+  },
+  {
+    code: "rem_pay_table",
+    screen: <Window />,
+    window: <QueryRemunerationPaymentTable />,
+    name: "Remuneration Payments Table",
     group: "Report",
     subgroup: "Human Resources",
   },
