@@ -3702,7 +3702,7 @@ export class RemunerationExpensePosting extends Collection {
               Account: payableGL,
               Amount: payable,
               PC,
-              ET: payable >= 0 ? "G1" : "G2",
+              ET: payable >= 0 ? "G2" : "G1",
             },
             {
               Account: whtGL,
@@ -3779,6 +3779,7 @@ export class RemunerationExpensePosting extends Collection {
       this.processAccountingDocument().add();
     const { DocumentNo: CostingDocument } = this.processCostingDocument().add();
     this.add({ AccountingDocument, Posted: true, CostingDocument });
+    return `Post Success, Accounting Document:${AccountingDocument}, Costing Document:${CostingDocument}`;
   }
   accountingDocument() {
     const { AccountingDocument: AccDocNo, CostingDocument: CostDocNo } =
@@ -4288,7 +4289,7 @@ export class AccountingDocument extends CompanyCollection {
   getData() {
     return super.getData(this.criteria);
   }
-  add(data) {
+  autoNumber() {
     const numberingStart = this.company
       .getData()
       .Numbering.find((item) => item.Item === "Accounting Document").From;
@@ -4297,7 +4298,15 @@ export class AccountingDocument extends CompanyCollection {
       "DocumentNo",
       numberingStart,
     );
-    super.add({ ...this.criteria, ...data, ...{ DocumentNo } });
+    return DocumentNo;
+  }
+  add(data) {
+    const DocumentNo = this.autoNumber();
+    super.add({
+      ...this.criteria,
+      ...data,
+      ...{ DocumentNo },
+    });
     const result = true;
     return { result, DocumentNo };
   }
@@ -4395,7 +4404,7 @@ export class ProcessAccountingDocument {
     const ER = this.exchangeRate();
     const { ET, Amount, BTC } = data;
     data.Amount = EntryTypes.isDebit(ET) ? Math.abs(Amount) : -Math.abs(Amount);
-    data.AmountInLC = Amount * ER;
+    data.AmountInLC = data.Amount * ER;
     return data;
   }
   errors() {
@@ -4420,7 +4429,7 @@ export class ProcessAccountingDocument {
     return this.errors().length > 0;
   }
   accountingDocument() {
-    const { DocumentNo, Year } = this.processed;
+    const { DocumentNo, Year } = this.processed();
     return new AccountingDocument(this.companycode, DocumentNo, Year);
   }
   add() {
@@ -4466,7 +4475,7 @@ export class CostingDocument extends CompanyCollection {
   }
   update(data) {
     this.delete();
-    super.save(data);
+    super.add(data);
   }
   reversalData(PostingDate) {
     const data = this.getData();
@@ -4575,7 +4584,7 @@ export class ProcessCostingDocument {
     return this.errors().length > 0;
   }
   costingDocument() {
-    const { DocumentNo, Year } = this.processed;
+    const { DocumentNo, Year } = this.processed();
     return new CostingDocument(this.companycode, DocumentNo, Year);
   }
   add() {
@@ -4778,12 +4787,13 @@ export class RemunerationPayment extends Collection {
   }
   post() {
     const { DocumentNo } = this.processAccountingDocument().add();
-    return this.add({
+    this.add({
       PaymentFile: this.paymentFile(),
       PaymentData: this.netPayableData(),
       AccountingDocument: DocumentNo,
       Reversed: false,
     });
+    return `Post Success, Accounting Document: ${DocumentNo}`;
   }
   accountingDocument() {
     return new AccountingDocument(
@@ -4988,12 +4998,13 @@ export class RemunerationOffcyclePayment extends Collection {
   }
   post() {
     const { DocumentNo } = this.processAccountingDocument().add();
-    return this.add({
+    this.add({
       PaymentFile: this.paymentFile(),
       PaymentData: this.netPayableData(),
       AccountingDocument: DocumentNo,
       Reversed: false,
     });
+    return `Post Success, Accounting Document: ${DocumentNo}`;
   }
   accountingDocument() {
     return new AccountingDocument(

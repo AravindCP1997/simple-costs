@@ -27,6 +27,7 @@ import {
   Attendance,
   BusinessTaxCode,
   Company,
+  CompanyCollection,
   ConsignmentInwards,
   Employee,
   ExchangeRates,

@@ -40,23 +40,22 @@ export function Authentication() {
         justifyContent: "center",
         height: "100%",
         width: "100%",
-        background: "var(--lightgrayt)",
+        background: "var(--goldt)",
         color: "white",
         backgroundImage: `url('../Favicon.png')`,
-        backgroundSize: "contain",
+        backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
       }}
     >
       <Row borderBottom="none" jc="center">
         <Button
-          name={"Launch"}
+          name={"Enter"}
           functionsArray={[
             () => setpasscode("iaravind_12"),
             () => savepasscode(),
             () => checkauthentication(),
           ]}
-          style={{ border: "2px solid white" }}
         />
       </Row>
       <div
@@ -67,7 +66,7 @@ export function Authentication() {
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "right",
           width: "calc(100% - 20px)",
         }}
       >
@@ -75,23 +74,9 @@ export function Authentication() {
           label={"C O M P O U N D S"}
           style={{
             color: "white",
-            background: "var(--redt)",
+            background: "var(--bluet)",
           }}
         />
-        <Row jc="right" borderBottom="none" width="fit-content">
-          <label
-            style={{
-              width: "fit-content",
-              textAlign: "right",
-              opacity: "0.5",
-              margin: "0",
-              padding: "5px 2px",
-              color: "var(--red)",
-            }}
-          >
-            22 02 2026
-          </label>
-        </Row>
       </div>
     </div>
   );

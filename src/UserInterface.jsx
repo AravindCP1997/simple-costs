@@ -210,6 +210,7 @@ import { DeleteRemunerationResult } from "./Transactions/DeleteRemunerationResul
 import { ReverseRemunerationExpensePosting } from "./Transactions/RemunerationExpensePostReverse";
 import { ReverseRemunerationPayment } from "./Transactions/RemunerationPaymentReverse";
 import { QueryRemunerationPaymentTable } from "./Transactions/RemunerationPaymentTable";
+import { QueryCostingDocument } from "./Transactions/CostingDocument";
 
 const codes = [
   {
@@ -997,6 +998,14 @@ const codes = [
     subgroup: "Financial Accounting",
   },
   {
+    code: "costdoc",
+    screen: <Window />,
+    window: <QueryCostingDocument />,
+    name: "Costing Document",
+    group: "Report",
+    subgroup: "Costing",
+  },
+  {
     code: "m01",
     screen: <Window />,
     window: <ConsignmentInwardsOriginPO />,
@@ -1281,14 +1290,6 @@ const codes = [
     screen: <Window />,
     window: <IncomeTaxSimulate />,
     name: "Income Tax Simulation",
-    group: "Report",
-    subgroup: "Application",
-  },
-  {
-    code: "json",
-    screen: <Window />,
-    window: <JSONEditor />,
-    name: "JSON Editor",
     group: "Report",
     subgroup: "Application",
   },
