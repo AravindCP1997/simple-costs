@@ -564,6 +564,10 @@ export const defaultSelection = (field, type = "StringCaseInsensitive") => {
   };
 };
 
+export const defaultList = () => {
+  return Array(20).fill("");
+};
+
 export const defaultVendorInvoice = {
   CompanyCode: "",
   PostingDate: "",

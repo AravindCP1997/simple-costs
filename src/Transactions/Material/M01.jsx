@@ -4,11 +4,13 @@ import { useInterface } from "../../useInterface";
 import { useError } from "../../useError";
 import {
   AutoSuggestInput,
+  Button,
   Column,
   ConditionalButton,
   DisplayArea,
   Input,
   Label,
+  ListSelection,
   PsuedoButton,
   Row,
   Table,
@@ -16,45 +18,40 @@ import {
   WindowTitle,
 } from "../../Components";
 import { Company, MaterialDocument } from "../../classes";
-import { perform, transformObject } from "../../functions";
+import {
+  perform,
+  transformObject,
+  trimArray,
+  UniqueList,
+} from "../../functions";
+import { defaultList } from "../../defaults";
 
 export function ConsignmentInwardsOriginPO() {
   const defaults = {
     CompanyCode: "",
-    ValueDate: "",
-    AccYear: "",
-    MatYear: "",
     PostingDate: "",
-    PO: "",
+    POs: defaultList(),
     Location: "",
     Items: [],
   };
-  const { data, processed, changeData, deleteItemfromArray, reset } =
-    useData(defaults);
+  const {
+    data,
+    processed,
+    changeData,
+    addItemtoArray,
+    deleteItemfromArray,
+    reset,
+  } = useData(defaults);
   const { showAlert, openWindow } = useInterface();
   const { errorsExist, DisplayHidingError, clearErrors, addError } = useError();
-  const {
-    CompanyCode,
-    ValueDate,
-    PostingDate,
-    PO,
-    Location,
-    Items,
-    AccYear,
-    MatYear,
-  } = processed;
+  const { CompanyCode, PostingDate, POs, Location, Items } = processed;
   const company = new Company(CompanyCode);
-  const md = company.materialdocument("", MatYear);
-  const ad = company.accountingdocument("", AccYear);
-  const po = company.po(PO);
   const location = company.location(Location);
+
   const matData = transformObject(
     processed,
-    ["ValueDate"],
-    [
-      ["CompanyCode", "Company"],
-      ["MatYear", "Year"],
-    ],
+    ["PostingDate"],
+    [["CompanyCode", "Company"]],
     {
       Movements: Items.map((item, i) =>
         transformObject(
@@ -231,40 +228,43 @@ export function ConsignmentInwardsOriginPO() {
           <Column>
             <Label label={"Materials"} />
             <Row jc="left" borderBottom="none" overflow="visible">
-              <Label label={"Purchase Order"} />
-              <AutoSuggestInput
-                value={PO}
-                process={(value) => changeData("", "PO", value)}
-                suggestions={po.listAllFromCompany("Code")}
-                captions={po.listAllFromCompany("Description")}
+              <Label label={"Purchase Orders"} />
+              <ListSelection
+                values={POs}
+                path={"POs"}
+                changeData={changeData}
               />
-              <ConditionalButton
+              <Button
                 name={"Load"}
-                result={po.exists()}
-                whileFalse={[() => showAlert("Purchase Order does not exist.")]}
-                whileTrue={[
-                  () =>
-                    changeData(
-                      "",
-                      "Items",
-                      po.summary().map((item, i) =>
-                        transformObject(
-                          item,
-                          ["Rate", "Description"],
-                          [
-                            ["Item", "MaterialCode"],
-                            ["Undispatched", "Quantity"],
-                          ],
-                          {
-                            No: i + 1,
-                            Value: item.Undispatched * item.Rate,
-                            Remarks: "",
-                            PO,
-                          },
-                        ),
-                      ),
-                    ),
-                  () => changeData("", "PO", ""),
+                functionsArray={[
+                  () => {
+                    changeData("", "Items", []);
+                    UniqueList(trimArray(POs)).forEach((ponumber) => {
+                      const po = company.po(Number(ponumber));
+                      if (po.exists()) {
+                        addItemtoArray(
+                          "Items",
+                          ...po.summary().map((item, i) =>
+                            transformObject(
+                              item,
+                              ["Rate", "Description"],
+                              [
+                                ["Item", "MaterialCode"],
+                                ["Undispatched", "Quantity"],
+                              ],
+                              {
+                                No: i + 1,
+                                Value: item.Undispatched * item.Rate,
+                                Remarks: "",
+                                PO: ponumber,
+                              },
+                            ),
+                          ),
+                        );
+                      }
+                    });
+                    changeData("", "POs", defaultList());
+                  },
                 ]}
               />
             </Row>

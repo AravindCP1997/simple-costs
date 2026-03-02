@@ -2529,97 +2529,6 @@ export class YearlyCompanyCollection extends CompanyCollection {
   }
 }
 
-export class MaterialDocument extends YearlyCompanyCollection {
-  constructor(documentNo, year, company, name = "MaterialDocument") {
-    super(year, company, name);
-    this.documentNo = Number(documentNo);
-    this.criteria = { DocumentNo: this.documentNo };
-  }
-  exists() {
-    return super.exists(this.criteria);
-  }
-  getData() {
-    return super.getData(this.criteria);
-  }
-  delete() {
-    return super.delete(this.criteria);
-  }
-  update(data) {
-    return super.update(this.criteria, data);
-  }
-  add(data) {
-    const numberingStart = this.company
-      .getData()
-      .Numbering.find((item) => item.Item === "Material Document").From;
-    const DocumentNo = super.autoNumber(
-      this.criteria,
-      "DocumentNo",
-      numberingStart,
-    );
-    const preparedData = { ...this.prepared(data), ...{ DocumentNo } };
-    super.add(preparedData);
-    const result = super.exists({ ...this.criteria, ...{ DocumentNo } });
-    return { result, DocumentNo };
-  }
-  update(data) {
-    super.update(this.criteria, data);
-  }
-  defaultDocument() {
-    return {
-      Company: this.companycode,
-      Year: this.year,
-      DocumentNo: this.documentNo,
-      Text: "",
-      ValueDate: "",
-      DocumentType: "",
-      EntryDate: dateString(new Date()),
-      TimeStamp: TimeStamp(),
-      Movements: [this.defaultMovement()],
-      Reversed: false,
-      ReversalDocumentNo: "",
-      ReversalDate: "",
-    };
-  }
-  prepared(data) {
-    return {
-      ...this.defaultDocument(),
-      ...refine(data, this.defaultDocument()),
-      ["Movements"]: data.Movements.map((movement, m) =>
-        this.prepareMovement(movement),
-      ),
-    };
-  }
-  defaultMovement() {
-    return {
-      No: "",
-      MovementType: "",
-      MaterialCode: "",
-      LocationCode: "",
-      Block: "Free",
-      Quantity: 0,
-      Rate: 0,
-      Value: 0,
-      PurchaseOrder: "",
-      StockTransportOrder: "",
-      SaleOrder: "",
-      Item: "",
-      Customer: "",
-      Vendor: "",
-      Text: "",
-      RefDocNo: "",
-      RefYear: "",
-      RefItem: "",
-      Consumption: {},
-    };
-  }
-  prepareMovement(data) {
-    return {
-      ...this.defaultMovement(),
-      ...refine(data, this.defaultMovement()),
-    };
-  }
-}
-
 export class Transaction extends Collection {
   constructor(company, year, number, type, name = "Transaction") {
     super(name);
@@ -4592,6 +4501,137 @@ export class ProcessCostingDocument {
   }
   update() {
     return this.costingDocument().update(this.processed());
+  }
+}
+
+export class MaterialDocument extends CompanyCollection {
+  constructor(company, documentNo, year, name = "MaterialDocument") {
+    super(company, name);
+    this.documentNo = Number(documentNo);
+    this.year = year;
+    this.criteria = {
+      Company: this.companycode,
+      Year: this.year,
+      DocumentNo: this.documentNo,
+    };
+  }
+  exists() {
+    return super.exists(this.criteria);
+  }
+  getData() {
+    return super.getData(this.criteria);
+  }
+  autoNumber() {
+    const numberingStart = this.company
+      .getData()
+      .Numbering.find((item) => item.Item === "Material Document").From;
+    const DocumentNo = super.autoNumber(
+      this.criteria,
+      "DocumentNo",
+      numberingStart,
+    );
+    return DocumentNo;
+  }
+  add(data) {
+    const DocumentNo = this.autoNumber();
+    super.add({
+      ...this.criteria,
+      ...data,
+      ...{ DocumentNo },
+    });
+    const result = true;
+    return { result, DocumentNo };
+  }
+  delete() {
+    super.delete(this.criteria);
+  }
+  update(data) {
+    this.delete();
+    super.add(data);
+  }
+}
+
+export class ProcessMaterialDocument {
+  constructor(data = {}, company = data.Company) {
+    this.data = data;
+    this.company = new Company(company);
+    this.companycode = company;
+  }
+  defaultData() {
+    return {
+      Company: this.companycode,
+      PostingDate: "",
+      DocumentNo: "",
+      Year: "",
+      CreationInfo: "",
+      Currency: "",
+      ExchangeRate: 1,
+      Movements: [],
+    };
+  }
+  defaultMovement() {
+    return {
+      Material: "",
+      MT: "",
+      Amount: 0,
+      Text: "",
+      Location: "",
+      AmountInLC: 0,
+      Identification: "",
+    };
+  }
+  year() {
+    const { PostingDate } = this.data;
+    if (PostingDate === "" || !this.company.exists()) {
+      return "";
+    }
+    return this.company.year(this.data.PostingDate);
+  }
+  preprocessed() {
+    return refine({ ...this.defaultData(), ...this.data }, this.defaultData());
+  }
+  exchangeRate() {
+    return this.preprocessed().ExchangeRate;
+  }
+  processed() {
+    const data = this.preprocessed();
+    data.Year = this.year();
+    const { Movements } = data;
+    data.Movements = [];
+    data.Movements = Movements.map((entry) => this.processedMovement(movement));
+    return data;
+  }
+  processedMovement(movement) {
+    const data = refine(
+      { ...this.defaultMovement(), ...movement },
+      this.defaultMovement(),
+    );
+    const ER = this.exchangeRate();
+    const { ET, Amount } = data;
+    data.AmountInLC = data.Amount * ER;
+    return data;
+  }
+  errors() {
+    const list = [];
+    const addError = (logic, path, error) => {
+      if (logic) {
+        list.push({ path, error });
+      }
+    };
+    return list;
+  }
+  errorsExist() {
+    return this.errors().length > 0;
+  }
+  materialDocument() {
+    const { DocumentNo, Year } = this.processed();
+    return new MaterialDocument(this.companycode, DocumentNo, Year);
+  }
+  add() {
+    return this.materialDocument().add(this.processed());
+  }
+  update() {
+    return this.materialDocument().update(this.processed());
   }
 }
 

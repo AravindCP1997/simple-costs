@@ -81,6 +81,7 @@ import {
 import {
   BusinessTaxType,
   EmployeeTable,
+  getExchangeRate,
   MaterialTable,
   PostedRemunerationTable,
   RemunerationPaymentTable,
@@ -136,6 +137,7 @@ export function Scratch() {
             </Row>
           </Row>
         </DisplayArea>
+        {JSON.stringify(getExchangeRate("FAC", "AED", "2025-12-03"))}
       </WindowContent>
     </>
   );

@@ -1396,6 +1396,30 @@ export function Selection({ value, path, changeData = noop }) {
   );
 }
 
+export function ListSelection({ values, path, changeData = noop }) {
+  return (
+    <Row width="fit-content" borderBottom="none">
+      <Input
+        value={values[0]}
+        process={(value) => changeData(`${path}`, 0, value)}
+        type={"text"}
+      />
+      <HidingDisplay title={"List"} buttonName={<FaArrowRight />}>
+        <Column width="min(100%,250px)">
+          {values.map((item, i) => (
+            <Input
+              key={i}
+              value={values[i]}
+              process={(value) => changeData(`${path}`, i, value)}
+              type={"text"}
+            />
+          ))}
+        </Column>
+      </HidingDisplay>
+    </Row>
+  );
+}
+
 export function ConditionalDisplays({ displays = [[true, <p></p>]] }) {
   return (
     <div>

@@ -1,8 +1,8 @@
 import { FcInspection } from "react-icons/fc";
 import { InputJSONFile } from "./Components";
 import { Collection } from "./Database";
-import { TimeStamp } from "./functions";
-import { Region } from "./classes";
+import { rangeOverlap, TimeStamp } from "./functions";
+import { ExchangeRates, Region } from "./classes";
 
 export function MaterialTable() {
   const data = new Collection("MaterialDocument").load();
@@ -107,4 +107,19 @@ export function RemunerationPaymentTable() {
     });
   });
   return result;
+}
+
+export function getExchangeRate(company, currency, date) {
+  const exchangerates = new ExchangeRates(currency, company);
+  if (!exchangerates.exists()) {
+    return 1;
+  }
+  const rates = exchangerates.getData().Rates;
+  const rate = rates.find((item) =>
+    rangeOverlap([item.From, item.To], [date, date]),
+  );
+  if (rate === undefined) {
+    return 1;
+  }
+  return rate.Rate;
 }

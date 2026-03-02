@@ -211,6 +211,7 @@ import { ReverseRemunerationExpensePosting } from "./Transactions/RemunerationEx
 import { ReverseRemunerationPayment } from "./Transactions/RemunerationPaymentReverse";
 import { QueryRemunerationPaymentTable } from "./Transactions/RemunerationPaymentTable";
 import { QueryCostingDocument } from "./Transactions/CostingDocument";
+import { CostTransfer } from "./Transactions/CostTransfer";
 
 const codes = [
   {
@@ -892,6 +893,14 @@ const codes = [
     name: "Stock Transport Order",
     group: "Control",
     subgroup: "Controlling",
+  },
+  {
+    code: "cost_trf",
+    screen: <Window />,
+    window: <CostTransfer />,
+    name: "Cost Transfer",
+    group: "Record",
+    subgroup: "Costing",
   },
   {
     code: "atc",
