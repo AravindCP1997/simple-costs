@@ -194,8 +194,6 @@ export function CreateBusinessPlace({
       "RegionCode",
       "Region does not exist.",
     );
-    addError(Country === "", "Country", `Country cannot be blank.`);
-    addError(State === "", "State", `State cannot be blank.`);
   }, [data]);
   if (method === "Create") {
     return (
@@ -279,26 +277,6 @@ export function CreateBusinessPlace({
                 process={(value) => changeData("", "RegionCode", value)}
                 suggestions={Region.list("Code")}
                 captions={Region.list("Description")}
-              />
-            </Row>
-            <Row>
-              <Label label={"Country"} />
-              <Option
-                value={Country}
-                process={(value) => changeData("", "Country", value)}
-                options={["", ...ListUniqueItems(StatesMaster, "Country")]}
-              />
-            </Row>
-            <Row>
-              <Label label={"State"} />
-              <Option
-                value={State}
-                process={(value) => changeData("", "State", value)}
-                options={FilteredList(
-                  StatesMaster,
-                  { Country: Country },
-                  "State",
-                )}
               />
             </Row>
             <Row>
@@ -403,26 +381,6 @@ export function CreateBusinessPlace({
               />
             </Row>
             <Row>
-              <Label label={"Country"} />
-              <Option
-                value={Country}
-                process={(value) => changeData("", "Country", value)}
-                options={["", ...ListUniqueItems(StatesMaster, "Country")]}
-              />
-            </Row>
-            <Row>
-              <Label label={"State"} />
-              <Option
-                value={State}
-                process={(value) => changeData("", "State", value)}
-                options={FilteredList(
-                  StatesMaster,
-                  { Country: Country },
-                  "State",
-                )}
-              />
-            </Row>
-            <Row>
               <Label label={"Email"} />
               <Input
                 value={Email}
@@ -506,14 +464,6 @@ export function CreateBusinessPlace({
             <Row>
               <Label label={"Postal Code"} />
               <label>{RegionCode}</label>
-            </Row>
-            <Row>
-              <Label label={"Country"} />
-              <label>{Country}</label>
-            </Row>
-            <Row>
-              <Label label={"State"} />
-              <label>{State}</label>
             </Row>
             <Row>
               <Label label={"Email"} />

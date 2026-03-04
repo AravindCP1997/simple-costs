@@ -96,8 +96,8 @@ export const UserInterfaceProvider = ({ children }) => {
     setauthenticated(authenticationData.read().passcode === defaultpasscode);
   };
 
-  const savepasscode = () => {
-    authenticationData.save({ passcode });
+  const savepasscode = (passcode) => {
+    authenticationData.save({ passcode: passcode });
   };
 
   const keyRefs = useRef({});

@@ -371,7 +371,12 @@ export const HSN = {
 
 export const Currencies = {
   object: new Dictionary("Currencies"),
-  defaults: [{ Code: "", Description: "" }],
+  defaults: [
+    { Code: "INR", Description: "Indian Rupee" },
+    { Code: "USD", Description: "US Dollar" },
+    { Code: "MYR", Description: "Malaysian Ringgit" },
+    { Code: "AED", Description: "UAE Dirham" },
+  ],
   sample: [
     { Code: "INR", Description: "Indian Rupee" },
     { Code: "USD", Description: "US Dollar" },
@@ -396,7 +401,10 @@ export const Currencies = {
 
 export const Segments = {
   object: new Dictionary("Segments"),
-  defaults: [{ Segment: "", Description: "" }],
+  defaults: [
+    { Segment: "ETRS", Description: "Electronics" },
+    { Segment: "FMCG", Description: "Consumer Goods" },
+  ],
   sample: [
     { Segment: "ETRS", Description: "Electronics" },
     { Segment: "FMCG", Description: "Consumer Goods" },

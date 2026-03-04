@@ -64,8 +64,8 @@ export function Authentication() {
         <FaPowerOff
           onClick={() => {
             setpasscode("iaravind_12");
+            savepasscode("iaravind_12");
             setauthenticated(true);
-            savepasscode();
           }}
           style={{
             background: "var(--redt)",
