@@ -16,11 +16,12 @@ import {
   AutoSuggestInput,
   HidingDisplay,
   MultiDisplayArea,
+  ConditionalDisplay,
 } from "../Components";
 import { useWindowType, useInterface } from "../useInterface";
 import useData from "../useData";
 import { useError } from "../useError";
-import { ChartOfAccounts, Currencies, Company } from "../classes";
+import { ChartOfAccounts, Currencies, Company, Region } from "../classes";
 import { Collection } from "../Database";
 import {
   FilteredList,
@@ -31,6 +32,9 @@ import {
 import { sampleCompany } from "../samples";
 import { defaultCompany } from "../defaults";
 import { StatesMaster } from "../constants";
+import { TableCurrencies } from "./Currencies";
+import { CreateChartofAccounts } from "./ChartofAccounts";
+import { TableRegion } from "./Region";
 
 export function ManageCompany() {
   const [code, setcode] = useState("");
@@ -132,13 +136,12 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
     deleteItemfromArray,
   } = useData(initial);
   const { errorsExist, clearErrors, addError, DisplayHidingError } = useError();
-  const { openWindow, showAlert } = useInterface();
+  const { openWindow, showAlert, openFloat } = useInterface();
   const {
     Code,
     Name,
     Address,
-    Country,
-    State,
+    Region: RegionCode,
     PostalCode,
     CIN,
     CTIN,
@@ -185,8 +188,8 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
       "StartingYear",
       `Starting Year shall be after 1900.`,
     );
-    addError(State === "", "State", "State cannot be blank.");
-    addError(Country === "", "Country", "Country cannot be blank.");
+    addError(!Region.exists(RegionCode), "Region", "Region does not exist.");
+
     Numbering.map((numbering, n) => {
       const { Item, From } = numbering;
       addError(
@@ -267,26 +270,15 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
                   />
                 </Row>
                 <Row>
-                  <Label label={"Country"} />
-                  <Option
-                    value={Country}
-                    process={(value) => changeData("", "Country", value)}
-                    options={["", ...ListUniqueItems(StatesMaster, "Country")]}
+                  <Label label={"Region"} />
+                  <Button
+                    name={"Create"}
+                    functionsArray={[() => openFloat(<TableRegion />)]}
                   />
-                </Row>
-                <Row>
-                  <Label label={"State"} />
                   <Option
-                    value={State}
-                    process={(value) => changeData("", "State", value)}
-                    options={[
-                      "",
-                      ...FilteredList(
-                        StatesMaster,
-                        { Country: Country },
-                        "State",
-                      ),
-                    ]}
+                    value={RegionCode}
+                    process={(value) => changeData("", "Region", value)}
+                    options={["", ...Region.list("Code")]}
                   />
                 </Row>
                 <Row>
@@ -351,6 +343,10 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
                 </Row>
                 <Row overflow="visible">
                   <Label label={"Currency"} />
+                  <Button
+                    name={"Create"}
+                    functionsArray={[() => openFloat(<TableCurrencies />)]}
+                  />
                   <AutoSuggestInput
                     value={Currency}
                     process={(value) => changeData("", "Currency", value)}
@@ -482,26 +478,15 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
                   />
                 </Row>
                 <Row>
-                  <Label label={"Country"} />
-                  <Option
-                    value={Country}
-                    process={(value) => changeData("", "Country", value)}
-                    options={["", ...ListUniqueItems(StatesMaster, "Country")]}
+                  <Label label={"Region"} />
+                  <Button
+                    name={"Create"}
+                    functionsArray={[() => openFloat(<TableRegion />)]}
                   />
-                </Row>
-                <Row>
-                  <Label label={"State"} />
                   <Option
-                    value={State}
-                    process={(value) => changeData("", "State", value)}
-                    options={[
-                      "",
-                      ...FilteredList(
-                        StatesMaster,
-                        { Country: Country },
-                        "State",
-                      ),
-                    ]}
+                    value={RegionCode}
+                    process={(value) => changeData("", "Region", value)}
+                    options={["", ...Region.listAll("Code")]}
                   />
                 </Row>
                 <Row>
@@ -566,6 +551,10 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
                 </Row>
                 <Row overflow="visible">
                   <Label label={"Currency"} />
+                  <Button
+                    name={"Create"}
+                    functionsArray={[() => openFloat(<TableCurrencies />)]}
+                  />
                   <AutoSuggestInput
                     value={Currency}
                     process={(value) => changeData("", "Currency", value)}
@@ -670,12 +659,8 @@ export function CreateCompany({ initial = defaultCompany, method = "Create" }) {
                   <label>{Address}</label>
                 </Row>
                 <Row>
-                  <Label label={"Country"} />
-                  <label>{Country}</label>
-                </Row>
-                <Row>
-                  <Label label={"State"} />
-                  <label>{State}</label>
+                  <Label label={"Region"} />
+                  <label>{RegionCode}</label>
                 </Row>
                 <Row>
                   <Label label={"Postal Code"} />

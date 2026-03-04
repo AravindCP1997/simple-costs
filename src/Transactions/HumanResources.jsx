@@ -174,6 +174,14 @@ export function HumanResources() {
               </p>
             </Column>
             <Column borderBottom="none" bg="var(--lightbluet)" padding="5px">
+              <Label label={"Business Place"} style={{ fontWeight: "bold" }} />
+              <p>
+                Statutory reporting unit or location within a company. Clusters
+                Cost Centers, Locations, Plants and Revenue Centers. Every
+                general ledger entry is attributed to a Business Place.
+              </p>
+            </Column>
+            <Column borderBottom="none" bg="var(--lightgreent)" padding="5px">
               <Label
                 label={"Cost Center, Location, Plant and Revenue Center"}
                 style={{ fontWeight: "bold" }}

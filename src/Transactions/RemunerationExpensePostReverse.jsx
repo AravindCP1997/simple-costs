@@ -62,6 +62,7 @@ export function ReverseRemunerationExpensePosting() {
     <>
       <WindowTitle
         title={"Reverse Remuneration Expense Posting"}
+        closeTo="Record"
         menu={[
           <ConditionalButton
             name={"Reverse"}

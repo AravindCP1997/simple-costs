@@ -96,6 +96,7 @@ export function QueryRemunerationPayment() {
     <>
       <WindowTitle
         title={"Remuneration Payment File"}
+        closeTo="Report"
         menu={[
           <ConditionalButton
             name={"Display"}
@@ -141,7 +142,7 @@ export function QueryRemunerationPayment() {
             />
           </Row>
           <Row overflow="visible">
-            <Label label={"Batch ID"} />
+            <Label label={"Payment Batch ID"} />
             <Input
               value={BatchId}
               process={(value) => changeData("", "BatchId", value)}
@@ -217,6 +218,7 @@ export function DisplayPaymentFile({ data }) {
   return (
     <>
       <WindowTitle
+        closeTo="Report"
         title={"Payment File"}
         menu={[
           <Button

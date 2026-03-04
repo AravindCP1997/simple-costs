@@ -707,3 +707,19 @@ export function isFuture(date) {
 export function UniqueList(list) {
   return [...new Set(list)];
 }
+
+export function minimumDate(dates) {
+  const datesArray = dates.map((date) => new Date(date));
+  const minDate = datesArray.reduce((prevValue, current) => {
+    return prevValue < current ? prevValue : current;
+  });
+  return dateString(minDate);
+}
+
+export function maximumDate(dates) {
+  const datesArray = dates.map((date) => new Date(date));
+  const maxDate = datesArray.reduce((prevValue, current) => {
+    return prevValue > current ? prevValue : current;
+  });
+  return dateString(maxDate);
+}

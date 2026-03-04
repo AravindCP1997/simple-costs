@@ -52,14 +52,19 @@ export function DeleteRemunerationResult() {
   const { CompanyCode, EmployeeCode, Year, Month, OffCycle, OffCycleDate } =
     data;
   const rr = OffCycle
-    ? new RemunerationOffCycleResult(CompanyCode, EmployeeCode, OffCycleDate)
-    : new RemunerationResult(CompanyCode, EmployeeCode, Year, Month);
+    ? new RemunerationOffCycleResult(
+        CompanyCode,
+        Number(EmployeeCode),
+        OffCycleDate,
+      )
+    : new RemunerationResult(CompanyCode, Number(EmployeeCode), Year, Month);
   const { showAlert, openWindow } = useInterface();
 
   return (
     <>
       <WindowTitle
         title={"Delete Remuneration Result"}
+        closeTo="Record"
         menu={[
           <ConditionalButton
             name={"Delete"}

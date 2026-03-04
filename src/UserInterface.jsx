@@ -200,7 +200,10 @@ import {
   ManageRemunerationRun,
   QueryRemunerationRun,
 } from "./Transactions/RemunerationRun";
-import { QueryRemunerationSlip } from "./Transactions/RemunerationSlip";
+import {
+  ForecastRemunerationSlip,
+  QueryRemunerationSlip,
+} from "./Transactions/RemunerationSlip";
 import { QueryRemunerationTable } from "./Transactions/PostedRemunerationTable";
 import { ManageRemunerationExpensePosting } from "./Transactions/RemunerationExpensePost";
 import { ManageRemunerationPayment } from "./Transactions/RemunerationPaymentRun";
@@ -212,21 +215,22 @@ import { ReverseRemunerationPayment } from "./Transactions/RemunerationPaymentRe
 import { QueryRemunerationPaymentTable } from "./Transactions/RemunerationPaymentTable";
 import { QueryCostingDocument } from "./Transactions/CostingDocument";
 import { CostTransfer } from "./Transactions/CostTransfer";
+import { Storage } from "./Transactions/Storage";
 
 const codes = [
-  {
-    code: "test",
-    screen: <Window />,
-    window: <Scratch />,
-    name: "Test",
-    group: "System",
-    subgroup: "General",
-  },
   {
     code: "accs",
     screen: <Window />,
     window: <Accessibility />,
     name: "Accessibility",
+    group: "System",
+    subgroup: "General",
+  },
+  {
+    code: "strg",
+    screen: <Window />,
+    window: <Storage />,
+    name: "Storage",
     group: "System",
     subgroup: "General",
   },
@@ -237,14 +241,6 @@ const codes = [
     name: "Human Resources",
     group: "System",
     subgroup: "Knowledge Base",
-  },
-  {
-    code: "enty",
-    screen: <Window />,
-    window: <TableEntryTypes />,
-    name: "Entry Types",
-    group: "System",
-    subgroup: "Info",
   },
   {
     code: "ccoa",
@@ -263,38 +259,6 @@ const codes = [
     subgroup: "Global",
   },
   {
-    code: "cfsc",
-    screen: <Window />,
-    window: <CreateFinancialStatementStructure />,
-    name: "Create Financial Statement Structure",
-    group: "Control",
-    subgroup: "Global",
-  },
-  {
-    code: "mfsc",
-    screen: <Window />,
-    window: <ManageFinancialStatementStructure />,
-    name: "Manage Financial Statement Structure",
-    group: "Control",
-    subgroup: "Global",
-  },
-  {
-    code: "cggl",
-    screen: <Window />,
-    window: <CreateGroupGeneralLedger />,
-    name: "Create Group General Ledger",
-    group: "Control",
-    subgroup: "Global",
-  },
-  {
-    code: "mggl",
-    screen: <Window />,
-    window: <ManageGroupGeneralLedger />,
-    name: "Manage Group General Ledger",
-    group: "Control",
-    subgroup: "Global",
-  },
-  {
     code: "citc",
     screen: <Window />,
     window: <CreateIncomeTaxCode />,
@@ -307,38 +271,6 @@ const codes = [
     screen: <Window />,
     window: <ManageIncomeTaxCode />,
     name: "Manage Income Tax Code",
-    group: "Control",
-    subgroup: "Global",
-  },
-  {
-    code: "cinc",
-    screen: <Window />,
-    window: <CreateInterestCode />,
-    name: "Create Interest Code",
-    group: "Control",
-    subgroup: "Global",
-  },
-  {
-    code: "minc",
-    screen: <Window />,
-    window: <ManageInterestCode />,
-    name: "Manage Interest Code",
-    group: "Control",
-    subgroup: "Global",
-  },
-  {
-    code: "cpt",
-    screen: <Window />,
-    window: <CreatePaymentTerms />,
-    name: "Create Payment Terms",
-    group: "Control",
-    subgroup: "Global",
-  },
-  {
-    code: "mpt",
-    screen: <Window />,
-    window: <ManagePaymentTerms />,
-    name: "Manage Payment Terms",
     group: "Control",
     subgroup: "Global",
   },
@@ -508,7 +440,7 @@ const codes = [
     window: <CreateGeneralLedger />,
     name: "Create General Ledger",
     group: "Control",
-    subgroup: "Financial Accounting",
+    subgroup: "Accounting",
   },
   {
     code: "mgl",
@@ -516,7 +448,7 @@ const codes = [
     window: <ManageGeneralLedger />,
     name: "Manage General Ledger",
     group: "Control",
-    subgroup: "Financial Accounting",
+    subgroup: "Accounting",
   },
   {
     code: "lst",
@@ -524,55 +456,7 @@ const codes = [
     window: <ManageLedgerAssignment />,
     name: "Ledger Assignment",
     group: "Control",
-    subgroup: "Financial Accounting",
-  },
-  {
-    code: "cag",
-    screen: <Window />,
-    window: <CreateAssetGroup />,
-    name: "Create Asset Group",
-    group: "Control",
-    subgroup: "Asset Accounting",
-  },
-  {
-    code: "mag",
-    screen: <Window />,
-    window: <ManageAssetGroup />,
-    name: "Manage Asset Group",
-    group: "Control",
-    subgroup: "Asset Accounting",
-  },
-  {
-    code: "cast",
-    screen: <Window />,
-    window: <CreateAsset />,
-    name: "Create Asset",
-    group: "Control",
-    subgroup: "Asset Accounting",
-  },
-  {
-    code: "mast",
-    screen: <Window />,
-    window: <ManageAsset />,
-    name: "Manage Asset",
-    group: "Control",
-    subgroup: "Asset Accounting",
-  },
-  {
-    code: "cado",
-    screen: <Window />,
-    window: <CreateAssetDevelopmentOrder />,
-    name: "Create Asset Development Order",
-    group: "Control",
-    subgroup: "Asset Accounting",
-  },
-  {
-    code: "mado",
-    screen: <Window />,
-    window: <ManageAssetDevelopmentOrder />,
-    name: "Manage Asset Development Order",
-    group: "Control",
-    subgroup: "Asset Accounting",
+    subgroup: "Accounting",
   },
   {
     code: "cwt",
@@ -631,150 +515,6 @@ const codes = [
     subgroup: "Human Resources",
   },
   {
-    code: "cmg",
-    screen: <Window />,
-    window: <CreateMaterialGroup />,
-    name: "Create Material Group",
-    group: "Control",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "mmg",
-    screen: <Window />,
-    window: <ManageMaterialGroup />,
-    name: "Manage Material Group",
-    group: "Control",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "csg",
-    screen: <Window />,
-    window: <CreateServiceGroup />,
-    name: "Create Service Group",
-    group: "Control",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "msg",
-    screen: <Window />,
-    window: <ManageServiceGroup />,
-    name: "Manage Service Group",
-    group: "Control",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "cfg",
-    screen: <Window />,
-    window: <CreateFreightGroup />,
-    name: "Create Freight Group",
-    group: "Control",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "mfg",
-    screen: <Window />,
-    window: <ManageFreightGroup />,
-    name: "Manage Freight Group",
-    group: "Control",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "cmat",
-    screen: <Window />,
-    window: <CreateMaterial />,
-    name: "Create Material",
-    group: "Control",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "mmat",
-    screen: <Window />,
-    window: <ManageMaterial />,
-    name: "Manage Material",
-    group: "Control",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "cser",
-    screen: <Window />,
-    window: <CreateService />,
-    name: "Create Service",
-    group: "Control",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "mser",
-    screen: <Window />,
-    window: <ManageService />,
-    name: "Manage Service",
-    group: "Control",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "ccg",
-    screen: <Window />,
-    window: <CreateCustomerGroup />,
-    name: "Create Customer Group",
-    group: "Control",
-    subgroup: "Payables and Receivables",
-  },
-  {
-    code: "mcg",
-    screen: <Window />,
-    window: <ManageCustomerGroup />,
-    name: "Manage Customer Group",
-    group: "Control",
-    subgroup: "Payables and Receivables",
-  },
-  {
-    code: "cvg",
-    screen: <Window />,
-    window: <CreateVendorGroup />,
-    name: "Create Vendor Group",
-    group: "Control",
-    subgroup: "Payables and Receivables",
-  },
-  {
-    code: "mvg",
-    screen: <Window />,
-    window: <ManageVendorGroup />,
-    name: "Manage Vendor Group",
-    group: "Control",
-    subgroup: "Payables and Receivables",
-  },
-  {
-    code: "ccus",
-    screen: <Window />,
-    window: <CreateCustomer />,
-    name: "Create Customer",
-    group: "Control",
-    subgroup: "Payables and Receivables",
-  },
-  {
-    code: "mcus",
-    screen: <Window />,
-    window: <ManageCustomer />,
-    name: "Manage Customer",
-    group: "Control",
-    subgroup: "Payables and Receivables",
-  },
-  {
-    code: "cven",
-    screen: <Window />,
-    window: <CreateVendor />,
-    name: "Create Vendor",
-    group: "Control",
-    subgroup: "Payables and Receivables",
-  },
-  {
-    code: "mven",
-    screen: <Window />,
-    window: <ManageVendor />,
-    name: "Manage Vendor",
-    group: "Control",
-    subgroup: "Payables and Receivables",
-  },
-  {
     code: "cbk",
     screen: <Window />,
     window: <CreateBankAccount />,
@@ -789,118 +529,6 @@ const codes = [
     name: "Manage Bank Account",
     group: "Control",
     subgroup: "Payables and Receivables",
-  },
-  {
-    code: "cvan",
-    screen: <Window />,
-    window: <CreateVirtualAccount />,
-    name: "Create Virtual Account",
-    group: "Control",
-    subgroup: "Payables and Receivables",
-  },
-  {
-    code: "mvan",
-    screen: <Window />,
-    window: <ManageVirtualAccount />,
-    name: "Manage Virtual Account",
-    group: "Control",
-    subgroup: "Payables and Receivables",
-  },
-  {
-    code: "cbtc",
-    screen: <Window />,
-    window: <CreateBusinessTaxCode />,
-    name: "Create Business Tax Code",
-    group: "Control",
-    subgroup: "Payables and Receivables",
-  },
-  {
-    code: "mbtc",
-    screen: <Window />,
-    window: <ManageBusinessTaxCode />,
-    name: "Manage Business Tax Code",
-    group: "Control",
-    subgroup: "Payables and Receivables",
-  },
-  {
-    code: "cwht",
-    screen: <Window />,
-    window: <CreateWithholdingTax />,
-    name: "Create Withholding Tax",
-    group: "Control",
-    subgroup: "Payables and Receivables",
-  },
-  {
-    code: "mwht",
-    screen: <Window />,
-    window: <ManageWithholdingTax />,
-    name: "Manage Withholding Tax",
-    group: "Control",
-    subgroup: "Payables and Receivables",
-  },
-  {
-    code: "exr",
-    screen: <Window />,
-    window: <ManageExchangeRates />,
-    name: "Exchange Rates",
-    group: "Control",
-    subgroup: "Payables and Receivables",
-  },
-  {
-    code: "po",
-    screen: <Window />,
-    window: <CreatePurchaseOrder />,
-    name: "Purchase Order",
-    group: "Control",
-    subgroup: "Controlling",
-  },
-  {
-    code: "so",
-    screen: <Window />,
-    window: <CreateSaleOrder />,
-    name: "Sale Order",
-    group: "Control",
-    subgroup: "Controlling",
-  },
-  {
-    code: "prod",
-    screen: <Window />,
-    window: <CreateProductionOrder />,
-    name: "Production Order",
-    group: "Control",
-    subgroup: "Controlling",
-  },
-  {
-    code: "proc",
-    screen: <Window />,
-    window: <CreateProcessOrder />,
-    name: "Process Order",
-    group: "Control",
-    subgroup: "Controlling",
-  },
-  {
-    code: "mo",
-    screen: <Window />,
-    window: <CreateMaintenanceOrder />,
-    name: "Maintenance Order",
-    group: "Control",
-    subgroup: "Controlling",
-  },
-  {
-    code: "sto",
-    screen: <Window />,
-    window: <CreateStockTransportOrder />,
-    name: "Stock Transport Order",
-    group: "Control",
-    subgroup: "Controlling",
-  },
-  {
-    code: "cost_trf",
-    screen: <Window />,
-    window: <CostTransfer />,
-    name: "Cost Transfer",
-    group: "Record",
-    subgroup: "Costing",
   },
   {
     code: "atc",
@@ -959,6 +587,14 @@ const codes = [
     subgroup: "Human Resources",
   },
   {
+    code: "rem_fore",
+    screen: <Window />,
+    window: <ForecastRemunerationSlip />,
+    name: "Forecast Remuneration",
+    group: "Report",
+    subgroup: "Human Resources",
+  },
+  {
     code: "rem_slip",
     screen: <Window />,
     window: <QueryRemunerationSlip />,
@@ -1004,7 +640,7 @@ const codes = [
     window: <QueryAccountingDocument />,
     name: "Accounting Document",
     group: "Report",
-    subgroup: "Financial Accounting",
+    subgroup: "Accounting",
   },
   {
     code: "costdoc",
@@ -1012,287 +648,7 @@ const codes = [
     window: <QueryCostingDocument />,
     name: "Costing Document",
     group: "Report",
-    subgroup: "Costing",
-  },
-  {
-    code: "m01",
-    screen: <Window />,
-    window: <ConsignmentInwardsOriginPO />,
-    name: "Consignment Inwards Origin - PO",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m01a",
-    screen: <Window />,
-    window: <ConsignmentInwardsOriginVendor />,
-    name: "Consignment Inwards Origin - Vendor",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m02",
-    screen: <Window />,
-    window: <ConsignmentInwardsReceipt />,
-    name: "Consignment Inwards Receipt",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m03",
-    screen: <Window />,
-    window: <ConsignmentInwardsReturn />,
-    name: "Consignment Inwards Return",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m04",
-    screen: <Window />,
-    window: <ConsignmentInwardsLoss />,
-    name: "Consignment Inwards Loss",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m05",
-    screen: <Window />,
-    window: <ReceiptForInspectionPO />,
-    name: "Receipt for Inspection - PO",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m05a",
-    screen: <Window />,
-    window: <ReceiptForInspectionVendor />,
-    name: "Receipt for Inspection - Vendor",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m06",
-    screen: <Window />,
-    window: <InspectionAcceptance />,
-    name: "Inspection Acceptance",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m07",
-    screen: <Window />,
-    window: <ReturnsFromInspection />,
-    name: "Return from Inspection Block",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m08",
-    screen: <Window />,
-    window: <LossfromInspection />,
-    name: "Loss from Inspection Block",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m09",
-    screen: <Window />,
-    window: <ReceiptPO />,
-    name: "PO Receipts",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m09a",
-    screen: <Window />,
-    window: <ReceiptVendor />,
-    name: "Receipts without PO",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m10",
-    screen: <Window />,
-    window: <ReturnOutwards />,
-    name: "Return Outwards",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m11",
-    screen: <Window />,
-    window: <MaterialLoss />,
-    name: "Material Loss",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m12",
-    screen: <Window />,
-    window: <MaterialDamage />,
-    name: "Material Damage",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m13",
-    screen: <Window />,
-    window: <ReserveMaterial />,
-    name: "Material Reservation",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m14",
-    screen: <Window />,
-    window: <UnReserveMaterial />,
-    name: "Material Unreservation",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m15",
-    screen: <Window />,
-    window: <MaterialTransfer />,
-    name: "Material Transfer",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m16",
-    screen: <Window />,
-    window: <MaterialIssueSTO />,
-    name: "Material Issue - STO",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m17",
-    screen: <Window />,
-    window: <MaterialReceiptSTO />,
-    name: "Material Receipt - STO",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m18",
-    screen: <Window />,
-    window: <STOReturn />,
-    name: "Material Return - STO",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m19",
-    screen: <Window />,
-    window: <STOLoss />,
-    name: "Material Loss - STO",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m20",
-    screen: <Window />,
-    window: <MaterialIssueSO />,
-    name: "Material Delivery SO",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m20a",
-    screen: <Window />,
-    window: <MaterialIssueCustomer />,
-    name: "Material Delivery to Customer",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m21",
-    screen: <Window />,
-    window: <ReturnInwards />,
-    name: "Return Inwards",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m22",
-    screen: <Window />,
-    window: <ConsignmentOutwardsOriginSO />,
-    name: "Consignment Outwards Origin- SO",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m22a",
-    screen: <Window />,
-    window: <ConsignmentOutwardsOriginCustomer />,
-    name: "Consignment Outwards Origin - Customer",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m23",
-    screen: <Window />,
-    window: <ConsignmentOutwardsDelivery />,
-    name: "Consignment Outwards Delivery",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m24",
-    screen: <Window />,
-    window: <ConsignmentOutwardsReturn />,
-    name: "Consignment Outwards Return",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m25",
-    screen: <Window />,
-    window: <ConsignmentOutwardsLoss />,
-    name: "Consignment Outwards Loss",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m26",
-    screen: <Window />,
-    window: <MaterialIssueOrder />,
-    name: "Material Issue for Orders",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m27",
-    screen: <Window />,
-    window: <MaterialIssueUnit />,
-    name: "Material Issue for Units",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "m28",
-    screen: <Window />,
-    window: <MaterialIssueOthers />,
-    name: "Material Issue Others",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "srv",
-    screen: <Window />,
-    window: <ServiceReceiptVendor />,
-    name: "Service Receipt from Vendor",
-    group: "Record",
-    subgroup: "Materials and Services",
-  },
-  {
-    code: "mms",
-    screen: <Window />,
-    window: <QueryMaterialMovements />,
-    name: "Material Movements",
-    group: "Report",
-    subgroup: "Materials and Services",
+    subgroup: "Accounting",
   },
   {
     code: "simtax",
@@ -1528,8 +884,14 @@ function Prompt() {
 }
 
 function SearchBar() {
-  const { showAlert, setscreen, addRef, openWindow, openFloat } =
-    useInterface();
+  const {
+    showAlert,
+    setscreen,
+    addRef,
+    openWindow,
+    openFloat,
+    accessibility: { Background },
+  } = useInterface();
   const [code, setcode] = useState("");
 
   const go = (windowcode) => {
@@ -1566,7 +928,10 @@ function SearchBar() {
     borderTop: "none",
     borderRadius: "10px",
     background: "var(--bluet)",
-    border: "3px solid var(--whitet)",
+    border:
+      Background === "Tech"
+        ? "3px solid var(--whitet)"
+        : "3px solid var(--bluet)",
   };
 
   const searchAreaStyle = {
@@ -1660,6 +1025,15 @@ function Accessibility() {
           />,
           <Button name="Reset" functionsArray={[() => resetAccessibility()]} />,
         ]}
+        floatMenu={[
+          <ConditionalButton
+            name="Save"
+            result={windowtype === "static"}
+            whileFalse={[() => saveAccessibility(), () => closeFloat()]}
+            whileTrue={[() => saveAccessibility(), () => closeWindow()]}
+          />,
+          <Button name="Reset" functionsArray={[() => resetAccessibility()]} />,
+        ]}
       />
       <WindowContent>
         <DisplayArea>
@@ -1686,7 +1060,11 @@ function Accessibility() {
 }
 
 export function Home() {
-  const { setscreen, checkauthentication } = useInterface();
+  const {
+    setscreen,
+    checkauthentication,
+    accessibility: { Background },
+  } = useInterface();
 
   const style = {
     borderRadius: "25px",
@@ -1718,7 +1096,10 @@ export function Home() {
   const menuStyle = {
     aspectRatio: "1/1",
     borderRadius: "50%",
-    border: "5px solid var(--whitet)",
+    border:
+      Background === "Tech"
+        ? "5px solid var(--whitet)"
+        : "5px solid var(--bluet)",
     width: "150px",
     display: "flex",
     flexDirection: "column",
@@ -1788,7 +1169,11 @@ export function Home() {
 
 export function Drawer({ initial = "Record" }) {
   const [group, setgroup] = useState(initial);
-  const { openWindow, setscreen } = useInterface();
+  const {
+    openWindow,
+    setscreen,
+    accessibility: { Background },
+  } = useInterface();
   const transactions = codes.filter((code) => code.group === group);
   const subgroups = ListUniqueItems(transactions, "subgroup");
   const transactionsInSubgroup = (subgroup) => {
@@ -1845,6 +1230,10 @@ export function Drawer({ initial = "Record" }) {
     textAlign: "center",
     aspectRatio: "1 / 1",
     padding: "10px",
+    border:
+      Background === "Tech"
+        ? "3px solid var(--whitet)"
+        : "3px solid var(--bluet)",
   };
 
   const NavButton = ({ name }) => {

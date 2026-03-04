@@ -34,6 +34,8 @@ import {
   isPositive,
   ListItems,
   ListUniqueItems,
+  maximumDate,
+  minimumDate,
   rangeOverlap,
 } from "../functions";
 import { defaultEmployee } from "../defaults";
@@ -43,7 +45,7 @@ export function ManageEmployee() {
   const [company, setcompany] = useState("");
   const [code, setcode] = useState("");
   const { openWindow, openConfirm, showAlert } = useInterface();
-  const collection = new Employee(code, company);
+  const collection = new Employee(Number(code), company);
 
   return (
     <>
@@ -171,7 +173,7 @@ export function CreateEmployee({
     SelectedBank,
     Blocked,
   } = data;
-  const collection = new Employee(Code, Company);
+  const collection = new Employee(Number(Code), Company);
   const eg = new EmployeeGroup(EmployeeGroupCode, Company);
   const wagetypes = new WageType("", Company);
   useEffect(() => {
@@ -350,6 +352,16 @@ export function CreateEmployee({
       addError(Date === "", path, "Date shall not be blank.");
       addError(!isPositive(Amount), path, "Amount shall be positive.");
     });
+    addError(
+      maximumDate(ListUniqueItems(OrgAssignment, "To")) < "9999-12-31",
+      "OrgAssignment",
+      `Organisational Assignment shall hypothetically be set up to '9999-12-31'.`,
+    );
+    addError(
+      minimumDate(ListUniqueItems(OrgAssignment, "From")) > DOJ,
+      "OrgAssignment",
+      `Organisational Assignment shall be set from Date of Joining.`,
+    );
   }, [data]);
 
   return (

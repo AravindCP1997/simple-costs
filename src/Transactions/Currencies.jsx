@@ -45,7 +45,7 @@ export function TableCurrencies() {
         addError(
           htwo > h && Code === currencytwo.Code,
           htwo + 1,
-          `Duplicate HSN Code ${h + 1} and ${htwo + 1}.`
+          `Duplicate HSN Code ${h + 1} and ${htwo + 1}.`,
         );
       });
     });
@@ -56,6 +56,44 @@ export function TableCurrencies() {
       <WindowTitle
         title={"Table Currencies"}
         menu={
+          method === "View"
+            ? [
+                <Button
+                  name="Update"
+                  functionsArray={[() => setmethod("Update")]}
+                />,
+              ]
+            : [
+                <ConditionalButton
+                  name={"Save"}
+                  result={!errorsExist}
+                  whileFalse={[
+                    () => showAlert("Messages exist. Please check."),
+                  ]}
+                  whileTrue={[
+                    () => showAlert(Currencies.save(data)),
+                    () => setmethod("View"),
+                  ]}
+                />,
+                <Button
+                  name="Cancel"
+                  functionsArray={[() => setmethod("View")]}
+                />,
+                <Button
+                  name={"Add"}
+                  functionsArray={[
+                    () => addItemtoArray("", { Code: "", Description: "" }),
+                  ]}
+                />,
+                <Button name={"Reset"} functionsArray={[() => reset()]} />,
+                <Button
+                  name={"Sample"}
+                  functionsArray={[() => setdata(Currencies.sample)]}
+                />,
+                <DisplayHidingError />,
+              ]
+        }
+        floatMenu={
           method === "View"
             ? [
                 <Button
@@ -134,7 +172,7 @@ export function TableCurrencies() {
                             openConfirm(
                               "This will permanently remove the Currency.",
                               [],
-                              [() => deleteItemfromArray("", h)]
+                              [() => deleteItemfromArray("", h)],
                             ),
                         ]}
                         whileFalse={[() => deleteItemfromArray("", h)]}

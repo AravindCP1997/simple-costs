@@ -14,6 +14,7 @@ import {
   Column,
   Table,
   AutoSuggestInput,
+  ConditionalDisplay,
 } from "../Components";
 import { useWindowType, useInterface } from "../useInterface";
 import useData from "../useData";
@@ -27,6 +28,7 @@ import {
 import { Collection } from "../Database";
 import { ListItems, rangeOverlap, valueInRange } from "../functions";
 import { defaultGeneralLedger } from "../defaults";
+import { CreateChartofAccounts } from "./ChartofAccounts";
 
 export function ManageGeneralLedger() {
   const [company, setcompany] = useState("");
@@ -57,7 +59,7 @@ export function ManageGeneralLedger() {
                   <CreateGeneralLedger
                     method="View"
                     initial={collection.getData()}
-                  />
+                  />,
                 ),
             ]}
           />,
@@ -69,7 +71,7 @@ export function ManageGeneralLedger() {
             whileFalse={[
               () =>
                 showAlert(
-                  "Either the General Ledger does not exist, or it is not in draft stage to be updated."
+                  "Either the General Ledger does not exist, or it is not in draft stage to be updated.",
                 ),
             ]}
             whileTrue={[
@@ -78,7 +80,7 @@ export function ManageGeneralLedger() {
                   <CreateGeneralLedger
                     method="Update"
                     initial={collection.getData()}
-                  />
+                  />,
                 ),
             ]}
           />,
@@ -90,7 +92,7 @@ export function ManageGeneralLedger() {
             whileFalse={[
               () =>
                 showAlert(
-                  "Either the General Ledger does not exist, or it is not in draft stage to be deleted."
+                  "Either the General Ledger does not exist, or it is not in draft stage to be deleted.",
                 ),
             ]}
             whileTrue={[
@@ -102,7 +104,7 @@ export function ManageGeneralLedger() {
                     () => showAlert(collection.delete()),
                     () => setcode(""),
                     () => setcompany(""),
-                  ]
+                  ],
                 ),
             ]}
           />,
@@ -116,7 +118,7 @@ export function ManageGeneralLedger() {
                   <CreateGeneralLedger
                     method="Create"
                     initial={collection.getData()}
-                  />
+                  />,
                 ),
             ]}
           />,
@@ -155,7 +157,7 @@ export function CreateGeneralLedger({
   method = "Create",
 }) {
   const { data, setdata, reset, changeData } = useData(initial);
-  const { openWindow, showAlert } = useInterface();
+  const { openWindow, showAlert, openFloat } = useInterface();
   const {
     Company,
     Code,
@@ -179,19 +181,19 @@ export function CreateGeneralLedger({
       addError(
         !collection.company.exists(),
         "Company",
-        `Company does not exist.`
+        `Company does not exist.`,
       );
       addError(Code === "", "Code", `Code cannot be blank.`);
       addError(
         collection.exists(),
         "Code",
-        `General Ledger ${Code} already exists in Company ${Company}.`
+        `General Ledger ${Code} already exists in Company ${Company}.`,
       );
     }
     addError(
       collection.company.exists() && !collection.getChart().groupExists(Group),
       "Group",
-      `Group does not exist in Chart of Accounts ${collection.getChart().Code}`
+      `Group does not exist in Chart of Accounts ${collection.getChart().Code}`,
     );
     addError(
       collection.company.exists() &&
@@ -200,7 +202,7 @@ export function CreateGeneralLedger({
       "Group",
       `General Ledger Number not within the range specified for the group '${Group}' in Chart of Accounts '${
         collection.getChart().Code
-      }'`
+      }'`,
     );
   }, [data]);
   if (method === "Create") {
@@ -232,11 +234,11 @@ export function CreateGeneralLedger({
                 process={(value) => changeData("", "Company", value)}
                 suggestions={collection.company.filteredList(
                   { Status: "Ready" },
-                  "Code"
+                  "Code",
                 )}
                 captions={collection.company.filteredList(
                   { Status: "Ready" },
-                  "Name"
+                  "Name",
                 )}
                 placeholder={"Enter Company Code"}
               />
@@ -259,6 +261,23 @@ export function CreateGeneralLedger({
             </Row>
             <Row overflow="visible">
               <Label label={"Group"} />
+              <ConditionalDisplay
+                logic={collection.getChart().exists()}
+                whileTrue={
+                  <Button
+                    name={"Chart"}
+                    functionsArray={[
+                      () =>
+                        openFloat(
+                          <CreateChartofAccounts
+                            method="View"
+                            initial={collection.getChart().getData()}
+                          />,
+                        ),
+                    ]}
+                  />
+                }
+              />
               <AutoSuggestInput
                 value={Group}
                 process={(value) => changeData("", "Group", value)}
@@ -272,13 +291,6 @@ export function CreateGeneralLedger({
                 value={Type}
                 process={(value) => changeData("", "Type", value)}
                 options={["Balance Sheet", "Profit or Loss"]}
-              />
-            </Row>
-            <Row jc="left">
-              <Label label={"Create as Cost Element"} />
-              <CheckBox
-                value={CostElement}
-                process={(value) => changeData("", "CostElement", value)}
               />
             </Row>
             <Row jc="left">
@@ -320,11 +332,11 @@ export function CreateGeneralLedger({
                 placeholder={"Enter Interest Code"}
                 suggestions={interestcode.filteredList(
                   { Status: "Ready" },
-                  "Code"
+                  "Code",
                 )}
                 captions={interestcode.filteredList(
                   { Status: "Ready" },
-                  "Description"
+                  "Description",
                 )}
               />
             </Row>
@@ -399,13 +411,6 @@ export function CreateGeneralLedger({
               />
             </Row>
             <Row jc="left">
-              <Label label={"Create as Cost Element"} />
-              <CheckBox
-                value={CostElement}
-                process={(value) => changeData("", "CostElement", value)}
-              />
-            </Row>
-            <Row jc="left">
               <Label label={"Restrict Manual Posting"} />
               <CheckBox
                 value={RestrictManual}
@@ -444,11 +449,11 @@ export function CreateGeneralLedger({
                 placeholder={"Enter Interest Code"}
                 suggestions={interestcode.filteredList(
                   { Status: "Ready" },
-                  "Code"
+                  "Code",
                 )}
                 captions={interestcode.filteredList(
                   { Status: "Ready" },
-                  "Description"
+                  "Description",
                 )}
               />
             </Row>
@@ -500,10 +505,6 @@ export function CreateGeneralLedger({
                 value={Type}
                 options={["Balance Sheet", "Profit or Loss"]}
               />
-            </Row>
-            <Row jc="left">
-              <Label label={"Create as Cost Element"} />
-              <CheckBox value={CostElement} />
             </Row>
             <Row jc="left">
               <Label label={"Restrict Manual Posting"} />

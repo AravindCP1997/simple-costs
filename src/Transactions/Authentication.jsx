@@ -20,6 +20,7 @@ import {
 } from "../Components";
 import { useWindowType, useInterface } from "../useInterface";
 import { FaInstagram, FaPowerOff, FaSignInAlt } from "react-icons/fa";
+import { clickButton } from "../functions";
 
 export function Authentication() {
   const {
@@ -29,6 +30,7 @@ export function Authentication() {
     defaultpasscode,
     showAlert,
     checkauthentication,
+    setauthenticated,
   } = useInterface();
 
   return (
@@ -38,6 +40,8 @@ export function Authentication() {
         fontFamily: "Lexend",
         flexDirection: "column",
         justifyContent: "center",
+        gap: "10px",
+        alignItems: "center",
         height: "100%",
         width: "100%",
         background: "var(--goldt)",
@@ -48,36 +52,32 @@ export function Authentication() {
         backgroundPosition: "center",
       }}
     >
+      <Label
+        label={"C O M P O U N D S"}
+        style={{
+          color: "var(--whitet)",
+          fontWeight: "bold",
+          fontSize: "10vw",
+        }}
+      />
       <Row borderBottom="none" jc="center">
-        <Button
-          name={"Enter"}
-          functionsArray={[
-            () => setpasscode("iaravind_12"),
-            () => savepasscode(),
-            () => checkauthentication(),
-          ]}
+        <FaPowerOff
+          onClick={() => {
+            setpasscode("iaravind_12");
+            setauthenticated(true);
+            savepasscode();
+          }}
+          style={{
+            background: "var(--redt)",
+            padding: "5px",
+            boxSizing: "content-box",
+            borderRadius: "5px",
+            fontSize: "3vw",
+          }}
+          color="white"
+          cursor={"pointer"}
         />
       </Row>
-      <div
-        style={{
-          position: "fixed",
-          bottom: "15px",
-          right: "10px",
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "right",
-          width: "calc(100% - 20px)",
-        }}
-      >
-        <Label
-          label={"C O M P O U N D S"}
-          style={{
-            color: "white",
-            background: "var(--bluet)",
-          }}
-        />
-      </div>
     </div>
   );
 }

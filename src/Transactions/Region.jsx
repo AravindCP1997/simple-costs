@@ -104,10 +104,54 @@ export function TableRegion() {
                 <DisplayHidingError />,
               ]
         }
+        floatMenu={
+          method === "View"
+            ? [
+                <Button
+                  name="Update"
+                  functionsArray={[() => setmethod("Update")]}
+                />,
+              ]
+            : [
+                <ConditionalButton
+                  name={"Save"}
+                  result={!errorsExist}
+                  whileFalse={[
+                    () => showAlert("Messages exist. Please check."),
+                  ]}
+                  whileTrue={[
+                    () => showAlert(Region.save(data)),
+                    () => setmethod("View"),
+                  ]}
+                />,
+                <Button
+                  name="Cancel"
+                  functionsArray={[() => setmethod("View")]}
+                />,
+                <Button
+                  name={"Add"}
+                  functionsArray={[
+                    () =>
+                      addItemtoArray("", {
+                        Code: "",
+                        Country: "",
+                        State: "",
+                        Description: "",
+                      }),
+                  ]}
+                />,
+                <Button name={"Reset"} functionsArray={[() => reset()]} />,
+                <Button
+                  name={"Sample"}
+                  functionsArray={[() => setdata(Region.sample)]}
+                />,
+                <DisplayHidingError />,
+              ]
+        }
       />
       <WindowContent>
         <DisplayArea>
-          <Column ac="center">
+          <Column>
             <Table
               columns={
                 method === "View"

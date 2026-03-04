@@ -156,16 +156,6 @@ export function ViewCostingDocument({ initial }) {
               />
             </Row>
           </HidingPrompt>,
-          <HidingDisplay title={"Info"}>
-            <Row>
-              <Label label={"Entry Date"} />
-              <label>{EntryDate}</label>
-            </Row>
-            <Row>
-              <Label label={"Time Stamp"} />
-              <label>{TimeStamp}</label>
-            </Row>
-          </HidingDisplay>,
         ]}
       />
       <WindowContent>
@@ -173,10 +163,6 @@ export function ViewCostingDocument({ initial }) {
           <Row width="min(100%,400px)">
             <Label label={"Document Number"} />
             <label>{DocumentNo}</label>
-          </Row>
-          <Row width="min(100%,400px)">
-            <Label label={"Document Type"} />
-            <label>{DocumentType}</label>
           </Row>
           <Row width="min(100%,400px)">
             <Label label={"Year"} />
@@ -205,19 +191,28 @@ export function ViewCostingDocument({ initial }) {
             <Table
               columns={[
                 "Element",
+                "Description",
                 "Object Type",
                 "Object",
                 "Amount",
                 "From",
                 "To",
+                "Text",
               ]}
               rows={Entries.map((entry, e) => [
                 <label>{entry.Element}</label>,
+                <label>
+                  {
+                    new GeneralLedger(entry.Element, Company).getData()
+                      .Description
+                  }
+                </label>,
                 <label>{entry.ObjectType}</label>,
                 <label>{entry.Object}</label>,
                 <label>{entry.Amount}</label>,
                 <label>{entry.From}</label>,
                 <label>{entry.To}</label>,
+                <label>{entry.Text}</label>,
               ])}
             />
           </Column>

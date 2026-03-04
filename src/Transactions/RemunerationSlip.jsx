@@ -25,16 +25,21 @@ import { useError } from "../useError";
 import {
   Company,
   CompanyCollection,
+  Employee,
+  RemunerationCalc,
+  RemunerationOffcycleCalc,
   RemunerationOffCycleResult,
   RemunerationResult,
 } from "../classes";
 import { Collection } from "../Database";
 import {
   FilteredList,
+  isPositive,
   ListItems,
   ListUniqueItems,
   monthBegin,
   monthEnd,
+  moveDate,
   rangeOverlap,
   roundOff,
   trimSelection,
@@ -52,13 +57,18 @@ export function QueryRemunerationSlip() {
   const { CompanyCode, EmployeeCode, Year, Month, OffCycle, OffCycleDate } =
     data;
   const rr = OffCycle
-    ? new RemunerationOffCycleResult(CompanyCode, EmployeeCode, OffCycleDate)
-    : new RemunerationResult(CompanyCode, EmployeeCode, Year, Month);
+    ? new RemunerationOffCycleResult(
+        CompanyCode,
+        Number(EmployeeCode),
+        OffCycleDate,
+      )
+    : new RemunerationResult(CompanyCode, Number(EmployeeCode), Year, Month);
   const { showAlert, openWindow } = useInterface();
 
   return (
     <>
       <WindowTitle
+        closeTo="Report"
         title={"Remuneration Slip"}
         menu={[
           <ConditionalButton
@@ -103,24 +113,6 @@ export function QueryRemunerationSlip() {
                 ),
             ]}
           />,
-          <Conditional logic={rr.exists()}>
-            <ConditionalButton
-              name={"Delete Result"}
-              result={!rr.expensePosting().posted()}
-              whileFalse={[
-                () =>
-                  showAlert(
-                    "Reversal not possible. Expense document has already been posted.",
-                  ),
-              ]}
-              whileTrue={[
-                () => {
-                  showAlert(rr.delete());
-                  reset();
-                },
-              ]}
-            />
-          </Conditional>,
           <Button name={"Reset"} functionsArray={[() => reset()]} />,
         ]}
       />
@@ -237,6 +229,7 @@ export function RemunerationSlip({ data, date = "" }) {
   return (
     <>
       <WindowTitle
+        closeTo="Report"
         title={`Remuneration Slip - ${Employee} ${date}`}
         menu={[
           <Button
@@ -366,6 +359,206 @@ export function DisplayRemunerationResult({
                 <label>{wage.OrgUnit.split("/")[1]}</label>,
               ])}
             />
+          </Column>
+        </DisplayArea>
+      </WindowContent>
+    </>
+  );
+}
+
+export function ForecastRemunerationSlip() {
+  const { data, changeData, reset } = useData({
+    CompanyCode: "",
+    EmployeeCode: "",
+    Year: "",
+    Month: "01",
+    CalculateFrom: "",
+    OffCycle: false,
+    OffCycleDate: "",
+  });
+  const { addError, clearErrors, DisplayHidingError, errorsExist } = useError();
+  const {
+    CompanyCode,
+    EmployeeCode,
+    Year,
+    Month,
+    OffCycle,
+    OffCycleDate,
+    CalculateFrom,
+  } = data;
+  const employee = new Employee(Number(EmployeeCode), CompanyCode);
+  const rr = OffCycle
+    ? new RemunerationOffcycleCalc(
+        CompanyCode,
+        Number(EmployeeCode),
+        OffCycleDate,
+      )
+    : new RemunerationCalc(
+        CompanyCode,
+        Number(EmployeeCode),
+        Year,
+        Month,
+        CalculateFrom,
+      );
+  const { showAlert, openConfirm, openFloat } = useInterface();
+  useEffect(() => {
+    clearErrors();
+    addError(
+      !employee.exists(),
+      "Employee",
+      "Employee does not exist in the company.",
+    );
+    if (!OffCycle) {
+      addError(
+        CalculateFrom === "",
+        "CalculateFrom",
+        `'Calculate From' date cannot be blank.`,
+      );
+      addError(
+        CalculateFrom > monthBegin(Year, Month),
+        "CalculateFrom",
+        `'Calculate From' date cannot be later than month beginning.`,
+      );
+      addError(
+        CalculateFrom < moveDate(monthBegin(Year, Month), -1, 0, 0),
+        "CalculateFrom",
+        `'Calculate From' date cannot be earlier than one year from month beginning.`,
+      );
+      addError(!isPositive(Year), "Year", "Year shall be positive.");
+    }
+    if (OffCycle) {
+      addError(
+        OffCycleDate === "",
+        "OffCycleDate",
+        "Off-cycle date shall not be blank.",
+      );
+    }
+  }, [data]);
+
+  return (
+    <>
+      <WindowTitle
+        closeTo="Report"
+        title={"Forecast Remuneration"}
+        menu={[
+          <ConditionalButton
+            name={"Display"}
+            result={!errorsExist}
+            whileFalse={[() => showAlert("Employee does not exist.")]}
+            whileTrue={[
+              () => {
+                openConfirm(
+                  "This is an expensive calculation and will take a while to process.",
+                  [],
+                  [
+                    () =>
+                      openFloat(
+                        <RemunerationSlip
+                          data={rr.forecastSlip()}
+                          date={OffCycle ? OffCycleDate : monthEnd(Year, Month)}
+                        />,
+                      ),
+                  ],
+                );
+              },
+            ]}
+          />,
+          <DisplayHidingError />,
+          <Button name={"Reset"} functionsArray={[() => reset()]} />,
+        ]}
+      />
+      <WindowContent>
+        <DisplayArea>
+          <Row overflow="visible">
+            <Label label={"Company"} />
+            <AutoSuggestInput
+              value={CompanyCode}
+              process={(value) => changeData("", "CompanyCode", value)}
+              suggestions={new Collection("Company").listAll("Code")}
+              captions={new Collection("Company").listAll("Name")}
+              placeholder={"Company Code"}
+            />
+          </Row>
+          <Row overflow="visible">
+            <Label label={"Employee"} />
+            <AutoSuggestInput
+              value={EmployeeCode}
+              process={(value) => changeData("", "EmployeeCode", value)}
+              suggestions={new CompanyCollection(
+                CompanyCode,
+                "Employee",
+              ).listAllFromCompany("Code")}
+              captions={new CompanyCollection(
+                CompanyCode,
+                "Employee",
+              ).listAllFromCompany("Name")}
+              placeholder={"Employee Code"}
+            />
+          </Row>
+          <Column
+            borderBottom="none"
+            bg={OffCycle ? "none" : "var(--lightbluet)"}
+            padding="5px"
+          >
+            <Row overflow="visible">
+              <Label label={"Year"} />
+              <Input
+                value={Year}
+                process={(value) => changeData("", "Year", value)}
+                type={"number"}
+                placeholder={"Year"}
+              />
+            </Row>
+            <Row overflow="visible">
+              <Label label={"Month"} />
+              <Option
+                value={Month}
+                process={(value) => changeData("", "Month", value)}
+                options={[
+                  "01",
+                  "02",
+                  "03",
+                  "04",
+                  "05",
+                  "06",
+                  "07",
+                  "08",
+                  "09",
+                  "10",
+                  "11",
+                  "12",
+                ]}
+              />
+            </Row>
+            <Row overflow="visible">
+              <Label label={"Calculate From"} />
+              <Input
+                value={CalculateFrom}
+                process={(value) => changeData("", "CalculateFrom", value)}
+                type={"date"}
+              />
+            </Row>
+          </Column>
+          <Column
+            borderBottom="none"
+            bg={OffCycle ? "var(--lightbluet)" : "none"}
+            padding="5px"
+          >
+            <Row jc="left">
+              <Label label="Off Cycle Run" />
+              <CheckBox
+                value={OffCycle}
+                process={(value) => changeData("", "OffCycle", value)}
+              />
+            </Row>
+            <Row overflow="visible">
+              <Label label={"Off Cycle Date"} />
+              <Input
+                value={OffCycleDate}
+                process={(value) => changeData("", "OffCycleDate", value)}
+                type={"date"}
+              />
+            </Row>
           </Column>
         </DisplayArea>
       </WindowContent>

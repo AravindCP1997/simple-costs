@@ -21,7 +21,7 @@ import {
 import { useWindowType, useInterface } from "../useInterface";
 import useData from "../useData";
 import { useError } from "../useError";
-import { AccountingDocument, GeneralLedger } from "../classes";
+import { AccountingDocument, EntryTypes, GeneralLedger } from "../classes";
 import { noop } from "../functions";
 
 export function QueryAccountingDocument() {
@@ -160,16 +160,6 @@ export function ViewAccountingDocument({ initial }) {
               />
             </Row>
           </HidingPrompt>,
-          <HidingDisplay title={"Info"}>
-            <Row>
-              <Label label={"Entry Date"} />
-              <label>{EntryDate}</label>
-            </Row>
-            <Row>
-              <Label label={"Time Stamp"} />
-              <label>{TimeStamp}</label>
-            </Row>
-          </HidingDisplay>,
         ]}
       />
       <WindowContent>
@@ -210,6 +200,7 @@ export function ViewAccountingDocument({ initial }) {
               columns={[
                 "Entry Type",
                 "Account",
+                "Description",
                 "Amount",
                 "Amount in Local Currency",
                 "Text",
@@ -220,6 +211,9 @@ export function ViewAccountingDocument({ initial }) {
               rows={Entries.map((entry, e) => [
                 <label>{entry.ET}</label>,
                 <label>{entry.Account}</label>,
+                <label>
+                  {EntryTypes.getDescription(entry.ET, Company, entry.Account)}
+                </label>,
                 <label>{entry.Amount}</label>,
                 <label>{entry.AmountInLC}</label>,
                 <label>{entry.Text}</label>,

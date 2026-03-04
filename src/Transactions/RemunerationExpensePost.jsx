@@ -77,6 +77,7 @@ export function ManageRemunerationExpensePosting() {
     <>
       <WindowTitle
         title={"Remuneration Expense Posting"}
+        closeTo="Record"
         menu={[
           <ConditionalButton
             name={"Post"}

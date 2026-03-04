@@ -84,6 +84,7 @@ export function ReverseRemunerationPayment() {
     clearErrors();
     addError(!company.exists(), "Company", "Company does not exist.");
     addError(!rp.exists(), "Batch", "Payment batch does not exist.");
+    addError(rp.reversed(), "Batch", "Payment batch already reversed.");
     addError(
       PostingDate === "",
       "PostingDate",
@@ -108,6 +109,7 @@ export function ReverseRemunerationPayment() {
     <>
       <WindowTitle
         title={"Remuneration Payment Reversal"}
+        closeTo="Record"
         menu={[
           <ConditionalButton
             name={"Reverse"}
@@ -145,7 +147,7 @@ export function ReverseRemunerationPayment() {
             />
           </Row>
           <Row overflow="visible">
-            <Label label={"Batch ID"} />
+            <Label label={"Payment Batch ID"} />
             <Input
               value={BatchId}
               process={(value) => changeData("", "BatchId", value)}

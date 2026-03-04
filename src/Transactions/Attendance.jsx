@@ -36,7 +36,7 @@ export function ManageAttendance() {
   const [month, setmonth] = useState("01");
   const [employee, setemployee] = useState("");
   const { errorsExist, clearErrors, addError, DisplayHidingError } = useError();
-  const collection = new Attendance(employee, year, month, company);
+  const collection = new Attendance(Number(employee), year, month, company);
   const { showAlert, openWindow } = useInterface();
   useEffect(() => {
     clearErrors();

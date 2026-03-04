@@ -93,7 +93,7 @@ export const UserInterfaceProvider = ({ children }) => {
     authenticationData.read().passcode === defaultpasscode,
   );
   const checkauthentication = () => {
-    setauthenticated(authenticationData.read().passcode);
+    setauthenticated(authenticationData.read().passcode === defaultpasscode);
   };
 
   const savepasscode = () => {
@@ -137,6 +137,7 @@ export const UserInterfaceProvider = ({ children }) => {
     setpasscode,
     defaultpasscode,
     authenticated,
+    setauthenticated,
     checkauthentication,
     savepasscode,
     keyRefs,

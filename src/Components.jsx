@@ -253,6 +253,10 @@ export const AutoSuggestInput = ({
       e.preventDefault();
       setselected((prev) => prev - 1);
     }
+    if (e.key === "ArrowUp" && selected > filteredSuggestions.length - 1) {
+      e.preventDefault();
+      setselected(filteredSuggestions.length - 1);
+    }
     if (e.key === "ArrowDown" && selected < filteredSuggestions.length - 1) {
       e.preventDefault();
       setselected((prev) => prev + 1);
@@ -361,6 +365,7 @@ export function WindowTitle({
   title,
   style = {},
   menu = [],
+  floatMenu = [],
   closeTo = "Control",
 }) {
   const { closeWindow } = useInterface();
@@ -399,7 +404,7 @@ export function WindowTitle({
           />
         </Conditional>
       </div>
-      {menu.length > 0 && (
+      {windowType !== "float" && menu.length > 0 && (
         <div
           className="controlButtons"
           style={{
@@ -411,6 +416,22 @@ export function WindowTitle({
           }}
         >
           {menu.map((control) => (
+            <>{control}</>
+          ))}
+        </div>
+      )}
+      {windowType === "float" && floatMenu.length > 0 && (
+        <div
+          className="controlButtons"
+          style={{
+            borderBottom:
+              windowType === "static"
+                ? "1px solid var(--bluet)"
+                : "1px solid var(--whitet)",
+            width: "min(100%,960px)",
+          }}
+        >
+          {floatMenu.map((control) => (
             <>{control}</>
           ))}
         </div>

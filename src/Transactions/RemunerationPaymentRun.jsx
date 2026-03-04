@@ -121,6 +121,7 @@ export function ManageRemunerationPayment() {
     <>
       <WindowTitle
         title={"Remuneration Payment Posting"}
+        closeTo="Record"
         menu={[
           <ConditionalButton
             name={"Run"}
@@ -158,7 +159,7 @@ export function ManageRemunerationPayment() {
             />
           </Row>
           <Row overflow="visible">
-            <Label label={"Batch ID"} />
+            <Label label={"Payment Batch ID"} />
             <Input
               value={BatchId}
               process={(value) => changeData("", "BatchId", value)}

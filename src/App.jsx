@@ -30,6 +30,7 @@ import {
   CompanyCollection,
   ConsignmentInwards,
   Employee,
+  EntryTypes,
   ExchangeRates,
   GeneralLedger,
   GroupGeneralLedger,
@@ -69,6 +70,8 @@ import {
   filterByMultipleSelection,
   filterBySelection,
   isFuture,
+  maximumDate,
+  minimumDate,
   monthEnd,
   monthsInYear,
   moveDate,
@@ -137,7 +140,6 @@ export function Scratch() {
             </Row>
           </Row>
         </DisplayArea>
-        {JSON.stringify(getExchangeRate("FAC", "AED", "2025-12-03"))}
       </WindowContent>
     </>
   );

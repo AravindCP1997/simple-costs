@@ -104,6 +104,7 @@ export function ManageRemunerationRun() {
     <>
       <WindowTitle
         title={"Remuneration Run"}
+        closeTo="Record"
         menu={[
           <ConditionalButton
             name={"Run"}
@@ -267,6 +268,7 @@ export function QueryRemunerationRun() {
     <>
       <WindowTitle
         title={"Remuneration Run Status"}
+        closeTo="Report"
         menu={[
           <ConditionalButton
             name={"Check"}
@@ -375,6 +377,7 @@ export function RemunerationRunStatus({ data, offcycle = false }) {
     <>
       <WindowTitle
         title={"Remuneration Run Status"}
+        closeTo="Report"
         menu={[
           <Button
             name={"Back"}

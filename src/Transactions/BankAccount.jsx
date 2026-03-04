@@ -401,7 +401,7 @@ export function CreateBankAccount({
               </Column>
             </Column>,
             <Column overflow="visible" borderBottom="none">
-              <Row>
+              <Row overflow="visible">
                 <Label label={"General Ledger"} />
                 <Conditional logic={method === "Create"}>
                   <AutoSuggestInput
@@ -416,7 +416,7 @@ export function CreateBankAccount({
                   <label>{GL}</label>
                 </Conditional>
               </Row>
-              <Row>
+              <Row overflow="visible">
                 <Label label={"Profit Center"} />
                 <Conditional logic={method === "Create"}>
                   <AutoSuggestInput
