@@ -46,26 +46,26 @@ export function HumanResources() {
           />
           <p>
             The core steps involved in the human resources process-flow include:
-            <ul>
-              <li>
-                Calculation of remuneration of employees, for a period (month)
-                or an interim date (off-cycle date),
-              </li>
-              <li>
-                Recognising expense and liability in financial accounts for the
-                remuneration due,
-              </li>
-              <li>
-                Creating cost records for the remuneration of each employee,
-                being cost objects, and for every wage type identified as cost
-                elements, and
-              </li>
-              <li>
-                Recognising payment in financial accounts and generating payment
-                files.
-              </li>
-            </ul>
           </p>
+          <ul>
+            <li>
+              Calculation of remuneration of employees, for a period (month) or
+              an interim date (off-cycle date),
+            </li>
+            <li>
+              Recognising expense and liability in financial accounts for the
+              remuneration due,
+            </li>
+            <li>
+              Creating cost records for the remuneration of each employee, being
+              cost objects, and for every wage type identified as cost elements,
+              and
+            </li>
+            <li>
+              Recognising payment in financial accounts and generating payment
+              files.
+            </li>
+          </ul>
           <p>
             The following data collections are necessary for performing the
             human resources process.
@@ -195,10 +195,15 @@ export function HumanResources() {
                 services.
               </p>
             </Column>
+            <Column borderBottom="none" bg="var(--lightbluet)" padding="5px">
+              <Label label={"Open Period"} style={{ fontWeight: "bold" }} />
+              <p>Control dates on which documents can be created</p>
+            </Column>
           </Column>
           <Column borderBottom="none">
             <Label label={"Transactions"} style={{ fontWeight: "bold" }} />
             <ul>
+              <li>'ATC': Record attendance of an employee for a month.</li>
               <li>'REM_RUN': Calculate and store remuneration results.</li>
               <li>
                 'REM_EXP': Recognise expense and liabiility from calculated
@@ -215,6 +220,7 @@ export function HumanResources() {
           <Column borderBottom="none">
             <Label label={"Reports"} style={{ fontWeight: "bold" }} />
             <ul>
+              <li>'REM_FORE': Forecast remuneration.</li>
               <li>
                 'REM_SLIP': View remuneration slip from calculated result.
               </li>

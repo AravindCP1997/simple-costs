@@ -582,7 +582,7 @@ const codes = [
     code: "rem_pay_rev",
     screen: <Window />,
     window: <ReverseRemunerationPayment />,
-    name: "Remuneration Payment Reversal",
+    name: "Reverse Remuneration Payment",
     group: "Record",
     subgroup: "Human Resources",
   },
