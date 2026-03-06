@@ -353,6 +353,11 @@ export function CreateEmployee({
       addError(!isPositive(Amount), path, "Amount shall be positive.");
     });
     addError(
+      OrgAssignment.length === 0,
+      "OrgAssignment",
+      "Organisational Assignment shall be provided.",
+    );
+    addError(
       OrgAssignment.length > 0 &&
         maximumDate(ListUniqueItems(OrgAssignment, "To")) < "9999-12-31",
       "OrgAssignment",
