@@ -3377,7 +3377,7 @@ export class RemunerationCalc {
       (this.taxableWageOfOrgUnit(unit) +
         this.restOfYearTaxableWageOfOrgUnit(unit).postedTaxableWage) *
       this.taxRate();
-    return Math.round(calculatedWithHoldingTax) - postedWithHoldingTax;
+    return Math.round(calculatedWithHoldingTax - postedWithHoldingTax);
   }
   netPayOfOrgUnit(unit) {
     return this.netWageofOrgUnit(unit) - this.whtOfOrgUnit(unit);
