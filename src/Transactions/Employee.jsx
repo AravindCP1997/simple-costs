@@ -353,12 +353,14 @@ export function CreateEmployee({
       addError(!isPositive(Amount), path, "Amount shall be positive.");
     });
     addError(
-      maximumDate(ListUniqueItems(OrgAssignment, "To")) < "9999-12-31",
+      OrgAssignment.length > 0 &&
+        maximumDate(ListUniqueItems(OrgAssignment, "To")) < "9999-12-31",
       "OrgAssignment",
       `Organisational Assignment shall hypothetically be set up to '9999-12-31'.`,
     );
     addError(
-      minimumDate(ListUniqueItems(OrgAssignment, "From")) > DOJ,
+      OrgAssignment.length > 0 &&
+        minimumDate(ListUniqueItems(OrgAssignment, "From")) > DOJ,
       "OrgAssignment",
       `Organisational Assignment shall be set from Date of Joining.`,
     );
