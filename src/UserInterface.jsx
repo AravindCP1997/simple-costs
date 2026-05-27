@@ -531,6 +531,22 @@ const codes = [
     subgroup: "Payables and Receivables",
   },
   {
+    code: "btc",
+    window: <CreateBusinessTaxCode />,
+    screen: <Window />,
+    name: "Create Business Tax Code",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
+    code: "btc",
+    window: <ManageBusinessTaxCode />,
+    screen: <Window />,
+    name: "Manage Business Tax Code",
+    group: "Control",
+    subgroup: "Payables and Receivables",
+  },
+  {
     code: "atc",
     screen: <Window />,
     window: <ManageAttendance />,

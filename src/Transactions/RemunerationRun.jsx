@@ -113,7 +113,7 @@ export function ManageRemunerationRun() {
             whileTrue={[
               () => {
                 openConfirm(
-                  "This action will initiate remuneration run for the month. Please do not close the window until the operation completes.",
+                  "This action will initiate remuneration run for the month or off-cycle date. Please do not close the window until the operation completes.",
                   [],
                   [
                     () => {
