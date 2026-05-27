@@ -311,7 +311,7 @@ export function CreateBusinessTaxCode({
                   }
                   suggestions={bp.listAllFromCompany("Code")}
                   captions={bp.listAllFromCompany("Description")}
-                  placeholder={"Enter Business Place"}
+                  placeholder={"Business Place"}
                 />,
                 <AutoSuggestInput
                   value={account.GL}
@@ -320,7 +320,7 @@ export function CreateBusinessTaxCode({
                   }
                   suggestions={glcollection.listAllFromCompany("Code")}
                   captions={glcollection.listAllFromCompany("Description")}
-                  placeholder={"Enter General Ledger"}
+                  placeholder={"General Ledger"}
                 />,
                 <Option
                   value={account.Type}
