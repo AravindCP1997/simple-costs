@@ -14,9 +14,7 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
 export function TallyToExcel() {
-  const [data, setdata] = useState(undefined);
-
-  const tabledata = TallyJSONToTable(data);
+  const [tabledata, setdata] = useState([]);
 
   const downloadFile = async () => {
     const wb = new ExcelJS.Workbook();
@@ -55,7 +53,10 @@ export function TallyToExcel() {
         menu={[
           <InputXMLFile
             title="Open"
-            process={(value) => setdata(value)}
+            process={(value) => {
+              setdata(TallyJSONToTable(value));
+              downloadFile();
+            }}
             handleError={(error) => showAlert(error)}
           />,
           <Button

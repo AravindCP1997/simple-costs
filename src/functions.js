@@ -755,26 +755,29 @@ export function xmlToJson(xml, json = {}) {
 }
 
 export function TallyJSONToTable(JSON = {}) {
-  let vouchers = [];
+  const list = [];
   try {
-    vouchers = JSON.ENVELOPE.BODY.IMPORTDATA.REQUESTDATA.TALLYMESSAGE.filter(
-      (item) => item.VOUCHER,
+    JSON.ENVELOPE.BODY.IMPORTDATA.REQUESTDATA.TALLYMESSAGE.forEach(
+      (voucher, i) => {
+        try {
+          voucher.VOUCHER["ALLLEDGERENTRIES.LIST"].forEach((entry, e) => {
+            list.push({
+              Date: voucher.VOUCHER.DATE,
+              Narration: voucher.VOUCHER.NARRATION,
+              Ledger: entry.LEDGERNAME,
+              Amount: entry.AMOUNT,
+              Voucher: voucher.VOUCHER.VOUCHERNUMBER,
+              VoucherType: voucher.VOUCHER.VOUCHERTYPENAME,
+            });
+          });
+        } catch (vouchererr) {
+          console.log(`Voucher ${i + 1} ${vouchererr}`);
+        }
+      },
     );
   } catch (err) {
     console.log(err);
+    console.log("This is a file error!");
   }
-  const list = [];
-  vouchers.forEach((voucher, v) => {
-    voucher.VOUCHER["ALLLEDGERENTRIES.LIST"].forEach((entry) => {
-      list.push({
-        Date: voucher.VOUCHER.DATE,
-        Narration: voucher.VOUCHER.NARRATION,
-        Ledger: entry.LEDGERNAME,
-        Amount: entry.AMOUNT,
-        Voucher: voucher.VOUCHER.VOUCHERNUMBER,
-        VoucherType: voucher.VOUCHER.VOUCHERTYPENAME,
-      });
-    });
-  });
   return list;
 }
