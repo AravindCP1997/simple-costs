@@ -1,6 +1,6 @@
 import { useState, useContext, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { clickButton, isObject, noop } from "./functions";
+import { clickButton, isObject, noop, xmlToJson } from "./functions";
 import { useInterface, useWindowType } from "./useInterface";
 import { FocusTrap } from "focus-trap-react";
 import {
@@ -1130,6 +1130,48 @@ export function CollapsingDisplay({ title, children }) {
 export function Conditional({ logic, children }) {
   if (!logic) return null;
   return <>{children}</>;
+}
+
+export function InputXMLFile({ title = "Import", process, handleError }) {
+  const button = useRef(null);
+  const fileChange = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === "text/xml") {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        try {
+          const xmlText = e.target.result;
+          const parser = new DOMParser();
+          const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+          const out = {};
+          xmlToJson(xmlDoc.documentElement, out);
+          process(out);
+        } catch (err) {
+          process({});
+          handleError("Error parsing XML file. Please ensure it is valid.");
+        }
+      };
+
+      reader.readAsText(file);
+    } else {
+      process({});
+      handleError("Please upload a valid JSON file.");
+    }
+  };
+
+  return (
+    <>
+      <Button name={title} functionsArray={[() => button.current.click()]} />
+      <input
+        style={{ display: "none" }}
+        ref={button}
+        type="file"
+        accept=".xml"
+        onChange={fileChange}
+      />
+    </>
+  );
 }
 
 export function InputJSONFile({ title = "Import", process, handleError }) {

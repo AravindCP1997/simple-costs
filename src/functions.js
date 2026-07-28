@@ -723,3 +723,58 @@ export function maximumDate(dates) {
   });
   return dateString(maxDate);
 }
+
+export function xmlToJson(xml, json = {}) {
+  if (xml.nodeType === 1) {
+    const key = xml.nodeName;
+    const children = [...xml.childNodes].filter(
+      (node) => node.nodeType === Node.ELEMENT_NODE,
+    );
+    if (children.length === 0) {
+      json[key] = xml.textContent.trim();
+    } else {
+      json[key] = {};
+      children.forEach((child) => {
+        const childkey = child.nodeName;
+        if (json[key][childkey] === undefined) {
+          xmlToJson(child, json[key]);
+        } else {
+          const newData = {};
+          xmlToJson(child, newData);
+          if (!Array.isArray(json[key][childkey])) {
+            json[key][childkey] = [json[key][childkey]];
+            json[key][childkey].push(newData[childkey]);
+          } else {
+            json[key][childkey].push(newData[childkey]);
+          }
+        }
+      });
+    }
+  }
+  return json;
+}
+
+export function TallyJSONToTable(JSON = {}) {
+  let vouchers = [];
+  try {
+    vouchers = JSON.ENVELOPE.BODY.IMPORTDATA.REQUESTDATA.TALLYMESSAGE.filter(
+      (item) => item.VOUCHER,
+    );
+  } catch (err) {
+    console.log(err);
+  }
+  const list = [];
+  vouchers.forEach((voucher, v) => {
+    voucher.VOUCHER["ALLLEDGERENTRIES.LIST"].forEach((entry) => {
+      list.push({
+        Date: voucher.VOUCHER.DATE,
+        Narration: voucher.VOUCHER.NARRATION,
+        Ledger: entry.LEDGERNAME,
+        Amount: entry.AMOUNT,
+        Voucher: voucher.VOUCHER.VOUCHERNUMBER,
+        VoucherType: voucher.VOUCHER.VOUCHERTYPENAME,
+      });
+    });
+  });
+  return list;
+}
