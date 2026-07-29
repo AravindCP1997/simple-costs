@@ -771,7 +771,25 @@ export function TallyJSONToTable(JSON = {}) {
             });
           });
         } catch (vouchererr) {
-          console.log(`Voucher ${i + 1} ${vouchererr}`);
+          console.log(
+            `Voucher ${i + 1} - Non Sales Parse Failed:  ${vouchererr}`,
+          );
+          try {
+            voucher.VOUCHER["LEDGERENTRIES.LIST"].forEach((entry, e) => {
+              list.push({
+                Date: voucher.VOUCHER.DATE,
+                Narration: voucher.VOUCHER.NARRATION,
+                Ledger: entry.LEDGERNAME,
+                Amount: entry.AMOUNT,
+                Voucher: voucher.VOUCHER.VOUCHERNUMBER,
+                VoucherType: voucher.VOUCHER.VOUCHERTYPENAME,
+              });
+            });
+          } catch (saleserr) {
+            console.log(
+              `Voucher ${i + 1} - Sales Parse Also Failed:  ${vouchererr}`,
+            );
+          }
         }
       },
     );
