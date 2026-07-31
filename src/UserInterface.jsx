@@ -222,9 +222,7 @@ import { QueryRemunerationPaymentTable } from "./Transactions/RemunerationPaymen
 import { QueryCostingDocument } from "./Transactions/CostingDocument";
 import { CostTransfer } from "./Transactions/CostTransfer";
 import { Storage } from "./Transactions/Storage";
-import { XMLToJSON } from "./Transactions/XMLToJSON";
 import { Test } from "./Transactions/Test";
-import { TallyToExcel } from "./Transactions/TallyToExcel";
 
 const codes = [
   {
@@ -680,22 +678,6 @@ const codes = [
     screen: <Window />,
     window: <IncomeTaxSimulate />,
     name: "Income Tax Simulation",
-    group: "Report",
-    subgroup: "Application",
-  },
-  {
-    code: "xmljson",
-    screen: <Window />,
-    window: <XMLToJSON />,
-    name: "XML to JSON Converter",
-    group: "Report",
-    subgroup: "Application",
-  },
-  {
-    code: "tally",
-    screen: <Window />,
-    window: <TallyToExcel />,
-    name: "Tally to Excel",
     group: "Report",
     subgroup: "Application",
   },
